@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34902.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacenotes_Installer", "Pacenotes_Installer.csproj", "{F3A8081B-330D-442C-8248-4226D1C29411}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pacenotes_Installer", "Pacenotes_Installer.csproj", "{F3A8081B-330D-442C-8248-4226D1C29411}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacenotes_Installer_Reqnroll", "..\Pacenotes_Installer_Reqnroll\Pacenotes_Installer_Reqnroll.csproj", "{C5BB85E4-C362-485D-9A51-7FB9D7DC693D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{F3A8081B-330D-442C-8248-4226D1C29411}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3A8081B-330D-442C-8248-4226D1C29411}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3A8081B-330D-442C-8248-4226D1C29411}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5BB85E4-C362-485D-9A51-7FB9D7DC693D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5BB85E4-C362-485D-9A51-7FB9D7DC693D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5BB85E4-C362-485D-9A51-7FB9D7DC693D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5BB85E4-C362-485D-9A51-7FB9D7DC693D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

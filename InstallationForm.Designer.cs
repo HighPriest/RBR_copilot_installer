@@ -1,6 +1,6 @@
 ﻿namespace Pacenotes_Installer
 {
-    partial class Form1
+    partial class InstallationForm
     {
         /// <summary>
         ///  Required designer variable.

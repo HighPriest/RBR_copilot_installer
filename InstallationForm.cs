@@ -1,8 +1,8 @@
 namespace Pacenotes_Installer
 {
-    public partial class Form1 : Form
+    public partial class InstallationForm : Form
     {
-        public Form1()
+        public InstallationForm()
         {
             InitializeComponent();
         }

@@ -8,4 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Supabase" Version="1.0.2" />
+  </ItemGroup>
+
 </Project>
