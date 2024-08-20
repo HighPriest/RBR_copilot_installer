@@ -154,20 +154,37 @@ namespace Pacenotes_Installer
         private void initializeFileList(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
             tab4treeView1.Nodes.Clear();
-            TreeNode languages = new TreeNode("Languages");
-            /*foreach (var language in downloadManager.public_files)
+            TreeNode rootNode = new TreeNode("Root");
+
+            foreach (var node in downloadManager.public_files)
             {
-                if (language.Key == ".emptyFolderPlaceholder") continue;
-                TreeNode langNode = new TreeNode(language.Key);
-                foreach (var voice in language.Value.Voices)
+                addNodeToFileList(rootNode, node.Name);
+            }
+            foreach (TreeNode node in rootNode.Nodes)
+            {
+                tab4treeView1.Nodes.Add(node);
+            }
+            
+        }
+
+        private void addNodeToFileList(TreeNode parentNode, string pathSegment)
+        {
+            List<string> segments = new List<string>(pathSegment.Split("/"));
+            segments[^1] = segments[^1].Replace(".zip", "").Replace(".ini", "");
+
+            foreach (string segment in segments)
+            {
+                TreeNode childNode = parentNode.Nodes.ContainsKey(segment) ? parentNode.Nodes[segment] : null;
+
+                if (childNode == null)
                 {
-                    TreeNode voiceNode = new TreeNode(voice.Key);
-                    voiceNode.Tag = "sound";
-                    langNode.Nodes.Add(voiceNode);
+                    childNode = new TreeNode(segment);
+                    if (segment == segments.Last()) { childNode.Tag = pathSegment; }
+                    parentNode.Nodes.Add(childNode);
                 }
-                languages.Nodes.Add(langNode);
-            }*/
-            tab4treeView1.Nodes.Add(languages);
+
+                parentNode = childNode;
+            }
         }
 
         private void tab4treeView1_CheckChildNodes(object sender, TreeViewEventArgs e)
