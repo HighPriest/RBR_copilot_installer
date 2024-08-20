@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -93,7 +94,27 @@ namespace Pacenotes_Installer
         }
         public void installFile(string destinationDir, string fileName, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
-            ExtractZipFile(Task.Run(() => DownloadFile(fileName, backgroundWorker)).GetAwaiter().GetResult(), destinationDir);
+            if (fileName.EndsWith(".zip"))
+            {
+                ExtractZipFile(Task.Run(() => DownloadFile(fileName, backgroundWorker)).GetAwaiter().GetResult(), destinationDir);
+            }
+            else
+            {
+                try
+                {
+                    byte[] file = Task.Run(() => DownloadFile(fileName, backgroundWorker)).GetAwaiter().GetResult();
+                    using (var fs = new FileStream(Path.Combine(destinationDir, fileName), FileMode.Create, FileAccess.Write))
+                    {
+                        fs.Write(file, 0, file.Length);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception caught in process: {0}", ex);
+                    return;
+                }
+            }
         }
 
         public void ExtractZipFile(byte[] zipFileBytes, string destinationDirectory)

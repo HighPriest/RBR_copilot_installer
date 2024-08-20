@@ -750,6 +750,7 @@
             // 
             // workerInstallation
             // 
+            workerInstallation.WorkerReportsProgress = true;
             workerInstallation.DoWork += workerInstallation_DoWork;
             workerInstallation.ProgressChanged += workerInstallation_ProgressChanged;
             workerInstallation.RunWorkerCompleted += workerInstallation_RunWorkerCompleted;

@@ -117,6 +117,7 @@ namespace Pacenotes_Installer
         private void tab4buttonNext_Click(object sender, EventArgs e)
         {
             workerInstallation.RunWorkerAsync();
+            btn_next_Click(sender, e);
         }
 
         private void tab4buttonBack_Click(object sender, EventArgs e)
@@ -178,7 +179,9 @@ namespace Pacenotes_Installer
 
                 if (childNode == null)
                 {
+                    // TreeNodes have 3 data slots: Text, Name, Tag!! Can't populate Name or Tag on creation!
                     childNode = new TreeNode(segment);
+                    childNode.Name = segment;
                     if (segment == segments.Last()) { childNode.Tag = pathSegment; }
                     parentNode.Nodes.Add(childNode);
                 }
@@ -214,7 +217,7 @@ namespace Pacenotes_Installer
         {
             if (treeNode.Checked & treeNode.Nodes.Count == 0)
             {
-                downloadManager.installFile(Path.Combine("/", tab3dirRBR.Text, "test"), treeNode.Text, workerInstallation);
+                downloadManager.installFile(Path.Combine("/", tab3dirRBR.Text, "test"), treeNode.Tag.ToString(), workerInstallation);
                 return;
             }
             foreach (TreeNode node in treeNode.Nodes)
