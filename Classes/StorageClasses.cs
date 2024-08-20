@@ -13,31 +13,17 @@ namespace Pacenotes_Installer.Classes
     internal class RbrConfigurationsStorage
     {
         public Configurations? Configurations = new();
-        public Languages? Languages = new();
-    }
-    public class Configuration
-    {
-        public string? Id;
-    }
-
-    public class Voice
-    {
-        public string? Id;
-        public string? Gender;
-    }
-    public class Language
-    {
-        public Dictionary<string, Voice>? Voices = [];
+        public Sounds? Sounds = new();
     }
 
     public class Configurations
     {
-        public Dictionary<string, Configuration>? Configuration = [];
+        public Dictionary<string, List<Supabase.Storage.FileObject>>? Configuration = [];
     }
 
-    public class Languages
+    public class Sounds
     {
-        public Dictionary<string, Language>? Language = [];
+        public Dictionary<string, List<Supabase.Storage.FileObject>>? Sound = [];
     }
     #endregion RbrConfigurationsStorage
 

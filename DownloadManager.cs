@@ -9,7 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
-
+using Microsoft.IdentityModel.Tokens;
 using Pacenotes_Installer.Classes;
 
 namespace Pacenotes_Installer
@@ -30,7 +30,9 @@ namespace Pacenotes_Installer
         public string privateKey;
         public Status status = 0;
 
-        public RbrConfigurationsStorage rbr_files;
+        public List<Supabase.Storage.FileObject> public_files;
+        public List<Supabase.Storage.FileObject> private_files;
+
         public DownloadManager()
         {
             string PublicURL = "";
@@ -133,48 +135,41 @@ namespace Pacenotes_Installer
             {
                 return;
             }
-            rbr_files = new RbrConfigurationsStorage();
 
-            Languages languages = new Languages();
-            var _languages = Task.Run(() => supabase.Storage.From("Public").List(path: "Sounds/")).GetAwaiter().GetResult();
+            public_files = new List<Supabase.Storage.FileObject>();
 
-            foreach (Supabase.Storage.FileObject _language in _languages)
+            foreach (Supabase.Storage.FileObject _file in Task.Run(() => supabase.Storage.From("Public").List()).GetAwaiter().GetResult())
             {
-                var language = new Language();
-                var _voices = Task.Run(() => supabase.Storage.From("Public").List(path: String.Join("/","Sounds", _language.Name, "male"))).GetAwaiter().GetResult();
-                foreach (Supabase.Storage.FileObject _voice in _voices)
-                {
-                    var voice = new Voice();
-                    voice.Id = _voice.Id;
-                    voice.Gender = "male";
-                    language.Voices.Add(_voice.Name, voice);
-                    Debug.WriteLine(String.Join("/", "Sounds", _language.Name, _voice.Name));
-                }
-                _voices = Task.Run(() => supabase.Storage.From("Public").List(path: String.Join("/", "Sounds", _language.Name, "female"))).GetAwaiter().GetResult();
-                foreach (Supabase.Storage.FileObject _voice in _voices)
-                {
-                    var voice = new Voice();
-                    voice.Id = _voice.Id;
-                    voice.Gender = "female";
-                    language.Voices.Add(_voice.Name, voice);
-                    Debug.WriteLine(String.Join("/", "Sounds", _language.Name, _voice.Name));
-                }
-                languages.Language.Add(_language.Name, language);
+                recursiveSupabaseFileListing(public_files, _file, "");
             }
-            rbr_files.Languages = languages;
-
-            Configurations configs = new Configurations();
-            var _configs = Task.Run(() => supabase.Storage.From("Public").List(path: "Config/")).GetAwaiter().GetResult();
-            foreach (Supabase.Storage.FileObject _config in _configs)
-            {
-                var config = new Configuration();
-                config.Id = _config.Id;
-                configs.Configuration.Add(_config.Name, config);
-            }
-            rbr_files.Configurations = configs;
 
             status = Status.files_listed;
+            foreach (var file in public_files)
+            {
+                Debug.WriteLine("File Name: " + file.Name);
+            }
             Debug.WriteLine("FilesListed: " + status);
+        }
+
+        public void recursiveSupabaseFileListing(List<Supabase.Storage.FileObject> files_list, Supabase.Storage.FileObject file, string path)
+        {
+            string _path = path.IsNullOrEmpty() ? file.Name : String.Join("/", path, file.Name);
+
+            if (!file.IsFolder)
+            {
+                file.Name = _path;
+                files_list.Add(file);
+                return;
+            }
+
+            var files = Task.Run(() => supabase.Storage.From("Public").List(path: _path)).GetAwaiter().GetResult();
+
+            Debug.WriteLine(_path);
+
+            foreach (Supabase.Storage.FileObject _files in files)
+            {
+                recursiveSupabaseFileListing(files_list, _files, _path);
+            }
         }
 
         public Task<byte[]> DownloadFile(string fileName, System.ComponentModel.BackgroundWorker backgroundWorker) 

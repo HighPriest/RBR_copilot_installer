@@ -155,7 +155,7 @@ namespace Pacenotes_Installer
         {
             tab4treeView1.Nodes.Clear();
             TreeNode languages = new TreeNode("Languages");
-            foreach (var language in downloadManager.rbr_files.Languages.Language)
+            /*foreach (var language in downloadManager.public_files)
             {
                 if (language.Key == ".emptyFolderPlaceholder") continue;
                 TreeNode langNode = new TreeNode(language.Key);
@@ -166,7 +166,7 @@ namespace Pacenotes_Installer
                     langNode.Nodes.Add(voiceNode);
                 }
                 languages.Nodes.Add(langNode);
-            }
+            }*/
             tab4treeView1.Nodes.Add(languages);
         }
 
@@ -198,6 +198,7 @@ namespace Pacenotes_Installer
             if (treeNode.Checked & treeNode.Nodes.Count == 0)
             {
                 downloadManager.installFile(Path.Combine("/", tab3dirRBR.Text, "test"), treeNode.Text, workerInstallation);
+                return;
             }
             foreach (TreeNode node in treeNode.Nodes)
             {
