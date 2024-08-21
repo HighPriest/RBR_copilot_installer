@@ -116,6 +116,7 @@ namespace Pacenotes_Installer
 
         private void tab4buttonNext_Click(object sender, EventArgs e)
         {
+            tab6selectCoPilot.Items.Clear(); tab6selectLanguage.Items.Clear(); tab6selectStyle.Items.Clear();
             workerInstallation.RunWorkerAsync();
             btn_next_Click(sender, e);
         }
@@ -128,6 +129,7 @@ namespace Pacenotes_Installer
         private void tab6buttonNext_Click(object sender, EventArgs e)
         {
             // Do saving tasks
+            downloadManager.CreateRBRConfiguration(tab3dirRBR.Text, tab6selectCoPilot.CheckedItems, tab6selectStyle.CheckedItems, tab6selectLanguage.CheckedItems);
             btn_next_Click(sender, e);
         }
 
@@ -135,6 +137,19 @@ namespace Pacenotes_Installer
         {
             // Do reset tasks
             tabControl1.SelectedIndex = 0;
+        }
+
+        private void tab6listViewHandler(object sender, EventArgs e)
+        {
+            ListView _sender = (ListView)sender;
+            if (_sender.SelectedItems.Count > 0)
+            {
+                foreach (ListViewItem item in _sender.CheckedItems)
+                {
+                    item.Checked = false;
+                }
+                _sender.SelectedItems[0].Checked = true;
+            }
         }
 
         private void tab7buttonNext_Click(object sender, EventArgs e)
@@ -165,7 +180,7 @@ namespace Pacenotes_Installer
             {
                 tab4treeView1.Nodes.Add(node);
             }
-            
+
         }
 
         private void addNodeToFileList(TreeNode parentNode, string pathSegment)
@@ -180,9 +195,16 @@ namespace Pacenotes_Installer
                 if (childNode == null)
                 {
                     // TreeNodes have 3 data slots: Text, Name, Tag!! Can't populate Name or Tag on creation!
+                    // Tag: fullPath
+                    // ?? Name = Key. Maybe the extension is unnecessary, but the Key will be needed ?? Name: fileNameWithExtension
+                    // Text: fileNameWithout Extension
                     childNode = new TreeNode(segment);
                     childNode.Name = segment;
-                    if (segment == segments.Last()) { childNode.Tag = pathSegment; }
+                    if (segment == segments.Last())
+                    {
+                        // childNode.Name = pathSegment.Split("/").Last();
+                        childNode.Tag = pathSegment;
+                    }
                     parentNode.Nodes.Add(childNode);
                 }
 
@@ -210,13 +232,28 @@ namespace Pacenotes_Installer
             {
                 downloadBasedOnTreeNode((TreeNode)treeNode);
             }
-            
         }
 
         private void downloadBasedOnTreeNode(TreeNode treeNode)
         {
             if (treeNode.Checked & treeNode.Nodes.Count == 0)
             {
+                string category = treeNode.Tag.ToString().Split("/").First();
+                ListViewItem item = new ListViewItem(treeNode.Text);
+                item.Name = treeNode.Name;
+                item.Tag = treeNode.Tag;
+                switch (category)
+                {
+                    case "Language":
+                        tab6selectLanguage.Items.Add(item);
+                        break;
+                    case "Sounds":
+                        tab6selectCoPilot.Items.Add(item);
+                        break;
+                    case "Config":
+                        tab6selectStyle.Items.Add(item);
+                        break;
+                }
                 downloadManager.installFile(Path.Combine("/", tab3dirRBR.Text, "test"), treeNode.Tag.ToString(), workerInstallation);
                 return;
             }
@@ -236,6 +273,8 @@ namespace Pacenotes_Installer
         {
             tabControl1.SelectTab(tabControl1.SelectedIndex + 1);
             System.Windows.Forms.MessageBox.Show(text: "Installation completed succesfully!", caption: "SUCCESS", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Asterisk);
+            workerInstallation.Dispose();
         }
+
     }
 }

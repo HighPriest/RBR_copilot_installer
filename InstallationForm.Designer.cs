@@ -81,9 +81,9 @@
             tab6textBox2 = new TextBox();
             tab6textBox1 = new TextBox();
             tab6splitContainer2 = new SplitContainer();
-            tab6selectStyle = new CheckedListBox();
-            tab6selectCoPilot = new CheckedListBox();
-            tab6selectLanguage = new CheckedListBox();
+            tab6selectStyle = new ListView();
+            tab6selectCoPilot = new ListView();
+            tab6selectLanguage = new ListView();
             tab6label1 = new Label();
             tab6label3 = new Label();
             tab6label2 = new Label();
@@ -612,21 +612,33 @@
             // 
             // tab6selectStyle
             // 
-            tab6selectStyle.FormattingEnabled = true;
+            tab6selectStyle.CheckBoxes = true;
             resources.ApplyResources(tab6selectStyle, "tab6selectStyle");
+            tab6selectStyle.MultiSelect = false;
             tab6selectStyle.Name = "tab6selectStyle";
+            tab6selectStyle.UseCompatibleStateImageBehavior = false;
+            tab6selectStyle.View = View.List;
+            tab6selectStyle.SelectedIndexChanged += tab6listViewHandler;
             // 
             // tab6selectCoPilot
             // 
-            tab6selectCoPilot.FormattingEnabled = true;
+            tab6selectCoPilot.CheckBoxes = true;
             resources.ApplyResources(tab6selectCoPilot, "tab6selectCoPilot");
+            tab6selectCoPilot.MultiSelect = false;
             tab6selectCoPilot.Name = "tab6selectCoPilot";
+            tab6selectCoPilot.UseCompatibleStateImageBehavior = false;
+            tab6selectCoPilot.View = View.List;
+            tab6selectCoPilot.SelectedIndexChanged += tab6listViewHandler;
             // 
             // tab6selectLanguage
             // 
-            tab6selectLanguage.FormattingEnabled = true;
+            tab6selectLanguage.CheckBoxes = true;
             resources.ApplyResources(tab6selectLanguage, "tab6selectLanguage");
+            tab6selectLanguage.MultiSelect = false;
             tab6selectLanguage.Name = "tab6selectLanguage";
+            tab6selectLanguage.UseCompatibleStateImageBehavior = false;
+            tab6selectLanguage.View = View.List;
+            tab6selectLanguage.SelectedIndexChanged += tab6listViewHandler;
             // 
             // tab6label1
             // 
@@ -906,14 +918,14 @@
         private Label tab6label2;
         private Label tab6label1;
         private Label tab6label3;
-        private CheckedListBox tab6selectStyle;
-        private CheckedListBox tab6selectCoPilot;
-        private CheckedListBox tab6selectLanguage;
         private RichTextBox tab7textInstalled;
         private Label tab7label2;
         private RichTextBox tab7textConfig;
         private Label tab7label1;
         private System.ComponentModel.BackgroundWorker workerListFiles;
         private System.ComponentModel.BackgroundWorker workerInstallation;
+        private ListView tab6selectLanguage;
+        private ListView tab6selectStyle;
+        private ListView tab6selectCoPilot;
     }
 }

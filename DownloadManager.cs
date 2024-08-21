@@ -204,9 +204,37 @@ namespace Pacenotes_Installer
         #endregion DownloadMethods
 
         #region ConfigurationMethods
-        public void CreateRBRConfiguration(string destinationDir)
+        public void CreateRBRConfiguration(string destinationDir, ListView.CheckedListViewItemCollection coPilotConfiguration, ListView.CheckedListViewItemCollection styleConfiguration, ListView.CheckedListViewItemCollection languageConfiguration)
         {
+            string configPacenote = @"[SETTINGS]
+sounds = " + coPilotConfiguration[0].Tag + @"
+language = " + languageConfiguration[0].Text + @"
+replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10
+enableGUI = 1
+showReplayHUD = 1
+muteReplayPacenotes = 0
+";
+            string configStyle = @";
+; File:         Rbr.ini
+; Version:      1.0
+; Date:         2023-12-09
+;
 
+[PACKAGE::RBR]
+file0=packages\";
+
+            switch (styleConfiguration[0].Text)
+            {
+                case "Numeric Standard":
+                    configStyle = configStyle + "FilipekMod_numeric_standard.ini";
+                    break;
+                case "Numeric 1to7":
+                    configStyle = configStyle + "FilipekMod_numeric_1to7.ini";
+                    break;
+                case "Descriptive":
+                    configStyle = configStyle + "FilipekMod_descriptive.ini";
+                    break;
+            }
         }
 
         public void ReadRBRConfiguration(string directory)

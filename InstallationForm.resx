@@ -1753,16 +1753,16 @@ Huuh?</value>
     <value>37, 279</value>
   </data>
   <data name="tab6selectStyle.Size" type="System.Drawing.Size, System.Drawing">
-    <value>185, 94</value>
+    <value>185, 112</value>
   </data>
   <data name="tab6selectStyle.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
+    <value>8</value>
   </data>
   <data name="&gt;&gt;tab6selectStyle.Name" xml:space="preserve">
     <value>tab6selectStyle</value>
   </data>
   <data name="&gt;&gt;tab6selectStyle.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;tab6selectStyle.Parent" xml:space="preserve">
     <value>tab6splitContainer2.Panel1</value>
@@ -1774,16 +1774,16 @@ Huuh?</value>
     <value>37, 155</value>
   </data>
   <data name="tab6selectCoPilot.Size" type="System.Drawing.Size, System.Drawing">
-    <value>185, 94</value>
+    <value>185, 103</value>
   </data>
   <data name="tab6selectCoPilot.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+    <value>7</value>
   </data>
   <data name="&gt;&gt;tab6selectCoPilot.Name" xml:space="preserve">
     <value>tab6selectCoPilot</value>
   </data>
   <data name="&gt;&gt;tab6selectCoPilot.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;tab6selectCoPilot.Parent" xml:space="preserve">
     <value>tab6splitContainer2.Panel1</value>
@@ -1795,16 +1795,16 @@ Huuh?</value>
     <value>37, 25</value>
   </data>
   <data name="tab6selectLanguage.Size" type="System.Drawing.Size, System.Drawing">
-    <value>185, 94</value>
+    <value>185, 109</value>
   </data>
   <data name="tab6selectLanguage.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>6</value>
   </data>
   <data name="&gt;&gt;tab6selectLanguage.Name" xml:space="preserve">
     <value>tab6selectLanguage</value>
   </data>
   <data name="&gt;&gt;tab6selectLanguage.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Windows.Forms.ListView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;tab6selectLanguage.Parent" xml:space="preserve">
     <value>tab6splitContainer2.Panel1</value>
