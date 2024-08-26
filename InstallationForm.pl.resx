@@ -1,0 +1,293 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema 
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="tab1textBox2.Text" xml:space="preserve">
+    <value>    Przeczytaj przed kontynuowaniem instalacji!</value>
+  </data>
+  <data name="tab1textBox1.Text" xml:space="preserve">
+    <value>Informacja</value>
+  </data>
+  <data name="richTextBox1.Text" xml:space="preserve">
+    <value>Instalator nie pobiera ani nie instaluje na komputerze żadnego oprogramowania i plików wykonywalnych.
+
+Jedynym zadaniem tego programu jest pobranie i skonfigurowanie plików audio dla wirtualnego pilota rajdowego.
+
+
+
+W kolejnych krokach wybierzesz styl, język i głos pilota użyty w pluginie Pacenote Richard Burns Rally i pluginie CrewChief Rally.
+ 
+
+
+Możesz kontynuować instalację bez obawy o utratę bieżącej konfiguracji. Wszystkie pliki, które są zmieniane przez instalator, są kopiowane i zapisywane w skompresowanym archiwum, obok nowo zainstalowanych plików.
+
+Poprzednie konfiguracje można odzyskać i zastosować w dowolnym momencie.
+
+</value>
+  </data>
+  <data name="tab1buttonNext.Text" xml:space="preserve">
+    <value>Akceptuj</value>
+  </data>
+  <data name="tab2textBox2.Text" xml:space="preserve">
+    <value>    Stan usług online i dostęp do prywatnej zawartości</value>
+  </data>
+  <data name="tab2textBox1.Text" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>181, 15</value>
+  </data>
+  <data name="tab2label2.Text" xml:space="preserve">
+    <value>Wpisz klucz prywatnej zawartości</value>
+  </data>
+  <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>85, 15</value>
+  </data>
+  <data name="tab2label1.Text" xml:space="preserve">
+    <value>Status serwera:</value>
+  </data>
+  <data name="tab2buttonBack.Text" xml:space="preserve">
+    <value>Wstecz</value>
+  </data>
+  <data name="tab2buttonNext.Text" xml:space="preserve">
+    <value>Dalej</value>
+  </data>
+  <data name="tab3textBox2.Text" xml:space="preserve">
+    <value>    Lokalizacja programów do zmodyfikowania</value>
+  </data>
+  <data name="tab3textBox1.Text" xml:space="preserve">
+    <value>Programy</value>
+  </data>
+  <data name="tab3label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 15</value>
+  </data>
+  <data name="tab3label2.Text" xml:space="preserve">
+    <value>Folder CrewChief</value>
+  </data>
+  <data name="tab3label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>144, 15</value>
+  </data>
+  <data name="tab3label1.Text" xml:space="preserve">
+    <value>Folder Richard Burns Rally</value>
+  </data>
+  <data name="tab4textBox2.Text" xml:space="preserve">
+    <value>    Wybierz zawartość do pobrania</value>
+  </data>
+  <data name="tab4textBox1.Text" xml:space="preserve">
+    <value>Pobieranie</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab4treeView1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 364</value>
+  </data>
+  <data name="tab4richTextBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 93</value>
+  </data>
+  <data name="tab4richTextBox.Text" xml:space="preserve">
+    <value>Możesz wybrać wiele stylów i pakietów dźwiękowych do pobrania jednocześnie. Ten, którego chcesz użyć po instalacji, można wybrać w kolejnych krokach.
+
+Jeśli będziesz chciał zmienić styl, lub pakiet głosowy po zakończeniu instalacji, możesz to zrobić poprzez modyfikację plików konfiguracyjnych.
+
+Config: Styl notatek. Numeryczny (Hairpin, 1, Square, 2, 3, 4, 5, 6), Opisowy (Easy, Medium, Slow), etc...
+Language: Język interfejsu użytkownika pluginu Pacenote. W tym pisane nazwy notatek.
+Sounds: Język i głos pilota rajdowego.</value>
+  </data>
+  <data name="tab4splitContainer3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 461</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab4splitContainer3.SplitterDistance" type="System.Int32, mscorlib">
+    <value>364</value>
+  </data>
+  <data name="tab4buttonBack.Text" xml:space="preserve">
+    <value>Wstecz</value>
+  </data>
+  <data name="tab4buttonNext.Text" xml:space="preserve">
+    <value>Pobierz</value>
+  </data>
+  <data name="tab5textBox2.Text" xml:space="preserve">
+    <value>    Poczekaj aż instalator zakończy pobieranie wybranych materiałów</value>
+  </data>
+  <data name="tab5textBox1.Text" xml:space="preserve">
+    <value>Pobieranie</value>
+  </data>
+  <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 15</value>
+  </data>
+  <data name="tab5label1.Text" xml:space="preserve">
+    <value>Aktualnie pobieram</value>
+  </data>
+  <data name="tab6textBox2.Text" xml:space="preserve">
+    <value>    Wybierz, których plików z pobranej konfiguracji chcesz użyć po instalacji</value>
+  </data>
+  <data name="tab6textBox1.Text" xml:space="preserve">
+    <value>Konfiguracja</value>
+  </data>
+  <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>182, 15</value>
+  </data>
+  <data name="tab6label1.Text" xml:space="preserve">
+    <value>Język interfejsu Pluginu Pacenote</value>
+  </data>
+  <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>69, 15</value>
+  </data>
+  <data name="tab6label3.Text" xml:space="preserve">
+    <value>Styl notatek</value>
+  </data>
+  <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>125, 15</value>
+  </data>
+  <data name="tab6label2.Text" xml:space="preserve">
+    <value>Głos Pilota Rajdowego</value>
+  </data>
+  <data name="tab6buttonBack.Text" xml:space="preserve">
+    <value>Reinstaluj</value>
+  </data>
+  <data name="tab6buttonNext.Text" xml:space="preserve">
+    <value>Zapisz</value>
+  </data>
+  <data name="tab7textBox2.Text" xml:space="preserve">
+    <value>    Potwierdź zgodność zainstalowanej zawartości z oczekiwaną konfiguracją</value>
+  </data>
+  <data name="tab7textBox1.Text" xml:space="preserve">
+    <value>Finalizacja</value>
+  </data>
+  <data name="tab7label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>237, 15</value>
+  </data>
+  <data name="tab7label2.Text" xml:space="preserve">
+    <value>Zainstalowana zawartość, gotowa do użycia</value>
+  </data>
+  <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>114, 15</value>
+  </data>
+  <data name="tab7label1.Text" xml:space="preserve">
+    <value>Finalna konfiguracja</value>
+  </data>
+  <data name="tab7buttonBack.Text" xml:space="preserve">
+    <value>Wstecz</value>
+  </data>
+  <data name="tab7buttonNext.Text" xml:space="preserve">
+    <value>Zakończ</value>
+  </data>
+</root>

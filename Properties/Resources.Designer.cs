@@ -59,5 +59,23 @@ namespace Pacenotes_Installer.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to English.
+        /// </summary>
+        internal static string en {
+            get {
+                return ResourceManager.GetString("en", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Polski.
+        /// </summary>
+        internal static string pl {
+            get {
+                return ResourceManager.GetString("pl", resourceCulture);
+            }
+        }
     }
 }

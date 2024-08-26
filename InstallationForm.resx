@@ -145,7 +145,7 @@
     <value>1</value>
   </data>
   <data name="tab1textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Read before continuing with installation!</value>
   </data>
   <data name="&gt;&gt;tab1textBox2.Name" xml:space="preserve">
     <value>tab1textBox2</value>
@@ -217,15 +217,19 @@
     <value>0, 0</value>
   </data>
   <data name="richTextBox1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 452</value>
+    <value>770, 466</value>
   </data>
   <data name="richTextBox1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="richTextBox1.Text" xml:space="preserve">
-    <value>Alot of very meaningful text
-EVEN MORE TEXT
-Huuh?</value>
+    <value>The installer does not download or install any executable sotware on your computer.
+Only task of this program is to download &amp; configure audio files for a virtual rally co-pilot.
+
+In following steps, you are going to choose style, language &amp; voice of the Pacenote Plugin for Richard Burns Rally &amp; CrewChief Rally plugin.
+
+You can proceed with installation without worry about losing your current configuration. All files which are altered by the installer, are copied &amp; saved into a compressed archive, next to newly installed files.
+Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="&gt;&gt;richTextBox1.Name" xml:space="preserve">
     <value>richTextBox1</value>
@@ -294,10 +298,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab1splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 488</value>
+    <value>770, 502</value>
   </data>
   <data name="tab1splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>452</value>
+    <value>466</value>
   </data>
   <data name="tab1splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -327,7 +331,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab1splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab1splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>35</value>
@@ -345,34 +349,6 @@ Huuh?</value>
     <value>tab1</value>
   </data>
   <data name="&gt;&gt;tab1splitContainer1.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="tab1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="tab1.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab1.TabIndex" type="System.Int32, mscorlib">
-    <value>0</value>
-  </data>
-  <data name="tab1.Text" xml:space="preserve">
-    <value>tabPage1</value>
-  </data>
-  <data name="&gt;&gt;tab1.Name" xml:space="preserve">
-    <value>tab1</value>
-  </data>
-  <data name="&gt;&gt;tab1.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab1.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
   <data name="tab2splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
@@ -400,7 +376,7 @@ Huuh?</value>
     <value>3</value>
   </data>
   <data name="tab2textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    State of online services &amp; access to private content</value>
   </data>
   <data name="&gt;&gt;tab2textBox2.Name" xml:space="preserve">
     <value>tab2textBox2</value>
@@ -430,7 +406,7 @@ Huuh?</value>
     <value>2</value>
   </data>
   <data name="tab2textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Online</value>
   </data>
   <data name="&gt;&gt;tab2textBox1.Name" xml:space="preserve">
     <value>tab2textBox1</value>
@@ -493,13 +469,13 @@ Huuh?</value>
     <value>31, 130</value>
   </data>
   <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>102, 15</value>
+    <value>94, 15</value>
   </data>
   <data name="tab2label2.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
   <data name="tab2label2.Text" xml:space="preserve">
-    <value>Enter Content Key</value>
+    <value>Enter private key</value>
   </data>
   <data name="&gt;&gt;tab2label2.Name" xml:space="preserve">
     <value>tab2label2</value>
@@ -523,13 +499,13 @@ Huuh?</value>
     <value>96, 70</value>
   </data>
   <data name="tab2labelStatus.Size" type="System.Drawing.Size, System.Drawing">
-    <value>46, 15</value>
+    <value>43, 15</value>
   </data>
   <data name="tab2labelStatus.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
   <data name="tab2labelStatus.Text" xml:space="preserve">
-    <value>Offline </value>
+    <value>Offline</value>
   </data>
   <data name="&gt;&gt;tab2labelStatus.Name" xml:space="preserve">
     <value>tab2labelStatus</value>
@@ -550,13 +526,13 @@ Huuh?</value>
     <value>31, 46</value>
   </data>
   <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>77, 15</value>
+    <value>76, 15</value>
   </data>
   <data name="tab2label1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="tab2label1.Text" xml:space="preserve">
-    <value>Server Status:</value>
+    <value>Server status:</value>
   </data>
   <data name="&gt;&gt;tab2label1.Name" xml:space="preserve">
     <value>tab2label1</value>
@@ -655,10 +631,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab2splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab2splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab2splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -688,7 +664,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab2splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab2splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -707,33 +683,6 @@ Huuh?</value>
   </data>
   <data name="&gt;&gt;tab2splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tab2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <data name="tab2.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab2.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
-  </data>
-  <data name="tab2.Text" xml:space="preserve">
-    <value>tabPage2</value>
-  </data>
-  <data name="&gt;&gt;tab2.Name" xml:space="preserve">
-    <value>tab2</value>
-  </data>
-  <data name="&gt;&gt;tab2.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab2.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab2.ZOrder" xml:space="preserve">
-    <value>1</value>
   </data>
   <data name="tab3splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -760,7 +709,7 @@ Huuh?</value>
     <value>5</value>
   </data>
   <data name="tab3textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Directories of programs to modify</value>
   </data>
   <data name="&gt;&gt;tab3textBox2.Name" xml:space="preserve">
     <value>tab3textBox2</value>
@@ -790,7 +739,7 @@ Huuh?</value>
     <value>4</value>
   </data>
   <data name="tab3textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Programs</value>
   </data>
   <data name="&gt;&gt;tab3textBox1.Name" xml:space="preserve">
     <value>tab3textBox1</value>
@@ -832,13 +781,13 @@ Huuh?</value>
     <value>31, 130</value>
   </data>
   <data name="tab3label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>116, 15</value>
+    <value>112, 15</value>
   </data>
   <data name="tab3label2.TabIndex" type="System.Int32, mscorlib">
     <value>5</value>
   </data>
   <data name="tab3label2.Text" xml:space="preserve">
-    <value>Crew Chief Directory</value>
+    <value>CrewChief directory</value>
   </data>
   <data name="&gt;&gt;tab3label2.Name" xml:space="preserve">
     <value>tab3label2</value>
@@ -859,13 +808,13 @@ Huuh?</value>
     <value>31, 46</value>
   </data>
   <data name="tab3label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>159, 15</value>
+    <value>158, 15</value>
   </data>
   <data name="tab3label1.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>
   </data>
   <data name="tab3label1.Text" xml:space="preserve">
-    <value>Richard Burns Rally Directory</value>
+    <value>Richard Burns Rally directory</value>
   </data>
   <data name="&gt;&gt;tab3label1.Name" xml:space="preserve">
     <value>tab3label1</value>
@@ -1054,10 +1003,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab3splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab3splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab3splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1087,7 +1036,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab3splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab3splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -1106,33 +1055,6 @@ Huuh?</value>
   </data>
   <data name="&gt;&gt;tab3splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tab3.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <data name="tab3.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab3.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
-  </data>
-  <data name="tab3.Text" xml:space="preserve">
-    <value>tabPage3</value>
-  </data>
-  <data name="&gt;&gt;tab3.Name" xml:space="preserve">
-    <value>tab3</value>
-  </data>
-  <data name="&gt;&gt;tab3.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab3.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab3.ZOrder" xml:space="preserve">
-    <value>2</value>
   </data>
   <data name="tab4splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -1159,7 +1081,7 @@ Huuh?</value>
     <value>5</value>
   </data>
   <data name="tab4textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Select content to download</value>
   </data>
   <data name="&gt;&gt;tab4textBox2.Name" xml:space="preserve">
     <value>tab4textBox2</value>
@@ -1189,7 +1111,7 @@ Huuh?</value>
     <value>4</value>
   </data>
   <data name="tab4textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Downloading</value>
   </data>
   <data name="&gt;&gt;tab4textBox1.Name" xml:space="preserve">
     <value>tab4textBox1</value>
@@ -1224,6 +1146,12 @@ Huuh?</value>
   <data name="tab4splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
+  <data name="tab4splitContainer3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab4splitContainer3.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
   <data name="tab4treeView1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
   </data>
@@ -1231,7 +1159,7 @@ Huuh?</value>
     <value>0, 0</value>
   </data>
   <data name="tab4treeView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 447</value>
+    <value>767, 350</value>
   </data>
   <data name="tab4treeView1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1243,9 +1171,86 @@ Huuh?</value>
     <value>System.Windows.Forms.TreeView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;tab4treeView1.Parent" xml:space="preserve">
-    <value>tab4splitContainer2.Panel1</value>
+    <value>tab4splitContainer3.Panel1</value>
   </data>
   <data name="&gt;&gt;tab4treeView1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel1.Name" xml:space="preserve">
+    <value>tab4splitContainer3.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel1.Parent" xml:space="preserve">
+    <value>tab4splitContainer3</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4richTextBox.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab4richTextBox.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab4richTextBox.Size" type="System.Drawing.Size, System.Drawing">
+    <value>767, 104</value>
+  </data>
+  <data name="tab4richTextBox.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab4richTextBox.Text" xml:space="preserve">
+    <value>You can choose many styles &amp; sound packs at once. The one you would like to use after installation, can be selected in following steps.
+If you will want to change the style or voice pack after the installation is complete, it can be done through modification of configuration files.
+
+Config: Pacenotes style. Numeric (Hairpin, 1, Square, 2, 3, 4, 5, 6), Descriptive (Easy, Medium, Slow), etc...
+Language: Language of the Pacenote plugins User Interface. Including written names of pacenotes.
+Sounds: Language &amp; voice of the CoPilot.</value>
+  </data>
+  <data name="&gt;&gt;tab4richTextBox.Name" xml:space="preserve">
+    <value>tab4richTextBox</value>
+  </data>
+  <data name="&gt;&gt;tab4richTextBox.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4richTextBox.Parent" xml:space="preserve">
+    <value>tab4splitContainer3.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4richTextBox.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel2.Name" xml:space="preserve">
+    <value>tab4splitContainer3.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel2.Parent" xml:space="preserve">
+    <value>tab4splitContainer3</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab4splitContainer3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>767, 458</value>
+  </data>
+  <data name="tab4splitContainer3.SplitterDistance" type="System.Int32, mscorlib">
+    <value>350</value>
+  </data>
+  <data name="tab4splitContainer3.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Name" xml:space="preserve">
+    <value>tab4splitContainer3</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.Parent" xml:space="preserve">
+    <value>tab4splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer3.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
   <data name="&gt;&gt;tab4splitContainer2.Panel1.Name" xml:space="preserve">
@@ -1306,7 +1311,7 @@ Huuh?</value>
     <value>3</value>
   </data>
   <data name="tab4buttonNext.Text" xml:space="preserve">
-    <value>Install</value>
+    <value>Download</value>
   </data>
   <data name="&gt;&gt;tab4buttonNext.Name" xml:space="preserve">
     <value>tab4buttonNext</value>
@@ -1333,10 +1338,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab4splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab4splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab4splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1366,7 +1371,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab4splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab4splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -1385,33 +1390,6 @@ Huuh?</value>
   </data>
   <data name="&gt;&gt;tab4splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tab4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <data name="tab4.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab4.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab4.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
-  </data>
-  <data name="tab4.Text" xml:space="preserve">
-    <value>tabPage4</value>
-  </data>
-  <data name="&gt;&gt;tab4.Name" xml:space="preserve">
-    <value>tab4</value>
-  </data>
-  <data name="&gt;&gt;tab4.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab4.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab4.ZOrder" xml:space="preserve">
-    <value>3</value>
   </data>
   <data name="tab5splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -1438,7 +1416,7 @@ Huuh?</value>
     <value>5</value>
   </data>
   <data name="tab5textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Wait for the installer to finish downloading selecetde content</value>
   </data>
   <data name="&gt;&gt;tab5textBox2.Name" xml:space="preserve">
     <value>tab5textBox2</value>
@@ -1468,7 +1446,7 @@ Huuh?</value>
     <value>4</value>
   </data>
   <data name="tab5textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Downloading</value>
   </data>
   <data name="&gt;&gt;tab5textBox1.Name" xml:space="preserve">
     <value>tab5textBox1</value>
@@ -1510,13 +1488,13 @@ Huuh?</value>
     <value>32, 102</value>
   </data>
   <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>107, 15</value>
+    <value>129, 15</value>
   </data>
   <data name="tab5label1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
   <data name="tab5label1.Text" xml:space="preserve">
-    <value>Currently installing</value>
+    <value>Currently downloading</value>
   </data>
   <data name="&gt;&gt;tab5label1.Name" xml:space="preserve">
     <value>tab5label1</value>
@@ -1534,7 +1512,7 @@ Huuh?</value>
     <value>Left, Right</value>
   </data>
   <data name="tab5progressBar1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>32, 67</value>
+    <value>32, 74</value>
   </data>
   <data name="tab5progressBar1.Size" type="System.Drawing.Size, System.Drawing">
     <value>703, 32</value>
@@ -1579,10 +1557,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab5splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab5splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab5splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1612,7 +1590,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab5splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab5splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -1631,33 +1609,6 @@ Huuh?</value>
   </data>
   <data name="&gt;&gt;tab5splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tab5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <data name="tab5.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab5.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
-  </data>
-  <data name="tab5.Text" xml:space="preserve">
-    <value>tabPage5</value>
-  </data>
-  <data name="&gt;&gt;tab5.Name" xml:space="preserve">
-    <value>tab5</value>
-  </data>
-  <data name="&gt;&gt;tab5.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab5.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab5.ZOrder" xml:space="preserve">
-    <value>4</value>
   </data>
   <data name="tab6splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -1684,7 +1635,7 @@ Huuh?</value>
     <value>5</value>
   </data>
   <data name="tab6textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Select which files from downloaded configuration would you like to use after installation</value>
   </data>
   <data name="&gt;&gt;tab6textBox2.Name" xml:space="preserve">
     <value>tab6textBox2</value>
@@ -1714,7 +1665,7 @@ Huuh?</value>
     <value>4</value>
   </data>
   <data name="tab6textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Configuration</value>
   </data>
   <data name="&gt;&gt;tab6textBox1.Name" xml:space="preserve">
     <value>tab6textBox1</value>
@@ -1819,13 +1770,13 @@ Huuh?</value>
     <value>9, 7</value>
   </data>
   <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>70, 15</value>
+    <value>173, 15</value>
   </data>
   <data name="tab6label1.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
   <data name="tab6label1.Text" xml:space="preserve">
-    <value>UI language</value>
+    <value>UI language of Pacenote Plugin</value>
   </data>
   <data name="&gt;&gt;tab6label1.Name" xml:space="preserve">
     <value>tab6label1</value>
@@ -1846,13 +1797,13 @@ Huuh?</value>
     <value>9, 261</value>
   </data>
   <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>82, 15</value>
+    <value>88, 15</value>
   </data>
   <data name="tab6label3.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
   <data name="tab6label3.Text" xml:space="preserve">
-    <value>Dictation style</value>
+    <value>Pacenotes style</value>
   </data>
   <data name="&gt;&gt;tab6label3.Name" xml:space="preserve">
     <value>tab6label3</value>
@@ -1873,13 +1824,13 @@ Huuh?</value>
     <value>9, 137</value>
   </data>
   <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>81, 15</value>
+    <value>77, 15</value>
   </data>
   <data name="tab6label2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="tab6label2.Text" xml:space="preserve">
-    <value>CoPilot to use</value>
+    <value>CoPilot voice</value>
   </data>
   <data name="&gt;&gt;tab6label2.Name" xml:space="preserve">
     <value>tab6label2</value>
@@ -1978,10 +1929,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab6splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab6splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab6splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -2011,7 +1962,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab6splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab6splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -2030,33 +1981,6 @@ Huuh?</value>
   </data>
   <data name="&gt;&gt;tab6splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
-  </data>
-  <data name="tab6.Location" type="System.Drawing.Point, System.Drawing">
-    <value>4, 24</value>
-  </data>
-  <data name="tab6.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>3, 3, 3, 3</value>
-  </data>
-  <data name="tab6.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
-  </data>
-  <data name="tab6.TabIndex" type="System.Int32, mscorlib">
-    <value>5</value>
-  </data>
-  <data name="tab6.Text" xml:space="preserve">
-    <value>tabPage6</value>
-  </data>
-  <data name="&gt;&gt;tab6.Name" xml:space="preserve">
-    <value>tab6</value>
-  </data>
-  <data name="&gt;&gt;tab6.Type" xml:space="preserve">
-    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;tab6.Parent" xml:space="preserve">
-    <value>tabControl1</value>
-  </data>
-  <data name="&gt;&gt;tab6.ZOrder" xml:space="preserve">
-    <value>5</value>
   </data>
   <data name="tab7splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
@@ -2083,7 +2007,7 @@ Huuh?</value>
     <value>5</value>
   </data>
   <data name="tab7textBox2.Text" xml:space="preserve">
-    <value>    Huh? Subtext?</value>
+    <value>    Confirm installed content matches expected configuration</value>
   </data>
   <data name="&gt;&gt;tab7textBox2.Name" xml:space="preserve">
     <value>tab7textBox2</value>
@@ -2113,7 +2037,7 @@ Huuh?</value>
     <value>4</value>
   </data>
   <data name="tab7textBox1.Text" xml:space="preserve">
-    <value>Information</value>
+    <value>Finalisation</value>
   </data>
   <data name="&gt;&gt;tab7textBox1.Name" xml:space="preserve">
     <value>tab7textBox1</value>
@@ -2182,13 +2106,13 @@ Huuh?</value>
     <value>9, 198</value>
   </data>
   <data name="tab7label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>95, 15</value>
+    <value>165, 15</value>
   </data>
   <data name="tab7label2.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
   </data>
   <data name="tab7label2.Text" xml:space="preserve">
-    <value>Installed content</value>
+    <value>Installed content, ready to use</value>
   </data>
   <data name="&gt;&gt;tab7label2.Name" xml:space="preserve">
     <value>tab7label2</value>
@@ -2236,13 +2160,13 @@ Huuh?</value>
     <value>9, 7</value>
   </data>
   <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>81, 15</value>
+    <value>120, 15</value>
   </data>
   <data name="tab7label1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
   <data name="tab7label1.Text" xml:space="preserve">
-    <value>Configuration</value>
+    <value>Default configuration</value>
   </data>
   <data name="&gt;&gt;tab7label1.Name" xml:space="preserve">
     <value>tab7label1</value>
@@ -2341,10 +2265,10 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab7splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 483</value>
+    <value>770, 497</value>
   </data>
   <data name="tab7splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>447</value>
+    <value>461</value>
   </data>
   <data name="tab7splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -2374,7 +2298,7 @@ Huuh?</value>
     <value>1</value>
   </data>
   <data name="tab7splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>770, 527</value>
+    <value>770, 541</value>
   </data>
   <data name="tab7splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>40</value>
@@ -2394,6 +2318,169 @@ Huuh?</value>
   <data name="&gt;&gt;tab7splitContainer1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="tab1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab1.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab1.Text" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab1.Name" xml:space="preserve">
+    <value>tab1</value>
+  </data>
+  <data name="&gt;&gt;tab1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab2.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab2.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab2.Text" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;tab2.Name" xml:space="preserve">
+    <value>tab2</value>
+  </data>
+  <data name="&gt;&gt;tab2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab3.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab3.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab3.Text" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab3.Name" xml:space="preserve">
+    <value>tab3</value>
+  </data>
+  <data name="&gt;&gt;tab3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab3.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab4.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab4.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab4.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab4.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab4.Text" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;tab4.Name" xml:space="preserve">
+    <value>tab4</value>
+  </data>
+  <data name="&gt;&gt;tab4.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab4.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="tab5.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab5.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab5.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab5.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab5.Text" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;tab5.Name" xml:space="preserve">
+    <value>tab5</value>
+  </data>
+  <data name="&gt;&gt;tab5.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab5.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="tab6.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab6.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab6.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 547</value>
+  </data>
+  <data name="tab6.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab6.Text" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;tab6.Name" xml:space="preserve">
+    <value>tab6</value>
+  </data>
+  <data name="&gt;&gt;tab6.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab6.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
   <data name="tab7.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 24</value>
   </data>
@@ -2401,13 +2488,13 @@ Huuh?</value>
     <value>3, 3, 3, 3</value>
   </data>
   <data name="tab7.Size" type="System.Drawing.Size, System.Drawing">
-    <value>776, 533</value>
+    <value>776, 547</value>
   </data>
   <data name="tab7.TabIndex" type="System.Int32, mscorlib">
     <value>6</value>
   </data>
   <data name="tab7.Text" xml:space="preserve">
-    <value>tabPage7</value>
+    <value>7</value>
   </data>
   <data name="&gt;&gt;tab7.Name" xml:space="preserve">
     <value>tab7</value>
@@ -2428,7 +2515,7 @@ Huuh?</value>
     <value>0, 0</value>
   </data>
   <data name="tabControl1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>784, 561</value>
+    <value>784, 575</value>
   </data>
   <data name="tabControl1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -2455,13 +2542,13 @@ Huuh?</value>
     <value>True</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>77</value>
+    <value>68</value>
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>7, 15</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>784, 561</value>
+    <value>784, 575</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
     <value>800, 600</value>

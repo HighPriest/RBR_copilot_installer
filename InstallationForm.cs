@@ -1,8 +1,15 @@
 using System.Diagnostics;
+using System;
+using System.Globalization;
+using System.Windows.Forms;
 using System.Xml.Linq;
+using static System.Windows.Forms.DataFormats;
+using System.ComponentModel;
+using System.Drawing.Text;
 
 namespace Pacenotes_Installer
 {
+
     internal partial class InstallationForm : Form
     {
         private DownloadManager downloadManager;
@@ -10,7 +17,7 @@ namespace Pacenotes_Installer
         {
             InitializeComponent();
             downloadManager = _downloadManager;
-            //InitializeTabUI();
+            InitializeTabUI();
         }
 
         private void InitializeTabUI()
@@ -116,9 +123,42 @@ namespace Pacenotes_Installer
 
         private void tab4buttonNext_Click(object sender, EventArgs e)
         {
-            tab6selectCoPilot.Items.Clear(); tab6selectLanguage.Items.Clear(); tab6selectStyle.Items.Clear();
+            // Check if each category has something selected
+            foreach (TreeNode node in tab4treeView1.Nodes)
+            {
+                if (node.Checked) { continue; }
+                else if (node.Nodes.Count > 0) {
+                    if(!tab4AtLeastOneNodeChecked(node))
+                    {
+                        System.Windows.Forms.MessageBox.Show(text: "Check at least one item from each category!", caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Exclamation);
+                        return;
+                    };
+                }
+            }
+            // Prepare Configuration tab for new content, based on what is being downloaded
+            tab6selectCoPilot.Clear(); tab6selectLanguage.Clear(); tab6selectStyle.Clear();
             workerInstallation.RunWorkerAsync();
             btn_next_Click(sender, e);
+        }
+
+        private bool tab4AtLeastOneNodeChecked(TreeNode _node)
+        {
+            bool status = false;
+            if ( _node.Nodes.Count > 0)
+            {
+                foreach (TreeNode node in _node.Nodes)
+                {
+                    status = tab4AtLeastOneNodeChecked(node);
+                    if (status) { break; }
+                }
+            }
+            if (_node.Checked == true)
+            {
+                return true;
+            }
+
+            return status;
+
         }
 
         private void tab4buttonBack_Click(object sender, EventArgs e)
@@ -129,7 +169,8 @@ namespace Pacenotes_Installer
         private void tab6buttonNext_Click(object sender, EventArgs e)
         {
             // Do saving tasks
-            downloadManager.CreateRBRConfiguration(tab3dirRBR.Text, tab6selectCoPilot.CheckedItems, tab6selectStyle.CheckedItems, tab6selectLanguage.CheckedItems);
+            string config = DownloadManager.CreateRBRConfiguration(tab3dirRBR.Text, tab6selectCoPilot.CheckedItems, tab6selectStyle.CheckedItems, tab6selectLanguage.CheckedItems);
+            tab7textConfig.Text = config;
             btn_next_Click(sender, e);
         }
 
@@ -141,6 +182,8 @@ namespace Pacenotes_Installer
 
         private void tab6listViewHandler(object sender, EventArgs e)
         {
+            BeginInvoke((MethodInvoker)delegate
+            {
             ListView _sender = (ListView)sender;
             if (_sender.SelectedItems.Count > 0)
             {
@@ -149,12 +192,26 @@ namespace Pacenotes_Installer
                     item.Checked = false;
                 }
                 _sender.SelectedItems[0].Checked = true;
+                return;
             }
+            try
+            {
+                _sender.Items[0].Checked = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.ToString());
+            }
+            });
+
         }
 
         private void tab7buttonNext_Click(object sender, EventArgs e)
         {
             // Do closing tasks
+            workerListFiles.Dispose();
+            workerInstallation.Dispose();
+            Close();
         }
 
         private void tab7buttonBack_Click(object sender, EventArgs e)
@@ -232,6 +289,13 @@ namespace Pacenotes_Installer
             {
                 downloadBasedOnTreeNode((TreeNode)treeNode);
             }
+
+            downloadManager.backupRBRConfiguration(tab3dirRBR.Text, workerInstallation);
+
+            // Make sure at least one item is checked
+            tab6listViewHandler(tab6selectLanguage, new EventArgs());
+            tab6listViewHandler(tab6selectCoPilot, new EventArgs());
+            tab6listViewHandler(tab6selectStyle, new EventArgs());
         }
 
         private void downloadBasedOnTreeNode(TreeNode treeNode)
@@ -242,19 +306,19 @@ namespace Pacenotes_Installer
                 ListViewItem item = new ListViewItem(treeNode.Text);
                 item.Name = treeNode.Name;
                 item.Tag = treeNode.Tag;
-                switch (category)
+                switch (category.ToLower())
                 {
-                    case "Language":
-                        tab6selectLanguage.Items.Add(item);
+                    case "language":
+                        tab6selectLanguage.Invoke(() => tab6selectLanguage.Items.Add(item));
                         break;
-                    case "Sounds":
-                        tab6selectCoPilot.Items.Add(item);
+                    case "sounds":
+                        tab6selectCoPilot.Invoke(() => tab6selectCoPilot.Items.Add(item));
                         break;
-                    case "Config":
-                        tab6selectStyle.Items.Add(item);
+                    case "config":
+                        tab6selectStyle.Invoke(() => tab6selectStyle.Items.Add(item));
                         break;
                 }
-                downloadManager.installFile(Path.Combine("/", tab3dirRBR.Text, "test"), treeNode.Tag.ToString(), workerInstallation);
+                downloadManager.saveFile(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), treeNode.Tag.ToString(), workerInstallation);
                 return;
             }
             foreach (TreeNode node in treeNode.Nodes)
@@ -272,9 +336,7 @@ namespace Pacenotes_Installer
         private void workerInstallation_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
             tabControl1.SelectTab(tabControl1.SelectedIndex + 1);
-            System.Windows.Forms.MessageBox.Show(text: "Installation completed succesfully!", caption: "SUCCESS", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Asterisk);
-            workerInstallation.Dispose();
+            System.Windows.Forms.MessageBox.Show(text: "Download completed succesfully!", caption: "SUCCESS", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Asterisk);
         }
-
     }
 }

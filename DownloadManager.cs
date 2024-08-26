@@ -92,7 +92,7 @@ namespace Pacenotes_Installer
         {
 
         }
-        public void installFile(string destinationDir, string fileName, System.ComponentModel.BackgroundWorker backgroundWorker)
+        public void saveFile(string destinationDir, string fileName, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
             if (fileName.EndsWith(".zip"))
             {
@@ -204,42 +204,110 @@ namespace Pacenotes_Installer
         #endregion DownloadMethods
 
         #region ConfigurationMethods
-        public void CreateRBRConfiguration(string destinationDir, ListView.CheckedListViewItemCollection coPilotConfiguration, ListView.CheckedListViewItemCollection styleConfiguration, ListView.CheckedListViewItemCollection languageConfiguration)
+        public static string CreateRBRConfiguration(string destinationDir, ListView.CheckedListViewItemCollection coPilotConfiguration, ListView.CheckedListViewItemCollection styleConfiguration, ListView.CheckedListViewItemCollection languageConfiguration)
         {
-            string configPacenote = @"[SETTINGS]
-sounds = " + coPilotConfiguration[0].Tag + @"
-language = " + languageConfiguration[0].Text + @"
-replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10
-enableGUI = 1
-showReplayHUD = 1
-muteReplayPacenotes = 0
-";
-            string configStyle = @";
-; File:         Rbr.ini
-; Version:      1.0
-; Date:         2023-12-09
-;
-
-[PACKAGE::RBR]
-file0=packages\";
+            string[] configPacenote = [ "[SETTINGS]",
+                                        "sounds = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0],
+                                        "language = " + languageConfiguration[0].Text,
+                                        "replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10",
+                                        "enableGUI = 1",
+                                        "showReplayHUD = 1",
+                                        "muteReplayPacenotes = 0", ";"];
+            string[] configStyle = [    ";",
+                                        "; File:         Rbr.ini",
+                                        "; Version:      1.0",
+                                        "; Date:         2023-12-09",
+                                        ";",
+                                        "[PACKAGE::RBR]",
+                                        "file0=packages\\"];
 
             switch (styleConfiguration[0].Text)
             {
                 case "Numeric Standard":
-                    configStyle = configStyle + "FilipekMod_numeric_standard.ini";
+                    configStyle[^1] = configStyle[^1] + ("FilipekMod_numeric_standard.ini");
                     break;
                 case "Numeric 1to7":
-                    configStyle = configStyle + "FilipekMod_numeric_1to7.ini";
+                    configStyle[^1] = configStyle[^1] + "FilipekMod_numeric_1to7.ini";
                     break;
                 case "Descriptive":
-                    configStyle = configStyle + "FilipekMod_descriptive.ini";
+                    configStyle[^1] = configStyle[^1] + "FilipekMod_descriptive.ini";
                     break;
             }
+
+            string[] configPaths = ["Plugins\\Pacenote\\config\\pacenotes\\RBR.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Rbr-Enhanced.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Numeric-fr.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Numeric-cz.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Descriptive-cz.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Descriptive-fr.ini",
+                                "Plugins\\Pacenote\\config\\pacenotes\\Descriptive-hu.ini"];
+
+            File.WriteAllLines(Path.Combine(destinationDir, "Plugins\\Pacenote\\Pacenote.ini"), configPacenote);
+            foreach (string configPath in configPaths)
+            {
+                File.WriteAllLines(Path.Combine(destinationDir, configPath), configStyle);
+            }
+            
+
+
+            return @"CoDriver = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0] + @"
+GUI Language = " + languageConfiguration[0].Text + @"
+Pacenotes style = " + styleConfiguration[0].Text;
         }
 
-        public void ReadRBRConfiguration(string directory)
+        public void backupRBRConfiguration(string directory, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
+            // Take the download location
+            string sourceDir = Path.Combine(directory, "backup\\FilipekMod");
+            // Take the backup file location
+            string targetDir = Path.Combine(directory, "backup\\backup_Pacenote.zip");
 
+            if (File.Exists(targetDir))
+            {
+                targetDir = targetDir.Replace("backup_Pacenote", "backup_Pacenote_" + $"{DateTime.Now:yy_MM_dd-HH_mm_ss}");
+            }
+            // Create ZipArchive 8\26\2024 6:40:01 AM
+            using (ZipArchive archive = ZipFile.Open(targetDir, ZipArchiveMode.Create))
+            {
+                var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories);
+                // Enumerate each file in sourceDirectory
+                foreach (var entry in files.Select((x, i) => new { Value = x, Index = i }))
+                {
+                    // Get structured file information, to avoid parsing errors
+                    FileInfo fileInfo = new FileInfo(
+                        // Change directory to root for search for the original files
+                        // For backup, we are interested in original files we are going to replace
+                        entry.Value.Replace(sourceDir, directory)
+                        );
+
+                    // Create an entry inside the zipFile of the file we want to backup
+                    ZipArchiveEntry zipFile = archive.CreateEntry(
+                        Path.Combine(
+                            // Important: directory in GetRelativePath, needs to be of root game directory
+                            Path.GetRelativePath(directory, fileInfo.DirectoryName),
+                            Path.GetFileName(fileInfo.FullName)
+                            )
+                        );
+                    try
+                    {
+                        using (FileStream stream = fileInfo.OpenRead())
+                        {
+                            using (Stream entryStream = zipFile.Open())
+                            {
+                                stream.CopyTo(entryStream);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Do nothing
+
+                    }
+
+                    backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), fileInfo.FullName);
+                }
+
+            }
         }
 
         #endregion ConfigurationMethods
