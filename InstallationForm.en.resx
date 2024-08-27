@@ -123,6 +123,23 @@
   <data name="tab1textBox1.Text" xml:space="preserve">
     <value>Information</value>
   </data>
+  <data name="richTextBox1.Text" xml:space="preserve">
+    <value>RBR Pacenotes Installer v1.0.0
+
+In following steps, you are going to choose style, language &amp; voice of the Pacenote Plugin for Richard Burns Rally &amp; CrewChief Rally plugin.
+
+COMPATIBILITY:
+Installed Pacenotes are compatible only with:
+ - RallySimFans Pacenotes Plugin
+ - CrewChief V4
+
+DISCLAIMER:
+The installer does not download or install any executable software on your computer.
+Only task of this program is to download &amp; configure audio files for a virtual rally co-pilot.
+
+You can proceed with installation without worry about losing your current configuration. All files which are altered by the installer, are copied &amp; saved into a compressed archive, next to newly installed files.
+Previous configurations can be retrieved &amp; applied at any time.</value>
+  </data>
   <data name="tab1buttonNext.Text" xml:space="preserve">
     <value>Accept</value>
   </data>
@@ -175,10 +192,6 @@
   <data name="tab4textBox1.Text" xml:space="preserve">
     <value>Downloading</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
-    <value>Fill</value>
-  </data>
   <data name="tab4treeView1.Size" type="System.Drawing.Size, System.Drawing">
     <value>770, 364</value>
   </data>
@@ -217,6 +230,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab5label1.Text" xml:space="preserve">
     <value>Currently downloading</value>
+  </data>
+  <data name="tab6textBox2.Text" xml:space="preserve">
+    <value>    Select which files from downloaded configuration would you like to use after installation</value>
   </data>
   <data name="tab6textBox1.Text" xml:space="preserve">
     <value>Configuration</value>
@@ -269,16 +285,8 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7buttonNext.Text" xml:space="preserve">
     <value>Finish</value>
   </data>
-  <data name="richTextBox1.Text" xml:space="preserve">
-    <value>The installer does not download or install any executable sotware on your computer.
-Only task of this program is to download &amp; configure audio files for a virtual rally co-pilot.
-
-In following steps, you are going to choose style, language &amp; voice of the Pacenote Plugin for Richard Burns Rally &amp; CrewChief Rally plugin.
-
-You can proceed with installation without worry about losing your current configuration. All files which are altered by the installer, are copied &amp; saved into a compressed archive, next to newly installed files.
-Previous configurations can be retrieved &amp; applied at any time.</value>
-  </data>
-  <data name="tab6textBox2.Text" xml:space="preserve">
-    <value>    Select which files from downloaded configuration would you like to use after installation</value>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
   </data>
 </root>

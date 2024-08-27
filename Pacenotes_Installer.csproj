@@ -2,11 +2,18 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <StartupObject>Pacenotes_Installer.Program</StartupObject>
+    <ApplicationIcon>rbr.ico</ApplicationIcon>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="rbr.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Supabase" Version="1.0.2" />
