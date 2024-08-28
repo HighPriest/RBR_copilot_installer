@@ -284,24 +284,23 @@ Pacenotes style = " + styleConfiguration[0].Text;
                             // For backup, we are interested in original files we are going to replace
                             entry.Value.Replace(sourceDir, directory)
                             );
-
-                        // Create an entry inside the zipFile of the file we want to backup
-                        ZipArchiveEntry zipFile = archive.CreateEntry(
-                            Path.Combine(
-                                // Important: directory in GetRelativePath, needs to be of root game directory
-                                Path.GetRelativePath(directory, fileInfo.DirectoryName),
-                                Path.GetFileName(fileInfo.FullName)
-                                )
-                            );
-                        try
+                        if (fileInfo.Exists)
                         {
+                            // Create an entry inside the zipFile of the file we want to backup
+                            ZipArchiveEntry zipFile = archive.CreateEntry(
+                                Path.Combine(
+                                    // Important: directory in GetRelativePath, needs to be of root game directory
+                                    Path.GetRelativePath(directory, fileInfo.DirectoryName),
+                                    Path.GetFileName(fileInfo.FullName)
+                                    )
+                                );
                             using (Stream entryStream = zipFile.Open())
                             using (StreamWriter streamWriter = new StreamWriter(entryStream))
-                                {
-                                    streamWriter.Write(entryStream);
-                                }
+                            {
+                                streamWriter.Write(entryStream);
+                            }
                         }
-                        catch
+                        else
                         {
                             backup = true; // If at least one file doesn't exist, then we should save the backup of user files
                         }
