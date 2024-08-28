@@ -20,7 +20,7 @@ namespace Pacenotes_Installer
         public LocalizationChangeForm(System.Globalization.CultureInfo defaultCulture)
         {
             InitializeComponent();
-            
+
             // Load cultures from the installed .NET
             UIlanguages = new Dictionary<string, string>();
             UIlanguages["English"] = "en";
@@ -36,7 +36,7 @@ namespace Pacenotes_Installer
             {
                 comboBoxCultures.SelectedIndex = UIlanguages.Values.ToList().IndexOf(System.Globalization.CultureInfo.CurrentCulture.Parent.Name);
             }
-            
+
         }
 
         private void buttonOK_Click(object sender, EventArgs e)

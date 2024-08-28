@@ -44,6 +44,7 @@
             // 
             resources.ApplyResources(label1, "label1");
             label1.Name = "label1";
+            label1.UseWaitCursor = true;
             // 
             // button1
             // 
@@ -51,6 +52,7 @@
             button1.Name = "button1";
             button1.UseVisualStyleBackColor = true;
             button1.Click += buttonOK_Click;
+            button1.KeyPress += buttonOK_Click;
             // 
             // LocalizationChangeForm
             // 

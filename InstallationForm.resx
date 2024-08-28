@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -126,6 +126,9 @@
     <value>4, 5</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab1splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab1splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -137,6 +140,9 @@
   </data>
   <data name="tab1textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab1textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab1textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -168,6 +174,9 @@
   </data>
   <data name="tab1textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab1textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab1textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -208,6 +217,9 @@
   <data name="tab1splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab1splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab1splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -217,8 +229,11 @@
   <data name="richTextBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="richTextBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="richTextBox1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1104, 767</value>
+    <value>1104, 749</value>
   </data>
   <data name="richTextBox1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -273,6 +288,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab1buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>990, 5</value>
   </data>
+  <data name="tab1buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab1buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
@@ -310,7 +328,10 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>1104, 845</value>
   </data>
   <data name="tab1splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>767</value>
+    <value>749</value>
+  </data>
+  <data name="tab1splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab1splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -345,6 +366,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab1splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>58</value>
   </data>
+  <data name="tab1splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab1splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
   </data>
@@ -366,6 +390,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab2splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -377,6 +404,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab2textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab2textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab2textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -407,6 +437,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab2textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab2textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab2textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -447,17 +480,23 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab2splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
   <data name="tab2contentKey.Location" type="System.Drawing.Point, System.Drawing">
     <value>137, 247</value>
   </data>
+  <data name="tab2contentKey.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2contentKey.Size" type="System.Drawing.Size, System.Drawing">
     <value>613, 31</value>
   </data>
   <data name="tab2contentKey.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>1</value>
   </data>
   <data name="&gt;&gt;tab2contentKey.Name" xml:space="preserve">
     <value>tab2contentKey</value>
@@ -476,6 +515,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab2label2.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 217</value>
+  </data>
+  <data name="tab2label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
     <value>143, 25</value>
@@ -507,6 +549,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2labelStatus.Location" type="System.Drawing.Point, System.Drawing">
     <value>137, 117</value>
   </data>
+  <data name="tab2labelStatus.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
   <data name="tab2labelStatus.Size" type="System.Drawing.Size, System.Drawing">
     <value>65, 25</value>
   </data>
@@ -533,6 +578,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab2label1.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 77</value>
+  </data>
+  <data name="tab2label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>117, 25</value>
@@ -576,6 +624,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2buttonBack.Location" type="System.Drawing.Point, System.Drawing">
     <value>877, 5</value>
   </data>
+  <data name="tab2buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2buttonBack.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
@@ -606,11 +657,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>993, 5</value>
   </data>
+  <data name="tab2buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab2buttonNext.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
+    <value>0</value>
   </data>
   <data name="tab2buttonNext.Text" xml:space="preserve">
     <value>Next</value>
@@ -643,7 +697,10 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab2splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab2splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab2splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -678,6 +735,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab2splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab2splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab2splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -699,6 +759,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab3splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -710,6 +773,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab3textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab3textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab3textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -740,6 +806,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab3textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab3textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab3textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -780,6 +849,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab3splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -788,6 +860,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab3label2.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 217</value>
+  </data>
+  <data name="tab3label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab3label2.Size" type="System.Drawing.Size, System.Drawing">
     <value>166, 25</value>
@@ -816,6 +891,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3label1.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 77</value>
   </data>
+  <data name="tab3label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
   <data name="tab3label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>237, 25</value>
   </data>
@@ -840,11 +918,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3buttonCC.Location" type="System.Drawing.Point, System.Drawing">
     <value>764, 247</value>
   </data>
+  <data name="tab3buttonCC.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3buttonCC.Size" type="System.Drawing.Size, System.Drawing">
     <value>39, 38</value>
   </data>
   <data name="tab3buttonCC.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="tab3buttonCC.Text" xml:space="preserve">
     <value>...</value>
@@ -864,11 +945,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3buttonRBR.Location" type="System.Drawing.Point, System.Drawing">
     <value>764, 105</value>
   </data>
+  <data name="tab3buttonRBR.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3buttonRBR.Size" type="System.Drawing.Size, System.Drawing">
     <value>39, 38</value>
   </data>
   <data name="tab3buttonRBR.TabIndex" type="System.Int32, mscorlib">
-    <value>2</value>
+    <value>1</value>
   </data>
   <data name="tab3buttonRBR.Text" xml:space="preserve">
     <value>...</value>
@@ -888,11 +972,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3dirCC.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 247</value>
   </data>
+  <data name="tab3dirCC.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3dirCC.Size" type="System.Drawing.Size, System.Drawing">
     <value>710, 31</value>
   </data>
   <data name="tab3dirCC.TabIndex" type="System.Int32, mscorlib">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="&gt;&gt;tab3dirCC.Name" xml:space="preserve">
     <value>tab3dirCC</value>
@@ -908,6 +995,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab3dirRBR.Location" type="System.Drawing.Point, System.Drawing">
     <value>44, 107</value>
+  </data>
+  <data name="tab3dirRBR.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab3dirRBR.Size" type="System.Drawing.Size, System.Drawing">
     <value>710, 31</value>
@@ -948,11 +1038,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3buttonBack.Location" type="System.Drawing.Point, System.Drawing">
     <value>877, 5</value>
   </data>
+  <data name="tab3buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3buttonBack.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab3buttonBack.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="tab3buttonBack.Text" xml:space="preserve">
     <value>Back</value>
@@ -978,11 +1071,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>993, 5</value>
   </data>
+  <data name="tab3buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab3buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab3buttonNext.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="tab3buttonNext.Text" xml:space="preserve">
     <value>Next</value>
@@ -1015,7 +1111,10 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab3splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab3splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab3splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1050,6 +1149,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab3splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab3splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -1071,6 +1173,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab4splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab4splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -1082,6 +1187,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab4textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab4textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab4textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -1112,6 +1220,9 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab4textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab4textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab4textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -1152,11 +1263,17 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab4splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab4splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
   <data name="tab4splitContainer3.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab4splitContainer3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab4splitContainer3.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
@@ -1167,8 +1284,11 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab4treeView1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab4treeView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4treeView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1096, 565</value>
+    <value>1096, 547</value>
   </data>
   <data name="tab4treeView1.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1203,11 +1323,14 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab4richTextBox.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab4richTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4richTextBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1096, 191</value>
+    <value>1096, 209</value>
   </data>
   <data name="tab4richTextBox.TabIndex" type="System.Int32, mscorlib">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="tab4richTextBox.Text" xml:space="preserve">
     <value>You can choose many styles &amp; sound packs at once. The one you would like to use after installation, can be selected in following steps.
@@ -1245,7 +1368,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>1096, 763</value>
   </data>
   <data name="tab4splitContainer3.SplitterDistance" type="System.Int32, mscorlib">
-    <value>565</value>
+    <value>547</value>
+  </data>
+  <data name="tab4splitContainer3.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab4splitContainer3.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
@@ -1283,11 +1409,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab4buttonBack.Location" type="System.Drawing.Point, System.Drawing">
     <value>877, 5</value>
   </data>
+  <data name="tab4buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4buttonBack.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab4buttonBack.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+    <value>3</value>
   </data>
   <data name="tab4buttonBack.Text" xml:space="preserve">
     <value>Back</value>
@@ -1313,11 +1442,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab4buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>993, 5</value>
   </data>
+  <data name="tab4buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab4buttonNext.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>2</value>
   </data>
   <data name="tab4buttonNext.Text" xml:space="preserve">
     <value>Download</value>
@@ -1350,7 +1482,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab4splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab4splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab4splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1385,6 +1520,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab4splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab4splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab4splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -1406,6 +1544,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab5splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab5splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab5splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -1417,6 +1558,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab5textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab5textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab5textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -1447,6 +1591,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab5textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab5textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab5textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -1487,6 +1634,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab5splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab5splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab5splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -1495,6 +1645,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab5label1.Location" type="System.Drawing.Point, System.Drawing">
     <value>46, 170</value>
+  </data>
+  <data name="tab5label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>193, 25</value>
@@ -1521,7 +1674,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>Left, Right</value>
   </data>
   <data name="tab5progressBar1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>46, 118</value>
+    <value>46, 109</value>
+  </data>
+  <data name="tab5progressBar1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab5progressBar1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1008, 53</value>
@@ -1569,7 +1725,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab5splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab5splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab5splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1604,6 +1763,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab5splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab5splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab5splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -1625,6 +1787,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab6splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -1636,6 +1801,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab6textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab6textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab6textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -1666,6 +1834,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab6textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab6textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab6textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -1706,17 +1877,23 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab6splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
   <data name="tab6selectStyle.Location" type="System.Drawing.Point, System.Drawing">
     <value>53, 465</value>
   </data>
+  <data name="tab6selectStyle.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6selectStyle.Size" type="System.Drawing.Size, System.Drawing">
     <value>263, 184</value>
   </data>
   <data name="tab6selectStyle.TabIndex" type="System.Int32, mscorlib">
-    <value>8</value>
+    <value>2</value>
   </data>
   <data name="&gt;&gt;tab6selectStyle.Name" xml:space="preserve">
     <value>tab6selectStyle</value>
@@ -1733,11 +1910,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6selectCoPilot.Location" type="System.Drawing.Point, System.Drawing">
     <value>53, 258</value>
   </data>
+  <data name="tab6selectCoPilot.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6selectCoPilot.Size" type="System.Drawing.Size, System.Drawing">
     <value>263, 169</value>
   </data>
   <data name="tab6selectCoPilot.TabIndex" type="System.Int32, mscorlib">
-    <value>7</value>
+    <value>1</value>
   </data>
   <data name="&gt;&gt;tab6selectCoPilot.Name" xml:space="preserve">
     <value>tab6selectCoPilot</value>
@@ -1754,11 +1934,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6selectLanguage.Location" type="System.Drawing.Point, System.Drawing">
     <value>53, 42</value>
   </data>
+  <data name="tab6selectLanguage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6selectLanguage.Size" type="System.Drawing.Size, System.Drawing">
     <value>263, 179</value>
   </data>
   <data name="tab6selectLanguage.TabIndex" type="System.Int32, mscorlib">
-    <value>6</value>
+    <value>0</value>
   </data>
   <data name="&gt;&gt;tab6selectLanguage.Name" xml:space="preserve">
     <value>tab6selectLanguage</value>
@@ -1777,6 +1960,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab6label1.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 12</value>
+  </data>
+  <data name="tab6label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>259, 25</value>
@@ -1805,6 +1991,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6label3.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 435</value>
   </data>
+  <data name="tab6label3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
+  </data>
   <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
     <value>132, 25</value>
   </data>
@@ -1831,6 +2020,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab6label2.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 228</value>
+  </data>
+  <data name="tab6label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
     <value>115, 25</value>
@@ -1874,6 +2066,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6buttonBack.Location" type="System.Drawing.Point, System.Drawing">
     <value>877, 5</value>
   </data>
+  <data name="tab6buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6buttonBack.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
@@ -1903,6 +2098,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab6buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>993, 5</value>
+  </data>
+  <data name="tab6buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab6buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
@@ -1941,7 +2139,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab6splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab6splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab6splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -1976,6 +2177,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab6splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab6splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -1997,6 +2201,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 5</value>
   </data>
+  <data name="tab7splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -2008,6 +2215,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab7textBox2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 32</value>
+  </data>
+  <data name="tab7textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab7textBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 22</value>
@@ -2038,6 +2248,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab7textBox1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
+  </data>
+  <data name="tab7textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab7textBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1104, 32</value>
@@ -2078,6 +2291,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tab7splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
     <value>Horizontal</value>
   </data>
@@ -2087,11 +2303,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7textInstalled.Location" type="System.Drawing.Point, System.Drawing">
     <value>50, 360</value>
   </data>
+  <data name="tab7textInstalled.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7textInstalled.Size" type="System.Drawing.Size, System.Drawing">
     <value>1002, 272</value>
   </data>
   <data name="tab7textInstalled.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>2</value>
   </data>
   <data name="tab7textInstalled.Text" xml:space="preserve">
     <value />
@@ -2113,6 +2332,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab7label2.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 330</value>
+  </data>
+  <data name="tab7label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab7label2.Size" type="System.Drawing.Size, System.Drawing">
     <value>250, 25</value>
@@ -2141,6 +2363,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7textConfig.Location" type="System.Drawing.Point, System.Drawing">
     <value>50, 42</value>
   </data>
+  <data name="tab7textConfig.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7textConfig.Size" type="System.Drawing.Size, System.Drawing">
     <value>1002, 272</value>
   </data>
@@ -2167,6 +2392,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab7label1.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 12</value>
+  </data>
+  <data name="tab7label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 0, 4, 0</value>
   </data>
   <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
     <value>180, 25</value>
@@ -2210,11 +2438,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7buttonBack.Location" type="System.Drawing.Point, System.Drawing">
     <value>877, 5</value>
   </data>
+  <data name="tab7buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7buttonBack.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab7buttonBack.TabIndex" type="System.Int32, mscorlib">
-    <value>4</value>
+    <value>3</value>
   </data>
   <data name="tab7buttonBack.Text" xml:space="preserve">
     <value>Back</value>
@@ -2240,11 +2471,14 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7buttonNext.Location" type="System.Drawing.Point, System.Drawing">
     <value>993, 5</value>
   </data>
+  <data name="tab7buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab7buttonNext.Size" type="System.Drawing.Size, System.Drawing">
     <value>107, 43</value>
   </data>
   <data name="tab7buttonNext.TabIndex" type="System.Int32, mscorlib">
-    <value>3</value>
+    <value>0</value>
   </data>
   <data name="tab7buttonNext.Text" xml:space="preserve">
     <value>Finish</value>
@@ -2277,7 +2511,10 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>1104, 836</value>
   </data>
   <data name="tab7splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
-    <value>758</value>
+    <value>740</value>
+  </data>
+  <data name="tab7splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
   </data>
   <data name="tab7splitContainer2.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -2312,6 +2549,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
+  <data name="tab7splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
   <data name="tab7splitContainer1.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
@@ -2329,6 +2569,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
+  </data>
+  <data name="tab1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab1.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
@@ -2357,6 +2600,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab2.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
   </data>
+  <data name="tab2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab2.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
   </data>
@@ -2383,6 +2629,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab3.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
+  </data>
+  <data name="tab3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab3.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
@@ -2411,6 +2660,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab4.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
   </data>
+  <data name="tab4.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab4.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
   </data>
@@ -2437,6 +2689,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab5.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
+  </data>
+  <data name="tab5.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab5.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
@@ -2465,6 +2720,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab6.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
   </data>
+  <data name="tab6.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tab6.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
   </data>
@@ -2491,6 +2749,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="tab7.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 34</value>
+  </data>
+  <data name="tab7.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
   </data>
   <data name="tab7.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
@@ -2522,6 +2783,9 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tabControl1.Location" type="System.Drawing.Point, System.Drawing">
     <value>0, 0</value>
   </data>
+  <data name="tabControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 5, 4, 5</value>
+  </data>
   <data name="tabControl1.Size" type="System.Drawing.Size, System.Drawing">
     <value>1120, 958</value>
   </data>
@@ -2540,314 +2804,23 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="&gt;&gt;tabControl1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="workerListFiles.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  <metadata name="workerListFiles.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
-  </data>
-  <data name="workerInstallation.TrayLocation" type="System.Drawing.Point, System.Drawing">
+  </metadata>
+  <metadata name="workerInstallation.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>148, 17</value>
-  </data>
-  <data name="$this.Localizable" type="System.Boolean, mscorlib">
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
-  </data>
-  <data name="$this.TrayHeight" type="System.Int32, mscorlib">
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>68</value>
-  </data>
+  </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>10, 25</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
     <value>1120, 958</value>
-  </data>
-  <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
-    <value>1133, 963</value>
-  </data>
-  <data name="$this.Text" xml:space="preserve">
-    <value>Filipek Mod Installer</value>
-  </data>
-  <data name="&gt;&gt;workerListFiles.Name" xml:space="preserve">
-    <value>workerListFiles</value>
-  </data>
-  <data name="&gt;&gt;workerListFiles.Type" xml:space="preserve">
-    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="&gt;&gt;workerInstallation.Name" xml:space="preserve">
-    <value>workerInstallation</value>
-  </data>
-  <data name="&gt;&gt;workerInstallation.Type" xml:space="preserve">
-    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="&gt;&gt;$this.Name" xml:space="preserve">
-    <value>InstallationForm</value>
-  </data>
-  <data name="&gt;&gt;$this.Type" xml:space="preserve">
-    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="tab4splitContainer3.Dock" xml:space="preserve">
-    <value />
-  </data>
-  <data name="tab1splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab1textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab1textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab1splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="richTextBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab1buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab1splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab1splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab2splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2contentKey.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab2labelStatus.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab2label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab2buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab2splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab3splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab3label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab3buttonCC.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3buttonRBR.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3dirCC.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3dirRBR.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab3splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab4splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4splitContainer3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4treeView1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4richTextBox.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4splitContainer3.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab4buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab4splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab5splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab5progressBar1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab5splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab6splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6selectStyle.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6selectCoPilot.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6selectLanguage.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab6label3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab6label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab6buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab6splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab7splitContainer1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7textBox2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7textBox1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7splitContainer2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7textInstalled.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7label2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab7textConfig.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7label1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 0, 4, 0</value>
-  </data>
-  <data name="tab7buttonBack.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7buttonNext.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7splitContainer2.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab7splitContainer1.SplitterWidth" type="System.Int32, mscorlib">
-    <value>7</value>
-  </data>
-  <data name="tab1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab2.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab3.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab4.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab5.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab6.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tab7.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
-  </data>
-  <data name="tabControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 5, 4, 5</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -4278,19 +4251,31 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
   </data>
-  <data name="ErrorNoDirectory" xml:space="preserve">
-    <value />
-  </data>
-  <data name="ErrorRBRDirectory" xml:space="preserve">
-    <value />
-  </data>
-  <data name="ErrorCCDirectory" xml:space="preserve">
-    <value />
+  <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
+    <value>1133, 963</value>
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>
   </data>
-  <data name="ErrorDownloadList" xml:space="preserve">
-    <value>Check at least one item from each category!</value>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Filipek Mod Installer</value>
+  </data>
+  <data name="&gt;&gt;workerListFiles.Name" xml:space="preserve">
+    <value>workerListFiles</value>
+  </data>
+  <data name="&gt;&gt;workerListFiles.Type" xml:space="preserve">
+    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="&gt;&gt;workerInstallation.Name" xml:space="preserve">
+    <value>workerInstallation</value>
+  </data>
+  <data name="&gt;&gt;workerInstallation.Type" xml:space="preserve">
+    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>InstallationForm</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

@@ -30,6 +30,8 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InstallationForm));
             tab1splitContainer1 = new SplitContainer();
+            tab1textBox2 = new TextBox();
+            tab1textBox1 = new TextBox();
             tab1splitContainer2 = new SplitContainer();
             richTextBox1 = new RichTextBox();
             tab1buttonNext = new Button();
@@ -102,8 +104,6 @@
             tab7 = new TabPage();
             workerListFiles = new System.ComponentModel.BackgroundWorker();
             workerInstallation = new System.ComponentModel.BackgroundWorker();
-            tab1textBox2 = new TextBox();
-            tab1textBox1 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)tab1splitContainer1).BeginInit();
             tab1splitContainer1.Panel1.SuspendLayout();
             tab1splitContainer1.Panel2.SuspendLayout();
@@ -187,6 +187,23 @@
             // tab1splitContainer1.Panel2
             // 
             tab1splitContainer1.Panel2.Controls.Add(tab1splitContainer2);
+            tab1splitContainer1.TabStop = false;
+            // 
+            // tab1textBox2
+            // 
+            tab1textBox2.BackColor = SystemColors.Control;
+            tab1textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab1textBox2, "tab1textBox2");
+            tab1textBox2.Name = "tab1textBox2";
+            tab1textBox2.TabStop = false;
+            // 
+            // tab1textBox1
+            // 
+            tab1textBox1.BackColor = SystemColors.Control;
+            tab1textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab1textBox1, "tab1textBox1");
+            tab1textBox1.Name = "tab1textBox1";
+            tab1textBox1.TabStop = false;
             // 
             // tab1splitContainer2
             // 
@@ -201,11 +218,13 @@
             // tab1splitContainer2.Panel2
             // 
             tab1splitContainer2.Panel2.Controls.Add(tab1buttonNext);
+            tab1splitContainer2.TabStop = false;
             // 
             // richTextBox1
             // 
             resources.ApplyResources(richTextBox1, "richTextBox1");
             richTextBox1.Name = "richTextBox1";
+            richTextBox1.TabStop = false;
             // 
             // tab1buttonNext
             // 
@@ -228,6 +247,7 @@
             // tab2splitContainer1.Panel2
             // 
             tab2splitContainer1.Panel2.Controls.Add(tab2splitContainer2);
+            tab2splitContainer1.TabStop = false;
             // 
             // tab2textBox2
             // 
@@ -235,6 +255,7 @@
             tab2textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab2textBox2, "tab2textBox2");
             tab2textBox2.Name = "tab2textBox2";
+            tab2textBox2.TabStop = false;
             // 
             // tab2textBox1
             // 
@@ -242,6 +263,7 @@
             tab2textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab2textBox1, "tab2textBox1");
             tab2textBox1.Name = "tab2textBox1";
+            tab2textBox1.TabStop = false;
             // 
             // tab2splitContainer2
             // 
@@ -260,6 +282,7 @@
             // 
             tab2splitContainer2.Panel2.Controls.Add(tab2buttonBack);
             tab2splitContainer2.Panel2.Controls.Add(tab2buttonNext);
+            tab2splitContainer2.TabStop = false;
             // 
             // tab2contentKey
             // 
@@ -309,6 +332,7 @@
             // tab3splitContainer1.Panel2
             // 
             tab3splitContainer1.Panel2.Controls.Add(tab3splitContainer2);
+            tab3splitContainer1.TabStop = false;
             // 
             // tab3textBox2
             // 
@@ -316,6 +340,7 @@
             tab3textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab3textBox2, "tab3textBox2");
             tab3textBox2.Name = "tab3textBox2";
+            tab3textBox2.TabStop = false;
             // 
             // tab3textBox1
             // 
@@ -323,6 +348,7 @@
             tab3textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab3textBox1, "tab3textBox1");
             tab3textBox1.Name = "tab3textBox1";
+            tab3textBox1.TabStop = false;
             // 
             // tab3splitContainer2
             // 
@@ -343,6 +369,7 @@
             // 
             tab3splitContainer2.Panel2.Controls.Add(tab3buttonBack);
             tab3splitContainer2.Panel2.Controls.Add(tab3buttonNext);
+            tab3splitContainer2.TabStop = false;
             // 
             // tab3label2
             // 
@@ -408,6 +435,7 @@
             // tab4splitContainer1.Panel2
             // 
             tab4splitContainer1.Panel2.Controls.Add(tab4splitContainer2);
+            tab4splitContainer1.TabStop = false;
             // 
             // tab4textBox2
             // 
@@ -415,6 +443,7 @@
             tab4textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab4textBox2, "tab4textBox2");
             tab4textBox2.Name = "tab4textBox2";
+            tab4textBox2.TabStop = false;
             // 
             // tab4textBox1
             // 
@@ -422,6 +451,7 @@
             tab4textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab4textBox1, "tab4textBox1");
             tab4textBox1.Name = "tab4textBox1";
+            tab4textBox1.TabStop = false;
             // 
             // tab4splitContainer2
             // 
@@ -437,6 +467,7 @@
             // 
             tab4splitContainer2.Panel2.Controls.Add(tab4buttonBack);
             tab4splitContainer2.Panel2.Controls.Add(tab4buttonNext);
+            tab4splitContainer2.TabStop = false;
             // 
             // tab4splitContainer3
             // 
@@ -451,6 +482,7 @@
             // tab4splitContainer3.Panel2
             // 
             tab4splitContainer3.Panel2.Controls.Add(tab4richTextBox);
+            tab4splitContainer3.TabStop = false;
             // 
             // tab4treeView1
             // 
@@ -493,6 +525,7 @@
             // tab5splitContainer1.Panel2
             // 
             tab5splitContainer1.Panel2.Controls.Add(tab5splitContainer2);
+            tab5splitContainer1.TabStop = false;
             // 
             // tab5textBox2
             // 
@@ -500,6 +533,7 @@
             tab5textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab5textBox2, "tab5textBox2");
             tab5textBox2.Name = "tab5textBox2";
+            tab5textBox2.TabStop = false;
             // 
             // tab5textBox1
             // 
@@ -507,6 +541,7 @@
             tab5textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab5textBox1, "tab5textBox1");
             tab5textBox1.Name = "tab5textBox1";
+            tab5textBox1.TabStop = false;
             // 
             // tab5splitContainer2
             // 
@@ -518,6 +553,7 @@
             // 
             tab5splitContainer2.Panel1.Controls.Add(tab5label1);
             tab5splitContainer2.Panel1.Controls.Add(tab5progressBar1);
+            tab5splitContainer2.TabStop = false;
             // 
             // tab5label1
             // 
@@ -543,6 +579,7 @@
             // tab6splitContainer1.Panel2
             // 
             tab6splitContainer1.Panel2.Controls.Add(tab6splitContainer2);
+            tab6splitContainer1.TabStop = false;
             // 
             // tab6textBox2
             // 
@@ -550,6 +587,7 @@
             tab6textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab6textBox2, "tab6textBox2");
             tab6textBox2.Name = "tab6textBox2";
+            tab6textBox2.TabStop = false;
             // 
             // tab6textBox1
             // 
@@ -557,6 +595,7 @@
             tab6textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab6textBox1, "tab6textBox1");
             tab6textBox1.Name = "tab6textBox1";
+            tab6textBox1.TabStop = false;
             // 
             // tab6splitContainer2
             // 
@@ -577,6 +616,7 @@
             // 
             tab6splitContainer2.Panel2.Controls.Add(tab6buttonBack);
             tab6splitContainer2.Panel2.Controls.Add(tab6buttonNext);
+            tab6splitContainer2.TabStop = false;
             // 
             // tab6selectStyle
             // 
@@ -652,6 +692,7 @@
             // tab7splitContainer1.Panel2
             // 
             tab7splitContainer1.Panel2.Controls.Add(tab7splitContainer2);
+            tab7splitContainer1.TabStop = false;
             // 
             // tab7textBox2
             // 
@@ -659,6 +700,7 @@
             tab7textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab7textBox2, "tab7textBox2");
             tab7textBox2.Name = "tab7textBox2";
+            tab7textBox2.TabStop = false;
             // 
             // tab7textBox1
             // 
@@ -666,6 +708,7 @@
             tab7textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab7textBox1, "tab7textBox1");
             tab7textBox1.Name = "tab7textBox1";
+            tab7textBox1.TabStop = false;
             // 
             // tab7splitContainer2
             // 
@@ -684,6 +727,7 @@
             // 
             tab7splitContainer2.Panel2.Controls.Add(tab7buttonBack);
             tab7splitContainer2.Panel2.Controls.Add(tab7buttonNext);
+            tab7splitContainer2.TabStop = false;
             // 
             // tab7textInstalled
             // 
@@ -731,6 +775,7 @@
             resources.ApplyResources(tabControl1, "tabControl1");
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
+            tabControl1.TabStop = false;
             // 
             // tab1
             // 
@@ -792,20 +837,6 @@
             workerInstallation.DoWork += workerInstallation_DoWork;
             workerInstallation.ProgressChanged += workerInstallation_ProgressChanged;
             workerInstallation.RunWorkerCompleted += workerInstallation_RunWorkerCompleted;
-            // 
-            // tab1textBox2
-            // 
-            tab1textBox2.BackColor = SystemColors.Control;
-            tab1textBox2.BorderStyle = BorderStyle.None;
-            resources.ApplyResources(tab1textBox2, "tab1textBox2");
-            tab1textBox2.Name = "tab1textBox2";
-            // 
-            // tab1textBox1
-            // 
-            tab1textBox1.BackColor = SystemColors.Control;
-            tab1textBox1.BorderStyle = BorderStyle.None;
-            resources.ApplyResources(tab1textBox1, "tab1textBox1");
-            tab1textBox1.Name = "tab1textBox1";
             // 
             // InstallationForm
             // 
