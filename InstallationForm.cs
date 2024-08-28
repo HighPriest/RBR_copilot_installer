@@ -285,13 +285,20 @@ namespace Pacenotes_Installer
 
         private void workerInstallation_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
+            // (Download) Downloads files & backups current configuration
             // Traverse all level 0 nodes and try to do download action on them
             foreach (TreeNode treeNode in tab4treeView1.Nodes)
             {
                 downloadBasedOnTreeNode((TreeNode)treeNode);
             }
 
+            // (Backup) Create a backup of files which we are going to replace
+            // Note: This doesn't touch the files which are not going to be replaced
             downloadManager.backupRBRConfiguration(tab3dirRBR.Text, workerInstallation);
+
+            // (Installation) Copy files to working directory, after download & backup
+            downloadManager.installRBRConfiguration(tab3dirRBR.Text);
+                // Directory.Move(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), tab3dirRBR.Text);
 
             // Make sure at least one item is checked
             tab6listViewHandler(tab6selectLanguage, new EventArgs());

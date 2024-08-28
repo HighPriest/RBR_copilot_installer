@@ -318,6 +318,19 @@ Pacenotes style = " + styleConfiguration[0].Text;
             }
         }
 
+        public void installRBRConfiguration(string targetDir)
+        {
+            // Take the download location
+            string sourceDir = Path.Combine(targetDir, "backup\\FilipekMod");
+
+            var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories);
+            foreach (string file in files)
+            {
+                targetDir = file.Replace("backup\\FilipekMod\\", "");
+                Directory.CreateDirectory(Path.GetDirectoryName(targetDir));
+                File.Move(file, targetDir, true);
+            }
+        }
         #endregion ConfigurationMethods
     }
 }
