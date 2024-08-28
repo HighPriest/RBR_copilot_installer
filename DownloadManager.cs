@@ -198,7 +198,7 @@ namespace Pacenotes_Installer
             // TODO: Check if supabase is initilized before proceeding
             var bytes = Task.Run(() => supabase.Storage
             .From("Public")
-                        .Download(fileName, (sender, progress) => backgroundWorker.ReportProgress((int)progress, fileName)));
+                        .Download(fileName, (sender, progress) => backgroundWorker.ReportProgress((int)progress, "Download: " + fileName)));
             return bytes;
         }
         #endregion DownloadMethods
@@ -304,7 +304,7 @@ Pacenotes style = " + styleConfiguration[0].Text;
 
                     }
 
-                    backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), fileInfo.FullName);
+                    backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), "Extract: " + fileInfo.FullName);
                 }
 
             }

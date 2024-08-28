@@ -36,8 +36,8 @@
             // 
             // comboBoxCultures
             // 
-            resources.ApplyResources(comboBoxCultures, "comboBoxCultures");
             comboBoxCultures.FormattingEnabled = true;
+            resources.ApplyResources(comboBoxCultures, "comboBoxCultures");
             comboBoxCultures.Name = "comboBoxCultures";
             // 
             // label1
@@ -60,6 +60,7 @@
             Controls.Add(label1);
             Controls.Add(comboBoxCultures);
             Name = "LocalizationChangeForm";
+            TopMost = true;
             ResumeLayout(false);
             PerformLayout();
         }

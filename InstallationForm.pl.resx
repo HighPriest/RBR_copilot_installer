@@ -120,16 +120,6 @@
   <data name="tab1textBox2.Text" xml:space="preserve">
     <value>    Przeczytaj przed kontynuowaniem instalacji!</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="tab1textBox1.Dock" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
-  </data>
-  <data name="tab1textBox1.Location" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
-  </data>
-  <data name="tab1textBox1.Size" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
-  </data>
   <data name="tab1textBox1.Text" xml:space="preserve">
     <value>Informacja</value>
   </data>
@@ -299,8 +289,23 @@ Sounds: Język i głos pilota rajdowego.</value>
   <data name="tab7buttonNext.Text" xml:space="preserve">
     <value>Zakończ</value>
   </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Instalator Filipek Mod</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
+  </data>
+  <data name="ErrorNoDirectory" xml:space="preserve">
+    <value>Nie wybrano folderów instalacji!</value>
+  </data>
+  <data name="ErrorRBRDirectory" xml:space="preserve">
+    <value>Wybrano niepoprawny folder RSF RBR. Brak w niej pliku "richardburnsrally.exe"</value>
+  </data>
+  <data name="ErrorCCDirectory" xml:space="preserve">
+    <value>Wybrano niepoprawny folder CrewChief. Brakuje w nim pliku "CrewChiefV4.exe".</value>
+  </data>
+  <data name="ErrorDownloadList" xml:space="preserve">
+    <value>Wybierz przynajmniej jedną pozycję z każdej kategorii!</value>
   </data>
 </root>

@@ -13,11 +13,12 @@ namespace Pacenotes_Installer
     internal partial class InstallationForm : Form
     {
         private DownloadManager downloadManager;
+        System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InstallationForm));
         public InstallationForm(DownloadManager _downloadManager)
         {
             InitializeComponent();
             downloadManager = _downloadManager;
-            InitializeTabUI();
+            InitializeTabUI(); // Hides tabs from the user
         }
 
         private void InitializeTabUI()
@@ -93,7 +94,7 @@ namespace Pacenotes_Installer
                     if (File.Exists(Path.Combine(fbd.SelectedPath, "richardburnsrally.exe")))
                         tab3dirRBR.Text = fbd.SelectedPath;
                     else
-                        System.Windows.Forms.MessageBox.Show("This is not a correct RSF RBR directory. 'richardburnsrally.exe' is missing");
+                        System.Windows.Forms.MessageBox.Show(resources.GetString("ErrorRBRDirectory"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);
                 }
                 if (btn.Tag is "CC_DIRECTORY")
                 {
@@ -101,7 +102,7 @@ namespace Pacenotes_Installer
                     if (File.Exists(Path.Combine(fbd.SelectedPath, "CrewChiefV4.exe")))
                         tab3dirCC.Text = fbd.SelectedPath;
                     else
-                        System.Windows.Forms.MessageBox.Show("This is not a correct CrewChief directory. 'CrewChiefV4.exe' is missing");
+                        System.Windows.Forms.MessageBox.Show(resources.GetString("ErrorCCDirectory"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);
                 }
             }
         }
@@ -110,7 +111,7 @@ namespace Pacenotes_Installer
         {
             if (string.IsNullOrEmpty(tab3dirRBR.Text) && string.IsNullOrEmpty(tab3dirCC.Text))
             {
-                System.Windows.Forms.MessageBox.Show(text: "No installation directories have been selected!", caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);
+                System.Windows.Forms.MessageBox.Show(text: resources.GetString("ErrorNoDirectory"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);
                 return;
             }
             btn_next_Click(sender, e);
@@ -130,7 +131,7 @@ namespace Pacenotes_Installer
                 else if (node.Nodes.Count > 0) {
                     if(!tab4AtLeastOneNodeChecked(node))
                     {
-                        System.Windows.Forms.MessageBox.Show(text: "Check at least one item from each category!", caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Exclamation);
+                        System.Windows.Forms.MessageBox.Show(text: resources.GetString("ErrorDownloadList"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Exclamation);
                         return;
                     };
                 }
@@ -264,7 +265,7 @@ namespace Pacenotes_Installer
                     }
                     parentNode.Nodes.Add(childNode);
                 }
-
+                parentNode.ExpandAll();
                 parentNode = childNode;
             }
         }

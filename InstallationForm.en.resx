@@ -285,8 +285,23 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab7buttonNext.Text" xml:space="preserve">
     <value>Finish</value>
   </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Filipek Mod Installer</value>
+  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
+  </data>
+  <data name="ErrorNoDirectory" xml:space="preserve">
+    <value>No installation directories have been selected!</value>
+  </data>
+  <data name="ErrorRBRDirectory" xml:space="preserve">
+    <value>This is not a correct RSF RBR directory. 'richardburnsrally.exe' is missing</value>
+  </data>
+  <data name="ErrorCCDirectory" xml:space="preserve">
+    <value>This is not a correct CrewChief directory. 'CrewChiefV4.exe' is missing.</value>
+  </data>
+  <data name="ErrorDownloadList" xml:space="preserve">
+    <value>Check at least one item from each category!</value>
   </data>
 </root>

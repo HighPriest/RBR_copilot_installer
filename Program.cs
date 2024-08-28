@@ -15,10 +15,12 @@ namespace Pacenotes_Installer
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-            Application.CurrentCulture = CultureInfo.InvariantCulture;
+            Application.CurrentCulture = System.Globalization.CultureInfo.CurrentCulture;
+            Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.CurrentCulture;
+            Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.CurrentCulture;
 
             // Create a modal form to change localization
-            LocalizationChangeForm localizationChangeForm = new LocalizationChangeForm();
+            LocalizationChangeForm localizationChangeForm = new LocalizationChangeForm(System.Globalization.CultureInfo.CurrentCulture);
 
             if (localizationChangeForm.ShowDialog() != DialogResult.OK)
             {
