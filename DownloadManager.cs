@@ -257,6 +257,9 @@ Pacenotes style = " + styleConfiguration[0].Text;
 
         public void backupRBRConfiguration(string directory, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
+            // Tag if a backup is needed. If all the files are already installed, then don't backup what already exists.
+            bool backup = false; // CAUTION: May cause bugs, where important data doesn't get backed up.
+
             // Take the download location
             string sourceDir = Path.Combine(directory, "backup\\FilipekMod");
             // Take the backup file location
@@ -266,47 +269,53 @@ Pacenotes style = " + styleConfiguration[0].Text;
             {
                 targetDir = targetDir.Replace("backup_Pacenote", "backup_Pacenote_" + $"{DateTime.Now:yy_MM_dd-HH_mm_ss}");
             }
-            // Create ZipArchive 8\26\2024 6:40:01 AM
-            using (ZipArchive archive = ZipFile.Open(targetDir, ZipArchiveMode.Create))
+            // Create ZipArchive in Memory Stream
+            using (MemoryStream memoryStream = new MemoryStream())
             {
-                var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories);
-                // Enumerate each file in sourceDirectory
-                foreach (var entry in files.Select((x, i) => new { Value = x, Index = i }))
+                using (ZipArchive archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
                 {
-                    // Get structured file information, to avoid parsing errors
-                    FileInfo fileInfo = new FileInfo(
-                        // Change directory to root for search for the original files
-                        // For backup, we are interested in original files we are going to replace
-                        entry.Value.Replace(sourceDir, directory)
-                        );
-
-                    // Create an entry inside the zipFile of the file we want to backup
-                    ZipArchiveEntry zipFile = archive.CreateEntry(
-                        Path.Combine(
-                            // Important: directory in GetRelativePath, needs to be of root game directory
-                            Path.GetRelativePath(directory, fileInfo.DirectoryName),
-                            Path.GetFileName(fileInfo.FullName)
-                            )
-                        );
-                    try
+                    var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories);
+                    // Enumerate each file in sourceDirectory
+                    foreach (var entry in files.Select((x, i) => new { Value = x, Index = i }))
                     {
-                        using (FileStream stream = fileInfo.OpenRead())
+                        // Get structured file information, to avoid parsing errors
+                        FileInfo fileInfo = new FileInfo(
+                            // Change directory to root for search for the original files
+                            // For backup, we are interested in original files we are going to replace
+                            entry.Value.Replace(sourceDir, directory)
+                            );
+
+                        // Create an entry inside the zipFile of the file we want to backup
+                        ZipArchiveEntry zipFile = archive.CreateEntry(
+                            Path.Combine(
+                                // Important: directory in GetRelativePath, needs to be of root game directory
+                                Path.GetRelativePath(directory, fileInfo.DirectoryName),
+                                Path.GetFileName(fileInfo.FullName)
+                                )
+                            );
+                        try
                         {
                             using (Stream entryStream = zipFile.Open())
-                            {
-                                stream.CopyTo(entryStream);
-                            }
+                            using (StreamWriter streamWriter = new StreamWriter(entryStream))
+                                {
+                                    streamWriter.Write(entryStream);
+                                }
                         }
-                    }
-                    catch
-                    {
-                        // Do nothing
+                        catch
+                        {
+                            backup = true; // If at least one file doesn't exist, then we should save the backup of user files
+                        }
 
+                        backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), "Extract: " + fileInfo.FullName);
                     }
-
-                    backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), "Extract: " + fileInfo.FullName);
                 }
 
+                if ( backup )
+                using (FileStream fileStream = new FileStream(targetDir, FileMode.Create))
+                {
+                    memoryStream.Position = 0;
+                    memoryStream.WriteTo(fileStream);
+                }
             }
         }
 
