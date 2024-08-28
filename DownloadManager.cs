@@ -36,8 +36,8 @@ namespace Pacenotes_Installer
 
         public DownloadManager()
         {
-            string PublicURL = "";
-            string PublicKey = "";
+            publicURL = Properties.Secrets.publicUrl;
+            publicKey = Properties.Secrets.publicKey;
 
             var options = new Supabase.SupabaseOptions
             {
