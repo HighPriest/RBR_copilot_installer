@@ -84,7 +84,7 @@ namespace Pacenotes_Installer
             if (btn == null) { return; }
 
             FolderBrowserDialog fbd = new FolderBrowserDialog();
-            //fbd.AutoUpgradeEnabled = true;
+            fbd.AutoUpgradeEnabled = true;
             DialogResult result = fbd.ShowDialog();
 
             if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))

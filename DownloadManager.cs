@@ -206,8 +206,9 @@ namespace Pacenotes_Installer
         #region ConfigurationMethods
         public static string CreateRBRConfiguration(string destinationDir, ListView.CheckedListViewItemCollection coPilotConfiguration, ListView.CheckedListViewItemCollection styleConfiguration, ListView.CheckedListViewItemCollection languageConfiguration)
         {
+
             string[] configPacenote = [ "[SETTINGS]",
-                                        "sounds = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0],
+                                        "sounds = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0].Replace("/","\\"),
                                         "language = " + languageConfiguration[0].Text,
                                         "replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10",
                                         "enableGUI = 1",
@@ -250,7 +251,7 @@ namespace Pacenotes_Installer
             
 
 
-            return @"CoDriver = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0] + @"
+            return @"CoDriver = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0].Replace("/", "\\") + @"
 GUI Language = " + languageConfiguration[0].Text + @"
 Pacenotes style = " + styleConfiguration[0].Text;
         }
