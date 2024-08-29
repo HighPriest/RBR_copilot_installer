@@ -117,4 +117,2542 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="&gt;&gt;tab1.Name" xml:space="preserve">
+    <value>tab1</value>
+  </data>
+  <data name="&gt;&gt;tab1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab2.Name" xml:space="preserve">
+    <value>tab2</value>
+  </data>
+  <data name="&gt;&gt;tab2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab3.Name" xml:space="preserve">
+    <value>tab3</value>
+  </data>
+  <data name="&gt;&gt;tab3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab3.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;tab4.Name" xml:space="preserve">
+    <value>tab4</value>
+  </data>
+  <data name="&gt;&gt;tab4.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab4.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab5.Name" xml:space="preserve">
+    <value>tab5</value>
+  </data>
+  <data name="&gt;&gt;tab5.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab5.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;tab6.Name" xml:space="preserve">
+    <value>tab6</value>
+  </data>
+  <data name="&gt;&gt;tab6.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab6.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;tab7.Name" xml:space="preserve">
+    <value>tab7</value>
+  </data>
+  <data name="&gt;&gt;tab7.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab7.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tabControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="tabControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tabControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>784, 561</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tabControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tabControl1.Name" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tabControl1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabControl, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tabControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;tabControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Name" xml:space="preserve">
+    <value>tab1splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Parent" xml:space="preserve">
+    <value>tab1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="tab1.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab1.Text" xml:space="preserve">
+    <value>tabPage1</value>
+  </data>
+  <data name="&gt;&gt;tab1.Name" xml:space="preserve">
+    <value>tab1</value>
+  </data>
+  <data name="&gt;&gt;tab1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab1splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab1splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab1splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab1textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab1textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab1textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab1textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab1textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab1textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox2.Name" xml:space="preserve">
+    <value>tab1textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox2.Parent" xml:space="preserve">
+    <value>tab1splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab1textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab1textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab1textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab1textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab1textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab1textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox1.Name" xml:space="preserve">
+    <value>tab1textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox1.Parent" xml:space="preserve">
+    <value>tab1splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab1textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab1splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab1splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab1splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab1splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab1splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="richTextBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="richTextBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="richTextBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 452</value>
+  </data>
+  <data name="richTextBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="richTextBox1.Text" xml:space="preserve">
+    <value>Alot of very meaningful text
+EVEN MORE TEXT
+Huuh?</value>
+  </data>
+  <data name="&gt;&gt;richTextBox1.Name" xml:space="preserve">
+    <value>richTextBox1</value>
+  </data>
+  <data name="&gt;&gt;richTextBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;richTextBox1.Parent" xml:space="preserve">
+    <value>tab1splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;richTextBox1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab1splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab1splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab1buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab1buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab1buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>690, 3</value>
+  </data>
+  <data name="tab1buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab1buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab1buttonNext.Text" xml:space="preserve">
+    <value>Accept</value>
+  </data>
+  <data name="&gt;&gt;tab1buttonNext.Name" xml:space="preserve">
+    <value>tab1buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab1buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1buttonNext.Parent" xml:space="preserve">
+    <value>tab1splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab1buttonNext.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab1splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab1splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab1splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 488</value>
+  </data>
+  <data name="tab1splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>452</value>
+  </data>
+  <data name="tab1splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Name" xml:space="preserve">
+    <value>tab1splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.Parent" xml:space="preserve">
+    <value>tab1splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab1splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab1splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab1splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab1splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>35</value>
+  </data>
+  <data name="tab1splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Name" xml:space="preserve">
+    <value>tab1splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.Parent" xml:space="preserve">
+    <value>tab1</value>
+  </data>
+  <data name="&gt;&gt;tab1splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Name" xml:space="preserve">
+    <value>tab2splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Parent" xml:space="preserve">
+    <value>tab2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab2.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab2.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab2.Text" xml:space="preserve">
+    <value>tabPage2</value>
+  </data>
+  <data name="&gt;&gt;tab2.Name" xml:space="preserve">
+    <value>tab2</value>
+  </data>
+  <data name="&gt;&gt;tab2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab2splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab2splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab2splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab2textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab2textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab2textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab2textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab2textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab2textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox2.Name" xml:space="preserve">
+    <value>tab2textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox2.Parent" xml:space="preserve">
+    <value>tab2splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab2textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab2textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab2textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab2textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab2textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox1.Name" xml:space="preserve">
+    <value>tab2textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox1.Parent" xml:space="preserve">
+    <value>tab2splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab2splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab2splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab2splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab2splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab2contentKey.Location" type="System.Drawing.Point, System.Drawing">
+    <value>96, 148</value>
+  </data>
+  <data name="tab2contentKey.Size" type="System.Drawing.Size, System.Drawing">
+    <value>430, 23</value>
+  </data>
+  <data name="tab2contentKey.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab2contentKey.Name" xml:space="preserve">
+    <value>tab2contentKey</value>
+  </data>
+  <data name="&gt;&gt;tab2contentKey.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2contentKey.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2contentKey.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2label2.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab2label2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 130</value>
+  </data>
+  <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>102, 15</value>
+  </data>
+  <data name="tab2label2.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab2label2.Text" xml:space="preserve">
+    <value>Enter Content Key</value>
+  </data>
+  <data name="&gt;&gt;tab2label2.Name" xml:space="preserve">
+    <value>tab2label2</value>
+  </data>
+  <data name="&gt;&gt;tab2label2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2label2.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2label2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab2labelStatus.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab2labelStatus.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
+  </data>
+  <data name="tab2labelStatus.Location" type="System.Drawing.Point, System.Drawing">
+    <value>96, 70</value>
+  </data>
+  <data name="tab2labelStatus.Size" type="System.Drawing.Size, System.Drawing">
+    <value>46, 15</value>
+  </data>
+  <data name="tab2labelStatus.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab2labelStatus.Text" xml:space="preserve">
+    <value>Offline </value>
+  </data>
+  <data name="&gt;&gt;tab2labelStatus.Name" xml:space="preserve">
+    <value>tab2labelStatus</value>
+  </data>
+  <data name="&gt;&gt;tab2labelStatus.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2labelStatus.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2labelStatus.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab2label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab2label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 46</value>
+  </data>
+  <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>77, 15</value>
+  </data>
+  <data name="tab2label1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab2label1.Text" xml:space="preserve">
+    <value>Server Status:</value>
+  </data>
+  <data name="&gt;&gt;tab2label1.Name" xml:space="preserve">
+    <value>tab2label1</value>
+  </data>
+  <data name="&gt;&gt;tab2label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2label1.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2label1.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab2splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab2splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2buttonBack.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab2buttonBack.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab2buttonBack.Location" type="System.Drawing.Point, System.Drawing">
+    <value>611, 3</value>
+  </data>
+  <data name="tab2buttonBack.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab2buttonBack.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab2buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonBack.Name" xml:space="preserve">
+    <value>tab2buttonBack</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonBack.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonBack.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonBack.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab2buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab2buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab2buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>692, 3</value>
+  </data>
+  <data name="tab2buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab2buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab2buttonNext.Text" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonNext.Name" xml:space="preserve">
+    <value>tab2buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonNext.Parent" xml:space="preserve">
+    <value>tab2splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab2buttonNext.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab2splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab2splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab2splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab2splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab2splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Name" xml:space="preserve">
+    <value>tab2splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.Parent" xml:space="preserve">
+    <value>tab2splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab2splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab2splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab2splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab2splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab2splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Name" xml:space="preserve">
+    <value>tab2splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.Parent" xml:space="preserve">
+    <value>tab2</value>
+  </data>
+  <data name="&gt;&gt;tab2splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Name" xml:space="preserve">
+    <value>tab3splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Parent" xml:space="preserve">
+    <value>tab3</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab3.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab3.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab3.Text" xml:space="preserve">
+    <value>tabPage3</value>
+  </data>
+  <data name="&gt;&gt;tab3.Name" xml:space="preserve">
+    <value>tab3</value>
+  </data>
+  <data name="&gt;&gt;tab3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab3.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab3splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab3splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab3splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab3textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab3textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab3textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab3textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab3textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab3textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox2.Name" xml:space="preserve">
+    <value>tab3textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox2.Parent" xml:space="preserve">
+    <value>tab3splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab3textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab3textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab3textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab3textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab3textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox1.Name" xml:space="preserve">
+    <value>tab3textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox1.Parent" xml:space="preserve">
+    <value>tab3splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab3splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab3splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab3splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab3splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab3label2.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab3label2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 130</value>
+  </data>
+  <data name="tab3label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>116, 15</value>
+  </data>
+  <data name="tab3label2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab3label2.Text" xml:space="preserve">
+    <value>Crew Chief Directory</value>
+  </data>
+  <data name="&gt;&gt;tab3label2.Name" xml:space="preserve">
+    <value>tab3label2</value>
+  </data>
+  <data name="&gt;&gt;tab3label2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3label2.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3label2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab3label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 46</value>
+  </data>
+  <data name="tab3label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>159, 15</value>
+  </data>
+  <data name="tab3label1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab3label1.Text" xml:space="preserve">
+    <value>Richard Burns Rally Directory</value>
+  </data>
+  <data name="&gt;&gt;tab3label1.Name" xml:space="preserve">
+    <value>tab3label1</value>
+  </data>
+  <data name="&gt;&gt;tab3label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3label1.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3label1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab3buttonCC.Location" type="System.Drawing.Point, System.Drawing">
+    <value>535, 148</value>
+  </data>
+  <data name="tab3buttonCC.Size" type="System.Drawing.Size, System.Drawing">
+    <value>27, 23</value>
+  </data>
+  <data name="tab3buttonCC.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab3buttonCC.Text" xml:space="preserve">
+    <value>...</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonCC.Name" xml:space="preserve">
+    <value>tab3buttonCC</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonCC.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonCC.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonCC.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab3buttonRBR.Location" type="System.Drawing.Point, System.Drawing">
+    <value>535, 63</value>
+  </data>
+  <data name="tab3buttonRBR.Size" type="System.Drawing.Size, System.Drawing">
+    <value>27, 23</value>
+  </data>
+  <data name="tab3buttonRBR.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab3buttonRBR.Text" xml:space="preserve">
+    <value>...</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonRBR.Name" xml:space="preserve">
+    <value>tab3buttonRBR</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonRBR.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonRBR.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonRBR.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="tab3dirCC.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 148</value>
+  </data>
+  <data name="tab3dirCC.Size" type="System.Drawing.Size, System.Drawing">
+    <value>498, 23</value>
+  </data>
+  <data name="tab3dirCC.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab3dirCC.Name" xml:space="preserve">
+    <value>tab3dirCC</value>
+  </data>
+  <data name="&gt;&gt;tab3dirCC.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3dirCC.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3dirCC.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="tab3dirRBR.Location" type="System.Drawing.Point, System.Drawing">
+    <value>31, 64</value>
+  </data>
+  <data name="tab3dirRBR.Size" type="System.Drawing.Size, System.Drawing">
+    <value>498, 23</value>
+  </data>
+  <data name="tab3dirRBR.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab3dirRBR.Name" xml:space="preserve">
+    <value>tab3dirRBR</value>
+  </data>
+  <data name="&gt;&gt;tab3dirRBR.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3dirRBR.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3dirRBR.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab3splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab3splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3buttonBack.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab3buttonBack.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab3buttonBack.Location" type="System.Drawing.Point, System.Drawing">
+    <value>611, 3</value>
+  </data>
+  <data name="tab3buttonBack.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab3buttonBack.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab3buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonBack.Name" xml:space="preserve">
+    <value>tab3buttonBack</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonBack.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonBack.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonBack.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab3buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab3buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab3buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>692, 3</value>
+  </data>
+  <data name="tab3buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab3buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab3buttonNext.Text" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonNext.Name" xml:space="preserve">
+    <value>tab3buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonNext.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonNext.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab3splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab3splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab3splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab3splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab3splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Name" xml:space="preserve">
+    <value>tab3splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.Parent" xml:space="preserve">
+    <value>tab3splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab3splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab3splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab3splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab3splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab3splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Name" xml:space="preserve">
+    <value>tab3splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.Parent" xml:space="preserve">
+    <value>tab3</value>
+  </data>
+  <data name="&gt;&gt;tab3splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Name" xml:space="preserve">
+    <value>tab4splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Parent" xml:space="preserve">
+    <value>tab4</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab4.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab4.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab4.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab4.Text" xml:space="preserve">
+    <value>tabPage4</value>
+  </data>
+  <data name="&gt;&gt;tab4.Name" xml:space="preserve">
+    <value>tab4</value>
+  </data>
+  <data name="&gt;&gt;tab4.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab4.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="tab4splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab4splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab4splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab4textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab4textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab4textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab4textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab4textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab4textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox2.Name" xml:space="preserve">
+    <value>tab4textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox2.Parent" xml:space="preserve">
+    <value>tab4splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab4textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab4textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab4textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab4textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab4textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox1.Name" xml:space="preserve">
+    <value>tab4textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox1.Parent" xml:space="preserve">
+    <value>tab4splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab4splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab4splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab4splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab4splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab4treeView1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab4treeView1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab4treeView1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 447</value>
+  </data>
+  <data name="tab4treeView1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4treeView1.Name" xml:space="preserve">
+    <value>tab4treeView1</value>
+  </data>
+  <data name="&gt;&gt;tab4treeView1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TreeView, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4treeView1.Parent" xml:space="preserve">
+    <value>tab4splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4treeView1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab4splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab4splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4buttonBack.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab4buttonBack.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab4buttonBack.Location" type="System.Drawing.Point, System.Drawing">
+    <value>611, 3</value>
+  </data>
+  <data name="tab4buttonBack.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab4buttonBack.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab4buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonBack.Name" xml:space="preserve">
+    <value>tab4buttonBack</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonBack.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonBack.Parent" xml:space="preserve">
+    <value>tab4splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonBack.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab4buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab4buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab4buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>692, 3</value>
+  </data>
+  <data name="tab4buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab4buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab4buttonNext.Text" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonNext.Name" xml:space="preserve">
+    <value>tab4buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonNext.Parent" xml:space="preserve">
+    <value>tab4splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4buttonNext.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab4splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab4splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab4splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab4splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab4splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Name" xml:space="preserve">
+    <value>tab4splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.Parent" xml:space="preserve">
+    <value>tab4splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab4splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab4splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab4splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab4splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab4splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Name" xml:space="preserve">
+    <value>tab4splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.Parent" xml:space="preserve">
+    <value>tab4</value>
+  </data>
+  <data name="&gt;&gt;tab4splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Name" xml:space="preserve">
+    <value>tab5splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Parent" xml:space="preserve">
+    <value>tab5</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab5.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab5.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab5.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab5.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab5.Text" xml:space="preserve">
+    <value>tabPage5</value>
+  </data>
+  <data name="&gt;&gt;tab5.Name" xml:space="preserve">
+    <value>tab5</value>
+  </data>
+  <data name="&gt;&gt;tab5.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab5.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="tab5splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab5splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab5splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab5textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab5textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab5textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab5textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab5textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab5textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox2.Name" xml:space="preserve">
+    <value>tab5textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox2.Parent" xml:space="preserve">
+    <value>tab5splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab5textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab5textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab5textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab5textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab5textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab5textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox1.Name" xml:space="preserve">
+    <value>tab5textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox1.Parent" xml:space="preserve">
+    <value>tab5splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab5splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab5splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab5splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab5splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab5splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab5label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab5label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>32, 102</value>
+  </data>
+  <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>107, 15</value>
+  </data>
+  <data name="tab5label1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab5label1.Text" xml:space="preserve">
+    <value>Currently installing</value>
+  </data>
+  <data name="&gt;&gt;tab5label1.Name" xml:space="preserve">
+    <value>tab5label1</value>
+  </data>
+  <data name="&gt;&gt;tab5label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5label1.Parent" xml:space="preserve">
+    <value>tab5splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5label1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab5progressBar1.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Left, Right</value>
+  </data>
+  <data name="tab5progressBar1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>32, 67</value>
+  </data>
+  <data name="tab5progressBar1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>703, 32</value>
+  </data>
+  <data name="tab5progressBar1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab5progressBar1.Name" xml:space="preserve">
+    <value>tab5progressBar1</value>
+  </data>
+  <data name="&gt;&gt;tab5progressBar1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.ProgressBar, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5progressBar1.Parent" xml:space="preserve">
+    <value>tab5splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5progressBar1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab5splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab5splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab5splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab5splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab5splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab5splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab5splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Name" xml:space="preserve">
+    <value>tab5splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.Parent" xml:space="preserve">
+    <value>tab5splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab5splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab5splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab5splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab5splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab5splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Name" xml:space="preserve">
+    <value>tab5splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.Parent" xml:space="preserve">
+    <value>tab5</value>
+  </data>
+  <data name="&gt;&gt;tab5splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Name" xml:space="preserve">
+    <value>tab6splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Parent" xml:space="preserve">
+    <value>tab6</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab6.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab6.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab6.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab6.Text" xml:space="preserve">
+    <value>tabPage6</value>
+  </data>
+  <data name="&gt;&gt;tab6.Name" xml:space="preserve">
+    <value>tab6</value>
+  </data>
+  <data name="&gt;&gt;tab6.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab6.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="tab6splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab6splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab6splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab6textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab6textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab6textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab6textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab6textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab6textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox2.Name" xml:space="preserve">
+    <value>tab6textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox2.Parent" xml:space="preserve">
+    <value>tab6splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab6textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab6textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab6textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab6textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab6textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox1.Name" xml:space="preserve">
+    <value>tab6textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox1.Parent" xml:space="preserve">
+    <value>tab6splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab6splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab6splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab6splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab6splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab6selectStyle.Location" type="System.Drawing.Point, System.Drawing">
+    <value>37, 279</value>
+  </data>
+  <data name="tab6selectStyle.Size" type="System.Drawing.Size, System.Drawing">
+    <value>185, 94</value>
+  </data>
+  <data name="tab6selectStyle.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;tab6selectStyle.Name" xml:space="preserve">
+    <value>tab6selectStyle</value>
+  </data>
+  <data name="&gt;&gt;tab6selectStyle.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6selectStyle.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6selectStyle.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6selectCoPilot.Location" type="System.Drawing.Point, System.Drawing">
+    <value>37, 155</value>
+  </data>
+  <data name="tab6selectCoPilot.Size" type="System.Drawing.Size, System.Drawing">
+    <value>185, 94</value>
+  </data>
+  <data name="tab6selectCoPilot.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;tab6selectCoPilot.Name" xml:space="preserve">
+    <value>tab6selectCoPilot</value>
+  </data>
+  <data name="&gt;&gt;tab6selectCoPilot.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6selectCoPilot.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6selectCoPilot.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab6selectLanguage.Location" type="System.Drawing.Point, System.Drawing">
+    <value>37, 25</value>
+  </data>
+  <data name="tab6selectLanguage.Size" type="System.Drawing.Size, System.Drawing">
+    <value>185, 94</value>
+  </data>
+  <data name="tab6selectLanguage.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab6selectLanguage.Name" xml:space="preserve">
+    <value>tab6selectLanguage</value>
+  </data>
+  <data name="&gt;&gt;tab6selectLanguage.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckedListBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6selectLanguage.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6selectLanguage.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab6label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab6label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 7</value>
+  </data>
+  <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>70, 15</value>
+  </data>
+  <data name="tab6label1.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab6label1.Text" xml:space="preserve">
+    <value>UI language</value>
+  </data>
+  <data name="&gt;&gt;tab6label1.Name" xml:space="preserve">
+    <value>tab6label1</value>
+  </data>
+  <data name="&gt;&gt;tab6label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6label1.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6label1.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="tab6label3.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab6label3.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 261</value>
+  </data>
+  <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>82, 15</value>
+  </data>
+  <data name="tab6label3.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab6label3.Text" xml:space="preserve">
+    <value>Dictation style</value>
+  </data>
+  <data name="&gt;&gt;tab6label3.Name" xml:space="preserve">
+    <value>tab6label3</value>
+  </data>
+  <data name="&gt;&gt;tab6label3.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6label3.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6label3.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="tab6label2.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab6label2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 137</value>
+  </data>
+  <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>81, 15</value>
+  </data>
+  <data name="tab6label2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab6label2.Text" xml:space="preserve">
+    <value>CoPilot to use</value>
+  </data>
+  <data name="&gt;&gt;tab6label2.Name" xml:space="preserve">
+    <value>tab6label2</value>
+  </data>
+  <data name="&gt;&gt;tab6label2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6label2.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6label2.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab6splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab6splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6buttonBack.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab6buttonBack.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab6buttonBack.Location" type="System.Drawing.Point, System.Drawing">
+    <value>611, 3</value>
+  </data>
+  <data name="tab6buttonBack.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab6buttonBack.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab6buttonBack.Text" xml:space="preserve">
+    <value>Reinstall</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonBack.Name" xml:space="preserve">
+    <value>tab6buttonBack</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonBack.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonBack.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonBack.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab6buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab6buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab6buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>692, 3</value>
+  </data>
+  <data name="tab6buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab6buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab6buttonNext.Text" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonNext.Name" xml:space="preserve">
+    <value>tab6buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonNext.Parent" xml:space="preserve">
+    <value>tab6splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab6buttonNext.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab6splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab6splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab6splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab6splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab6splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Name" xml:space="preserve">
+    <value>tab6splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.Parent" xml:space="preserve">
+    <value>tab6splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab6splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab6splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab6splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab6splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab6splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Name" xml:space="preserve">
+    <value>tab6splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.Parent" xml:space="preserve">
+    <value>tab6</value>
+  </data>
+  <data name="&gt;&gt;tab6splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Name" xml:space="preserve">
+    <value>tab7splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Parent" xml:space="preserve">
+    <value>tab7</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 24</value>
+  </data>
+  <data name="tab7.Padding" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 3, 3, 3</value>
+  </data>
+  <data name="tab7.Size" type="System.Drawing.Size, System.Drawing">
+    <value>776, 533</value>
+  </data>
+  <data name="tab7.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="tab7.Text" xml:space="preserve">
+    <value>tabPage7</value>
+  </data>
+  <data name="&gt;&gt;tab7.Name" xml:space="preserve">
+    <value>tab7</value>
+  </data>
+  <data name="&gt;&gt;tab7.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TabPage, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7.Parent" xml:space="preserve">
+    <value>tabControl1</value>
+  </data>
+  <data name="&gt;&gt;tab7.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="tab7splitContainer1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab7splitContainer1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>3, 3</value>
+  </data>
+  <data name="tab7splitContainer1.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab7textBox2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab7textBox2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 8.25pt</value>
+  </data>
+  <data name="tab7textBox2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 22</value>
+  </data>
+  <data name="tab7textBox2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 15</value>
+  </data>
+  <data name="tab7textBox2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="tab7textBox2.Text" xml:space="preserve">
+    <value>    Huh? Subtext?</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox2.Name" xml:space="preserve">
+    <value>tab7textBox2</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox2.Parent" xml:space="preserve">
+    <value>tab7splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7textBox1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Top</value>
+  </data>
+  <data name="tab7textBox1.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 12pt, style=Bold</value>
+  </data>
+  <data name="tab7textBox1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab7textBox1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 22</value>
+  </data>
+  <data name="tab7textBox1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab7textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox1.Name" xml:space="preserve">
+    <value>tab7textBox1</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.TextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox1.Parent" xml:space="preserve">
+    <value>tab7splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7textBox1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel1.Name" xml:space="preserve">
+    <value>tab7splitContainer1.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel1.Parent" xml:space="preserve">
+    <value>tab7splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7splitContainer2.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="tab7splitContainer2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab7splitContainer2.Orientation" type="System.Windows.Forms.Orientation, System.Windows.Forms">
+    <value>Horizontal</value>
+  </data>
+  <data name="tab7textInstalled.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left, Right</value>
+  </data>
+  <data name="tab7textInstalled.Location" type="System.Drawing.Point, System.Drawing">
+    <value>35, 216</value>
+  </data>
+  <data name="tab7textInstalled.Size" type="System.Drawing.Size, System.Drawing">
+    <value>700, 165</value>
+  </data>
+  <data name="tab7textInstalled.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab7textInstalled.Text" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;tab7textInstalled.Name" xml:space="preserve">
+    <value>tab7textInstalled</value>
+  </data>
+  <data name="&gt;&gt;tab7textInstalled.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7textInstalled.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7textInstalled.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7label2.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab7label2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 198</value>
+  </data>
+  <data name="tab7label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>95, 15</value>
+  </data>
+  <data name="tab7label2.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="tab7label2.Text" xml:space="preserve">
+    <value>Installed content</value>
+  </data>
+  <data name="&gt;&gt;tab7label2.Name" xml:space="preserve">
+    <value>tab7label2</value>
+  </data>
+  <data name="&gt;&gt;tab7label2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7label2.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7label2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab7textConfig.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left, Right</value>
+  </data>
+  <data name="tab7textConfig.Location" type="System.Drawing.Point, System.Drawing">
+    <value>35, 25</value>
+  </data>
+  <data name="tab7textConfig.Size" type="System.Drawing.Size, System.Drawing">
+    <value>700, 165</value>
+  </data>
+  <data name="tab7textConfig.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="tab7textConfig.Text" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;tab7textConfig.Name" xml:space="preserve">
+    <value>tab7textConfig</value>
+  </data>
+  <data name="&gt;&gt;tab7textConfig.Type" xml:space="preserve">
+    <value>System.Windows.Forms.RichTextBox, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7textConfig.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7textConfig.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="tab7label1.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="tab7label1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>9, 7</value>
+  </data>
+  <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>81, 15</value>
+  </data>
+  <data name="tab7label1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="tab7label1.Text" xml:space="preserve">
+    <value>Configuration</value>
+  </data>
+  <data name="&gt;&gt;tab7label1.Name" xml:space="preserve">
+    <value>tab7label1</value>
+  </data>
+  <data name="&gt;&gt;tab7label1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7label1.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7label1.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel1.Name" xml:space="preserve">
+    <value>tab7splitContainer2.Panel1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel1.Parent" xml:space="preserve">
+    <value>tab7splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7buttonBack.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab7buttonBack.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab7buttonBack.Location" type="System.Drawing.Point, System.Drawing">
+    <value>611, 3</value>
+  </data>
+  <data name="tab7buttonBack.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab7buttonBack.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="tab7buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonBack.Name" xml:space="preserve">
+    <value>tab7buttonBack</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonBack.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonBack.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonBack.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="tab7buttonNext.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Right</value>
+  </data>
+  <data name="tab7buttonNext.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab7buttonNext.Location" type="System.Drawing.Point, System.Drawing">
+    <value>692, 3</value>
+  </data>
+  <data name="tab7buttonNext.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 26</value>
+  </data>
+  <data name="tab7buttonNext.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="tab7buttonNext.Text" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonNext.Name" xml:space="preserve">
+    <value>tab7buttonNext</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonNext.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonNext.Parent" xml:space="preserve">
+    <value>tab7splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab7buttonNext.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel2.Name" xml:space="preserve">
+    <value>tab7splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel2.Parent" xml:space="preserve">
+    <value>tab7splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab7splitContainer2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 483</value>
+  </data>
+  <data name="tab7splitContainer2.SplitterDistance" type="System.Int32, mscorlib">
+    <value>447</value>
+  </data>
+  <data name="tab7splitContainer2.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Name" xml:space="preserve">
+    <value>tab7splitContainer2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.Parent" xml:space="preserve">
+    <value>tab7splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel2.Name" xml:space="preserve">
+    <value>tab7splitContainer1.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel2.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitterPanel, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel2.Parent" xml:space="preserve">
+    <value>tab7splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Panel2.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="tab7splitContainer1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>770, 527</value>
+  </data>
+  <data name="tab7splitContainer1.SplitterDistance" type="System.Int32, mscorlib">
+    <value>40</value>
+  </data>
+  <data name="tab7splitContainer1.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Name" xml:space="preserve">
+    <value>tab7splitContainer1</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Type" xml:space="preserve">
+    <value>System.Windows.Forms.SplitContainer, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.Parent" xml:space="preserve">
+    <value>tab7</value>
+  </data>
+  <data name="&gt;&gt;tab7splitContainer1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <metadata name="workerListFiles.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="workerInstallation.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>148, 17</value>
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>77</value>
+  </metadata>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>7, 15</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>784, 561</value>
+  </data>
+  <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
+    <value>800, 600</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Filipek Mod Installer</value>
+  </data>
+  <data name="&gt;&gt;workerListFiles.Name" xml:space="preserve">
+    <value>workerListFiles</value>
+  </data>
+  <data name="&gt;&gt;workerListFiles.Type" xml:space="preserve">
+    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="&gt;&gt;workerInstallation.Name" xml:space="preserve">
+    <value>workerInstallation</value>
+  </data>
+  <data name="&gt;&gt;workerInstallation.Type" xml:space="preserve">
+    <value>System.ComponentModel.BackgroundWorker, System.ComponentModel.EventBasedAsync, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>InstallationForm</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

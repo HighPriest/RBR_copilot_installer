@@ -23,6 +23,7 @@ namespace Pacenotes_Installer.Classes
     public class Voice
     {
         public string? Id;
+        public string? Gender;
     }
     public class Language
     {
