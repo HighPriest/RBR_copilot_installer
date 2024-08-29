@@ -224,6 +224,7 @@
             // 
             resources.ApplyResources(richTextBox1, "richTextBox1");
             richTextBox1.Name = "richTextBox1";
+            richTextBox1.ReadOnly = true;
             richTextBox1.TabStop = false;
             // 
             // tab1buttonNext
