@@ -26,7 +26,7 @@ namespace Pacenotes_Installer
 
     internal class DownloadManager
     {
-        private static Supabase.Client supabase;
+        private Supabase.Client supabase;
         private string publicURL, publicKey;
         public string privateKey;
         public Status status = 0;
@@ -41,7 +41,7 @@ namespace Pacenotes_Installer
 
             var options = new Supabase.SupabaseOptions
             {
-                AutoConnectRealtime = true
+                //AutoConnectRealtime = true
             };
 
             supabase = new Supabase.Client(publicURL, publicKey, options);
@@ -53,6 +53,7 @@ namespace Pacenotes_Installer
             {
                 Task.Run(() => supabase.InitializeAsync()).Wait();
                 status = Status.connected;
+                //Debug.WriteLine(supabase.Realtime.Socket.IsConnected);
             }
             catch
             {
@@ -60,20 +61,23 @@ namespace Pacenotes_Installer
             }
         }
 
-        public void InitializeSupabase(string key)
+        public void InitializeSupabase(string privateKey)
         {
+            this.privateKey = privateKey;
             var options = new Supabase.SupabaseOptions
             {
-                AutoConnectRealtime = true
+                //AutoConnectRealtime = true,
+                Headers = new Dictionary<string, string>(){
+                    { "privateKey", privateKey } // Do get Premium content
+                }
             };
 
-            privateKey = key;
-            Supabase.Client _supabase = new Supabase.Client(publicURL, key, options);
+            Supabase.Client _supabase = new Supabase.Client(publicURL, publicKey, options);
 
             try
             {
                 Task.Run(() => _supabase.InitializeAsync()).Wait();
-                if (supabase.Realtime.Socket.IsConnected) supabase.Realtime.Disconnect();
+                //if (supabase.Realtime.Socket.IsConnected) supabase.Realtime.Disconnect();
                 supabase = _supabase;
                 status = Status.authorized;
             }
@@ -152,7 +156,7 @@ namespace Pacenotes_Installer
         #region DownloadMethods
         public void ListAllFiles()
         {
-            if (status == Status.disconnected || !supabase.Realtime.Socket.IsConnected)
+            if (status == Status.disconnected)
             {
                 return;
             }
