@@ -220,7 +220,7 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>Download</value>
   </data>
   <data name="tab5textBox2.Text" xml:space="preserve">
-    <value>    Wait for the installer to finish downloading selecetde content</value>
+    <value>    Wait for the installer to finish downloading seleceted content</value>
   </data>
   <data name="tab5textBox1.Text" xml:space="preserve">
     <value>Downloading</value>

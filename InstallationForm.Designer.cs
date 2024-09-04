@@ -195,6 +195,7 @@
             tab1textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab1textBox2, "tab1textBox2");
             tab1textBox2.Name = "tab1textBox2";
+            tab1textBox2.ReadOnly = true;
             tab1textBox2.TabStop = false;
             // 
             // tab1textBox1
@@ -203,6 +204,7 @@
             tab1textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab1textBox1, "tab1textBox1");
             tab1textBox1.Name = "tab1textBox1";
+            tab1textBox1.ReadOnly = true;
             tab1textBox1.TabStop = false;
             // 
             // tab1splitContainer2
@@ -256,6 +258,7 @@
             tab2textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab2textBox2, "tab2textBox2");
             tab2textBox2.Name = "tab2textBox2";
+            tab2textBox2.ReadOnly = true;
             tab2textBox2.TabStop = false;
             // 
             // tab2textBox1
@@ -264,6 +267,7 @@
             tab2textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab2textBox1, "tab2textBox1");
             tab2textBox1.Name = "tab2textBox1";
+            tab2textBox1.ReadOnly = true;
             tab2textBox1.TabStop = false;
             // 
             // tab2splitContainer2
@@ -341,6 +345,7 @@
             tab3textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab3textBox2, "tab3textBox2");
             tab3textBox2.Name = "tab3textBox2";
+            tab3textBox2.ReadOnly = true;
             tab3textBox2.TabStop = false;
             // 
             // tab3textBox1
@@ -349,6 +354,7 @@
             tab3textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab3textBox1, "tab3textBox1");
             tab3textBox1.Name = "tab3textBox1";
+            tab3textBox1.ReadOnly = true;
             tab3textBox1.TabStop = false;
             // 
             // tab3splitContainer2
@@ -444,6 +450,7 @@
             tab4textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab4textBox2, "tab4textBox2");
             tab4textBox2.Name = "tab4textBox2";
+            tab4textBox2.ReadOnly = true;
             tab4textBox2.TabStop = false;
             // 
             // tab4textBox1
@@ -452,6 +459,7 @@
             tab4textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab4textBox1, "tab4textBox1");
             tab4textBox1.Name = "tab4textBox1";
+            tab4textBox1.ReadOnly = true;
             tab4textBox1.TabStop = false;
             // 
             // tab4splitContainer2
@@ -534,6 +542,7 @@
             tab5textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab5textBox2, "tab5textBox2");
             tab5textBox2.Name = "tab5textBox2";
+            tab5textBox2.ReadOnly = true;
             tab5textBox2.TabStop = false;
             // 
             // tab5textBox1
@@ -542,6 +551,7 @@
             tab5textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab5textBox1, "tab5textBox1");
             tab5textBox1.Name = "tab5textBox1";
+            tab5textBox1.ReadOnly = true;
             tab5textBox1.TabStop = false;
             // 
             // tab5splitContainer2
@@ -588,6 +598,7 @@
             tab6textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab6textBox2, "tab6textBox2");
             tab6textBox2.Name = "tab6textBox2";
+            tab6textBox2.ReadOnly = true;
             tab6textBox2.TabStop = false;
             // 
             // tab6textBox1
@@ -596,6 +607,7 @@
             tab6textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab6textBox1, "tab6textBox1");
             tab6textBox1.Name = "tab6textBox1";
+            tab6textBox1.ReadOnly = true;
             tab6textBox1.TabStop = false;
             // 
             // tab6splitContainer2
@@ -701,6 +713,7 @@
             tab7textBox2.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab7textBox2, "tab7textBox2");
             tab7textBox2.Name = "tab7textBox2";
+            tab7textBox2.ReadOnly = true;
             tab7textBox2.TabStop = false;
             // 
             // tab7textBox1
@@ -709,6 +722,7 @@
             tab7textBox1.BorderStyle = BorderStyle.None;
             resources.ApplyResources(tab7textBox1, "tab7textBox1");
             tab7textBox1.Name = "tab7textBox1";
+            tab7textBox1.ReadOnly = true;
             tab7textBox1.TabStop = false;
             // 
             // tab7splitContainer2

@@ -127,8 +127,9 @@ namespace Pacenotes_Installer
             foreach (TreeNode node in tab4treeView1.Nodes)
             {
                 if (node.Checked) { continue; }
-                else if (node.Nodes.Count > 0) {
-                    if(!tab4AtLeastOneNodeChecked(node))
+                else if (node.Nodes.Count > 0)
+                {
+                    if (!tab4AtLeastOneNodeChecked(node))
                     {
                         System.Windows.Forms.MessageBox.Show(text: resources.GetString("ErrorDownloadList"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Exclamation);
                         return;
@@ -144,7 +145,7 @@ namespace Pacenotes_Installer
         private bool tab4AtLeastOneNodeChecked(TreeNode _node)
         {
             bool status = false;
-            if ( _node.Nodes.Count > 0)
+            if (_node.Nodes.Count > 0)
             {
                 foreach (TreeNode node in _node.Nodes)
                 {
@@ -187,24 +188,24 @@ namespace Pacenotes_Installer
         {
             BeginInvoke((MethodInvoker)delegate
             {
-            ListView _sender = (ListView)sender;
-            if (_sender.SelectedItems.Count > 0)
-            {
-                foreach (ListViewItem item in _sender.CheckedItems)
+                ListView _sender = (ListView)sender;
+                if (_sender.SelectedItems.Count > 0)
                 {
-                    item.Checked = false;
+                    foreach (ListViewItem item in _sender.CheckedItems)
+                    {
+                        item.Checked = false;
+                    }
+                    _sender.SelectedItems[0].Checked = true;
+                    return;
                 }
-                _sender.SelectedItems[0].Checked = true;
-                return;
-            }
-            try
-            {
-                _sender.Items[0].Checked = true;
-            }
-            catch (Exception ex)
-            {
-                Debug.Write(ex.ToString());
-            }
+                try
+                {
+                    _sender.Items[0].Checked = true;
+                }
+                catch (Exception ex)
+                {
+                    Debug.Write(ex.ToString());
+                }
             });
 
         }
@@ -300,7 +301,7 @@ namespace Pacenotes_Installer
 
             // (Installation) Copy files to working directory, after download & backup
             downloadManager.installRBRConfiguration(tab3dirRBR.Text, workerInstallation);
-                // Directory.Move(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), tab3dirRBR.Text);
+            // Directory.Move(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), tab3dirRBR.Text);
 
             // Make sure at least one item is checked
             tab6listViewHandler(tab6selectLanguage, new EventArgs());

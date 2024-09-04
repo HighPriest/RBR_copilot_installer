@@ -1499,7 +1499,7 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>5</value>
   </data>
   <data name="tab5textBox2.Text" xml:space="preserve">
-    <value>    Wait for the installer to finish downloading selecetde content</value>
+    <value>    Wait for the installer to finish downloading seleceted content</value>
   </data>
   <data name="&gt;&gt;tab5textBox2.Name" xml:space="preserve">
     <value>tab5textBox2</value>
@@ -4103,9 +4103,6 @@ Sounds: Language &amp; voice of the CoPilot.</value>
         xmzCfvCUqkxiZPJz6MXvyB35eZIfs3J6R+7IHbkjd+SO3JE7ckfuyB25I3fkjtyRO3JH7sgduSN35I7c
         kTtyR+7IHbkjP5fy/wMbyXtUu02poAAAAABJRU5ErkJggg==
 </value>
-  </data>
-  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
   </data>
   <data name="$this.MinimumSize" type="System.Drawing.Size, System.Drawing">
     <value>800, 600</value>
