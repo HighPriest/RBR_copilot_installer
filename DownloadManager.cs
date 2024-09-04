@@ -4,14 +4,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing.Text;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Pacenotes_Installer.Classes;
+using Supabase.Storage;
 
 namespace Pacenotes_Installer
 {
@@ -96,20 +99,20 @@ namespace Pacenotes_Installer
         {
 
         }
-        public void saveFile(string destinationDir, string fileName, System.ComponentModel.BackgroundWorker backgroundWorker)
+        public void saveFile(string destinationDir, Supabase.Storage.FileObject file, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
-            if (fileName.EndsWith(".zip"))
+            if (file.Name.EndsWith(".zip"))
             {
-                ExtractZipFile(Task.Run(() => DownloadFile(fileName, backgroundWorker)).GetAwaiter().GetResult(), destinationDir);
+                ExtractZipFile(Task.Run(() => DownloadFile(file, backgroundWorker)).GetAwaiter().GetResult(), destinationDir);
             }
             else
             {
                 try
                 {
-                    byte[] file = Task.Run(() => DownloadFile(fileName, backgroundWorker)).GetAwaiter().GetResult();
-                    using (var fs = new FileStream(Path.Combine(destinationDir, fileName), FileMode.Create, FileAccess.Write))
+                    byte[] fileBytes = Task.Run(() => DownloadFile(file, backgroundWorker)).GetAwaiter().GetResult();
+                    using (var fs = new FileStream(Path.Combine(destinationDir, file.Name), FileMode.Create, FileAccess.Write))
                     {
-                        fs.Write(file, 0, file.Length);
+                        fs.Write(fileBytes, 0, fileBytes.Length);
                         return;
                     }
                 }
@@ -163,9 +166,13 @@ namespace Pacenotes_Installer
 
             public_files = new List<Supabase.Storage.FileObject>();
 
-            foreach (Supabase.Storage.FileObject _file in Task.Run(() => supabase.Storage.From("Public").List()).GetAwaiter().GetResult())
+            foreach (Supabase.Storage.Bucket _bucket in Task.Run(() => supabase.Storage.ListBuckets()).GetAwaiter().GetResult())
             {
-                recursiveSupabaseFileListing(public_files, _file, "");
+                foreach (Supabase.Storage.FileObject _file in Task.Run(() => supabase.Storage.From(_bucket.Id).List()).GetAwaiter().GetResult())
+                    {
+                        _file.BucketId = _bucket.Id; // This is really stupid. Why isn't the bucketId filled on fetch?
+                        recursiveSupabaseFileListing(public_files, _file, "");
+                    }
             }
 
             status = Status.files_listed;
@@ -187,33 +194,34 @@ namespace Pacenotes_Installer
                 return;
             }
 
-            var files = Task.Run(() => supabase.Storage.From("Public").List(path: _path)).GetAwaiter().GetResult();
+            var files = Task.Run(() => supabase.Storage.From(file.BucketId).List(path: _path)).GetAwaiter().GetResult();
 
             Debug.WriteLine(_path);
 
-            foreach (Supabase.Storage.FileObject _files in files)
+            foreach (Supabase.Storage.FileObject _file in files)
             {
-                recursiveSupabaseFileListing(files_list, _files, _path);
+                _file.BucketId = file.BucketId; // This is really stupid. Why isn't the bucketId filled on fetch?
+                recursiveSupabaseFileListing(files_list, _file, _path);
             }
         }
 
-        public Task<byte[]> DownloadFile(string fileName, System.ComponentModel.BackgroundWorker backgroundWorker) 
+        public Task<byte[]> DownloadFile(Supabase.Storage.FileObject file, System.ComponentModel.BackgroundWorker backgroundWorker) 
         {
             // TODO: Check if supabase is initilized before proceeding
             var bytes = Task.Run(() => supabase.Storage
-            .From("Public")
-                        .Download(fileName, (sender, progress) => backgroundWorker.ReportProgress((int)progress, "Download: " + fileName)));
+            .From(file.BucketId)
+                        .Download(file.Name, (sender, progress) => backgroundWorker.ReportProgress((int)progress, "Download: " + file.Name)));
             return bytes;
         }
         #endregion DownloadMethods
 
         #region ConfigurationMethods
-        public static string CreateRBRConfiguration(string destinationDir, ListView.CheckedListViewItemCollection coPilotConfiguration, ListView.CheckedListViewItemCollection styleConfiguration, ListView.CheckedListViewItemCollection languageConfiguration)
+        public static string CreateRBRConfiguration(string destinationDir, Supabase.Storage.FileObject coPilotConfiguration, string styleConfiguration, string languageConfiguration)
         {
 
             string[] configPacenote = [ "[SETTINGS]",
-                                        "sounds = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0].Replace("/","\\"),
-                                        "language = " + languageConfiguration[0].Text,
+                                        "sounds = " + coPilotConfiguration.Name.Split(".")[0].Replace("/","\\").Remove(0,7),
+                                        "language = " + languageConfiguration,
                                         "replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10",
                                         "enableGUI = 1",
                                         "showReplayHUD = 1",
@@ -226,7 +234,7 @@ namespace Pacenotes_Installer
                                         "[PACKAGE::RBR]",
                                         "file0=packages\\"];
 
-            switch (styleConfiguration[0].Text)
+            switch (styleConfiguration)
             {
                 case "Numeric Standard":
                     configStyle[^1] = configStyle[^1] + ("FilipekMod_numeric_standard.ini");
@@ -255,9 +263,9 @@ namespace Pacenotes_Installer
             
 
 
-            return @"CoDriver = " + coPilotConfiguration[0].Tag.ToString().Split(".")[0].Replace("/", "\\") + @"
-GUI Language = " + languageConfiguration[0].Text + @"
-Pacenotes style = " + styleConfiguration[0].Text;
+            return @"CoDriver = " + coPilotConfiguration.Name.ToString().Split(".")[0].Replace("/", "\\").Remove(0, 7) + @"
+GUI Language = " + languageConfiguration + @"
+Pacenotes style = " + styleConfiguration;
         }
 
         public void backupRBRConfiguration(string directory, System.ComponentModel.BackgroundWorker backgroundWorker)
@@ -307,33 +315,41 @@ Pacenotes style = " + styleConfiguration[0].Text;
                         }
                         else
                         {
+                            backgroundWorker.ReportProgress(0, "Writing Backup");
                             backup = true; // If at least one file doesn't exist, then we should save the backup of user files
                         }
-
-                        backgroundWorker.ReportProgress(entry.Index * 100 / files.Count(), "Extract: " + fileInfo.FullName);
                     }
                 }
 
                 if ( backup )
                 using (FileStream fileStream = new FileStream(targetDir, FileMode.Create))
                 {
+                    backgroundWorker.ReportProgress(70, "Writing Backup");
                     memoryStream.Position = 0;
                     memoryStream.WriteTo(fileStream);
+                    backgroundWorker.ReportProgress(100, "Backup Complete");
+                    Thread.Sleep(1000); // Show off that something happened
                 }
             }
         }
 
-        public void installRBRConfiguration(string targetDir)
+        public void installRBRConfiguration(string targetDir, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
             // Take the download location
             string sourceDir = Path.Combine(targetDir, "backup\\FilipekMod");
 
             var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories);
-            foreach (string file in files)
+            int files_count = files.Count();
+
+            foreach (var entry in files.Select((x, i) => new { Value = x, Index = i }))
             {
-                targetDir = file.Replace("backup\\FilipekMod\\", "");
+                targetDir = entry.Value.Replace("backup\\FilipekMod\\", "");
                 Directory.CreateDirectory(Path.GetDirectoryName(targetDir));
-                File.Move(file, targetDir, true);
+                System.IO.File.Move(entry.Value, targetDir, true);
+                if (((entry.Index * 100 / files_count) % 10) == 0)
+                {
+                    backgroundWorker.ReportProgress((entry.Index * 100 / files_count) % 100, "Installing: " + entry.Value);
+                }
             }
         }
         #endregion ConfigurationMethods

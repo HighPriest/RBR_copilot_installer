@@ -9,7 +9,6 @@ using System.Drawing.Text;
 
 namespace Pacenotes_Installer
 {
-
     internal partial class InstallationForm : Form
     {
         private DownloadManager downloadManager;
@@ -170,7 +169,10 @@ namespace Pacenotes_Installer
         private void tab6buttonNext_Click(object sender, EventArgs e)
         {
             // Do saving tasks
-            string config = DownloadManager.CreateRBRConfiguration(tab3dirRBR.Text, tab6selectCoPilot.CheckedItems, tab6selectStyle.CheckedItems, tab6selectLanguage.CheckedItems);
+            string config = DownloadManager.CreateRBRConfiguration(tab3dirRBR.Text,
+                (Supabase.Storage.FileObject)tab6selectCoPilot.CheckedItems[0].Tag,
+                (string)tab6selectStyle.CheckedItems[0].Text,
+                (string)tab6selectLanguage.CheckedItems[0].Text);
             tab7textConfig.Text = config;
             btn_next_Click(sender, e);
         }
@@ -232,7 +234,7 @@ namespace Pacenotes_Installer
 
             foreach (var node in downloadManager.public_files)
             {
-                addNodeToFileList(rootNode, node.Name);
+                addNodeToFileList(rootNode, node);
             }
             foreach (TreeNode node in rootNode.Nodes)
             {
@@ -241,9 +243,9 @@ namespace Pacenotes_Installer
 
         }
 
-        private void addNodeToFileList(TreeNode parentNode, string pathSegment)
+        private void addNodeToFileList(TreeNode parentNode, Supabase.Storage.FileObject file)
         {
-            List<string> segments = new List<string>(pathSegment.Split("/"));
+            List<string> segments = new List<string>(file.Name.Split("/"));
             segments[^1] = segments[^1].Replace(".zip", "").Replace(".ini", "");
 
             foreach (string segment in segments)
@@ -253,7 +255,7 @@ namespace Pacenotes_Installer
                 if (childNode == null)
                 {
                     // TreeNodes have 3 data slots: Text, Name, Tag!! Can't populate Name or Tag on creation!
-                    // Tag: fullPath
+                    // Tag: Supabase.Storage.FileObject
                     // ?? Name = Key. Maybe the extension is unnecessary, but the Key will be needed ?? Name: fileNameWithExtension
                     // Text: fileNameWithout Extension
                     childNode = new TreeNode(segment);
@@ -261,7 +263,7 @@ namespace Pacenotes_Installer
                     if (segment == segments.Last())
                     {
                         // childNode.Name = pathSegment.Split("/").Last();
-                        childNode.Tag = pathSegment;
+                        childNode.Tag = file;
                     }
                     parentNode.Nodes.Add(childNode);
                 }
@@ -297,7 +299,7 @@ namespace Pacenotes_Installer
             downloadManager.backupRBRConfiguration(tab3dirRBR.Text, workerInstallation);
 
             // (Installation) Copy files to working directory, after download & backup
-            downloadManager.installRBRConfiguration(tab3dirRBR.Text);
+            downloadManager.installRBRConfiguration(tab3dirRBR.Text, workerInstallation);
                 // Directory.Move(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), tab3dirRBR.Text);
 
             // Make sure at least one item is checked
@@ -308,9 +310,10 @@ namespace Pacenotes_Installer
 
         private void downloadBasedOnTreeNode(TreeNode treeNode)
         {
-            if (treeNode.Checked & treeNode.Nodes.Count == 0)
+            if (treeNode.Checked & treeNode.Tag is Supabase.Storage.FileObject)
             {
-                string category = treeNode.Tag.ToString().Split("/").First();
+                Supabase.Storage.FileObject file = (Supabase.Storage.FileObject)treeNode.Tag;
+                string category = file.Name.Split("/").First();
                 ListViewItem item = new ListViewItem(treeNode.Text);
                 item.Name = treeNode.Name;
                 item.Tag = treeNode.Tag;
@@ -326,7 +329,7 @@ namespace Pacenotes_Installer
                         tab6selectStyle.Invoke(() => tab6selectStyle.Items.Add(item));
                         break;
                 }
-                downloadManager.saveFile(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), treeNode.Tag.ToString(), workerInstallation);
+                downloadManager.saveFile(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), (Supabase.Storage.FileObject)treeNode.Tag, workerInstallation);
                 return;
             }
             foreach (TreeNode node in treeNode.Nodes)
