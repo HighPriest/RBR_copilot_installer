@@ -296,7 +296,7 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>No installation directories have been selected!</value>
   </data>
   <data name="ErrorRBRDirectory" xml:space="preserve">
-    <value>This is not a correct RSF RBR directory. 'richardburnsrally.exe' is missing</value>
+    <value>This is not a correct RSF RBR directory. 'RichardBurnsRally_SSE.exe' is missing</value>
   </data>
   <data name="ErrorCCDirectory" xml:space="preserve">
     <value>This is not a correct CrewChief directory. 'CrewChiefV4.exe' is missing.</value>

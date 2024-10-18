@@ -90,7 +90,7 @@ namespace Pacenotes_Installer
             {
                 if (btn.Tag is "RSF_DIRECTORY")
                 {
-                    if (File.Exists(Path.Combine(fbd.SelectedPath, "richardburnsrally.exe")))
+                    if (File.Exists(Path.Combine(fbd.SelectedPath, "RichardBurnsRally_SSE.exe")))
                         tab3dirRBR.Text = fbd.SelectedPath;
                     else
                         System.Windows.Forms.MessageBox.Show(resources.GetString("ErrorRBRDirectory"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);

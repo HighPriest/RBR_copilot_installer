@@ -300,7 +300,7 @@ Sounds: Język i głos pilota rajdowego.</value>
     <value>Nie wybrano folderów instalacji!</value>
   </data>
   <data name="ErrorRBRDirectory" xml:space="preserve">
-    <value>Wybrano niepoprawny folder RSF RBR. Brak w niej pliku "richardburnsrally.exe"</value>
+    <value>Wybrano niepoprawny folder RSF RBR. Brak w niej pliku "RichardBurnsRally_SSE.exe"</value>
   </data>
   <data name="ErrorCCDirectory" xml:space="preserve">
     <value>Wybrano niepoprawny folder CrewChief. Brakuje w nim pliku "CrewChiefV4.exe".</value>
