@@ -219,7 +219,13 @@ namespace Pacenotes_Installer
         public static string CreateRBRConfiguration(string destinationDir, Supabase.Storage.FileObject coPilotConfiguration, string styleConfiguration, string languageConfiguration)
         {
 
-            string[] configPacenote = [ "[SETTINGS]",
+            string[] configPacenote = [ 
+                                        ";",
+                                        "; File:         PaceNote.ini",
+                                        "; Version:      2.0",
+                                        "; Date:         " + DateTime.Now.ToString("yyyy-MM-dd"),
+                                        ";",
+                                        "[SETTINGS]",
                                         "sounds = " + coPilotConfiguration.Name.Split(".")[0].Replace("/","\\").Remove(0,7),
                                         "language = " + languageConfiguration,
                                         "replaySpeeds = 0.005 0.01 0.03 0.06 0.125 0.25 0.5 0.75 1 1.25 1.5 1.75 2 4 6 8 10",
@@ -228,8 +234,8 @@ namespace Pacenotes_Installer
                                         "muteReplayPacenotes = 0", ";"];
             string[] configStyle = [    ";",
                                         "; File:         Rbr.ini",
-                                        "; Version:      1.0",
-                                        "; Date:         2023-12-09",
+                                        "; Version:      2.0",
+                                        "; Date:         " + DateTime.Now.ToString("yyyy-MM-dd"),
                                         ";",
                                         "[PACKAGE::RBR]",
                                         "file0=packages\\"];
@@ -255,7 +261,7 @@ namespace Pacenotes_Installer
                                 "Plugins\\Pacenote\\config\\pacenotes\\Descriptive-fr.ini",
                                 "Plugins\\Pacenote\\config\\pacenotes\\Descriptive-hu.ini"];
 
-            File.WriteAllLines(Path.Combine(destinationDir, "Plugins\\Pacenote\\Pacenote.ini"), configPacenote);
+            File.WriteAllLines(Path.Combine(destinationDir, "Plugins\\Pacenote\\PaceNote.ini"), configPacenote);
             foreach (string configPath in configPaths)
             {
                 File.WriteAllLines(Path.Combine(destinationDir, configPath), configStyle);
