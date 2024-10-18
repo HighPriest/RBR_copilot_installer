@@ -15,6 +15,8 @@ namespace Pacenotes_Installer
     public partial class LocalizationChangeForm : Form
     {
         public Dictionary<string, string> UIlanguages;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public CultureInfo SelectedCulture { get; private set; }
 
         public LocalizationChangeForm(System.Globalization.CultureInfo defaultCulture)
