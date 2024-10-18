@@ -189,6 +189,12 @@ Poprzednie konfiguracje można odzyskać i zastosować w dowolnym momencie.
   <data name="tab3label1.Text" xml:space="preserve">
     <value>Folder Richard Burns Rally</value>
   </data>
+  <data name="tab3buttonBack.Text" xml:space="preserve">
+    <value>Wstecz</value>
+  </data>
+  <data name="tab3buttonNext.Text" xml:space="preserve">
+    <value>Dalej</value>
+  </data>
   <data name="tab4textBox2.Text" xml:space="preserve">
     <value>    Wybierz zawartość do pobrania</value>
   </data>

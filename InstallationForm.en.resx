@@ -186,6 +186,12 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   <data name="tab3label1.Text" xml:space="preserve">
     <value>Richard Burns Rally directory</value>
   </data>
+  <data name="tab3buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="tab3buttonNext.Text" xml:space="preserve">
+    <value>Next</value>
+  </data>
   <data name="tab4textBox2.Text" xml:space="preserve">
     <value>    Select content to download</value>
   </data>
