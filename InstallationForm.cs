@@ -226,18 +226,18 @@ namespace Pacenotes_Installer
             foreach (string file in Directory.EnumerateFiles(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod"), "*", SearchOption.AllDirectories))
             {
                 string downloadDir = file.Replace(Path.Combine(tab3dirRBR.Text, "backup\\FilipekMod\\"), "");
-                string category = downloadDir.Split("\\")[0];
+                string category = downloadDir.Split('\\')[0];
                 // Add the file to configuration window
                 switch (category.ToLower())
                 {
                     case "language":
-                        tab6selectLanguage.Invoke(() => languageDataSource.Add(new Pacenotes_Installer.Classes.Language { Name = file.Split("\\").Last().Split(".").First(), Path = downloadDir, FileObject = null }));
+                        tab6selectLanguage.Invoke(() => languageDataSource.Add(new Pacenotes_Installer.Classes.Language { Name = file.Split("\\").Last().Split('.').First(), Path = downloadDir, FileObject = null }));
                         break;
                     case "sounds":
-                        tab6selectLanguage.Invoke(() => voiceDataSource.Add(new Pacenotes_Installer.Classes.Voice { Name = file.Split("\\").Last().Split(".").First(), Path = downloadDir, FileObject = null }));
+                        tab6selectLanguage.Invoke(() => voiceDataSource.Add(new Pacenotes_Installer.Classes.Voice { Name = file.Split("\\").Last().Split('.').First(), Path = downloadDir, FileObject = null }));
                         break;
                     case "config":
-                        tab6selectStyle.Invoke(() => styleDataSource.Add(new Pacenotes_Installer.Classes.Style { Name = file.Split("\\").Last().Split(".").First(), Path = downloadDir, FileObject = null }));
+                        tab6selectStyle.Invoke(() => styleDataSource.Add(new Pacenotes_Installer.Classes.Style { Name = file.Split("\\").Last().Split('.').First(), Path = downloadDir, FileObject = null }));
                         break;
                 }
             }
@@ -297,7 +297,7 @@ namespace Pacenotes_Installer
         {
             // Do saving tasks
             string config = DownloadManager.CreateRBRConfiguration(tab3dirRBR.Text,
-                ((Pacenotes_Installer.Classes.Voice)tab6selectCoPilot.SelectedItem).Path.TrimStart("sounds\\").Split(".")[0], // Or .Remove(0,7)
+                ((Pacenotes_Installer.Classes.Voice)tab6selectCoPilot.SelectedItem).Path.Remove(0, "sounds\\".Length).Split('.')[0], // Or .Remove(0,7)
                 ((Pacenotes_Installer.Classes.Style)tab6selectStyle.SelectedItem).Name,
                 ((Pacenotes_Installer.Classes.Language)tab6selectLanguage.SelectedItem).Name);
             tab8textConfig.Text = config;
@@ -354,7 +354,7 @@ namespace Pacenotes_Installer
 
         private void addNodeToFileList(TreeNode parentNode, Supabase.Storage.FileObject file)
         {
-            List<string> segments = new List<string>(file.Name.Split("/"));
+            List<string> segments = new List<string>(file.Name.Split('/'));
             segments[^1] = segments[^1].Replace(".zip", "").Replace(".ini", "");
 
             foreach (string segment in segments)
@@ -371,7 +371,7 @@ namespace Pacenotes_Installer
                     childNode.Name = segment;
                     if (segment == segments.Last())
                     {
-                        // childNode.Name = pathSegment.Split("/").Last();
+                        // childNode.Name = pathSegment.Split('/').Last();
                         childNode.Tag = file;
                     }
                     parentNode.Nodes.Add(childNode);

@@ -25,8 +25,15 @@ namespace Pacenotes_Installer
 
         public DownloadManager()
         {
-            publicURL = Properties.Secrets.publicUrl;
-            publicKey = Properties.Secrets.publicKey;
+            if(Environment.GetEnvironmentVariable("SUPABASE_PUBLICURL").IsNullOrEmpty() || Environment.GetEnvironmentVariable("SUPABASE_PUBLICKEY").IsNullOrEmpty())
+            {
+                publicURL = Properties.Secrets.publicUrl;
+                publicKey = Properties.Secrets.publicKey;
+            } else
+            {
+                publicURL = Environment.GetEnvironmentVariable("SUPABASE_PUBLICURL");
+                publicKey = Environment.GetEnvironmentVariable("SUPABASE_PUBLICKEY");
+            }
 
             var options = new Supabase.SupabaseOptions
             {
