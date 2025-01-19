@@ -117,80 +117,76 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="tab1textBox2.Text" xml:space="preserve">
-    <value>    Read before continuing with installation!</value>
+  <data name="tab8textBox2.Text" xml:space="preserve">
+    <value>    Confirm installed content matches expected configuration</value>
   </data>
-  <data name="tab1textBox1.Text" xml:space="preserve">
-    <value>Information</value>
-  </data>
-  <data name="richTextBox1.Text" xml:space="preserve">
-    <value>RBR Pacenotes Installer v1.0.0
-
-In following steps, you are going to choose style, language &amp; voice of the Pacenote Plugin for Richard Burns Rally &amp; CrewChief Rally plugin.
-
-COMPATIBILITY:
-Installed Pacenotes are compatible only with:
- - RallySimFans Pacenotes Plugin
- - CrewChief V4
-
-DISCLAIMER:
-The installer does not download or install any executable software on your computer.
-Only task of this program is to download &amp; configure audio files for a virtual rally co-pilot.
-
-You can proceed with installation without worry about losing your current configuration. All files which are altered by the installer, are copied &amp; saved into a compressed archive, next to newly installed files.
-Previous configurations can be retrieved &amp; applied at any time.</value>
-  </data>
-  <data name="tab1buttonNext.Text" xml:space="preserve">
-    <value>Accept</value>
-  </data>
-  <data name="tab2textBox2.Text" xml:space="preserve">
-    <value>    State of online services &amp; access to private content</value>
-  </data>
-  <data name="tab2textBox1.Text" xml:space="preserve">
-    <value>Online</value>
+  <data name="tab8textBox1.Text" xml:space="preserve">
+    <value>Finalisation</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>206, 15</value>
+  <data name="tab8label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>232, 15</value>
   </data>
-  <data name="tab2label2.Text" xml:space="preserve">
-    <value>Enter private key</value>
+  <data name="tab8label2.Text" xml:space="preserve">
+    <value>Installed content, ready to use</value>
   </data>
-  <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>85, 15</value>
+  <data name="tab8label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>143, 15</value>
   </data>
-  <data name="tab2label1.Text" xml:space="preserve">
-    <value>Server status:</value>
+  <data name="tab8label1.Text" xml:space="preserve">
+    <value>Default configuration</value>
   </data>
-  <data name="tab2buttonBack.Text" xml:space="preserve">
+  <data name="tab8buttonBack.Text" xml:space="preserve">
     <value>Back</value>
   </data>
-  <data name="tab2buttonNext.Text" xml:space="preserve">
-    <value>Next</value>
+  <data name="tab8buttonNext.Text" xml:space="preserve">
+    <value>Finish</value>
   </data>
-  <data name="tab3textBox2.Text" xml:space="preserve">
-    <value>    Directories of programs to modify</value>
+  <data name="tab6textBox2.Text" xml:space="preserve">
+    <value>    Select which files from downloaded configuration would you like to use after installation</value>
   </data>
-  <data name="tab3textBox1.Text" xml:space="preserve">
-    <value>Programs</value>
+  <data name="tab6textBox1.Text" xml:space="preserve">
+    <value>Configuration</value>
   </data>
-  <data name="tab3label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>101, 15</value>
+  <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>133, 15</value>
   </data>
-  <data name="tab3label2.Text" xml:space="preserve">
-    <value>CrewChief directory</value>
+  <data name="tab6label3.Text" xml:space="preserve">
+    <value>Pacenotes style</value>
   </data>
-  <data name="tab3label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>144, 15</value>
+  <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>63, 15</value>
   </data>
-  <data name="tab3label1.Text" xml:space="preserve">
-    <value>Richard Burns Rally directory</value>
+  <data name="tab6label2.Text" xml:space="preserve">
+    <value>CoPilot voice</value>
   </data>
-  <data name="tab3buttonBack.Text" xml:space="preserve">
-    <value>Back</value>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="soundsDataSource.TrayLocation" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab3buttonNext.Text" xml:space="preserve">
-    <value>Next</value>
+  <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>175, 15</value>
+  </data>
+  <data name="tab6label1.Text" xml:space="preserve">
+    <value>UI language of Pacenote Plugin</value>
+  </data>
+  <data name="tab6buttonBack.Text" xml:space="preserve">
+    <value>Reinstall</value>
+  </data>
+  <data name="tab6buttonNext.Text" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="tab5textBox2.Text" xml:space="preserve">
+    <value>    Wait for the installer to finish downloading seleceted content</value>
+  </data>
+  <data name="tab5textBox1.Text" xml:space="preserve">
+    <value>Downloading</value>
+  </data>
+  <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 15</value>
+  </data>
+  <data name="tab5label1.Text" xml:space="preserve">
+    <value>Currently downloading</value>
   </data>
   <data name="tab4textBox2.Text" xml:space="preserve">
     <value>    Select content to download</value>
@@ -206,7 +202,8 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
   </data>
   <data name="tab4richTextBox.Text" xml:space="preserve">
     <value>You can choose many styles &amp; sound packs at once. The one you would like to use after installation, can be selected in following steps.
-If you will want to change the style or voice pack after the installation is complete, it can be done through modification of configuration files.
+
+If you would like to change the style or voice pack after the installation is complete, downloaded data is cached on drive. Just start the installer &amp; make changes on further screens.
 
 Config: Pacenotes style. Numeric (Hairpin, 1, Square, 2, 3, 4, 5, 6), Descriptive (Easy, Medium, Slow), etc...
 Language: Language of the Pacenote plugins User Interface. Including written names of pacenotes.
@@ -225,81 +222,123 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   <data name="tab4buttonNext.Text" xml:space="preserve">
     <value>Download</value>
   </data>
-  <data name="tab5textBox2.Text" xml:space="preserve">
-    <value>    Wait for the installer to finish downloading seleceted content</value>
+  <data name="tab3textBox2.Text" xml:space="preserve">
+    <value>    Directories of programs to modify</value>
   </data>
-  <data name="tab5textBox1.Text" xml:space="preserve">
-    <value>Downloading</value>
+  <data name="tab3textBox1.Text" xml:space="preserve">
+    <value>Programs</value>
   </data>
-  <data name="tab5label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>111, 15</value>
+  <data name="tab3labelDR2.TabIndex" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab5label1.Text" xml:space="preserve">
-    <value>Currently downloading</value>
+  <data name="tab3labelDR2.Text" xml:space="preserve">
+    <value>Dirt Rally 2.0 directory</value>
   </data>
-  <data name="tab6textBox2.Text" xml:space="preserve">
-    <value>    Select which files from downloaded configuration would you like to use after installation</value>
+  <data name="tab3labelAC.Size" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab6textBox1.Text" xml:space="preserve">
-    <value>Configuration</value>
+  <data name="tab3labelAC.TabIndex" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab6label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>175, 15</value>
+  <data name="tab3labelAC.Text" xml:space="preserve">
+    <value>Assetto Corsa directory</value>
   </data>
-  <data name="tab6label1.Text" xml:space="preserve">
-    <value>UI language of Pacenote Plugin</value>
+  <data name="tab3labelCC.Size" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab6label3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>133, 15</value>
+  <data name="tab3labelCC.Text" xml:space="preserve">
+    <value>CrewChief directory</value>
   </data>
-  <data name="tab6label3.Text" xml:space="preserve">
-    <value>Pacenotes style</value>
+  <data name="tab3labelRBR.Size" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
   </data>
-  <data name="tab6label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>63, 15</value>
+  <data name="tab3labelRBR.Text" xml:space="preserve">
+    <value>Richard Burns Rally directory</value>
   </data>
-  <data name="tab6label2.Text" xml:space="preserve">
-    <value>CoPilot voice</value>
-  </data>
-  <data name="tab6buttonBack.Text" xml:space="preserve">
-    <value>Reinstall</value>
-  </data>
-  <data name="tab6buttonNext.Text" xml:space="preserve">
-    <value>Save</value>
-  </data>
-  <data name="tab7textBox2.Text" xml:space="preserve">
-    <value>    Confirm installed content matches expected configuration</value>
-  </data>
-  <data name="tab7textBox1.Text" xml:space="preserve">
-    <value>Finalisation</value>
-  </data>
-  <data name="tab7label2.Size" type="System.Drawing.Size, System.Drawing">
-    <value>232, 15</value>
-  </data>
-  <data name="tab7label2.Text" xml:space="preserve">
-    <value>Installed content, ready to use</value>
-  </data>
-  <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>143, 15</value>
-  </data>
-  <data name="tab7label1.Text" xml:space="preserve">
-    <value>Default configuration</value>
-  </data>
-  <data name="tab7buttonBack.Text" xml:space="preserve">
+  <data name="tab3buttonBack.Text" xml:space="preserve">
     <value>Back</value>
   </data>
-  <data name="tab7buttonNext.Text" xml:space="preserve">
-    <value>Finish</value>
+  <data name="tab3buttonNext.Text" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="tab2textBox2.Text" xml:space="preserve">
+    <value>    State of online services &amp; access to private content</value>
+  </data>
+  <data name="tab2textBox1.Text" xml:space="preserve">
+    <value>Online</value>
+  </data>
+  <data name="tab2label2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>206, 15</value>
+  </data>
+  <data name="tab2label2.Text" xml:space="preserve">
+    <value>Enter private key</value>
+  </data>
+  <data name="tab2label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>85, 15</value>
+  </data>
+  <data name="tab2label1.Text" xml:space="preserve">
+    <value>Server status:</value>
+  </data>
+  <data name="tab2buttonBack.Text" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="tab2buttonNext.Text" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="tab1textBox2.Text" xml:space="preserve">
+    <value>    Read before continuing with installation!</value>
+  </data>
+  <data name="tab1textBox1.Text" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="richTextBox1.Text" xml:space="preserve">
+    <value>RBR Pacenotes Installer v1.1.0
+
+In following steps, you are going to choose style, language &amp; voice of copilot in your favorite games
+
+COMPATIBILITY:
+Installed Pacenotes are compatible only with:
+ - RallySimFans Pacenotes Plugin
+ - Assetto Corsa (alpha)
+ - Dirt Rally 2.0 (alpha)
+ - CrewChief V4 (beta)
+
+DISCLAIMER:
+The installer does not download or install any executable software on your computer.
+Only task of this program is to download &amp; configure audio files for a virtual rally co-pilot.
+
+You can proceed with installation without worry about losing your current configuration. All files which are altered by the installer, are copied &amp; saved into a compressed archive, next to newly installed files.
+Previous configurations can be retrieved &amp; applied at any time.</value>
+  </data>
+  <data name="tab1buttonNext.Text" xml:space="preserve">
+    <value>Accept</value>
+  </data>
+  <data name="tab7textBox2.Dock" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="tab7textBox2.Text" xml:space="preserve">
+    <value>    Wait for the installer to finish installing selected content</value>
+  </data>
+  <data name="tab7textBox1.Text" xml:space="preserve">
+    <value>Installing</value>
+  </data>
+  <data name="tab7label1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>111, 15</value>
+  </data>
+  <data name="tab7label1.Text" xml:space="preserve">
+    <value>Currently installing</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>Filipek Mod Installer</value>
   </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="tab4splitContainer3.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
     <value>Fill</value>
   </data>
   <data name="ErrorNoDirectory" xml:space="preserve">
     <value>No installation directories have been selected!</value>
+  </data>
+  <data name="ErrorACDirectory" xml:space="preserve">
+    <value>This is not a correct Assetto Corsa directory. 'AssettoCorsa.exe' is missing.</value>
   </data>
   <data name="ErrorRBRDirectory" xml:space="preserve">
     <value>This is not a correct RSF RBR directory. 'RichardBurnsRally_SSE.exe' is missing</value>
@@ -309,5 +348,17 @@ Sounds: Language &amp; voice of the CoPilot.</value>
   </data>
   <data name="ErrorDownloadList" xml:space="preserve">
     <value>Check at least one item from each category!</value>
+  </data>
+  <data name="tab2labelStatus.Text" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="ErrorACNoContent" xml:space="preserve">
+    <value>You don't have access to Assetto Corsa content. Make sure the content key is correct.</value>
+  </data>
+  <data name="ErrorDR2NoContent" xml:space="preserve">
+    <value>You don't have access to Dirt Rally 2 content. Make sure the content key is correct.</value>
+  </data>
+  <data name="ErrorDR2Directory" xml:space="preserve">
+    <value>This is not a correct Dirt Rally 2.0 directory. 'dirtrally2.exe' is missing.</value>
   </data>
 </root>

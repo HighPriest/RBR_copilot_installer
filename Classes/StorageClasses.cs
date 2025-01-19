@@ -12,18 +12,36 @@ namespace Pacenotes_Installer.Classes
     #region RbrConfigurationsStorage
     internal class RbrConfigurationsStorage
     {
-        public Configurations? Configurations = new();
-        public Sounds? Sounds = new();
+        public Style? Style = new();
+        public Language? Language = new();
+        public Voice? Voice = new();
     }
 
-    public class Configurations
+    public class Style
     {
-        public Dictionary<string, List<Supabase.Storage.FileObject>>? Configuration = [];
+        public string Name { get; set; }
+        public string Path { get; set; }
+        public Supabase.Storage.FileObject FileObject { get; set; }
+
+        public override string ToString() => Name;
     }
 
-    public class Sounds
+    public class Language
     {
-        public Dictionary<string, List<Supabase.Storage.FileObject>>? Sound = [];
+        public string Name { get; set; }
+        public string Path { get; set; }
+        public Supabase.Storage.FileObject FileObject { get; set; }
+
+        public override string ToString() => Name;
+    }
+
+    public class Voice
+    {
+        public string Name { get; set; }
+        public string Path { get; set; }
+        public Supabase.Storage.FileObject FileObject { get; set; }
+
+        public override string ToString() => Name;
     }
     #endregion RbrConfigurationsStorage
 
