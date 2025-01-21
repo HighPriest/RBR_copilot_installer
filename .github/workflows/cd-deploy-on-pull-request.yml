@@ -13,66 +13,84 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup .NET 9 Preview
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
+    - name: Setup .NET 9 Preview
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
 
-      - name: Install dependencies
-        run: |
-          dotnet restore
+    - name: Install dependencies
+      run: |
+        dotnet restore
 
-      - name: Extract application version
-        id: get_version
-        run: |
-          $file = Get-ChildItem -Path . -Filter '*.csproj' -Recurse | Select-Object -First 1
-          if (-not $file) {
-            Write-Error \"No .csproj file found in the repository.\"
-            exit 1
-          }
-          $version = Select-String -Path $file.FullName -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
-          if (-not $version) {
-            Write-Error \"Version tag not found in $($file.FullName).\"
-            exit 1
-          }
-          echo "Application Version: $version"
-          echo "VERSION=$version" >> $env:GITHUB_ENV
+    - name: Extract application version
+      id: get_version
+      run: |
+        $file = Get-ChildItem -Path . -Filter '*.csproj' -Recurse | Select-Object -First 1
+        if (-not $file) {
+          Write-Error \"No .csproj file found in the repository.\"
+          exit 1
+        }
+        $version = Select-String -Path $file.FullName -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }
+        if (-not $version) {
+          Write-Error \"Version tag not found in $($file.FullName).\"
+          exit 1
+        }
+        echo "Application Version: $version"
+        echo "VERSION=$version" >> $env:GITHUB_ENV
 
-      - name: Build the application
-        run: |
-          dotnet publish /p:Configuration=Release /p:PublishProfile=FolderProfile
-        env:
-          SUPABASE_PUBLICURL: ${{ secrets.SUPABASE_PUBLICURL }}
-          SUPABASE_PUBLICKEY: ${{ secrets.SUPABASE_PUBLICKEY }}
+    # This isn't great, but I couldn't find a better way to embed strings from external sources into .net applications
+    - name: Generate Secrets.resx file from environment variables
+      run: |
+        echo "Generating Secrets.resx from environment variables..."
 
-      - name: Verify output
-        shell: pwsh
-        run: |
-          if (-not(Test-path "bin\Release\Pacenotes_Installer.exe" -PathType leaf)) {
-            echo "Output file not found!"
-            exit 1
-          }
+        $envStrings = @"
+          <root>
+            <data name="publicKey" xml:space="preserve">
+              <value>${{ secrets.SUPABASE_PUBLICKEY }}</value>
+            </data>
+            <data name="publicUrl" xml:space="preserve">
+              <value>${{ secrets.SUPABASE_PUBLICURL }}</value>
+            </data>
+            <data name="privateKey" xml:space="preserve">
+              <value>${{ secrets.SUPABASE_PUBLICURL }}</value>
+            </data>
+          </root>
+        "@
 
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: v${{ env.VERSION }}
-          draft: false
-          prerelease: false
+        $envStrings | Out-File -FilePath Properties\Secrets.resx -Encoding UTF8
 
-      - name: Upload file to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: bin\\Release\\Pacenotes_Installer.exe
-          asset_name: Pacenotes_Installer.exe
-          asset_content_type: application/octet-stream
+    - name: Build the application
+      run: |
+        dotnet publish /p:Configuration=Release /p:PublishProfile=ReleaseProfile
+
+    - name: Verify output
+      shell: pwsh
+      run: |
+        if (-not(Test-path "bin\Release\Pacenotes_Installer.exe" -PathType leaf)) {
+          echo "Output file not found!"
+          exit 1
+        }
+
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: v${{ env.VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Upload file to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: bin\\Release\\Pacenotes_Installer.exe
+        asset_name: Pacenotes_Installer.exe
+        asset_content_type: application/octet-stream

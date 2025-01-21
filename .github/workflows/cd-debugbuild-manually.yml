@@ -1,6 +1,6 @@
 # Inspired by https://github.com/files-community/Files/blob/main/.github/workflows/cd-store-stable.yml
 
-name: Pacenotes Installer Manual Deployment
+name: Pacenotes Installer Debug Build creator
 
 on:
   workflow_dispatch:
@@ -62,33 +62,18 @@ jobs:
 
     - name: Build the application
       run: |
-        dotnet publish /p:Configuration=Release /p:PublishProfile=ReleaseProfile
+        dotnet publish /p:Configuration=Debug /p:PublishProfile=DebugProfile
 
     - name: Verify output
       shell: pwsh
       run: |
-        if (-not(Test-path "bin\Release\Pacenotes_Installer.exe" -PathType leaf)) {
+        if (-not(Test-path "bin\Debug\Pacenotes_Installer.exe" -PathType leaf)) {
           echo "Output file not found!"
           exit 1
         }
 
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: v${{ env.VERSION }}
-        release_name: v${{ env.VERSION }}
-        draft: false
-        prerelease: false
-
-    - name: Upload file to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: bin\\Release\\Pacenotes_Installer.exe
-        asset_name: Pacenotes_Installer.exe
-        asset_content_type: application/octet-stream
+        name: pacenotes-installer-debug-build-v${{ env.VERSION }}
+        path: bin/Debug
