@@ -95,9 +95,8 @@ namespace Pacenotes_Installer
         public void saveFile(string destinationDir, Supabase.Storage.FileObject file, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
             // Check if file has already been downloaded & skip the download phase if it exists
-            if (File.Exists(Path.Combine(destinationDir, file.Name)))
+            if (File.Exists(Path.Combine(destinationDir, file.Name)) && File.GetLastWriteTime(Path.Combine(destinationDir, file.Name)) > file.UpdatedAt)
             {
-                // TODO: Do a check of file.CreatedAt & only if they don't match local file, do download
                 return;
             }
 
@@ -388,19 +387,22 @@ Pacenotes style = " + styleConfiguration;
                 System.IO.File.Move(file.Value, targetDir, true);
                 if (((file.Index * 100 / files_count) % 10) == 0)
                 {
-                    backgroundWorker.ReportProgress((file.Index * 100 / files_count) % 100, "Installing: " + file.Value);
+                    backgroundWorker.ReportProgress((file.Index * 100 / files_count) % 100, "Installing: " + targetDir);
                 }
             }
         }
 
         public void installRBRPackage(string targetDir, string packageName, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
+            // This can't be executed in WorkerComplete! The background worker is attached here, but can't be used.
+            // backgroundWorker.ReportProgress(0, "Configuring: " + packageName);
             string packagePath = Path.Combine(targetDir, "backup\\FilipekMod\\", packageName);
             Directory.CreateDirectory(Path.GetDirectoryName(targetDir));
             if (packagePath.EndsWith(".zip"))
             {
                 ExtractZipFile(System.IO.File.ReadAllBytes(packagePath), targetDir);
             }
+
         }
         #endregion RBRConfigurationMethods
     }
