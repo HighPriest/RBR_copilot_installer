@@ -14,15 +14,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup .NET 9 Preview
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
-
-    - name: Install dependencies
-      run: |
-        dotnet restore
-
     - name: Extract application version
       id: get_version
       run: |
@@ -38,6 +29,24 @@ jobs:
         }
         echo "Application Version: $version"
         echo "VERSION=$version" >> $env:GITHUB_ENV
+
+    - name: Check if tag exists
+      shell: pwsh
+      run: |
+        git fetch --tags
+        $existing_tags = git tag | Where-Object { $_ -eq v${{ env.VERSION }} }
+        if ($existing_tags) {
+          Write-Host "Tag v${{ env.VERSION }} already exists.`r`n` Please update the project configuration file.`r`n` Are you sure you are testing correct build?"
+        }
+
+    - name: Setup .NET 9 Preview
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install dependencies
+      run: |
+        dotnet restore
 
     # This isn't great, but I couldn't find a better way to embed strings from external sources into .net applications
     - name: Generate Secrets.resx file from environment variables
