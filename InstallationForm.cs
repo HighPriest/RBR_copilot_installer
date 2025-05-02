@@ -144,6 +144,32 @@ namespace Pacenotes_Installer
             btn_back_Click(sender, e);
         }
 
+        private void tab3buttonUninstall_Click(object sender, EventArgs e)
+        {
+            if (
+                System.Windows.Forms.MessageBox.Show(text: resources.GetString("UninstallNotice"), caption: "WARNING", buttons: MessageBoxButtons.YesNo, icon: MessageBoxIcon.Warning)
+                != DialogResult.Yes
+                ) return;
+            if (string.IsNullOrEmpty(tab3dirRBR.Text) && string.IsNullOrEmpty(tab3dirAC.Text) && string.IsNullOrEmpty(tab3dirDR2.Text) && string.IsNullOrEmpty(tab3dirCC.Text))
+            {
+                System.Windows.Forms.MessageBox.Show(text: resources.GetString("ErrorNoDirectory"), caption: "ERROR", buttons: MessageBoxButtons.OK, icon: MessageBoxIcon.Error);
+                return;
+            }
+
+            else
+            {
+                // open tab7
+                tabControl1.SelectTab(7);
+                // start uninstallation function
+                downloadManager.uninstallRBRConfiguration(tab3dirRBR.Text, workerInstallation);
+                    // pass installationWorker to the uninstall function
+                // start restoration function
+                downloadManager.restoreRBRBackup(tab3dirRBR.Text, workerInstallation);
+                    // pass installationWorker to the restoration function
+                tab8textConfig.Text = resources.GetString("UninstallConfigurationNotice");
+            }
+        }
+
         #endregion
         #region tab4
 
@@ -411,10 +437,5 @@ namespace Pacenotes_Installer
             }
         }
 
-
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }

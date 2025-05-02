@@ -30,10 +30,6 @@
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InstallationForm));
-            workerListFiles = new System.ComponentModel.BackgroundWorker();
-            workerDownload = new System.ComponentModel.BackgroundWorker();
-            workerInstallation = new System.ComponentModel.BackgroundWorker();
-            tab8 = new TabPage();
             tab8splitContainer1 = new SplitContainer();
             tab8textBox2 = new TextBox();
             tab8textBox1 = new TextBox();
@@ -44,7 +40,6 @@
             tab8label1 = new Label();
             tab8buttonBack = new Button();
             tab8buttonNext = new Button();
-            tab6 = new TabPage();
             tab6splitContainer1 = new SplitContainer();
             tab6textBox2 = new TextBox();
             tab6textBox1 = new TextBox();
@@ -60,14 +55,12 @@
             languageDataSource = new BindingSource(components);
             tab6buttonBack = new Button();
             tab6buttonNext = new Button();
-            tab5 = new TabPage();
             tab5splitContainer1 = new SplitContainer();
             tab5textBox2 = new TextBox();
             tab5textBox1 = new TextBox();
             tab5splitContainer2 = new SplitContainer();
             tab5label1 = new Label();
             tab5progressBar1 = new ProgressBar();
-            tab4 = new TabPage();
             tab4splitContainer1 = new SplitContainer();
             tab4textBox2 = new TextBox();
             tab4textBox1 = new TextBox();
@@ -77,7 +70,6 @@
             tab4richTextBox = new RichTextBox();
             tab4buttonBack = new Button();
             tab4buttonNext = new Button();
-            tab3 = new TabPage();
             tab3splitContainer1 = new SplitContainer();
             tab3textBox2 = new TextBox();
             tab3textBox1 = new TextBox();
@@ -96,7 +88,6 @@
             tab3dirRBR = new TextBox();
             tab3buttonBack = new Button();
             tab3buttonNext = new Button();
-            tab2 = new TabPage();
             tab2splitContainer1 = new SplitContainer();
             tab2textBox2 = new TextBox();
             tab2textBox1 = new TextBox();
@@ -107,22 +98,31 @@
             tab2label1 = new Label();
             tab2buttonBack = new Button();
             tab2buttonNext = new Button();
-            tab1 = new TabPage();
             tab1splitContainer1 = new SplitContainer();
             tab1textBox2 = new TextBox();
             tab1textBox1 = new TextBox();
             tab1splitContainer2 = new SplitContainer();
             richTextBox1 = new RichTextBox();
             tab1buttonNext = new Button();
-            tabControl1 = new TabControl();
-            tab7 = new TabPage();
             tab7splitContainer1 = new SplitContainer();
             tab7textBox2 = new TextBox();
             tab7textBox1 = new TextBox();
             tab7splitContainer2 = new SplitContainer();
             tab7label1 = new Label();
             tab7progressBar1 = new ProgressBar();
-            tab8.SuspendLayout();
+            workerListFiles = new System.ComponentModel.BackgroundWorker();
+            workerDownload = new System.ComponentModel.BackgroundWorker();
+            workerInstallation = new System.ComponentModel.BackgroundWorker();
+            tab8 = new TabPage();
+            tab6 = new TabPage();
+            tab5 = new TabPage();
+            tab4 = new TabPage();
+            tab3 = new TabPage();
+            tab2 = new TabPage();
+            tab1 = new TabPage();
+            tabControl1 = new TabControl();
+            tab7 = new TabPage();
+            tab3buttonUninstall = new Button();
             ((System.ComponentModel.ISupportInitialize)tab8splitContainer1).BeginInit();
             tab8splitContainer1.Panel1.SuspendLayout();
             tab8splitContainer1.Panel2.SuspendLayout();
@@ -131,7 +131,6 @@
             tab8splitContainer2.Panel1.SuspendLayout();
             tab8splitContainer2.Panel2.SuspendLayout();
             tab8splitContainer2.SuspendLayout();
-            tab6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab6splitContainer1).BeginInit();
             tab6splitContainer1.Panel1.SuspendLayout();
             tab6splitContainer1.Panel2.SuspendLayout();
@@ -143,7 +142,6 @@
             ((System.ComponentModel.ISupportInitialize)styleDataSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)voiceDataSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)languageDataSource).BeginInit();
-            tab5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab5splitContainer1).BeginInit();
             tab5splitContainer1.Panel1.SuspendLayout();
             tab5splitContainer1.Panel2.SuspendLayout();
@@ -151,7 +149,6 @@
             ((System.ComponentModel.ISupportInitialize)tab5splitContainer2).BeginInit();
             tab5splitContainer2.Panel1.SuspendLayout();
             tab5splitContainer2.SuspendLayout();
-            tab4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab4splitContainer1).BeginInit();
             tab4splitContainer1.Panel1.SuspendLayout();
             tab4splitContainer1.Panel2.SuspendLayout();
@@ -164,7 +161,6 @@
             tab4splitContainer3.Panel1.SuspendLayout();
             tab4splitContainer3.Panel2.SuspendLayout();
             tab4splitContainer3.SuspendLayout();
-            tab3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab3splitContainer1).BeginInit();
             tab3splitContainer1.Panel1.SuspendLayout();
             tab3splitContainer1.Panel2.SuspendLayout();
@@ -173,7 +169,6 @@
             tab3splitContainer2.Panel1.SuspendLayout();
             tab3splitContainer2.Panel2.SuspendLayout();
             tab3splitContainer2.SuspendLayout();
-            tab2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab2splitContainer1).BeginInit();
             tab2splitContainer1.Panel1.SuspendLayout();
             tab2splitContainer1.Panel2.SuspendLayout();
@@ -182,7 +177,6 @@
             tab2splitContainer2.Panel1.SuspendLayout();
             tab2splitContainer2.Panel2.SuspendLayout();
             tab2splitContainer2.SuspendLayout();
-            tab1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab1splitContainer1).BeginInit();
             tab1splitContainer1.Panel1.SuspendLayout();
             tab1splitContainer1.Panel2.SuspendLayout();
@@ -191,8 +185,6 @@
             tab1splitContainer2.Panel1.SuspendLayout();
             tab1splitContainer2.Panel2.SuspendLayout();
             tab1splitContainer2.SuspendLayout();
-            tabControl1.SuspendLayout();
-            tab7.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tab7splitContainer1).BeginInit();
             tab7splitContainer1.Panel1.SuspendLayout();
             tab7splitContainer1.Panel2.SuspendLayout();
@@ -200,33 +192,16 @@
             ((System.ComponentModel.ISupportInitialize)tab7splitContainer2).BeginInit();
             tab7splitContainer2.Panel1.SuspendLayout();
             tab7splitContainer2.SuspendLayout();
+            tab8.SuspendLayout();
+            tab6.SuspendLayout();
+            tab5.SuspendLayout();
+            tab4.SuspendLayout();
+            tab3.SuspendLayout();
+            tab2.SuspendLayout();
+            tab1.SuspendLayout();
+            tabControl1.SuspendLayout();
+            tab7.SuspendLayout();
             SuspendLayout();
-            // 
-            // workerListFiles
-            // 
-            workerListFiles.DoWork += listAllFiles;
-            workerListFiles.RunWorkerCompleted += initializeFileList;
-            // 
-            // workerDownload
-            // 
-            workerDownload.WorkerReportsProgress = true;
-            workerDownload.DoWork += workerDownload_DoWork;
-            workerDownload.ProgressChanged += workerDownload_ProgressChanged;
-            workerDownload.RunWorkerCompleted += workerDownload_RunWorkerCompleted;
-            // 
-            // workerInstallation
-            // 
-            workerInstallation.WorkerReportsProgress = true;
-            workerInstallation.DoWork += workerInstallation_DoWork;
-            workerInstallation.ProgressChanged += workerInstallation_ProgressChanged;
-            workerInstallation.RunWorkerCompleted += workerInstallation_RunWorkerCompleted;
-            // 
-            // tab8
-            // 
-            resources.ApplyResources(tab8, "tab8");
-            tab8.Controls.Add(tab8splitContainer1);
-            tab8.Name = "tab8";
-            tab8.UseVisualStyleBackColor = true;
             // 
             // tab8splitContainer1
             // 
@@ -236,30 +211,28 @@
             // 
             // tab8splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab8splitContainer1.Panel1, "tab8splitContainer1.Panel1");
             tab8splitContainer1.Panel1.Controls.Add(tab8textBox2);
             tab8splitContainer1.Panel1.Controls.Add(tab8textBox1);
             // 
             // tab8splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab8splitContainer1.Panel2, "tab8splitContainer1.Panel2");
             tab8splitContainer1.Panel2.Controls.Add(tab8splitContainer2);
             tab8splitContainer1.TabStop = false;
             // 
             // tab8textBox2
             // 
-            resources.ApplyResources(tab8textBox2, "tab8textBox2");
             tab8textBox2.BackColor = SystemColors.Control;
             tab8textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab8textBox2, "tab8textBox2");
             tab8textBox2.Name = "tab8textBox2";
             tab8textBox2.ReadOnly = true;
             tab8textBox2.TabStop = false;
             // 
             // tab8textBox1
             // 
-            resources.ApplyResources(tab8textBox1, "tab8textBox1");
             tab8textBox1.BackColor = SystemColors.Control;
             tab8textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab8textBox1, "tab8textBox1");
             tab8textBox1.Name = "tab8textBox1";
             tab8textBox1.ReadOnly = true;
             tab8textBox1.TabStop = false;
@@ -272,7 +245,6 @@
             // 
             // tab8splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab8splitContainer2.Panel1, "tab8splitContainer2.Panel1");
             tab8splitContainer2.Panel1.Controls.Add(tab8textInstalled);
             tab8splitContainer2.Panel1.Controls.Add(tab8label2);
             tab8splitContainer2.Panel1.Controls.Add(tab8textConfig);
@@ -280,7 +252,6 @@
             // 
             // tab8splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab8splitContainer2.Panel2, "tab8splitContainer2.Panel2");
             tab8splitContainer2.Panel2.Controls.Add(tab8buttonBack);
             tab8splitContainer2.Panel2.Controls.Add(tab8buttonNext);
             tab8splitContainer2.TabStop = false;
@@ -314,17 +285,11 @@
             // 
             // tab8buttonNext
             // 
+            tab8buttonNext.BackColor = Color.LightGreen;
             resources.ApplyResources(tab8buttonNext, "tab8buttonNext");
             tab8buttonNext.Name = "tab8buttonNext";
-            tab8buttonNext.UseVisualStyleBackColor = true;
+            tab8buttonNext.UseVisualStyleBackColor = false;
             tab8buttonNext.Click += tab8buttonNext_Click;
-            // 
-            // tab6
-            // 
-            resources.ApplyResources(tab6, "tab6");
-            tab6.Controls.Add(tab6splitContainer1);
-            tab6.Name = "tab6";
-            tab6.UseVisualStyleBackColor = true;
             // 
             // tab6splitContainer1
             // 
@@ -334,30 +299,28 @@
             // 
             // tab6splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab6splitContainer1.Panel1, "tab6splitContainer1.Panel1");
             tab6splitContainer1.Panel1.Controls.Add(tab6textBox2);
             tab6splitContainer1.Panel1.Controls.Add(tab6textBox1);
             // 
             // tab6splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab6splitContainer1.Panel2, "tab6splitContainer1.Panel2");
             tab6splitContainer1.Panel2.Controls.Add(tab6splitContainer2);
             tab6splitContainer1.TabStop = false;
             // 
             // tab6textBox2
             // 
-            resources.ApplyResources(tab6textBox2, "tab6textBox2");
             tab6textBox2.BackColor = SystemColors.Control;
             tab6textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab6textBox2, "tab6textBox2");
             tab6textBox2.Name = "tab6textBox2";
             tab6textBox2.ReadOnly = true;
             tab6textBox2.TabStop = false;
             // 
             // tab6textBox1
             // 
-            resources.ApplyResources(tab6textBox1, "tab6textBox1");
             tab6textBox1.BackColor = SystemColors.Control;
             tab6textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab6textBox1, "tab6textBox1");
             tab6textBox1.Name = "tab6textBox1";
             tab6textBox1.ReadOnly = true;
             tab6textBox1.TabStop = false;
@@ -370,7 +333,6 @@
             // 
             // tab6splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab6splitContainer2.Panel1, "tab6splitContainer2.Panel1");
             tab6splitContainer2.Panel1.Controls.Add(tab6label3);
             tab6splitContainer2.Panel1.Controls.Add(tab6selectStyle);
             tab6splitContainer2.Panel1.Controls.Add(tab6label2);
@@ -380,7 +342,6 @@
             // 
             // tab6splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab6splitContainer2.Panel2, "tab6splitContainer2.Panel2");
             tab6splitContainer2.Panel2.Controls.Add(tab6buttonBack);
             tab6splitContainer2.Panel2.Controls.Add(tab6buttonNext);
             tab6splitContainer2.TabStop = false;
@@ -392,9 +353,9 @@
             // 
             // tab6selectStyle
             // 
-            resources.ApplyResources(tab6selectStyle, "tab6selectStyle");
             tab6selectStyle.DataSource = styleDataSource;
             tab6selectStyle.FormattingEnabled = true;
+            resources.ApplyResources(tab6selectStyle, "tab6selectStyle");
             tab6selectStyle.Name = "tab6selectStyle";
             // 
             // styleDataSource
@@ -408,9 +369,9 @@
             // 
             // tab6selectCoPilot
             // 
-            resources.ApplyResources(tab6selectCoPilot, "tab6selectCoPilot");
             tab6selectCoPilot.DataSource = voiceDataSource;
             tab6selectCoPilot.FormattingEnabled = true;
+            resources.ApplyResources(tab6selectCoPilot, "tab6selectCoPilot");
             tab6selectCoPilot.Name = "tab6selectCoPilot";
             // 
             // voiceDataSource
@@ -424,9 +385,9 @@
             // 
             // tab6selectLanguage
             // 
-            resources.ApplyResources(tab6selectLanguage, "tab6selectLanguage");
             tab6selectLanguage.DataSource = languageDataSource;
             tab6selectLanguage.FormattingEnabled = true;
+            resources.ApplyResources(tab6selectLanguage, "tab6selectLanguage");
             tab6selectLanguage.Name = "tab6selectLanguage";
             // 
             // languageDataSource
@@ -442,17 +403,11 @@
             // 
             // tab6buttonNext
             // 
+            tab6buttonNext.BackColor = Color.LightGreen;
             resources.ApplyResources(tab6buttonNext, "tab6buttonNext");
             tab6buttonNext.Name = "tab6buttonNext";
-            tab6buttonNext.UseVisualStyleBackColor = true;
+            tab6buttonNext.UseVisualStyleBackColor = false;
             tab6buttonNext.Click += tab6buttonNext_Click;
-            // 
-            // tab5
-            // 
-            resources.ApplyResources(tab5, "tab5");
-            tab5.Controls.Add(tab5splitContainer1);
-            tab5.Name = "tab5";
-            tab5.UseVisualStyleBackColor = true;
             // 
             // tab5splitContainer1
             // 
@@ -462,30 +417,28 @@
             // 
             // tab5splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab5splitContainer1.Panel1, "tab5splitContainer1.Panel1");
             tab5splitContainer1.Panel1.Controls.Add(tab5textBox2);
             tab5splitContainer1.Panel1.Controls.Add(tab5textBox1);
             // 
             // tab5splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab5splitContainer1.Panel2, "tab5splitContainer1.Panel2");
             tab5splitContainer1.Panel2.Controls.Add(tab5splitContainer2);
             tab5splitContainer1.TabStop = false;
             // 
             // tab5textBox2
             // 
-            resources.ApplyResources(tab5textBox2, "tab5textBox2");
             tab5textBox2.BackColor = SystemColors.Control;
             tab5textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab5textBox2, "tab5textBox2");
             tab5textBox2.Name = "tab5textBox2";
             tab5textBox2.ReadOnly = true;
             tab5textBox2.TabStop = false;
             // 
             // tab5textBox1
             // 
-            resources.ApplyResources(tab5textBox1, "tab5textBox1");
             tab5textBox1.BackColor = SystemColors.Control;
             tab5textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab5textBox1, "tab5textBox1");
             tab5textBox1.Name = "tab5textBox1";
             tab5textBox1.ReadOnly = true;
             tab5textBox1.TabStop = false;
@@ -498,13 +451,8 @@
             // 
             // tab5splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab5splitContainer2.Panel1, "tab5splitContainer2.Panel1");
             tab5splitContainer2.Panel1.Controls.Add(tab5label1);
             tab5splitContainer2.Panel1.Controls.Add(tab5progressBar1);
-            // 
-            // tab5splitContainer2.Panel2
-            // 
-            resources.ApplyResources(tab5splitContainer2.Panel2, "tab5splitContainer2.Panel2");
             tab5splitContainer2.TabStop = false;
             // 
             // tab5label1
@@ -517,13 +465,6 @@
             resources.ApplyResources(tab5progressBar1, "tab5progressBar1");
             tab5progressBar1.Name = "tab5progressBar1";
             // 
-            // tab4
-            // 
-            resources.ApplyResources(tab4, "tab4");
-            tab4.Controls.Add(tab4splitContainer1);
-            tab4.Name = "tab4";
-            tab4.UseVisualStyleBackColor = true;
-            // 
             // tab4splitContainer1
             // 
             resources.ApplyResources(tab4splitContainer1, "tab4splitContainer1");
@@ -532,30 +473,28 @@
             // 
             // tab4splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab4splitContainer1.Panel1, "tab4splitContainer1.Panel1");
             tab4splitContainer1.Panel1.Controls.Add(tab4textBox2);
             tab4splitContainer1.Panel1.Controls.Add(tab4textBox1);
             // 
             // tab4splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab4splitContainer1.Panel2, "tab4splitContainer1.Panel2");
             tab4splitContainer1.Panel2.Controls.Add(tab4splitContainer2);
             tab4splitContainer1.TabStop = false;
             // 
             // tab4textBox2
             // 
-            resources.ApplyResources(tab4textBox2, "tab4textBox2");
             tab4textBox2.BackColor = SystemColors.Control;
             tab4textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab4textBox2, "tab4textBox2");
             tab4textBox2.Name = "tab4textBox2";
             tab4textBox2.ReadOnly = true;
             tab4textBox2.TabStop = false;
             // 
             // tab4textBox1
             // 
-            resources.ApplyResources(tab4textBox1, "tab4textBox1");
             tab4textBox1.BackColor = SystemColors.Control;
             tab4textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab4textBox1, "tab4textBox1");
             tab4textBox1.Name = "tab4textBox1";
             tab4textBox1.ReadOnly = true;
             tab4textBox1.TabStop = false;
@@ -568,37 +507,33 @@
             // 
             // tab4splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab4splitContainer2.Panel1, "tab4splitContainer2.Panel1");
             tab4splitContainer2.Panel1.Controls.Add(tab4splitContainer3);
             // 
             // tab4splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab4splitContainer2.Panel2, "tab4splitContainer2.Panel2");
             tab4splitContainer2.Panel2.Controls.Add(tab4buttonBack);
             tab4splitContainer2.Panel2.Controls.Add(tab4buttonNext);
             tab4splitContainer2.TabStop = false;
             // 
             // tab4splitContainer3
             // 
-            resources.ApplyResources(tab4splitContainer3, "tab4splitContainer3");
             tab4splitContainer3.FixedPanel = FixedPanel.Panel2;
+            resources.ApplyResources(tab4splitContainer3, "tab4splitContainer3");
             tab4splitContainer3.Name = "tab4splitContainer3";
             // 
             // tab4splitContainer3.Panel1
             // 
-            resources.ApplyResources(tab4splitContainer3.Panel1, "tab4splitContainer3.Panel1");
             tab4splitContainer3.Panel1.Controls.Add(tab4treeView1);
             // 
             // tab4splitContainer3.Panel2
             // 
-            resources.ApplyResources(tab4splitContainer3.Panel2, "tab4splitContainer3.Panel2");
             tab4splitContainer3.Panel2.Controls.Add(tab4richTextBox);
             tab4splitContainer3.TabStop = false;
             // 
             // tab4treeView1
             // 
-            resources.ApplyResources(tab4treeView1, "tab4treeView1");
             tab4treeView1.CheckBoxes = true;
+            resources.ApplyResources(tab4treeView1, "tab4treeView1");
             tab4treeView1.FullRowSelect = true;
             tab4treeView1.Name = "tab4treeView1";
             tab4treeView1.AfterCheck += tab4treeView1_CheckChildNodes;
@@ -617,17 +552,11 @@
             // 
             // tab4buttonNext
             // 
+            tab4buttonNext.BackColor = Color.LightGreen;
             resources.ApplyResources(tab4buttonNext, "tab4buttonNext");
             tab4buttonNext.Name = "tab4buttonNext";
-            tab4buttonNext.UseVisualStyleBackColor = true;
+            tab4buttonNext.UseVisualStyleBackColor = false;
             tab4buttonNext.Click += tab4buttonNext_Click;
-            // 
-            // tab3
-            // 
-            resources.ApplyResources(tab3, "tab3");
-            tab3.Controls.Add(tab3splitContainer1);
-            tab3.Name = "tab3";
-            tab3.UseVisualStyleBackColor = true;
             // 
             // tab3splitContainer1
             // 
@@ -637,30 +566,28 @@
             // 
             // tab3splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab3splitContainer1.Panel1, "tab3splitContainer1.Panel1");
             tab3splitContainer1.Panel1.Controls.Add(tab3textBox2);
             tab3splitContainer1.Panel1.Controls.Add(tab3textBox1);
             // 
             // tab3splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab3splitContainer1.Panel2, "tab3splitContainer1.Panel2");
             tab3splitContainer1.Panel2.Controls.Add(tab3splitContainer2);
             tab3splitContainer1.TabStop = false;
             // 
             // tab3textBox2
             // 
-            resources.ApplyResources(tab3textBox2, "tab3textBox2");
             tab3textBox2.BackColor = SystemColors.Control;
             tab3textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab3textBox2, "tab3textBox2");
             tab3textBox2.Name = "tab3textBox2";
             tab3textBox2.ReadOnly = true;
             tab3textBox2.TabStop = false;
             // 
             // tab3textBox1
             // 
-            resources.ApplyResources(tab3textBox1, "tab3textBox1");
             tab3textBox1.BackColor = SystemColors.Control;
             tab3textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab3textBox1, "tab3textBox1");
             tab3textBox1.Name = "tab3textBox1";
             tab3textBox1.ReadOnly = true;
             tab3textBox1.TabStop = false;
@@ -673,7 +600,6 @@
             // 
             // tab3splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab3splitContainer2.Panel1, "tab3splitContainer2.Panel1");
             tab3splitContainer2.Panel1.Controls.Add(tab3labelDR2);
             tab3splitContainer2.Panel1.Controls.Add(tab3buttonDR2);
             tab3splitContainer2.Panel1.Controls.Add(tab3dirDR2);
@@ -689,7 +615,7 @@
             // 
             // tab3splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab3splitContainer2.Panel2, "tab3splitContainer2.Panel2");
+            tab3splitContainer2.Panel2.Controls.Add(tab3buttonUninstall);
             tab3splitContainer2.Panel2.Controls.Add(tab3buttonBack);
             tab3splitContainer2.Panel2.Controls.Add(tab3buttonNext);
             tab3splitContainer2.TabStop = false;
@@ -729,7 +655,6 @@
             // 
             resources.ApplyResources(tab3dirAC, "tab3dirAC");
             tab3dirAC.Name = "tab3dirAC";
-            tab3dirAC.TextChanged += textBox1_TextChanged;
             // 
             // tab3labelCC
             // 
@@ -776,17 +701,11 @@
             // 
             // tab3buttonNext
             // 
+            tab3buttonNext.BackColor = Color.PaleGreen;
             resources.ApplyResources(tab3buttonNext, "tab3buttonNext");
             tab3buttonNext.Name = "tab3buttonNext";
-            tab3buttonNext.UseVisualStyleBackColor = true;
+            tab3buttonNext.UseVisualStyleBackColor = false;
             tab3buttonNext.Click += tab3buttonNext_Click;
-            // 
-            // tab2
-            // 
-            resources.ApplyResources(tab2, "tab2");
-            tab2.Controls.Add(tab2splitContainer1);
-            tab2.Name = "tab2";
-            tab2.UseVisualStyleBackColor = true;
             // 
             // tab2splitContainer1
             // 
@@ -796,30 +715,28 @@
             // 
             // tab2splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab2splitContainer1.Panel1, "tab2splitContainer1.Panel1");
             tab2splitContainer1.Panel1.Controls.Add(tab2textBox2);
             tab2splitContainer1.Panel1.Controls.Add(tab2textBox1);
             // 
             // tab2splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab2splitContainer1.Panel2, "tab2splitContainer1.Panel2");
             tab2splitContainer1.Panel2.Controls.Add(tab2splitContainer2);
             tab2splitContainer1.TabStop = false;
             // 
             // tab2textBox2
             // 
-            resources.ApplyResources(tab2textBox2, "tab2textBox2");
             tab2textBox2.BackColor = SystemColors.Control;
             tab2textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab2textBox2, "tab2textBox2");
             tab2textBox2.Name = "tab2textBox2";
             tab2textBox2.ReadOnly = true;
             tab2textBox2.TabStop = false;
             // 
             // tab2textBox1
             // 
-            resources.ApplyResources(tab2textBox1, "tab2textBox1");
             tab2textBox1.BackColor = SystemColors.Control;
             tab2textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab2textBox1, "tab2textBox1");
             tab2textBox1.Name = "tab2textBox1";
             tab2textBox1.ReadOnly = true;
             tab2textBox1.TabStop = false;
@@ -832,7 +749,6 @@
             // 
             // tab2splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab2splitContainer2.Panel1, "tab2splitContainer2.Panel1");
             tab2splitContainer2.Panel1.Controls.Add(tab2contentKey);
             tab2splitContainer2.Panel1.Controls.Add(tab2label2);
             tab2splitContainer2.Panel1.Controls.Add(tab2labelStatus);
@@ -840,7 +756,6 @@
             // 
             // tab2splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab2splitContainer2.Panel2, "tab2splitContainer2.Panel2");
             tab2splitContainer2.Panel2.Controls.Add(tab2buttonBack);
             tab2splitContainer2.Panel2.Controls.Add(tab2buttonNext);
             tab2splitContainer2.TabStop = false;
@@ -874,17 +789,11 @@
             // 
             // tab2buttonNext
             // 
+            tab2buttonNext.BackColor = Color.LightGreen;
             resources.ApplyResources(tab2buttonNext, "tab2buttonNext");
             tab2buttonNext.Name = "tab2buttonNext";
-            tab2buttonNext.UseVisualStyleBackColor = true;
+            tab2buttonNext.UseVisualStyleBackColor = false;
             tab2buttonNext.Click += tab2buttonNext_Click;
-            // 
-            // tab1
-            // 
-            resources.ApplyResources(tab1, "tab1");
-            tab1.BackColor = Color.Transparent;
-            tab1.Controls.Add(tab1splitContainer1);
-            tab1.Name = "tab1";
             // 
             // tab1splitContainer1
             // 
@@ -894,30 +803,28 @@
             // 
             // tab1splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab1splitContainer1.Panel1, "tab1splitContainer1.Panel1");
             tab1splitContainer1.Panel1.Controls.Add(tab1textBox2);
             tab1splitContainer1.Panel1.Controls.Add(tab1textBox1);
             // 
             // tab1splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab1splitContainer1.Panel2, "tab1splitContainer1.Panel2");
             tab1splitContainer1.Panel2.Controls.Add(tab1splitContainer2);
             tab1splitContainer1.TabStop = false;
             // 
             // tab1textBox2
             // 
-            resources.ApplyResources(tab1textBox2, "tab1textBox2");
             tab1textBox2.BackColor = SystemColors.Control;
             tab1textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab1textBox2, "tab1textBox2");
             tab1textBox2.Name = "tab1textBox2";
             tab1textBox2.ReadOnly = true;
             tab1textBox2.TabStop = false;
             // 
             // tab1textBox1
             // 
-            resources.ApplyResources(tab1textBox1, "tab1textBox1");
             tab1textBox1.BackColor = SystemColors.Control;
             tab1textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab1textBox1, "tab1textBox1");
             tab1textBox1.Name = "tab1textBox1";
             tab1textBox1.ReadOnly = true;
             tab1textBox1.TabStop = false;
@@ -930,12 +837,10 @@
             // 
             // tab1splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab1splitContainer2.Panel1, "tab1splitContainer2.Panel1");
             tab1splitContainer2.Panel1.Controls.Add(richTextBox1);
             // 
             // tab1splitContainer2.Panel2
             // 
-            resources.ApplyResources(tab1splitContainer2.Panel2, "tab1splitContainer2.Panel2");
             tab1splitContainer2.Panel2.Controls.Add(tab1buttonNext);
             tab1splitContainer2.TabStop = false;
             // 
@@ -948,32 +853,11 @@
             // 
             // tab1buttonNext
             // 
+            tab1buttonNext.BackColor = Color.LightGreen;
             resources.ApplyResources(tab1buttonNext, "tab1buttonNext");
             tab1buttonNext.Name = "tab1buttonNext";
-            tab1buttonNext.UseVisualStyleBackColor = true;
+            tab1buttonNext.UseVisualStyleBackColor = false;
             tab1buttonNext.Click += tab1buttonNext_Click;
-            // 
-            // tabControl1
-            // 
-            resources.ApplyResources(tabControl1, "tabControl1");
-            tabControl1.Controls.Add(tab1);
-            tabControl1.Controls.Add(tab2);
-            tabControl1.Controls.Add(tab3);
-            tabControl1.Controls.Add(tab4);
-            tabControl1.Controls.Add(tab5);
-            tabControl1.Controls.Add(tab6);
-            tabControl1.Controls.Add(tab7);
-            tabControl1.Controls.Add(tab8);
-            tabControl1.Name = "tabControl1";
-            tabControl1.SelectedIndex = 0;
-            tabControl1.TabStop = false;
-            // 
-            // tab7
-            // 
-            resources.ApplyResources(tab7, "tab7");
-            tab7.Controls.Add(tab7splitContainer1);
-            tab7.Name = "tab7";
-            tab7.UseVisualStyleBackColor = true;
             // 
             // tab7splitContainer1
             // 
@@ -983,30 +867,28 @@
             // 
             // tab7splitContainer1.Panel1
             // 
-            resources.ApplyResources(tab7splitContainer1.Panel1, "tab7splitContainer1.Panel1");
             tab7splitContainer1.Panel1.Controls.Add(tab7textBox2);
             tab7splitContainer1.Panel1.Controls.Add(tab7textBox1);
             // 
             // tab7splitContainer1.Panel2
             // 
-            resources.ApplyResources(tab7splitContainer1.Panel2, "tab7splitContainer1.Panel2");
             tab7splitContainer1.Panel2.Controls.Add(tab7splitContainer2);
             tab7splitContainer1.TabStop = false;
             // 
             // tab7textBox2
             // 
-            resources.ApplyResources(tab7textBox2, "tab7textBox2");
             tab7textBox2.BackColor = SystemColors.Control;
             tab7textBox2.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab7textBox2, "tab7textBox2");
             tab7textBox2.Name = "tab7textBox2";
             tab7textBox2.ReadOnly = true;
             tab7textBox2.TabStop = false;
             // 
             // tab7textBox1
             // 
-            resources.ApplyResources(tab7textBox1, "tab7textBox1");
             tab7textBox1.BackColor = SystemColors.Control;
             tab7textBox1.BorderStyle = BorderStyle.None;
+            resources.ApplyResources(tab7textBox1, "tab7textBox1");
             tab7textBox1.Name = "tab7textBox1";
             tab7textBox1.ReadOnly = true;
             tab7textBox1.TabStop = false;
@@ -1019,13 +901,8 @@
             // 
             // tab7splitContainer2.Panel1
             // 
-            resources.ApplyResources(tab7splitContainer2.Panel1, "tab7splitContainer2.Panel1");
             tab7splitContainer2.Panel1.Controls.Add(tab7label1);
             tab7splitContainer2.Panel1.Controls.Add(tab7progressBar1);
-            // 
-            // tab7splitContainer2.Panel2
-            // 
-            resources.ApplyResources(tab7splitContainer2.Panel2, "tab7splitContainer2.Panel2");
             tab7splitContainer2.TabStop = false;
             // 
             // tab7label1
@@ -1038,6 +915,104 @@
             resources.ApplyResources(tab7progressBar1, "tab7progressBar1");
             tab7progressBar1.Name = "tab7progressBar1";
             // 
+            // workerListFiles
+            // 
+            workerListFiles.DoWork += listAllFiles;
+            workerListFiles.RunWorkerCompleted += initializeFileList;
+            // 
+            // workerDownload
+            // 
+            workerDownload.WorkerReportsProgress = true;
+            workerDownload.DoWork += workerDownload_DoWork;
+            workerDownload.ProgressChanged += workerDownload_ProgressChanged;
+            workerDownload.RunWorkerCompleted += workerDownload_RunWorkerCompleted;
+            // 
+            // workerInstallation
+            // 
+            workerInstallation.WorkerReportsProgress = true;
+            workerInstallation.DoWork += workerInstallation_DoWork;
+            workerInstallation.ProgressChanged += workerInstallation_ProgressChanged;
+            workerInstallation.RunWorkerCompleted += workerInstallation_RunWorkerCompleted;
+            // 
+            // tab8
+            // 
+            tab8.Controls.Add(tab8splitContainer1);
+            resources.ApplyResources(tab8, "tab8");
+            tab8.Name = "tab8";
+            tab8.UseVisualStyleBackColor = true;
+            // 
+            // tab6
+            // 
+            tab6.Controls.Add(tab6splitContainer1);
+            resources.ApplyResources(tab6, "tab6");
+            tab6.Name = "tab6";
+            tab6.UseVisualStyleBackColor = true;
+            // 
+            // tab5
+            // 
+            tab5.Controls.Add(tab5splitContainer1);
+            resources.ApplyResources(tab5, "tab5");
+            tab5.Name = "tab5";
+            tab5.UseVisualStyleBackColor = true;
+            // 
+            // tab4
+            // 
+            tab4.Controls.Add(tab4splitContainer1);
+            resources.ApplyResources(tab4, "tab4");
+            tab4.Name = "tab4";
+            tab4.UseVisualStyleBackColor = true;
+            // 
+            // tab3
+            // 
+            tab3.Controls.Add(tab3splitContainer1);
+            resources.ApplyResources(tab3, "tab3");
+            tab3.Name = "tab3";
+            tab3.UseVisualStyleBackColor = true;
+            // 
+            // tab2
+            // 
+            tab2.Controls.Add(tab2splitContainer1);
+            resources.ApplyResources(tab2, "tab2");
+            tab2.Name = "tab2";
+            tab2.UseVisualStyleBackColor = true;
+            // 
+            // tab1
+            // 
+            tab1.BackColor = Color.Transparent;
+            tab1.Controls.Add(tab1splitContainer1);
+            resources.ApplyResources(tab1, "tab1");
+            tab1.Name = "tab1";
+            // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tab1);
+            tabControl1.Controls.Add(tab2);
+            tabControl1.Controls.Add(tab3);
+            tabControl1.Controls.Add(tab4);
+            tabControl1.Controls.Add(tab5);
+            tabControl1.Controls.Add(tab6);
+            tabControl1.Controls.Add(tab7);
+            tabControl1.Controls.Add(tab8);
+            resources.ApplyResources(tabControl1, "tabControl1");
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.TabStop = false;
+            // 
+            // tab7
+            // 
+            tab7.Controls.Add(tab7splitContainer1);
+            resources.ApplyResources(tab7, "tab7");
+            tab7.Name = "tab7";
+            tab7.UseVisualStyleBackColor = true;
+            // 
+            // tab3buttonUninstall
+            // 
+            tab3buttonUninstall.BackColor = Color.Pink;
+            resources.ApplyResources(tab3buttonUninstall, "tab3buttonUninstall");
+            tab3buttonUninstall.Name = "tab3buttonUninstall";
+            tab3buttonUninstall.UseVisualStyleBackColor = false;
+            tab3buttonUninstall.Click += tab3buttonUninstall_Click;
+            // 
             // InstallationForm
             // 
             resources.ApplyResources(this, "$this");
@@ -1045,7 +1020,6 @@
             Controls.Add(tabControl1);
             Name = "InstallationForm";
             Load += Form1_Load;
-            tab8.ResumeLayout(false);
             tab8splitContainer1.Panel1.ResumeLayout(false);
             tab8splitContainer1.Panel1.PerformLayout();
             tab8splitContainer1.Panel2.ResumeLayout(false);
@@ -1056,7 +1030,6 @@
             tab8splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)tab8splitContainer2).EndInit();
             tab8splitContainer2.ResumeLayout(false);
-            tab6.ResumeLayout(false);
             tab6splitContainer1.Panel1.ResumeLayout(false);
             tab6splitContainer1.Panel1.PerformLayout();
             tab6splitContainer1.Panel2.ResumeLayout(false);
@@ -1070,7 +1043,6 @@
             ((System.ComponentModel.ISupportInitialize)styleDataSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)voiceDataSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)languageDataSource).EndInit();
-            tab5.ResumeLayout(false);
             tab5splitContainer1.Panel1.ResumeLayout(false);
             tab5splitContainer1.Panel1.PerformLayout();
             tab5splitContainer1.Panel2.ResumeLayout(false);
@@ -1080,7 +1052,6 @@
             tab5splitContainer2.Panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)tab5splitContainer2).EndInit();
             tab5splitContainer2.ResumeLayout(false);
-            tab4.ResumeLayout(false);
             tab4splitContainer1.Panel1.ResumeLayout(false);
             tab4splitContainer1.Panel1.PerformLayout();
             tab4splitContainer1.Panel2.ResumeLayout(false);
@@ -1094,7 +1065,6 @@
             tab4splitContainer3.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)tab4splitContainer3).EndInit();
             tab4splitContainer3.ResumeLayout(false);
-            tab3.ResumeLayout(false);
             tab3splitContainer1.Panel1.ResumeLayout(false);
             tab3splitContainer1.Panel1.PerformLayout();
             tab3splitContainer1.Panel2.ResumeLayout(false);
@@ -1105,7 +1075,6 @@
             tab3splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)tab3splitContainer2).EndInit();
             tab3splitContainer2.ResumeLayout(false);
-            tab2.ResumeLayout(false);
             tab2splitContainer1.Panel1.ResumeLayout(false);
             tab2splitContainer1.Panel1.PerformLayout();
             tab2splitContainer1.Panel2.ResumeLayout(false);
@@ -1116,7 +1085,6 @@
             tab2splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)tab2splitContainer2).EndInit();
             tab2splitContainer2.ResumeLayout(false);
-            tab1.ResumeLayout(false);
             tab1splitContainer1.Panel1.ResumeLayout(false);
             tab1splitContainer1.Panel1.PerformLayout();
             tab1splitContainer1.Panel2.ResumeLayout(false);
@@ -1126,8 +1094,6 @@
             tab1splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)tab1splitContainer2).EndInit();
             tab1splitContainer2.ResumeLayout(false);
-            tabControl1.ResumeLayout(false);
-            tab7.ResumeLayout(false);
             tab7splitContainer1.Panel1.ResumeLayout(false);
             tab7splitContainer1.Panel1.PerformLayout();
             tab7splitContainer1.Panel2.ResumeLayout(false);
@@ -1137,6 +1103,15 @@
             tab7splitContainer2.Panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)tab7splitContainer2).EndInit();
             tab7splitContainer2.ResumeLayout(false);
+            tab8.ResumeLayout(false);
+            tab6.ResumeLayout(false);
+            tab5.ResumeLayout(false);
+            tab4.ResumeLayout(false);
+            tab3.ResumeLayout(false);
+            tab2.ResumeLayout(false);
+            tab1.ResumeLayout(false);
+            tabControl1.ResumeLayout(false);
+            tab7.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -1241,5 +1216,6 @@
         private BindingSource languageDataSource;
         private BindingSource styleDataSource;
         private BindingSource voiceDataSource;
+        private Button tab3buttonUninstall;
     }
 }

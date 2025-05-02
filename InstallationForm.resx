@@ -478,8 +478,7 @@
     <value>770, 454</value>
   </data>
   <data name="richTextBox1.Text" xml:space="preserve">
-    <value>RBR Pacenotes Installer v1.0.0
-
+    <value>RBR Pacenotes Installer v1.2.0
 In following steps, you are going to choose style, language &amp; voice of the Pacenote Plugin for Richard Burns Rally &amp; CrewChief Rally plugin.
 
 COMPATIBILITY:
@@ -976,7 +975,7 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>tab2contentKey</value>
   </data>
   <data name="&gt;&gt;tab3buttonBack.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>1</value>
   </data>
   <data name="tab8.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 24</value>
@@ -1708,7 +1707,7 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>Fill</value>
   </data>
   <data name="&gt;&gt;tab3buttonNext.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="&gt;&gt;tab3splitContainer1.Panel1.Parent" xml:space="preserve">
     <value>tab3splitContainer1</value>
@@ -1897,7 +1896,7 @@ Previous configurations can be retrieved &amp; applied at any time.</value>
     <value>Horizontal</value>
   </data>
   <data name="tab3buttonNext.Text" xml:space="preserve">
-    <value>Next</value>
+    <value>Install</value>
   </data>
   <data name="&gt;&gt;tab7textBox1.Name" xml:space="preserve">
     <value>tab7textBox1</value>
@@ -4660,10 +4659,7 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value>735, 17</value>
   </data>
   <data name="$this.TrayHeight" type="System.Int32, mscorlib">
-    <value>151</value>
-  </data>
-  <data name="soundsDataSource.TrayLocation" xml:space="preserve">
-    <value />
+    <value>77</value>
   </data>
   <data name="ErrorNoDirectory" xml:space="preserve">
     <value />
@@ -4678,15 +4674,60 @@ Sounds: Language &amp; voice of the CoPilot.</value>
     <value />
   </data>
   <data name="ErrorACDirectory" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="ErrorDR2Directory" xml:space="preserve">
     <value />
   </data>
   <data name="ErrorACNoContent" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="ErrorDR2NoContent" xml:space="preserve">
-    <value></value>
+    <value />
+  </data>
+  <data name="tab4splitContainer3.Dock" xml:space="preserve">
+    <value />
+  </data>
+  <data name="tab3buttonUninstall.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Left</value>
+  </data>
+  <data name="tab3buttonUninstall.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9.75pt</value>
+  </data>
+  <data name="tab3buttonUninstall.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="tab3buttonUninstall.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="tab3buttonUninstall.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 30</value>
+  </data>
+  <data name="tab3buttonUninstall.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="tab3buttonUninstall.Text" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonUninstall.Name" xml:space="preserve">
+    <value>tab3buttonUninstall</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonUninstall.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonUninstall.Parent" xml:space="preserve">
+    <value>tab3splitContainer2.Panel2</value>
+  </data>
+  <data name="&gt;&gt;tab3buttonUninstall.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="UninstallNotice" xml:space="preserve">
+    <value>Are you sure
+you want to uninstall content installed by this installer
+and restore the oldest backup?</value>
+  </data>
+  <data name="UninstallConfigurationNotice" xml:space="preserve">
+    <value>All new content has been sucessfully uninstalled
+The oldest backup has been restored</value>
   </data>
 </root>

@@ -77,14 +77,6 @@ namespace Pacenotes_Installer
         }
 
         #region InstallationMethods
-        public void createRBRBackup(string directory)
-        {
-
-        }
-        public void restoreRBRBackup(string directory)
-        {
-
-        }
         public void saveFile(string destinationDir, Supabase.Storage.FileObject file, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
             // Check if file has already been downloaded & skip the download phase if it exists
@@ -127,9 +119,9 @@ namespace Pacenotes_Installer
                         string destinationPath = Path.Combine(destinationDirectory, entry.FullName);
 
                         // Create the directory if it doesn't exist
-                        if (entry.FullName.EndsWith("/"))
+                        if (entry.FullName.EndsWith("/") || !Directory.Exists(Path.GetDirectoryName(destinationPath)))
                         {
-                            Directory.CreateDirectory(destinationPath);
+                            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
                         }
                         else
                         {
@@ -272,7 +264,7 @@ Pacenotes style = " + styleConfiguration;
             bool backup = false; // CAUTION: May cause bugs, where important data doesn't get backed up.
 
             // Take the unpacked location
-            string sourceDir = Path.Combine(directory, "backup\\temp");
+            string sourceDir = Path.Combine(directory, "backup\\unpacked");
             // Take the backup file location
             string targetDir = Path.Combine(directory, "backup\\backup_Pacenote.zip");
 
@@ -337,7 +329,7 @@ Pacenotes style = " + styleConfiguration;
             string sourceDir = Path.Combine(targetDir, "backup\\FilipekMod");
 
             // Take the unpacking location
-            string unpackDir = Path.Combine(targetDir, "backup\\temp");
+            string unpackDir = Path.Combine(targetDir, "backup\\unpacked");
 
             // for each file in directory
             // check if the file is selected in configuration window
@@ -356,7 +348,7 @@ Pacenotes style = " + styleConfiguration;
                 }
                 else
                 {
-                    string _unpackDir = file.Value.Replace("backup\\FilipekMod\\", "backup\\temp\\");
+                    string _unpackDir = file.Value.Replace("backup\\FilipekMod\\", "backup\\unpacked\\");
                     Directory.CreateDirectory(Path.GetDirectoryName(_unpackDir));
                     System.IO.File.Move(file.Value, _unpackDir, true);
                     if (((file.Index * 100 / files_count) % 10) == 0)
@@ -368,16 +360,16 @@ Pacenotes style = " + styleConfiguration;
         }
         public void installRBRConfiguration(string targetDir, System.ComponentModel.BackgroundWorker backgroundWorker)
         {
-            string unpackDir = Path.Combine(targetDir, "backup\\temp");
+            string unpackDir = Path.Combine(targetDir, "backup\\unpacked");
 
             var files = Directory.EnumerateFiles(unpackDir, "*", SearchOption.AllDirectories);
             int files_count = files.Count();
 
             foreach (var file in files.Select((x, i) => new { Value = x, Index = i }))
             {
-                targetDir = file.Value.Replace("backup\\temp\\", "");
+                targetDir = file.Value.Replace("backup\\unpacked\\", "");
                 Directory.CreateDirectory(Path.GetDirectoryName(targetDir));
-                System.IO.File.Move(file.Value, targetDir, true);
+                System.IO.File.Copy(file.Value, targetDir, true);
                 if (((file.Index * 100 / files_count) % 10) == 0)
                 {
                     backgroundWorker.ReportProgress((file.Index * 100 / files_count) % 100, "Installing: " + targetDir);
@@ -398,5 +390,48 @@ Pacenotes style = " + styleConfiguration;
 
         }
         #endregion RBRConfigurationMethods
+
+        #region UninstallationMethods
+        // Enumerate all the files from unpacked Backup directory
+        // Remove all the enumerated files from main directory
+        public void uninstallRBRConfiguration(string targetDir, System.ComponentModel.BackgroundWorker backgroundWorker)
+        {
+            // This is pretty much a mirror of installRBRConfiguration function
+            string unpackDir = Path.Combine(targetDir, "backup\\unpacked");
+
+            var files = Directory.EnumerateFiles(unpackDir, "*", SearchOption.AllDirectories);
+            int files_count = files.Count();
+
+            foreach (var file in files.Select((x, i) => new { Value = x, Index = i }))
+            {
+                targetDir = file.Value.Replace("backup\\unpacked\\", "");
+                if (File.Exists(targetDir))
+                {
+                    System.IO.File.Delete(targetDir);
+                }
+                if (((file.Index * 100 / files_count) % 10) == 0)
+                {
+                    backgroundWorker.ReportProgress((file.Index * 100 / files_count) % 100, "Deleting: " + targetDir);
+                }
+            }
+        }
+        // Unpack the first backup file
+        public void restoreRBRBackup(string targetDir, System.ComponentModel.BackgroundWorker backgroundWorker)
+        {
+            string packagePath = Path.Combine(targetDir, "backup\\");
+            var backupFiles = Directory.GetFiles(packagePath, "*", SearchOption.TopDirectoryOnly);
+
+            var oldestFile = backupFiles
+                                .Select(f => new FileInfo(f))
+                                .OrderBy(f => f.CreationTime)
+                                .First();
+
+            if (oldestFile.Extension.Equals(".zip"))
+            {
+                ExtractZipFile(System.IO.File.ReadAllBytes(oldestFile.FullName), targetDir);
+            }
+
+        }
+        #endregion UninstallationMethods
     }
 }
