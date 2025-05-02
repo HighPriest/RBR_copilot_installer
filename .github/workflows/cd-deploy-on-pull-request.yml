@@ -36,7 +36,7 @@ jobs:
       shell: pwsh
       run: |
         git fetch --tags
-        $existing_tags = git tag | Where-Object { $_ -eq v${{ env.VERSION }} }
+        $existing_tags = git tag | Where-Object { $_ -eq "v${{ env.VERSION }}" }
         if ($existing_tags) {
           Write-Host "Tag v${{ env.VERSION }} already exists.`r`n` Please update the project configuration file.`r`n` Stopping execution."
           exit 1
