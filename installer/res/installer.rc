@@ -1,0 +1,68 @@
+// installer.rc — dialogs, strings, manifest. Control IDs must match src/ui.rs.
+#include <windows.h>
+
+// Common Controls v6 + DPI awareness manifest
+1 RT_MANIFEST "app.manifest"
+
+// ---- Dialog: language picker (mirrors C# LocalizationChangeForm) ----
+#define IDD_LANGPICK   100
+#define IDC_LANGCOMBO  101
+
+IDD_LANGPICK DIALOGEX 0, 0, 180, 70
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Language"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "Select language:", -1, 10, 8, 160, 10
+    COMBOBOX        IDC_LANGCOMBO, 10, 20, 160, 60,
+                    CBS_DROPDOWNLIST | WS_TABSTOP
+    DEFPUSHBUTTON   "OK", IDOK, 65, 46, 50, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 120, 46, 50, 14
+END
+
+// ---- Dialog: main installer window (skeleton; grows in task I2) ----
+#define IDD_MAIN       110
+#define IDC_PKGLIST    111
+#define IDC_TARGETDIR  112
+#define IDC_BROWSE     113
+#define IDC_TOKEN      114
+#define IDC_UNLOCK     115
+#define IDC_PROGRESS   116
+#define IDC_STATUS     117
+#define IDC_INSTALL    118
+#define IDC_UNINSTALL  119
+
+IDD_MAIN DIALOGEX 0, 0, 320, 220
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
+CAPTION "Pacenotes Installer"
+FONT 9, "Segoe UI"
+BEGIN
+    CONTROL         "", IDC_PKGLIST, "SysListView32",
+                    LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP,
+                    10, 10, 300, 100
+    LTEXT           "Game folder:", -1, 10, 116, 60, 10
+    EDITTEXT        IDC_TARGETDIR, 10, 126, 240, 12, ES_AUTOHSCROLL
+    PUSHBUTTON      "...", IDC_BROWSE, 256, 125, 20, 14
+    LTEXT           "Access key:", -1, 10, 142, 60, 10
+    EDITTEXT        IDC_TOKEN, 10, 152, 240, 12, ES_AUTOHSCROLL | ES_PASSWORD
+    PUSHBUTTON      "Unlock", IDC_UNLOCK, 256, 151, 50, 14
+    CONTROL         "", IDC_PROGRESS, "msctls_progress32", WS_BORDER,
+                    10, 172, 300, 10
+    LTEXT           "", IDC_STATUS, 10, 186, 300, 10
+    DEFPUSHBUTTON   "Install", IDC_INSTALL, 145, 200, 50, 14
+    PUSHBUTTON      "Uninstall", IDC_UNINSTALL, 200, 200, 55, 14
+    PUSHBUTTON      "Close", IDCANCEL, 260, 200, 50, 14
+END
+
+// ---- Strings (i18n; extend per language in task I2) ----
+STRINGTABLE
+BEGIN
+    1  "Connecting..."
+    2  "Downloading: %s"
+    3  "Verifying..."
+    4  "Writing backup"
+    5  "Installing: %s"
+    6  "Done"
+    7  "Invalid or expired key."
+    8  "The plugin configuration directory doesn't exist!\nInstall the Pacenote plugin from the RSF installer first."
+END

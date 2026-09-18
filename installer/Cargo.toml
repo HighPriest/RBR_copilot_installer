@@ -1,0 +1,39 @@
+# Standalone crate on purpose — NOT a default workspace member.
+# Build (Windows only):
+#   cargo build --release --target x86_64-pc-windows-msvc
+# Then run check-size.ps1. The 500 kB limit is a release gate.
+
+[package]
+name = "pacenotes-installer"
+version = "0.1.0"
+edition = "2021"
+
+# DEPENDENCY BUDGET — read installer/CLAUDE.md before adding ANYTHING.
+# Forbidden: tokio, reqwest, hyper, rustls, native-tls, openssl, winit, egui,
+# iced, druid, windows-app, image, zip (the crate; it pulls too much).
+[dependencies]
+pacenotes-shared = { path = "../shared" }
+serde = { version = "1", features = ["derive"], default-features = false, features = ["std", "derive"] }
+serde_json = { version = "1", default-features = false, features = ["std"] }
+miniz_oxide = "0.8"           # inflate for zip extraction (~40 kB)
+# windows-sys is lighter than the `windows` crate (no COM metadata bloat).
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Controls",
+  "Win32_UI_Shell",              # SHBrowseForFolder / IFileDialog-lite
+  "Win32_Networking_WinHttp",
+  "Win32_System_LibraryLoader",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Threading",
+] }
+
+[build-dependencies]
+embed-resource = "2"          # compiles res/installer.rc (dialogs, manifest, icon)
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"

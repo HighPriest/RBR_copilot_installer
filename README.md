@@ -7,13 +7,34 @@ The ultimate second seat filler</p>
 <b align="center">Demo Video</b>
 </p>
 
-## Introduction
-This repository is the source for an automated installer of CoDriver configuration files. These files are presented for your acquaintance with current state of the project, for you to point out bugs & to state your desires in extension of the final product.
+## Introduction  
 
-## Contribute 
-### To the CoDriver system
+This repository is the source for an automated installer of CoDriver configuration files. These files are presented for your acquaintance with current state of the project, for you to point out bugs & to state your desires in extension of the final product.
+Rust rewrite of the C# Pacenotes installer, with a self-hosted package server.
+
+- Start here: `CLAUDE.md` (architecture rules), `TASKS.md` (milestones M0–M7).
+- `shared/` — protocol types (serde only).
+- `installer/` — Windows GUI, hard <500 kB gate. See `installer/CLAUDE.md`.
+- `server/` — axum + libSQL package/auth server. See `server/CLAUDE.md`.
+- `legacy/` — original C# sources; behavioral reference for the port.
+
+## Build
+
+    cargo build            # shared + server (any OS)
+    cargo test             # shared tests + server unit tests
+
+Installer (Windows, MSVC):
+
+    cd installer
+    .\check-size.ps1       # release build + 500 kB gate
+
+## Contribute  
+
+### To the CoDriver system  
+
 This repository is just the installer. If you would like to report bugs or contribute to individual CoDrivers & the Pacenoting system, please visit this repository:
 **[Richard Burns Rally CoPilot source repository](https://github.com/HighPriest/RBR_copilot_base)**
 
-### Extend the installer
+### Extend the installer  
+
 If you want to extend the installer, you are welcome to create PRs.
