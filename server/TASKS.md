@@ -16,7 +16,13 @@
 - [ ] GET /packages returns public-directory entries only (no auth yet)
 - [ ] `manifest gen` subcommand: scan <dir>/<subdir>/*.zip, subdir = access
       directory (validate [a-z0-9_-]+, reject top-level zips), sha256/size/
-      mtime; preserve version/description of existing entries
+      updated_at
+- [ ] `manifest gen` sidecar merge: parse <name>.toml (category default
+      "pacenotes", display_name, exclusive_group, requires, description,
+      version); preserve version of existing entries when sidecar omits it
+- [ ] `manifest gen` validation + warnings: dangling requires, sidecar w/o
+      zip, public package requiring non-public package
+- [ ] Unit tests: sidecar merge + validation cases
 
 ## S4 — Downloads
 - [ ] GET /download/{directory}/{name}: manifest (directory,name) lookup →
@@ -50,5 +56,9 @@
       token; revoked token; ungrant takes effect; 404; traversal
 - [ ] deploy/: Caddyfile (reverse_proxy + auto-HTTPS), systemd unit or
       Dockerfile (static musl build optional)
-- [ ] README snippet: publish flow = drop zip into packages/<dir>/ →
-      `manifest gen` → done; access flow = `token mint --grant <dir>`
+- [ ] Author sidecar .toml for the real packages (config variants share
+      exclusive_group "pacenote-config"; voice packs requires their
+      language pack; categories: sounds/configs/languages/pacenotes)
+- [ ] README snippet: publish flow = drop zip (+ sidecar) into
+      packages/<dir>/ → `manifest gen` → done; access flow =
+      `token mint --grant <dir>`

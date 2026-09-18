@@ -19,9 +19,19 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
 - [x] Unit tests: JSON round-trip; Manifest::visible_to grant filtering
 - [x] `cargo test -p pacenotes-shared` green
 
+## M1a — Protocol v2: install metadata (see root CLAUDE.md "Install model")
+- [ ] Extend PackageInfo: `category: String`,
+      `display_name: Option<String>`, `exclusive_group: Option<String>`,
+      `requires: Vec<String>` ("directory/name" refs; serde default = empty)
+- [ ] Unit tests: round-trip incl. new fields; old manifests without the
+      fields still deserialize (serde defaults; `category` defaults to
+      "pacenotes" via #[serde(default = ...)])
+- [ ] `shared::PackageRef` helper: parse/format "directory/name"
+
 ## M2 — Server MVP (serves real files, no auth yet)
 - [ ] server/TASKS.md → S1..S4
-- [ ] `GET /health`, `GET /packages` (public only), `GET /download/{name}`
+- [ ] `GET /health`, `GET /packages` (public only),
+      `GET /download/{directory}/{name}`
 - [ ] Manual test with curl against a `packages/` dir with one test zip
 
 ## M3 — Server auth
@@ -38,18 +48,27 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
 - [ ] Win32 dialog opens, size-check script passes on empty-ish binary
 - [ ] WinHTTP GET works against server `GET /packages` (localhost, http)
 
-## M5 — Installer download + install pipeline
+## M5 — Installer cache + install engine
 - [ ] installer/TASKS.md → I4..I7
-- [ ] List packages in UI, download w/ progress, sha256 verify, unzip
-- [ ] Port RBR logic: backup, unpack, install, ini generation
+- [ ] Library view: packages grouped by category, download → per-user cache
+      (sha-keyed, verified), cached/not-cached state shown
+- [ ] Install engine: ledger (installed.json per game dir), overlay extract,
+      one-time backup of non-ledger files, uninstall from ledger
+- [ ] Apply = diff selected-vs-ledger; exclusive groups honored;
+      `requires` enforced
+- [ ] Port `write_rbr_config` (the one built-in special step)
 
 ## M6 — Installer auth + polish
 - [ ] installer/TASKS.md → I8..I10
 - [ ] Access-key entry UI → granted directories appear; localization;
-      uninstall/restore
+      restore-from-backup
 - [ ] Final size audit < 500 kB, `cargo bloat` report saved to docs/
 
 ## M7 — Ship
 - [ ] Server: Dockerfile or systemd unit + Caddyfile (auto-HTTPS)
+- [ ] Sidecar .toml files authored for the real packages (categories,
+      display names, exclusive_group on the config variants, requires on
+      voice packs)
 - [ ] Reproducible release build instructions for both binaries
-- [ ] Smoke test: fresh Windows VM installs a real package end-to-end
+- [ ] Smoke test: fresh Windows VM — download several packages, install
+      subset, switch config variant, uninstall, restore

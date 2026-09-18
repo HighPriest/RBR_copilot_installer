@@ -27,6 +27,41 @@ pacenote packages. Two deliverables:
   covers its whole directory — per-package access = a package in its own
   directory.
 
+## Install model (fixed mechanism, declarative metadata)
+
+- Every package zip is a **game-root overlay**: extracting it at the game
+  directory puts every file in its final place. This is the ONLY install
+  mechanism. There are NO instruction/script files inside packages and the
+  installer must never execute or interpret package content. Rationale:
+  a compromised server must not gain arbitrary installer behavior; an
+  interpreter costs size budget; all real packages already conform.
+- What varies between packages is **metadata**, carried by the server
+  manifest (`PackageInfo`), NOT by paths and NOT by files inside the zip:
+  - `category`: UI grouping ("sounds", "configs", "languages", "pacenotes";
+    open string). Replaces the legacy meaning-in-path scheme
+    (`sounds\lang\gender\Voice.zip`). Access `directory` is auth ONLY —
+    category and directory are orthogonal.
+  - `display_name`: human name shown in the UI (replaces path hierarchy,
+    e.g. "English / Female / VoiceName").
+  - `exclusive_group` (optional): packages sharing a group overwrite the
+    same files (e.g. the pacenote-config variants); the UI radio-selects
+    within a group and Apply uninstalls the previous member first.
+  - `requires` (optional): list of "directory/name" deps the UI enforces
+    (e.g. voice pack requires its language pack).
+- **Cache**: downloads land in a per-user cache
+  (`%LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip` + `cache.json`
+  index). Sha-keyed: integrity + dedupe. Installing is cache → game dir;
+  works offline, works for multiple game dirs.
+- **Ledger**: each game dir gets `Plugins\Pacenote\installer\installed.json`
+  recording, per installed package, the exact files written. Uninstall =
+  delete ledgered files. Apply = diff (selected vs ledger) → uninstall
+  removed, install added.
+- **Backup**: before overwriting a file NOT owned by the ledger, copy it
+  once to `backup\` (preserving relative path). Restore = copy back.
+  This replaces the legacy backup/FilipekMod/unpacked directory dance.
+- The one built-in special step: `write_rbr_config` (RBR ini generation),
+  hard-coded in the installer, keyed off the selected `configs` package.
+
 ## Protocol (client ↔ server)
 
 - `GET /packages` — optional `Authorization: Bearer <token>`.
@@ -41,12 +76,11 @@ Any protocol change = change `shared/` first, then both sides in the same PR.
 
 ## Reference material
 
-`legacy/` (if present) contains the original C# sources (`DownloadManager.cs`,
-`InstallationForm.cs`, `Program.cs`). The installer's install/backup/uninstall
-logic (RBR .ini generation, backup zip, unpack/copy/delete flows) must be
-ported from there behavior-for-behavior. When in doubt about behavior, read
-the C# and match it — including quirks like "oldest backup zip is the restore
-source".
+`legacy/` contains the original C# sources (`DownloadManager.cs`,
+`InstallationForm.cs`, `Program.cs`). Port *behavior users depend on*
+(overlay layout, ini generation, restore-to-pristine), not mechanisms the
+new install model supersedes (backup/FilipekMod/unpacked staging dirs,
+oldest-zip restore). `installer/CLAUDE.md` says which is which.
 
 ## Workspace layout / build
 
@@ -61,6 +95,11 @@ source".
 - Follow the task lists: `TASKS.md` (root, ordered milestones), then
   `installer/TASKS.md` and `server/TASKS.md`. Mark items done as you go.
 - Prefer std over dependencies everywhere, but especially in `installer/`.
+- Limit amount of `use` statements. Prefer the full path at the point of use
+  (`std::path::PathBuf`, `pacenotes_shared::Manifest`, `anyhow::bail!(...)`),
+  most importantly in struct/enum definitions and function signatures. Where a trait method is needed, call it fully qualified
+  (`<sha2::Sha256 as sha2::Digest>::new()`). This keeps every identifier's
+  origin visible at the call site.
 - Windows paths in install logic use `\\` separators intentionally (RBR
   expects them in .ini content). Do not "normalize" .ini file contents.
 - No unwrap() in server request paths; map errors to proper HTTP statuses.

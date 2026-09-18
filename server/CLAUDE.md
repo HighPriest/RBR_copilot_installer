@@ -13,6 +13,9 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
 - One credential can hold grants for any number of directories.
 - A grant covers the whole directory (list + download of everything in it).
   Per-package access = put the package in its own directory.
+- Access directory ≠ UI category. `PackageInfo.category` (sounds/configs/
+  languages/pacenotes/...) is presentation metadata and lives in the
+  manifest; it has NO effect on auth.
 
 ## Data model
 
@@ -21,11 +24,25 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
   `PACENOTES_DB_URL` (keep all queries portable, no local-file assumptions).
   Tables: `tokens` + `grants(token_hash, directory)`. See
   migrations/0001_init.sql.
-- **Packages**: `./packages/<directory>/*.zip` + `./packages/manifest.json`
-  (a `shared::Manifest`). The manifest is the source of truth for metadata
-  (version, sha256, updated_at, description); each entry's `directory` field
-  must equal its subdirectory. The DB is ONLY for auth. Publishing = drop a
-  zip into a directory + run `manifest gen`. No upload API in v1.
+- **Packages**: `./packages/<directory>/<name>.zip` — game-root overlay
+  zips, dumb payloads, never introspected by the server.
+- **Sidecar metadata** (optional): `./packages/<directory>/<name>.toml`
+  next to its zip, authored by hand:
+
+      category = "configs"            # default if absent: "pacenotes"
+      display_name = "Numeric standard calls"
+      exclusive_group = "pacenote-config"
+      requires = ["public/english"]   # "directory/name" refs
+      description = "..."
+      version = "2.0.0"               # optional; else keep existing/1.0.0
+
+- **manifest.json** (`shared::Manifest`) at `./packages/manifest.json` is
+  what `GET /packages` serves. It is GENERATED: `manifest gen` scans
+  `<dir>/<subdir>/*.zip`, computes size/sha256/updated_at, merges each zip's
+  sidecar .toml, validates `requires` refs point at existing packages, and
+  writes the file. Hand-edits to manifest.json get overwritten — edit
+  sidecars instead. Publishing = drop zip (+ optional sidecar) → run
+  `manifest gen`. No upload API in v1.
 - Manifest is loaded at startup and hot-reloaded on file mtime change
   (checked lazily per request, cached with an RwLock — no inotify dep).
 - Directory names: `[a-z0-9_-]+`, enforced by `manifest gen` and re-checked
@@ -66,15 +83,17 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
 - `pacenotes-server token ungrant <token-or-hash> <directory>`
 - `pacenotes-server token revoke <token-or-hash>`
 - `pacenotes-server token list` (shows label, grants, expiry, revoked)
-- `pacenotes-server manifest gen --dir ./packages` — scans
-  `<dir>/<directory>/*.zip`, computes sha256/size/mtime, sets each entry's
-  `directory` from its subdir, preserves version/description of existing
-  entries, rejects invalid directory names and top-level zips.
+- `pacenotes-server manifest gen --dir ./packages` — scan + sidecar merge +
+  validation as described under Data model. Warnings for: sidecar without
+  zip, invalid directory name, top-level zips, dangling `requires`,
+  cross-directory `requires` pointing into a NON-public directory from a
+  public package (a public package must not require protected content).
 
 ## Testing
 
 - Unit: `auth::decide` (pure: token row + directory → decision) — exhaustive
   table test (exists in scaffold; extend, don't delete).
+- Unit: sidecar merge + `requires` validation in `manifest gen`.
 - Integration: spin server on an ephemeral port with a tempdir packages tree
   (public/ + two protected dirs) + in-memory libsql; assert the
   {anon, token-no-grants, token-dirA, token-dirA+dirB} × {public, dirA, dirB}
@@ -88,3 +107,5 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
   PACENOTES_PACKAGES_DIR).
 - tracing for logs; never log Authorization headers.
 - Keep handlers thin; logic in `auth.rs` / `store.rs` modules as they grow.
+- Sidecar parsing needs a TOML crate (e.g. `toml`) — fine, the server has no
+  size budget.
