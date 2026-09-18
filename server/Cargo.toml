@@ -8,15 +8,19 @@ license.workspace = true
 pacenotes-shared = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-axum = "0.8"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs", "signal"] }
-tower-http = { version = "0.6", features = ["trace"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-libsql = "0.6"            # embedded local file now; remote Turso later by URL
-sha2 = "0.10"             # token hashing (server has no size budget)
-rand = "0.8"              # token minting (admin CLI)
-clap = { version = "4", features = ["derive"] }  # serve / token subcommands
-anyhow = "1"
-# Version notes: these are known-good major versions as of mid-2026; run
-# `cargo update` and fix any breakage during M2 (see TASKS S1).
+axum = "=0.8.9"
+tokio = { version = "=1.53.1", features = ["macros", "rt-multi-thread", "fs", "signal"] }
+tower-http = { version = "=0.6.11", features = ["trace"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter"] }
+libsql = "=0.6.0"         # embedded local file now; remote Turso later by URL
+sha2 = "=0.10.9"          # token hashing (server has no size budget)
+rand = "=0.8.8"           # token minting (admin CLI)
+# `env` feature: flags fall back to PACENOTES_* env vars (server/CLAUDE.md).
+clap = { version = "=4.6.7", features = ["derive", "env"] }
+anyhow = "=1.0.104"
+# Versions are pinned exactly (M0); bump deliberately + commit Cargo.lock.
+
+[dev-dependencies]
+tempfile = "=3.24.0"
+reqwest = { version = "=0.12.28", default-features = false, features = ["json"] }
