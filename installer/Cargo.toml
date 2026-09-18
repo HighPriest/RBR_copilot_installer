@@ -13,7 +13,7 @@ edition = "2021"
 # iced, druid, windows-app, image, zip (the crate; it pulls too much).
 [dependencies]
 pacenotes-shared = { path = "../shared" }
-serde = { version = "1", features = ["derive"], default-features = false, features = ["std", "derive"] }
+serde = { version = "1", features = ["std", "derive"], default-features = false }
 serde_json = { version = "1", default-features = false, features = ["std"] }
 miniz_oxide = "0.8"           # inflate for zip extraction (~40 kB)
 # windows-sys is lighter than the `windows` crate (no COM metadata bloat).

@@ -3,3 +3,4 @@
 /server/data/
 /server/packages/*.zip
 Cargo.lock.bak
+legacy

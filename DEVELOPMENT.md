@@ -22,7 +22,7 @@ server + shared** (and CI-style checks). VSCode connects to both.
        cd installer
        cargo test
 
-## 2. Ubuntu 25.10 server (server + shared)
+## 2. Linux server (server + shared)
 
     sudo apt update && sudo apt install -y build-essential pkg-config git
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh   # defaults
