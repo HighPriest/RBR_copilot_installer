@@ -1,0 +1,82 @@
+# Rust port of legacy/.github/workflows/cd-debugbuild-manually.yml
+# Differences from the C# original:
+#   - version comes from installer/Cargo.toml instead of the .csproj <Version>
+#   - no Secrets.resx step: Supabase is gone, access keys are server credentials
+#   - dotnet publish -> cargo build for x86_64-pc-windows-msvc
+
+name: Pacenotes Installer Debug Build creator
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Extract application version
+      id: get_version
+      shell: pwsh
+      run: |
+        $file = "installer\Cargo.toml"
+        if (-not (Test-Path $file)) {
+          Write-Error "installer/Cargo.toml not found."
+          exit 1
+        }
+        $version = (Select-String -Path $file -Pattern '^version\s*=\s*"(.*?)"' | Select-Object -First 1).Matches.Groups[1].Value
+        if (-not $version) {
+          Write-Error "Version key not found in $file."
+          exit 1
+        }
+        echo "Application Version: $version"
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+
+    - name: Check if tag exists
+      shell: pwsh
+      run: |
+        git fetch --tags
+        $existing_tags = git tag | Where-Object { $_ -eq "v${{ env.VERSION }}" }
+        if ($existing_tags) {
+          Write-Host "Tag v${{ env.VERSION }} already exists.`r`n` Please update installer/Cargo.toml.`r`n` Are you sure you are testing correct build?"
+        }
+
+    - name: Setup Rust (MSVC target)
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: x86_64-pc-windows-msvc
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: installer
+
+    - name: Test pure-logic modules
+      working-directory: installer
+      run: cargo test --locked
+
+    - name: Build the application
+      working-directory: installer
+      run: cargo build --locked --target x86_64-pc-windows-msvc
+
+    - name: Verify output
+      shell: pwsh
+      run: |
+        if (-not(Test-Path "installer\target\x86_64-pc-windows-msvc\debug\pacenotes-installer.exe" -PathType leaf)) {
+          echo "Output file not found!"
+          exit 1
+        }
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pacenotes-installer-debug-build-v${{ env.VERSION }}
+        path: |
+          installer/target/x86_64-pc-windows-msvc/debug/pacenotes-installer.exe
+          installer/target/x86_64-pc-windows-msvc/debug/pacenotes-installer.pdb

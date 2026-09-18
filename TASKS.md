@@ -8,14 +8,16 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
 - [x] CLAUDE.md files (root, installer, server)
 - [x] Copy legacy C# sources into `legacy/` for reference
 - [x] `git init`, first commit
-- [ ] Pin all `*`/loose versions in Cargo.toml files to exact versions
+- [x] Pin all `*`/loose versions in Cargo.toml files to exact versions
       (`cargo add` latest stable of each; commit Cargo.lock)
-- [ ] Setup github actions scripts, equivalent to `legacy\.github\workflows`
+- [x] Setup github actions scripts, equivalent to `legacy\.github\workflows`
+      (`ci.yml` + ported `cd-debugbuild-manually` / `cd-deploy-manually` /
+      `cd-deploy-on-pull-request`)
 
 ## M1 — Shared protocol crate
-- [ ] `shared`: PackageInfo (directory-based), Manifest, ApiError compile
-- [ ] Unit tests: JSON round-trip; Manifest::visible_to grant filtering
-- [ ] `cargo test -p pacenotes-shared` green
+- [x] `shared`: PackageInfo (directory-based), Manifest, ApiError compile
+- [x] Unit tests: JSON round-trip; Manifest::visible_to grant filtering
+- [x] `cargo test -p pacenotes-shared` green
 
 ## M2 — Server MVP (serves real files, no auth yet)
 - [ ] server/TASKS.md → S1..S4

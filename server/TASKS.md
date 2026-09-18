@@ -1,9 +1,9 @@
 # Server tasks (S1..S8)
 
 ## S1 — Compile + pin
-- [ ] `cargo build -p pacenotes-server`; fix any version breakage from the
+- [x] `cargo build -p pacenotes-server`; fix any version breakage from the
       Cargo.toml majors; commit Cargo.lock
-- [ ] tracing-subscriber wired (env-filter, default info)
+- [x] tracing-subscriber wired (env-filter, default info)
 
 ## S2 — Config + skeleton
 - [ ] clap CLI: `serve` subcommand with --listen/--packages/--db-url

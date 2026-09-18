@@ -23,7 +23,10 @@ impl ManifestStore {
     pub fn new(packages_dir: impl Into<PathBuf>) -> Self {
         Self {
             packages_dir: packages_dir.into(),
-            cache: RwLock::new(Cached { manifest: Manifest::default(), mtime: None }),
+            cache: RwLock::new(Cached {
+                manifest: Manifest::default(),
+                mtime: None,
+            }),
         }
     }
 

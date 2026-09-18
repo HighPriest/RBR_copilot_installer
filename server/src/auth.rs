@@ -36,7 +36,7 @@ pub fn decide(token: Option<&TokenRow>, directory: &str, now: i64) -> Decision {
     match token {
         None => Decision::Unauthorized,
         Some(t) => {
-            let expired = t.expires_at.map_or(false, |e| e <= now);
+            let expired = t.expires_at.is_some_and(|e| e <= now);
             if t.revoked || expired {
                 return Decision::Unauthorized;
             }
@@ -75,31 +75,64 @@ mod tests {
         }
     }
 
+    /// (token, directory, predicate over the resulting decision)
+    type Case = (Option<TokenRow>, &'static str, fn(&Decision) -> bool);
+
     #[test]
     fn decision_table() {
         use Decision::*;
         let now = 1_000;
-        let cases: Vec<(Option<TokenRow>, &str, fn(&Decision) -> bool)> = vec![
+        let cases: Vec<Case> = vec![
             // public: always allowed, even with a bad token attached
             (None, PUBLIC_DIR, |d| matches!(d, Allow)),
-            (Some(tok(true, Some(1), &[])), PUBLIC_DIR, |d| matches!(d, Allow)),
+            (Some(tok(true, Some(1), &[])), PUBLIC_DIR, |d| {
+                matches!(d, Allow)
+            }),
             // protected dir, no token
             (None, "premium-voices", |d| matches!(d, Unauthorized)),
             // valid token, no grant
-            (Some(tok(false, None, &[])), "premium-voices", |d| matches!(d, Forbidden)),
+            (Some(tok(false, None, &[])), "premium-voices", |d| {
+                matches!(d, Forbidden)
+            }),
             // valid token, grant for a DIFFERENT dir
-            (Some(tok(false, None, &["beta"])), "premium-voices", |d| matches!(d, Forbidden)),
+            (Some(tok(false, None, &["beta"])), "premium-voices", |d| {
+                matches!(d, Forbidden)
+            }),
             // valid token with matching grant
-            (Some(tok(false, None, &["premium-voices"])), "premium-voices", |d| matches!(d, Allow)),
+            (
+                Some(tok(false, None, &["premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Allow),
+            ),
             // multiple grants, one matches
-            (Some(tok(false, None, &["beta", "premium-voices"])), "premium-voices", |d| matches!(d, Allow)),
+            (
+                Some(tok(false, None, &["beta", "premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Allow),
+            ),
             // revoked
-            (Some(tok(true, None, &["premium-voices"])), "premium-voices", |d| matches!(d, Unauthorized)),
+            (
+                Some(tok(true, None, &["premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Unauthorized),
+            ),
             // expired (expires_at <= now)
-            (Some(tok(false, Some(999), &["premium-voices"])), "premium-voices", |d| matches!(d, Unauthorized)),
-            (Some(tok(false, Some(1_000), &["premium-voices"])), "premium-voices", |d| matches!(d, Unauthorized)),
+            (
+                Some(tok(false, Some(999), &["premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Unauthorized),
+            ),
+            (
+                Some(tok(false, Some(1_000), &["premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Unauthorized),
+            ),
             // not yet expired
-            (Some(tok(false, Some(1_001), &["premium-voices"])), "premium-voices", |d| matches!(d, Allow)),
+            (
+                Some(tok(false, Some(1_001), &["premium-voices"])),
+                "premium-voices",
+                |d| matches!(d, Allow),
+            ),
         ];
         for (i, (t, dir, check)) in cases.iter().enumerate() {
             let d = decide(t.as_ref(), dir, now);
