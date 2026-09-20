@@ -5,6 +5,24 @@
 
 pub struct AppState {
     pub store: crate::store::ManifestStore,
+    pub db: libsql::Connection,
+}
+
+/// The caller's credential, resolved once per request.
+/// `None` = anonymous (or a token that does not exist): either way only
+/// `public` is visible.
+async fn caller(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Result<Option<crate::auth::TokenRow>, crate::error::AppError> {
+    let Some(raw) = crate::auth::bearer_from_headers(headers) else {
+        return Ok(None);
+    };
+    // SECURITY: only the hash leaves this line; the raw token is never logged
+    // and never reaches an error message.
+    crate::auth::load_token(&state.db, &crate::auth::hash_token(&raw))
+        .await
+        .map_err(|e| crate::error::AppError::internal("loading credential", e))
 }
 
 pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
@@ -20,13 +38,20 @@ async fn health() -> &'static str {
     "ok"
 }
 
-/// `GET /packages` — never 403s: it silently filters to the directories the
-/// caller may see, so directory names can't be enumerated (task S3/S6).
-/// Auth-based filtering arrives with S6; for now only `public` is listed.
+/// `GET /packages` — never 401s or 403s: it silently filters to the
+/// directories the caller may see, so a caller cannot enumerate directory
+/// names by probing (server/CLAUDE.md). A revoked, expired or unknown token
+/// therefore yields exactly the anonymous listing.
 async fn list_packages(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
-) -> axum::Json<pacenotes_shared::Manifest> {
-    axum::Json(state.store.current().public_only())
+    headers: axum::http::HeaderMap,
+) -> Result<axum::Json<pacenotes_shared::Manifest>, crate::error::AppError> {
+    let token = caller(&state, &headers).await?;
+    let grants = match token {
+        Some(t) if t.is_live(crate::auth::now()) => t.grants,
+        _ => Vec::new(),
+    };
+    Ok(axum::Json(state.store.current().visible_to(&grants)))
 }
 
 /// `GET /download/{directory}/{name}` — `directory` and `name` are manifest
@@ -35,10 +60,21 @@ async fn list_packages(
 async fn download(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
     axum::extract::Path((directory, name)): axum::extract::Path<(String, String)>,
+    headers: axum::http::HeaderMap,
 ) -> Result<axum::response::Response, crate::error::AppError> {
     let Some((package, path)) = state.store.zip_path(&directory, &name) else {
         return Err(crate::error::AppError::not_found());
     };
+
+    // Access is decided AFTER the lookup, so the status tells the caller
+    // about a package that exists; a package that does not is always 404,
+    // whatever credential was presented.
+    let token = caller(&state, &headers).await?;
+    match crate::auth::decide(token.as_ref(), &package.directory, crate::auth::now()) {
+        crate::auth::Decision::Allow => {}
+        crate::auth::Decision::Unauthorized => return Err(crate::error::AppError::unauthorized()),
+        crate::auth::Decision::Forbidden => return Err(crate::error::AppError::forbidden()),
+    }
 
     let file = match tokio::fs::File::open(&path).await {
         Ok(f) => f,

@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026/09/20 — M3: server auth
+
+- libSQL auth store: `db.rs` opens `--db-url` (local file, `:memory:`, or
+  remote Turso by URL with `PACENOTES_DB_AUTH_TOKEN`) and applies
+  `migrations/0001_init.sql` idempotently on every start.
+- `auth.rs`: bearer parsing, sha256 hashing, minting (`pcn_` + 32 random
+  bytes, hand-rolled unpadded base64url — no dependency for 20 lines), and
+  a single-query `tokens LEFT JOIN grants` load. `TokenRow::is_live` is the
+  one definition of "not revoked, not expired", shared by `decide` and the
+  `/packages` filter.
+- `/packages` filters to public + granted directories and never 4xxs (a bad
+  credential silently sees the anonymous listing, so directory names cannot
+  be enumerated). `/download` enforces `decide()`: 401 missing/expired/
+  revoked, 403 valid-but-not-granted, 404 no such package — resolved before
+  the access check, so a nonexistent package is 404 for everyone.
+- `token` admin CLI: `mint` (prints the key once, stdout), `grant`,
+  `ungrant`, `revoke`, `list`. Credentials are addressed by raw key or hash
+  (full or the short form `list` prints); `public` and invalid directory
+  names are refused; an ambiguous hash prefix is an error.
+- `server` split into lib + bin so `server/tests/api.rs` drives the real
+  router: the {anon, no-grants, dirA, dirA+dirB} x {public, dirA, dirB}
+  matrix for listing AND download, plus expired, revoked, ungrant-takes-
+  effect, traversal and ApiError bodies. 35 tests green, clippy -D warnings
+  clean.
+- Verified live: minting, listing, refusal to grant `public`, per-grant
+  filtering, 401/403/200 on download, revoke taking effect — and the log
+  contains neither the key nor the Authorization header.
+
 ## 2026/09/20 — M1a (protocol v2) + M2 (server MVP)
 
 - `shared`: protocol v2. `PackageInfo` gains `game`, `category`,

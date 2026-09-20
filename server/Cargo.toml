@@ -4,6 +4,16 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 
+# The binary is a thin CLI over the library; the library is what the
+# integration tests in server/tests/ drive.
+[lib]
+name = "pacenotes_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pacenotes-server"
+path = "src/main.rs"
+
 [dependencies]
 pacenotes-shared = { workspace = true }
 serde = { workspace = true }
@@ -30,3 +40,4 @@ toml = "=1.1.6"
 [dev-dependencies]
 tempfile = "=3.24.0"
 reqwest = { version = "=0.12.28", default-features = false, features = ["json"] }
+pacenotes-shared = { workspace = true }

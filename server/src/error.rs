@@ -12,9 +12,6 @@ pub struct AppError {
 
 impl AppError {
     /// Missing/malformed/expired/revoked credential on a protected directory.
-    // TODO(S6): drop this allow — unauthorized()/forbidden() get their callers
-    // when /download starts enforcing auth::decide().
-    #[allow(dead_code)]
     pub fn unauthorized() -> Self {
         Self {
             status: axum::http::StatusCode::UNAUTHORIZED,
@@ -24,7 +21,6 @@ impl AppError {
     }
 
     /// Valid credential, but it does not grant this directory.
-    #[allow(dead_code)] // TODO(S6): see above.
     pub fn forbidden() -> Self {
         Self {
             status: axum::http::StatusCode::FORBIDDEN,

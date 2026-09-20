@@ -31,29 +31,31 @@
 - [x] Traversal test: directory+name are lookup keys, never paths (assert)
 
 ## S5 — libSQL auth store
-- [ ] migrations/0001_init.sql applied on startup (idempotent)
-- [ ] auth.rs: parse Bearer header → sha256 → load TokenRow + grants
+- [x] migrations/0001_init.sql applied on startup (idempotent)
+- [x] auth.rs: parse Bearer header → sha256 → load TokenRow + grants
       (single query, tokens LEFT JOIN grants)
-- [ ] `auth::decide` already implemented + table-tested in scaffold: review,
-      extend cases if behavior grows
+- [x] `auth::decide` reviewed; `TokenRow::is_live` extracted so the
+      /packages filter and decide() cannot drift apart
 
 ## S6 — Auth wiring
-- [ ] /packages: filter manifest to public + granted dirs (Manifest::visible_to);
+- [x] /packages: filter manifest to public + granted dirs (Manifest::visible_to);
       never 403 — filtering only (no directory-name enumeration)
-- [ ] /download: enforce decide(); 401/403 with shared::ApiError bodies
-- [ ] Never log tokens (tracing field audit)
+- [x] /download: enforce decide(); 401/403 with shared::ApiError bodies
+- [x] Never log tokens (tracing field audit; verified against a live run —
+      neither the key nor the Authorization header reaches the log)
 
 ## S7 — Credential admin CLI
-- [ ] `token mint --label ... [--grant DIR]... [--expires-days N]`
+- [x] `token mint --label ... [--grant DIR]... [--expires-days N]`
       (pcn_ + 32B base64url, print once, store hash + grant rows)
-- [ ] `token grant` / `token ungrant` (reject directory "public")
-- [ ] `token revoke`, `token list` (label, grants, expiry, revoked)
-- [ ] expires_at + revoked honored by decide() (already in scaffold tests)
+- [x] `token grant` / `token ungrant` (reject directory "public")
+- [x] `token revoke`, `token list` (label, grants, expiry, revoked)
+- [x] expires_at + revoked honored by decide() (already in scaffold tests)
 
 ## S8 — Integration + deploy
-- [ ] Integration tests: {anon, no-grants, dirA, dirA+dirB} × {public, dirA,
+- [x] Integration tests: {anon, no-grants, dirA, dirA+dirB} × {public, dirA,
       dirB} matrix for /packages filtering and /download statuses; expired
       token; revoked token; ungrant takes effect; 404; traversal
+      (`server/tests/api.rs`, 9 tests on an ephemeral port + in-memory DB)
 - [ ] deploy/: Caddyfile (reverse_proxy + auto-HTTPS), systemd unit or
       Dockerfile (static musl build optional)
 - [ ] Author sidecar .toml for the real packages (config variants share
@@ -82,3 +84,28 @@
 - Downloads stream via `tokio_util::io::ReaderStream`; Content-Length comes
   from the file handle, not the manifest, so a stale manifest cannot produce
   a truncated or over-long response.
+
+## S5-S8 implementation notes
+
+- `server` is now lib + bin: `src/lib.rs` exports the modules, `src/main.rs`
+  is only the CLI. Integration tests could not otherwise drive the real
+  router and the real admin commands — a test that reimplements them proves
+  nothing.
+- `TokenRow::is_live` is the single definition of "not revoked, not expired".
+  `/packages` filtering and `auth::decide` both call it, so the listing and
+  the download decision cannot disagree about a credential.
+- `/packages` never 4xxs, by design: an expired, revoked, unknown or
+  malformed credential silently gets the anonymous listing. Status codes
+  there would let a caller enumerate directory names.
+- `/download` resolves the package BEFORE deciding access, so a package that
+  does not exist is 404 for everyone and the status never reveals which
+  directories exist. Only a real package yields 401/403.
+- Credentials are identified on the CLI by the raw key OR the hash (full or
+  the 12-char prefix `token list` prints). An ambiguous prefix is an error,
+  never a coin flip.
+- `token mint` prints the key on stdout (pipeable) and the warning on
+  stderr. It is the only place a raw key exists.
+- Grants are read per request, never cached, so `ungrant`/`revoke` take
+  effect immediately — asserted by tests, not just claimed.
+- base64url is 20 hand-written lines with known-vector tests rather than a
+  dependency.

@@ -49,19 +49,22 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
       with correct Content-Length/Type/Disposition, unknown package 404,
       `..%2F..%2Fdata/auth.db` 404)
 
-NOTE: /download is NOT access-checked yet — a protected directory's zip is
-downloadable by anyone who guesses `directory/name`. `/packages` hides those
-names, which is concealment, not access control. M3/S6 closes it; do not
-deploy M2 publicly.
+(The M2 gap where /download was unauthenticated is closed by M3 below.)
 
 ## M3 — Server auth
-- [ ] server/TASKS.md → S5..S7
-- [ ] libSQL schema + migrations (tokens + grants), token hashing,
+- [x] server/TASKS.md → S5..S7
+- [x] libSQL schema + migrations (tokens + grants), token hashing,
       directory-grant checks (auth::decide)
-- [ ] Admin CLI subcommand: mint/revoke credentials
-- [ ] Admin CLI: grant/ungrant directories per credential
-- [ ] Integration tests: {anon, no-grants, one-dir, multi-dir} listing &
-      download matrix
+- [x] Admin CLI subcommand: mint/revoke credentials
+- [x] Admin CLI: grant/ungrant directories per credential
+- [x] Integration tests: {anon, no-grants, one-dir, multi-dir} listing &
+      download matrix (`server/tests/api.rs`) — plus S8's expired/revoked/
+      ungrant/404/traversal cases, which were cheap once the harness existed
+
+The server side of the protocol is now feature-complete for M1-M3: the
+installer can be pointed at it. What remains server-side is S8's deploy
+half (Caddyfile + systemd/Docker) and the real packages' sidecars, both in
+M7.
 
 ## M4 — Installer skeleton (Windows)
 - [x] installer/TASKS.md → I1 (toolchain, resources, pinned deps, size gate)
