@@ -8,6 +8,12 @@ pub struct Sha256 {
     // TODO(I5): state [u32; 8], buffer, length counter.
 }
 
+impl Default for Sha256 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Sha256 {
     pub fn new() -> Self {
         Self {}

@@ -33,5 +33,9 @@ pub fn get(
     _cancel: &std::sync::atomic::AtomicBool,
 ) -> Result<Vec<u8>, HttpError> {
     // TODO(I3)
-    Err(HttpError { code: 0, message: "not implemented".into(), status: None })
+    Err(HttpError {
+        code: 0,
+        message: "not implemented".into(),
+        status: None,
+    })
 }

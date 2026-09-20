@@ -1,4 +1,6 @@
 // installer.rc — dialogs, strings, manifest. Control IDs must match src/ui.rs.
+// Polish strings below are UTF-8; keep this pragma or they will mojibake.
+#pragma code_page(65001)
 #include <windows.h>
 
 // Common Controls v6 + DPI awareness manifest
@@ -42,65 +44,209 @@ BEGIN
     END
 END
 
-// ---- Dialog: language picker (mirrors C# LocalizationChangeForm) ----
-#define IDD_LANGPICK   100
-#define IDC_LANGCOMBO  101
+// ---- Control IDs ----
+// Grouped per view so ShowWindow can flip whole blocks (see ui.rs).
+#define IDD_LANGPICK       100
+#define IDC_LANGCOMBO      101
+#define IDC_LANGPROMPT     102
 
+#define IDD_MAIN           110
+#define IDC_TAB            111
+
+// Library view: 120-139
+#define IDC_LIB_LIST       120
+#define IDC_LIB_TOKENLABEL 121
+#define IDC_LIB_TOKEN      122
+#define IDC_LIB_UNLOCK     123
+#define IDC_LIB_DOWNLOAD   124
+
+// Install view: 140-159
+#define IDC_INS_DIRLABEL   140
+#define IDC_INS_GAMEDIR    141
+#define IDC_INS_BROWSE     142
+#define IDC_INS_LIST       143
+#define IDC_INS_APPLY      144
+#define IDC_INS_RESTORE    145
+
+// Shared: 160+
+#define IDC_PROGRESS       160
+#define IDC_STATUS         161
+
+// ---- String IDs ----
+// 1-19 worker/status strings (ids 1-8 kept from the original scaffold).
+#define IDS_CONNECTING      1
+#define IDS_DOWNLOADING     2
+#define IDS_VERIFYING       3
+#define IDS_BACKUP          4
+#define IDS_INSTALLING      5
+#define IDS_DONE            6
+#define IDS_BADKEY          7
+#define IDS_NOPLUGIN        8
+#define IDS_READY           9
+#define IDS_NOT_IMPL       10
+// 20+ UI chrome.
+#define IDS_APP_TITLE      20
+#define IDS_TAB_LIBRARY    21
+#define IDS_TAB_INSTALL    22
+#define IDS_COL_NAME       23
+#define IDS_COL_CATEGORY   24
+#define IDS_COL_VERSION    25
+#define IDS_COL_SIZE       26
+#define IDS_COL_STATE      27
+#define IDS_BTN_DOWNLOAD   28
+#define IDS_BTN_UNLOCK     29
+#define IDS_BTN_APPLY      30
+#define IDS_BTN_RESTORE    31
+#define IDS_BTN_CLOSE      32
+#define IDS_BTN_BROWSE     33
+#define IDS_LBL_ACCESSKEY  34
+#define IDS_LBL_GAMEDIR    35
+#define IDS_LANG_TITLE     36
+#define IDS_LANG_PROMPT    37
+#define IDS_STATE_NOTCACHED 38
+#define IDS_STATE_CACHED    39
+#define IDS_STATE_UPDATE    40
+#define IDS_BROWSE_PROMPT   41
+
+// ============================================================
+// Dialogs — language-neutral. Text here is an English fallback only;
+// ui.rs overwrites every caption in WM_INITDIALOG via load_string().
+// ============================================================
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+// ---- Dialog: language picker (mirrors C# LocalizationChangeForm) ----
 IDD_LANGPICK DIALOGEX 0, 0, 180, 70
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Language"
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "Select language:", -1, 10, 8, 160, 10
+    LTEXT           "Select language:", IDC_LANGPROMPT, 10, 8, 160, 10
     COMBOBOX        IDC_LANGCOMBO, 10, 20, 160, 60,
-                    CBS_DROPDOWNLIST | WS_TABSTOP
+                    CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     DEFPUSHBUTTON   "OK", IDOK, 65, 46, 50, 14
     PUSHBUTTON      "Cancel", IDCANCEL, 120, 46, 50, 14
 END
 
-// ---- Dialog: main installer window (skeleton; grows in task I2) ----
-#define IDD_MAIN       110
-#define IDC_PKGLIST    111
-#define IDC_TARGETDIR  112
-#define IDC_BROWSE     113
-#define IDC_TOKEN      114
-#define IDC_UNLOCK     115
-#define IDC_PROGRESS   116
-#define IDC_STATUS     117
-#define IDC_INSTALL    118
-#define IDC_UNINSTALL  119
-
-IDD_MAIN DIALOGEX 0, 0, 320, 220
+// ---- Dialog: main window, two views over one tab control ----
+// The tab control and the two control groups are SIBLINGS. ui.rs pushes the
+// tab to the bottom of the Z-order in WM_INITDIALOG and ShowWindow()s whole
+// groups on TCN_SELCHANGE. Declaring the groups after the tab keeps tab order
+// sane; the Z-order fix is what stops the tab painting over them.
+IDD_MAIN DIALOGEX 0, 0, 360, 250
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "Pacenotes Installer"
 FONT 9, "Segoe UI"
 BEGIN
-    CONTROL         "", IDC_PKGLIST, "SysListView32",
-                    LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP,
-                    10, 10, 300, 100
-    LTEXT           "Game folder:", -1, 10, 116, 60, 10
-    EDITTEXT        IDC_TARGETDIR, 10, 126, 240, 12, ES_AUTOHSCROLL
-    PUSHBUTTON      "...", IDC_BROWSE, 256, 125, 20, 14
-    LTEXT           "Access key:", -1, 10, 142, 60, 10
-    EDITTEXT        IDC_TOKEN, 10, 152, 240, 12, ES_AUTOHSCROLL | ES_PASSWORD
-    PUSHBUTTON      "Unlock", IDC_UNLOCK, 256, 151, 50, 14
+    CONTROL         "", IDC_TAB, "SysTabControl32",
+                    TCS_TABS | WS_CLIPSIBLINGS | WS_TABSTOP,
+                    7, 7, 346, 205
+
+    // ---- Library view ----
+    CONTROL         "", IDC_LIB_LIST, "SysListView32",
+                    LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS
+                    | WS_BORDER | WS_TABSTOP,
+                    14, 26, 332, 132
+    LTEXT           "Access key:", IDC_LIB_TOKENLABEL, 14, 166, 66, 9
+    EDITTEXT        IDC_LIB_TOKEN, 83, 163, 139, 13, ES_AUTOHSCROLL | ES_PASSWORD
+    PUSHBUTTON      "Unlock", IDC_LIB_UNLOCK, 228, 162, 55, 15
+    PUSHBUTTON      "Download", IDC_LIB_DOWNLOAD, 288, 162, 58, 15
+
+    // ---- Install view ----
+    LTEXT           "Game folder:", IDC_INS_DIRLABEL, 14, 28, 160, 9
+    EDITTEXT        IDC_INS_GAMEDIR, 14, 39, 272, 13, ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...", IDC_INS_BROWSE, 292, 38, 54, 15
+    CONTROL         "", IDC_INS_LIST, "SysListView32",
+                    LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS
+                    | WS_BORDER | WS_TABSTOP,
+                    14, 60, 332, 98
+    PUSHBUTTON      "Apply", IDC_INS_APPLY, 234, 162, 55, 15
+    PUSHBUTTON      "Restore", IDC_INS_RESTORE, 294, 162, 52, 15
+
+    // ---- Shared strip ----
     CONTROL         "", IDC_PROGRESS, "msctls_progress32", WS_BORDER,
-                    10, 172, 300, 10
-    LTEXT           "", IDC_STATUS, 10, 186, 300, 10
-    DEFPUSHBUTTON   "Install", IDC_INSTALL, 145, 200, 50, 14
-    PUSHBUTTON      "Uninstall", IDC_UNINSTALL, 200, 200, 55, 14
-    PUSHBUTTON      "Close", IDCANCEL, 260, 200, 50, 14
+                    7, 218, 285, 10
+    PUSHBUTTON      "Close", IDCANCEL, 303, 216, 50, 14
+    LTEXT           "", IDC_STATUS, 7, 233, 346, 10
 END
 
-// ---- Strings (i18n; extend per language in task I2) ----
+// ============================================================
+// Strings. One STRINGTABLE per language; LoadStringW resolves against the
+// thread UI language, which i18n::set_language sets via SetThreadUILanguage.
+// Every id MUST exist in every table — there is no neutral fallback table.
+// ============================================================
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 STRINGTABLE
 BEGIN
-    1  "Connecting..."
-    2  "Downloading: %s"
-    3  "Verifying..."
-    4  "Writing backup"
-    5  "Installing: %s"
-    6  "Done"
-    7  "Invalid or expired key."
-    8  "The plugin configuration directory doesn't exist!\nInstall the Pacenote plugin from the RSF installer first."
+    IDS_CONNECTING      "Connecting..."
+    IDS_DOWNLOADING     "Downloading: %s"
+    IDS_VERIFYING       "Verifying..."
+    IDS_BACKUP          "Writing backup"
+    IDS_INSTALLING      "Installing: %s"
+    IDS_DONE            "Done"
+    IDS_BADKEY          "Invalid or expired key."
+    IDS_NOPLUGIN        "The plugin configuration directory doesn't exist!\nThere is a high chance the Pacenote plugin is broken. First install the Pacenote plugin from RSF installer."
+    IDS_READY           "Ready."
+    IDS_NOT_IMPL        "Not implemented yet."
+    IDS_APP_TITLE       "Pacenotes Installer"
+    IDS_TAB_LIBRARY     "Library"
+    IDS_TAB_INSTALL     "Install"
+    IDS_COL_NAME        "Name"
+    IDS_COL_CATEGORY    "Category"
+    IDS_COL_VERSION     "Version"
+    IDS_COL_SIZE        "Size"
+    IDS_COL_STATE       "State"
+    IDS_BTN_DOWNLOAD    "Download"
+    IDS_BTN_UNLOCK      "Unlock"
+    IDS_BTN_APPLY       "Apply"
+    IDS_BTN_RESTORE     "Restore"
+    IDS_BTN_CLOSE       "Close"
+    IDS_BTN_BROWSE      "Browse..."
+    IDS_LBL_ACCESSKEY   "Access key:"
+    IDS_LBL_GAMEDIR     "Game folder:"
+    IDS_LANG_TITLE      "Language"
+    IDS_LANG_PROMPT     "Select language:"
+    IDS_STATE_NOTCACHED "Not downloaded"
+    IDS_STATE_CACHED    "Downloaded"
+    IDS_STATE_UPDATE    "Update available"
+    IDS_BROWSE_PROMPT   "Select the Richard Burns Rally folder:"
+END
+
+// Polish wording reuses the legacy InstallationForm.pl.resx strings where the
+// original had an equivalent control, so returning users see familiar terms
+// ("Pobierz", "Wpisz klucz prywatnej zawartości", "Folder Richard Burns Rally").
+LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
+STRINGTABLE
+BEGIN
+    IDS_CONNECTING      "Łączenie..."
+    IDS_DOWNLOADING     "Aktualnie pobieram: %s"
+    IDS_VERIFYING       "Weryfikacja..."
+    IDS_BACKUP          "Zapisywanie kopii zapasowej"
+    IDS_INSTALLING      "Aktualnie instaluję: %s"
+    IDS_DONE            "Gotowe"
+    IDS_BADKEY          "Nieprawidłowy lub wygasły klucz."
+    IDS_NOPLUGIN        "Katalog konfiguracyjny pluginu nie istnieje!\nPrawdopodobnie plugin Pacenote jest uszkodzony. Najpierw zainstaluj plugin Pacenote z instalatora RSF."
+    IDS_READY           "Gotowy."
+    IDS_NOT_IMPL        "Jeszcze niezaimplementowane."
+    IDS_APP_TITLE       "Instalator Pacenotes"
+    IDS_TAB_LIBRARY     "Biblioteka"
+    IDS_TAB_INSTALL     "Instalacja"
+    IDS_COL_NAME        "Nazwa"
+    IDS_COL_CATEGORY    "Kategoria"
+    IDS_COL_VERSION     "Wersja"
+    IDS_COL_SIZE        "Rozmiar"
+    IDS_COL_STATE       "Stan"
+    IDS_BTN_DOWNLOAD    "Pobierz"
+    IDS_BTN_UNLOCK      "Odblokuj"
+    IDS_BTN_APPLY       "Zastosuj"
+    IDS_BTN_RESTORE     "Przywróć"
+    IDS_BTN_CLOSE       "Zakończ"
+    IDS_BTN_BROWSE      "Przeglądaj..."
+    IDS_LBL_ACCESSKEY   "Klucz dostępu:"
+    IDS_LBL_GAMEDIR     "Folder Richard Burns Rally"
+    IDS_LANG_TITLE      "Język"
+    IDS_LANG_PROMPT     "Wybierz język:"
+    IDS_STATE_NOTCACHED "Niepobrane"
+    IDS_STATE_CACHED    "Pobrane"
+    IDS_STATE_UPDATE    "Dostępna aktualizacja"
+    IDS_BROWSE_PROMPT   "Wskaż folder Richard Burns Rally:"
 END

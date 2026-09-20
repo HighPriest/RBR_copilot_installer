@@ -2,20 +2,20 @@
 //! plan, then execute it. THE most test-worthy logic in the installer —
 //! exhaustive table tests required. Task I7.
 //!
-//! plan():
-//!   - uninstall  = ledgered but unselected, plus any ledgered member of an
-//!                  exclusive_group superseded by a new selection
-//!   - install    = selected but not ledgered, or cached sha != ledgered sha
-//!   - enforce `requires` (block with a message if a dep is not cached)
-//!   - order: all uninstalls, then all installs
+//! plan() decides two sets and orders all uninstalls before all installs:
 //!
-//! execute():
-//!   - uninstall: delete ledgered files, prune emptied dirs, drop ledger entry
-//!   - install:   per zip entry, first-touch backup if an existing file is
-//!                owned by no ledger entry, extract, then write the ledger
-//!                entry for that package
+//! - uninstall: ledgered but unselected, plus any ledgered member of an
+//!   exclusive_group superseded by a new selection
+//! - install: selected but not ledgered, or cached sha != ledgered sha
+//! - `requires` is enforced, blocking with a message if a dep is not cached
 //!
-//! Backup lives here too: backup/<relative path>, never overwriting an
+//! execute() walks that plan:
+//!
+//! - uninstall: delete ledgered files, prune emptied dirs, drop ledger entry
+//! - install: per zip entry, take a first-touch backup if an existing file is
+//!   owned by no ledger entry, extract, then write the package's ledger entry
+//!
+//! Backup lives here too: `backup/<relative path>`, never overwriting an
 //! existing backup file; restore copies the tree back over the game dir.
 //!
 //! Cross-platform testable: paths injected, no Win32 calls in this module.

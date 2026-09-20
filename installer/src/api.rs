@@ -9,15 +9,18 @@ use std::path::Path;
 use std::sync::atomic::AtomicBool;
 
 pub struct Api {
-    pub base_url: String,          // e.g. "https://packages.example.com"
-    pub token: Option<String>,     // bearer access key; set by Unlock (I8);
-                                   // server filters manifest to public +
-                                   // this key's granted directories
+    pub base_url: String, // e.g. "https://packages.example.com"
+    pub token: Option<String>, // bearer access key; set by Unlock (I8);
+                          // server filters manifest to public +
+                          // this key's granted directories
 }
 
 impl Api {
     pub fn new(base_url: &str) -> Self {
-        Self { base_url: base_url.trim_end_matches('/').to_string(), token: None }
+        Self {
+            base_url: base_url.trim_end_matches('/').to_string(),
+            token: None,
+        }
     }
 
     /// GET /packages → Manifest. Replaces C# ListAllFiles + recursion:
@@ -28,7 +31,7 @@ impl Api {
     }
 
     /// GET /download/{directory}/{name} → temp file → sha256 verify → rename
-/// into place.
+    /// into place.
     /// Skip-if-current: if `dest` exists and its mtime > pkg.updated_at, no-op
     /// (port of C# saveFile early return).
     pub fn download_package(

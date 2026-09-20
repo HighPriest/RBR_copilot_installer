@@ -28,8 +28,8 @@ look better and likely reclaim 40-60 kB. Not done here: it is an art asset,
 not code. Revisit at I10 if the budget gets tight.
 
 ## I2 — Dialog layout (two views)
-- [ ] Language-picker dialog (combo + OK/Cancel; Cancel exits app)
-- [ ] Main dialog with view toggle (tab control or two buttons):
+- [x] Language-picker dialog (combo + OK/Cancel; Cancel exits app)
+- [x] Main dialog with view toggle (tab control or two buttons):
       LIBRARY view: SysListView32 grouped by category (LVGF groups or
       category column), columns: name/version/size/state
       (cached|update available|not cached), Download button, access-key
@@ -38,9 +38,37 @@ not code. Revisit at I10 if the budget gets tight.
       SysListView32 of CACHED packages w/ checkboxes (radio behavior inside
       an exclusive_group enforced in LVN_ITEMCHANGED), Apply + Restore
       buttons, plan preview in status area
-- [ ] Shared: progress bar (msctls_progress32), status static, Close
-- [ ] ui.rs: control ID constants, dlgproc skeleton, enable/disable states
-- [ ] i18n.rs + STRINGTABLE with en + one more language; picker switches it
+- [x] Shared: progress bar (msctls_progress32), status static, Close
+- [x] ui.rs: control ID constants, dlgproc skeleton
+- [x] i18n.rs + STRINGTABLE with en + one more language; picker switches it
+
+I2 implementation notes:
+- View toggle is a SysTabControl32. The tab and the two control groups are
+  siblings; WM_INITDIALOG pushes the tab to HWND_BOTTOM (controls declared
+  earlier in a template sit higher in Z-order, so the tab would otherwise
+  paint over both views) and TCN_SELCHANGE ShowWindow()s whole groups.
+- Localization is SetThreadUILanguage + per-language STRINGTABLE, so
+  LoadStringW resolves the right table with no lookup code of our own.
+  Polish wording reuses the legacy InstallationForm.pl.resx terms.
+- Library grouping uses a Category COLUMN (the task allowed "LVGF groups or
+  category column"); real LVGF groups can come later if wanted.
+
+DEFERRED out of I2, because each needs data that does not exist until I5:
+- Radio behavior inside an exclusive_group (LVN_ITEMCHANGED) — needs
+  exclusive_group from the manifest.
+- Apply plan preview in the status area — needs the engine (I7).
+- Button enable/disable state machine — needs real cache/selection state.
+Download / Unlock / Apply / Restore currently set the status line to the
+localized "Not implemented yet." rather than failing silently.
+
+Verified by driving the real .exe (scripted Win32 automation, not just a
+build): both dialogs open; EnumChildWindows confirms the Library group visible
+and the Install group hidden; a synthetic click on the Install tab flips them;
+tab count 2; Library 5 columns, Install 4; Polish run shows "Instalator
+Pacenotes" / "Biblioteka" / "Klucz dostępu:" / "Zakończ" / "Gotowy." with
+diacritics intact; Browse opens the shell "Browse For Folder" dialog and Esc
+dismisses it; WM_CLOSE exits the process cleanly.
+Size after I2: 202,240 B (197.5 kB).
 
 ## I3 — WinHTTP client
 - [ ] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
