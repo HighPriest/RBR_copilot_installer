@@ -125,6 +125,11 @@ anywhere else in the crate. Read `tests/README.md` before adding one.
     pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate
 
 - `tests/gamedir.rs` — cross-platform `cargo test`. Game-folder identification.
+- `tests/Test-VersionSync.ps1` — `[package] version` in Cargo.toml must match
+  FILEVERSION/PRODUCTVERSION and the FileVersion/ProductVersion strings in
+  `res/installer.rc`. The CD workflows tag releases from Cargo.toml, so drift
+  would ship an .exe whose properties contradict its own tag. Bump all four
+  together.
 - `tests/Test-BinarySize.ps1` — the 500 kB release gate.
 - `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST that drives the real .exe
   through user32.dll. Run it in BOTH languages (`-Language 0` / `-Language 1`)
@@ -142,6 +147,13 @@ The GUI tests need Windows with an interactive desktop session. Everything else
 runs anywhere, which is the point of the lib/bin split: pure modules live in
 the lib target (`src/lib.rs`) and the Windows-only bin (`src/main.rs`) owns
 `http`/`ui`/`i18n`, so `cargo test` never needs Win32.
+
+CI (`.github/workflows/ci.yml`, `installer` job) runs fmt, clippy, `cargo
+test`, the version sync and the size gate — everything except the GUI tests.
+The installer is excluded from the Cargo workspace, so the `server` job's
+fmt/clippy do NOT reach it; that job is the only thing linting this crate.
+`Run-AllTests.ps1` runs the same set plus the GUI tests, so a green local run
+means a green CI run.
 
 ### Two rules for writing tests here
 

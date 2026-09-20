@@ -48,6 +48,11 @@ jobs:
           Write-Host "Tag v${{ env.VERSION }} already exists.`r`n` Please update installer/Cargo.toml.`r`n` Are you sure you are testing correct build?"
         }
 
+    - name: Version sync (Cargo.toml vs installer.rc)
+      working-directory: installer
+      shell: pwsh
+      run: .\tests\Test-VersionSync.ps1
+
     - name: Setup Rust (MSVC target)
       uses: dtolnay/rust-toolchain@stable
       with:

@@ -6,14 +6,18 @@
 .DESCRIPTION
     One entry point for the whole suite:
 
-      1. cargo test          — pure logic, cross-platform, no desktop needed
-      2. Test-BinarySize.ps1 — the 500 kB release gate
-      3. Test-UiLayout.ps1   — the real .exe driven through user32.dll,
+      1. cargo fmt --check   — the installer is excluded from the workspace,
+                               so the root CI job's fmt/clippy never sees it
+      2. cargo clippy        — ditto, under -D warnings as CI uses
+      3. cargo test          — pure logic, cross-platform, no desktop needed
+      4. Test-VersionSync    — Cargo.toml version vs the .rc VERSIONINFO
+      5. Test-BinarySize.ps1 — the 500 kB release gate
+      6. Test-UiLayout.ps1   — the real .exe driven through user32.dll,
                                once per shipped language
 
-    Step 3 needs Windows with an interactive desktop session, since it shows
-    real windows. Use -SkipUi on a headless machine; the first two steps still
-    give you the cross-platform logic and the size gate.
+    Step 6 needs Windows with an interactive desktop session, since it shows
+    real windows. Use -SkipUi on a headless machine; everything before it still
+    runs and covers the cross-platform logic, the version fields and the size.
 
 .PARAMETER SkipUi
     Skip the GUI tests (use on a headless agent or in a container).
@@ -40,7 +44,14 @@ function Invoke-Step {
 
 Push-Location $crateRoot
 try {
+    # Mirror what CI denies, so a local run fails for the same reasons.
+    $env:RUSTFLAGS = '-D warnings'
+    Invoke-Step 'cargo fmt --check' { cargo fmt --check }
+    Invoke-Step 'cargo clippy' {
+        cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc
+    }
     Invoke-Step 'cargo test (pure logic)' { cargo test --locked }
+    Invoke-Step 'version sync' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-VersionSync.ps1') }
     Invoke-Step 'binary size gate' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-BinarySize.ps1') }
 
     if ($SkipUi) {

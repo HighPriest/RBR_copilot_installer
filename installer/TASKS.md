@@ -143,8 +143,11 @@ All installer checks live in `installer/tests/`; `src/` has no inline
 `check-size.ps1` moved to `tests/Test-BinarySize.ps1` (workflows and docs
 updated). See `tests/README.md`.
 
-- [x] `tests/Run-AllTests.ps1` — one entry point (`-SkipUi` for headless)
+- [x] `tests/Run-AllTests.ps1` — one entry point (`-SkipUi` for headless);
+      also runs fmt + clippy, so a green local run means a green CI run
 - [x] `tests/gamedir.rs` — cross-platform, 11 tests
+- [x] `tests/Test-VersionSync.ps1` — Cargo.toml version vs the four
+      VERSIONINFO fields in `res/installer.rc`
 - [x] `tests/Test-BinarySize.ps1` — the 500 kB release gate
 - [x] `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST, 55 checks per language
 - [x] `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, asserts nothing
@@ -234,6 +237,9 @@ session, so they are run locally via the runner, not gated in CI.
 
 ## I10 — Release gate
 - [ ] tests/Test-BinarySize.ps1 < 500 kB on release build; record final size here: ____
+- [ ] Bump `[package] version` in Cargo.toml AND the four VERSIONINFO fields in
+      res/installer.rc together; `tests/Test-VersionSync.ps1` enforces it, and
+      the CD workflows tag the release from Cargo.toml
 - [ ] cargo bloat report saved to docs/bloat.txt
 - [ ] If over budget: replace serde_json with minimal JSON parse/write for
       Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5)

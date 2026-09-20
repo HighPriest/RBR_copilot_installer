@@ -55,6 +55,11 @@ jobs:
           exit 1
         }
 
+    - name: Version sync (Cargo.toml vs installer.rc)
+      working-directory: installer
+      shell: pwsh
+      run: .\tests\Test-VersionSync.ps1
+
     - name: Setup Rust (MSVC target)
       uses: dtolnay/rust-toolchain@stable
       with:

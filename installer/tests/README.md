@@ -13,14 +13,23 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 
 ## What is here
 
-| Path | Kind | Needs a desktop? |
-|---|---|---|
-| `gamedir.rs` | AUTOMATED TEST — game-folder identification | no |
-| `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no |
-| `ui/Test-UiLayout.ps1` | AUTOMATED TEST — drives the real .exe | yes |
-| `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes |
-| `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a |
-| `Run-AllTests.ps1` | runner for all of the above | optional |
+| Path | Kind | Needs a desktop? | In CI? |
+|---|---|---|---|
+| `gamedir.rs` | AUTOMATED TEST — game-folder identification | no | yes |
+| `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
+| `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
+| `ui/Test-UiLayout.ps1` | AUTOMATED TEST — drives the real .exe | yes | no |
+| `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes | no |
+| `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
+| `Run-AllTests.ps1` | runner for all of the above, plus fmt + clippy | optional | no |
+
+`Run-AllTests.ps1` also runs `cargo fmt --check` and `cargo clippy` under
+`-D warnings`, matching the CI installer job. The installer is excluded from
+the Cargo workspace, so the root `server` CI job's fmt/clippy never touch it —
+without these it would go unlinted.
+
+The GUI tests are the only ones CI skips: they drive real dialogs and need an
+interactive desktop session. Run them locally before pushing UI changes.
 
 **AUTOMATED TEST** asserts and exits non-zero on failure — safe to gate CI on.
 **AGENT / DEVELOPER AID** produces artifacts for a person or an AI agent to

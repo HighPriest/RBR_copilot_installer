@@ -13,6 +13,10 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
 - [x] Setup github actions scripts, equivalent to `legacy\.github\workflows`
       (`ci.yml` + ported `cd-debugbuild-manually` / `cd-deploy-manually` /
       `cd-deploy-on-pull-request`)
+- [x] CI covers the installer too: because it is excluded from the workspace,
+      the `server` job's fmt/clippy never reached it, so the installer job now
+      runs fmt + clippy + tests + version sync + the size gate. The GUI tests
+      need an interactive desktop and stay local (`tests/Run-AllTests.ps1`).
 
 ## M1 — Shared protocol crate
 - [x] `shared`: PackageInfo (directory-based), Manifest, ApiError compile
@@ -44,14 +48,28 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
       download matrix
 
 ## M4 — Installer skeleton (Windows)
-- [ ] installer/TASKS.md → I1..I3
-- [ ] Win32 dialog opens, size-check script passes on empty-ish binary
+- [x] installer/TASKS.md → I1 (toolchain, resources, pinned deps, size gate)
+- [x] installer/TASKS.md → I2 + I2a (full UI per `installer/DESIGN.md`)
+- [ ] installer/TASKS.md → I3 (WinHTTP client) — NOT started
+- [x] Win32 dialog opens; release gate passes
+      (script is now `installer/tests/Test-BinarySize.ps1`)
 - [ ] WinHTTP GET works against server `GET /packages` (localhost, http)
+      — blocked on I3, and on the server reaching M2
+
+NOTE: `installer/DESIGN.md` arrived after this list was written and changed the
+installer's shape: it targets THREE games (Richard Burns Rally, Dirt Rally,
+BeamNG) behind a game ribbon, not RBR alone. The per-game folder field is
+validated against that game's marker executable. See `installer/TASKS.md` I2a.
+All installer checks live in `installer/tests/`; run them with
+`pwsh -File installer/tests/Run-AllTests.ps1`.
 
 ## M5 — Installer cache + install engine
 - [ ] installer/TASKS.md → I4..I7
-- [ ] Library view: packages grouped by category, download → per-user cache
+- [ ] Download tab: per-category lists, download → per-user cache
       (sha-keyed, verified), cached/not-cached state shown
+      (the old "Library view" wording predates `installer/DESIGN.md`; the UI
+      is now a game ribbon with per-category lists, and the lists stay empty
+      until this milestone fills them from the manifest)
 - [ ] Install engine: ledger (installed.json per game dir), overlay extract,
       one-time backup of non-ledger files, uninstall from ledger
 - [ ] Apply = diff selected-vs-ledger; exclusive groups honored;

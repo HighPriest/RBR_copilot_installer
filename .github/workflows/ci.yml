@@ -42,7 +42,7 @@ jobs:
         run: cargo test --workspace --locked
 
   installer:
-    name: installer (windows, size gate)
+    name: installer (windows: lint, test, version, size gate)
     runs-on: windows-latest
     defaults:
       run:
@@ -54,16 +54,32 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: installer
 
-      # Pure-logic tests + the size gate. The GUI tests under tests/ui/ are NOT
-      # run here: they drive real dialogs and need an interactive desktop
-      # session. Run them locally with tests/Run-AllTests.ps1.
+      # The installer is excluded from the workspace, so the `server` job's
+      # fmt/clippy never reach it. Lint it here or it goes unlinted entirely.
+      - name: Format check
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc
+
+      # Pure-logic tests: the lib target plus tests/gamedir.rs. The GUI tests
+      # under tests/ui/ are NOT run here — they drive real dialogs and need an
+      # interactive desktop session. Run the whole suite locally instead:
+      #   pwsh -File installer/tests/Run-AllTests.ps1
       - name: Test (pure-logic modules)
         run: cargo test --locked
+
+      # Cargo.toml is what the CD workflows tag releases from, so a drifted
+      # VERSIONINFO would ship an .exe whose properties contradict its tag.
+      - name: Version sync (Cargo.toml vs installer.rc)
+        shell: pwsh
+        run: .\tests\Test-VersionSync.ps1
 
       - name: Release build + 500 kB size gate
         shell: pwsh
