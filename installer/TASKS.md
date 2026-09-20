@@ -4,12 +4,28 @@ Each task ends with: builds on Windows MSVC, `check-size.ps1` passes,
 cross-platform `cargo test` green for logic modules.
 
 ## I1 — Toolchain + empty window
-- [ ] Install target: `rustup target add x86_64-pc-windows-msvc`
-- [ ] build.rs: `embed_resource::compile("res/installer.rc")`
-- [ ] res/installer.rc: app manifest (common-controls v6, DPI-aware, UTF-8),
+- [x] Install target: `rustup target add x86_64-pc-windows-msvc`
+- [x] build.rs: `embed_resource::compile("res/installer.rc")`
+- [x] res/installer.rc: app manifest (common-controls v6, DPI-aware, UTF-8),
       one empty dialog template, version info
-- [ ] main.rs: `wWinMain`, `InitCommonControlsEx`, show dialog, clean exit
-- [ ] check-size.ps1 written and passing (baseline size recorded in TASKS)
+- [x] main.rs: `InitCommonControlsEx`, show dialog, clean exit
+      AMENDED: plain `fn main`, NOT `wWinMain`. `#![windows_subsystem =
+      "windows"]` already yields a GUI-subsystem binary; hand-rolled wWinMain
+      glue would add bytes for no behavioral gain.
+- [x] Pin all dependency versions with `=` (root M0 claimed this was done, but
+      the installer manifest pinned nothing)
+- [x] check-size.ps1 written and passing (baseline size recorded in TASKS)
+
+Recorded sizes (release, x86_64-pc-windows-msvc):
+- do-nothing binary before I1 ......... 107,008 B (104.5 kB)
+- after I1 (icon + VERSIONINFO) ....... 193,024 B (188.5 kB)
+
+SIZE FLAG: `rbr.ico` is a single 256x256 PNG-compressed image of 85,272 B, so
+the icon alone is ~83 kB = 17% of the 500 kB gate. It also ships no 16/32/48
+sizes, so Windows downscales the 256 for the titlebar and taskbar (soft-looking
+at small sizes). Generating a multi-resolution, recompressed .ico would both
+look better and likely reclaim 40-60 kB. Not done here: it is an art asset,
+not code. Revisit at I10 if the budget gets tight.
 
 ## I2 — Dialog layout (two views)
 - [ ] Language-picker dialog (combo + OK/Cancel; Cancel exits app)

@@ -4,6 +4,44 @@
 // Common Controls v6 + DPI awareness manifest
 1 RT_MANIFEST "app.manifest"
 
+// ---- Application icon ----
+// Lowest-numbered icon resource is what Explorer/the taskbar show, so keep
+// IDI_APPICON at 1. Dialogs set it explicitly via WM_SETICON in ui.rs.
+#define IDI_APPICON 1
+IDI_APPICON ICON "../../rbr.ico"
+
+// ---- Version info ----
+// Keep FILEVERSION/PRODUCTVERSION in sync with [package] version in
+// Cargo.toml — the CD workflows read that value to tag releases.
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     0,1,0,0
+PRODUCTVERSION  0,1,0,0
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"   // US English, Unicode
+        BEGIN
+            VALUE "CompanyName",      "Pacenotes"
+            VALUE "FileDescription",  "Pacenotes Installer for Richard Burns Rally"
+            VALUE "FileVersion",      "0.1.0.0"
+            VALUE "InternalName",     "pacenotes-installer"
+            VALUE "LegalCopyright",   "MIT"
+            VALUE "OriginalFilename", "pacenotes-installer.exe"
+            VALUE "ProductName",      "Pacenotes Installer"
+            VALUE "ProductVersion",   "0.1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
 // ---- Dialog: language picker (mirrors C# LocalizationChangeForm) ----
 #define IDD_LANGPICK   100
 #define IDC_LANGCOMBO  101
