@@ -84,3 +84,11 @@ jobs:
       - name: Release build + 500 kB size gate
         shell: pwsh
         run: .\tests\Test-BinarySize.ps1
+
+      # End-to-end against a real pacenotes-server: WinHTTP cannot be unit
+      # tested, so this is the only thing that proves the client works. It
+      # needs no desktop — --selftest-http writes to a file, never a window —
+      # which is why it runs here while the tests/ui/ suite does not.
+      - name: HTTP client vs live server
+        shell: pwsh
+        run: .\tests\Test-HttpClient.ps1

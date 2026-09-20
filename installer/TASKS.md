@@ -171,10 +171,45 @@ CI runs `cargo test` + the size gate. The GUI tests need an interactive desktop
 session, so they are run locally via the runner, not gated in CI.
 
 ## I3 — WinHTTP client
-- [ ] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
-- [ ] Chunked read loop with `progress: fn(read: u64, total: Option<u64>)`
-- [ ] Proper error surface: WinHTTP error code → readable string
-- [ ] Manual test binary flag (`--selftest-http URL`) hitting server /health
+- [x] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
+- [x] Chunked read loop (64 KiB) with `progress(read: u64, total: Option<u64>)`
+- [x] Proper error surface: WinHTTP error code → readable string
+- [x] Manual test binary flag (`--selftest-http URL`) hitting server /health
+
+I3 implementation notes:
+- `get_streaming()` is the real entry point and `get()` buffers on top of it.
+  The task only asked for `-> Vec<u8>`, but package zips are tens of MB and
+  I5 must sha256 them into a cache file as they arrive; adding the sink now
+  costs a few lines and avoids rewriting the read loop later.
+- Timeouts are set explicitly (10s resolve/connect, 30s send/receive). Without
+  them a dead server parks the worker thread forever and Cancel does nothing,
+  since cancellation is only checked between chunks.
+- A response shorter than its Content-Length is an error, not a success. A
+  truncated download would otherwise be written into the cache as a valid
+  package and only fail later, at sha verification, with a confusing message.
+- WinHTTP's error codes (12001+) are NOT in the system message table, so
+  FormatMessageW is given the winhttp.dll module handle. Without that every
+  network failure reads as a bare hex number.
+- `--selftest-http` writes to `--out <file>` when asked and a MessageBox
+  otherwise. This is a GUI-subsystem binary with no stdout; attaching to the
+  parent console would mean console APIs and reopening CONOUT$ for a
+  developer-only flag. `--token` was added so the authenticated paths are
+  reachable too; the token is never written into the report.
+- `Game::id()` / `from_id()` added to gamedir.rs, deferring to
+  `pacenotes_shared::GAME_*`. The shared crate already claimed the two sides
+  matched; nothing enforced it, and I5 filters each ribbon tab by this value,
+  so a drift would silently empty a tab.
+
+Verified END TO END against a real pacenotes-server, not a mock:
+`tests/Test-HttpClient.ps1` 28/28 — publishes an overlay zip via
+`manifest gen`, mints a credential granted one directory, then asserts
+/health 200 with Content-Length honoured, anonymous /packages listing the
+public package and hiding the protected one, the same listing growing once
+the bearer header is sent, public and granted downloads returning exactly the
+manifest's byte count, a protected download without a key giving 401 (not a
+transport error), a missing package giving 404, an unreachable port giving a
+WinHTTP code rendered as English prose, and the access key never appearing in
+the report. Size after I3: 237,056 B (231.5 kB).
 
 ## I4 — Worker thread + progress protocol
 - [ ] `WM_APP` message constants (progress %, status-string id, done, error)

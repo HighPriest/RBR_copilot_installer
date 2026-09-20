@@ -157,6 +157,40 @@ fn ribbon_indices_round_trip() {
     assert_eq!(Game::from_index(Game::ALL.len()), Game::Rbr);
 }
 
+/// The ribbon's game ids are the SAME values the server writes into
+/// `PackageInfo::game`. If they drift, task I5 filters every package out of
+/// its tab and the lists silently come up empty — no error, just nothing.
+#[test]
+fn game_ids_are_the_shared_protocol_values() {
+    assert_eq!(Game::Rbr.id(), pacenotes_shared::GAME_RBR);
+    assert_eq!(Game::DirtRally.id(), pacenotes_shared::GAME_DIRT_RALLY);
+    assert_eq!(Game::BeamNg.id(), pacenotes_shared::GAME_BEAMNG);
+
+    // A manifest entry carrying that id must land on the matching tab.
+    for game in Game::ALL {
+        assert_eq!(Game::from_id(game.id()), Some(game));
+    }
+}
+
+/// `game` is an open string: a newer server may list a game this build has no
+/// tab for. Those packages must be ignored, not shown under some other game.
+#[test]
+fn an_unknown_game_id_belongs_to_no_tab() {
+    for unknown in ["", "wrc", "rbr2", "RBR", " rbr"] {
+        assert_eq!(Game::from_id(unknown), None, "id {unknown:?} matched a tab");
+    }
+}
+
+/// A manifest written before the server went multi-game carries no `game`
+/// field; shared defaults it to RBR, which must be a tab we actually have.
+#[test]
+fn the_protocol_default_game_has_a_tab() {
+    assert_eq!(
+        Game::from_id(&pacenotes_shared::default_game()),
+        Some(Game::Rbr)
+    );
+}
+
 /// Ribbon labels are what the user clicks; they are proper nouns and must not
 /// be translated or abbreviated.
 #[test]

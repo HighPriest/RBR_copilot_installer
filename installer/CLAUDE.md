@@ -131,6 +131,11 @@ anywhere else in the crate. Read `tests/README.md` before adding one.
   would ship an .exe whose properties contradict its own tag. Bump all four
   together.
 - `tests/Test-BinarySize.ps1` — the 500 kB release gate.
+- `tests/Test-HttpClient.ps1` — builds and runs a real `pacenotes-server`,
+  then drives `--selftest-http` against it: /health, anonymous vs
+  authenticated /packages, downloads, 401, 404, and an unreachable port.
+  WinHTTP cannot be unit tested, so this is the only thing that proves
+  `http.rs` works. Needs no desktop, so CI runs it.
 - `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST that drives the real .exe
   through user32.dll. Run it in BOTH languages (`-Language 0` / `-Language 1`)
   after ANY change to `res/installer.rc`, `ui.rs` or `i18n.rs`. The Polish pass

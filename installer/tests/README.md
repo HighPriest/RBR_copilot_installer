@@ -18,6 +18,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `gamedir.rs` | AUTOMATED TEST — game-folder identification | no | yes |
 | `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
+| `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `ui/Test-UiLayout.ps1` | AUTOMATED TEST — drives the real .exe | yes | no |
 | `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes | no |
 | `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
@@ -35,6 +36,12 @@ interactive desktop session. Run them locally before pushing UI changes.
 **AGENT / DEVELOPER AID** produces artifacts for a person or an AI agent to
 look at; it asserts nothing and always exits 0, so never gate on it.
 Each script states its kind in its own `.SYNOPSIS`.
+
+`Test-HttpClient.ps1` builds and runs a real `pacenotes-server`: WinHTTP
+cannot be unit tested, so the only honest test is against the server the
+installer actually talks to. It drives the binary's `--selftest-http` flag,
+which writes a report to a file rather than opening a window — which is why
+it runs in CI while the GUI suite does not.
 
 `cargo test` picks up `gamedir.rs` automatically. It ignores `ui/` and the
 `.ps1` files, so the two suites coexist in one directory without interfering.

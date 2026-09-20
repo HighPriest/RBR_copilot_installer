@@ -44,6 +44,28 @@ impl Game {
         }
     }
 
+    /// Wire identifier: the value the server puts in `PackageInfo::game`.
+    ///
+    /// These ARE `pacenotes_shared::GAME_*` rather than copies of them. The
+    /// shared crate documents that the two sides match; deferring to it is
+    /// what makes that true. Task I5 filters each ribbon tab's lists by this
+    /// value, so a drift would silently empty a tab.
+    pub fn id(self) -> &'static str {
+        match self {
+            Game::Rbr => pacenotes_shared::GAME_RBR,
+            Game::DirtRally => pacenotes_shared::GAME_DIRT_RALLY,
+            Game::BeamNg => pacenotes_shared::GAME_BEAMNG,
+        }
+    }
+
+    /// Game for a manifest's `game` value. `None` for an id this build does
+    /// not know: `game` is an open string, so a newer server may list packages
+    /// for a game with no tab here, and those must be ignored rather than
+    /// dumped into the wrong one.
+    pub fn from_id(id: &str) -> Option<Game> {
+        Game::ALL.iter().copied().find(|game| game.id() == id)
+    }
+
     /// Index in `ALL`, i.e. the ribbon tab index.
     pub fn index(self) -> usize {
         Game::ALL.iter().position(|&g| g == self).unwrap_or(0)

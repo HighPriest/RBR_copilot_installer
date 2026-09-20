@@ -69,11 +69,18 @@ M7.
 ## M4 — Installer skeleton (Windows)
 - [x] installer/TASKS.md → I1 (toolchain, resources, pinned deps, size gate)
 - [x] installer/TASKS.md → I2 + I2a (full UI per `installer/DESIGN.md`)
-- [ ] installer/TASKS.md → I3 (WinHTTP client) — NOT started
+- [x] installer/TASKS.md → I3 (WinHTTP client, `--selftest-http`)
 - [x] Win32 dialog opens; release gate passes
       (script is now `installer/tests/Test-BinarySize.ps1`)
-- [ ] WinHTTP GET works against server `GET /packages` (localhost, http)
-      — blocked on I3, and on the server reaching M2
+- [x] WinHTTP GET works against server `GET /packages` (localhost, http)
+      — verified end to end against a real `pacenotes-server`, including
+      bearer auth and the 401/404/unreachable surfaces:
+      `installer/tests/Test-HttpClient.ps1`, 28/28. It needs no desktop, so
+      CI runs it.
+
+M4 IS COMPLETE. The installer opens, is localized, validates a game folder per
+game, and can talk to the server. It cannot yet DO anything with what it
+fetches — parsing the manifest into the ribbon's lists is I5 (M5).
 
 NOTE: `installer/DESIGN.md` arrived after this list was written and changed the
 installer's shape: it targets THREE games (Richard Burns Rally, Dirt Rally,
