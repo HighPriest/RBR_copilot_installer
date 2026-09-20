@@ -119,3 +119,31 @@ testable with `cargo test` cross-platform: keep Win32 calls out of them,
 inject base paths/writers. Only `main/ui/http` may touch windows-sys.
 Engine planning (diff + exclusive groups + requires) is THE most
 test-worthy logic in the installer — exhaustive table tests.
+
+The crate is split into a lib target (pure logic, `src/lib.rs`) and the
+Windows-only bin (`src/main.rs`, which owns `http`/`ui`/`i18n`), so
+`cargo test --lib` builds without Win32.
+
+## GUI scripts — USE THESE, don't re-invent them
+
+`tests/ui/` holds PowerShell that drives the real .exe through user32.dll.
+A `cargo build` cannot catch a control missing from the dialog template, a
+caption that never got localized, a tab page that fails to hide, or a clipped
+label — these can. Read `tests/README.md` first; each script's `.SYNOPSIS`
+states which kind it is.
+
+- `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST. Asserts layout + behavior
+  against `DESIGN.md`; exits non-zero on failure. Run it in BOTH languages
+  (`-Language 0` / `-Language 1`) after ANY change to `res/installer.rc`,
+  `ui.rs` or `i18n.rs`. The Polish pass is what proves the per-language
+  STRINGTABLE lookup and the UTF-8 diacritics.
+- `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID. Writes PNGs of the
+  dialogs so a human or an agent can SEE the layout. Asserts nothing. Use it
+  whenever you change geometry; assertions alone will not reveal an overlap.
+- `tests/ui/Win32Ui.psm1` — shared helpers, plus comments on two traps worth
+  knowing: `GetWindowText` does not cross process boundaries (use WM_GETTEXT,
+  or Edit controls read back empty and assertions falsely pass), and
+  `TCM_SETCURSEL` does not notify the parent (drive tabs with arrow keys so a
+  real `TCN_SELCHANGE` fires).
+
+Both need Windows and an interactive desktop session; they are not headless.

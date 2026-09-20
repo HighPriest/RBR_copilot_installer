@@ -1,6 +1,6 @@
 //! Win32 dialog procs and UI plumbing. Control IDs MUST match res/installer.rc.
 //! Only this module + http.rs + main.rs may call windows-sys (see CLAUDE.md).
-//! Task I2.
+//! Layout and behavior follow installer/DESIGN.md. Tasks I2 / I2a.
 
 #![allow(dead_code)]
 
@@ -11,45 +11,75 @@ use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 pub const IDD_LANGPICK: u16 = 100;
 pub const IDC_LANGCOMBO: u16 = 101;
 pub const IDC_LANGPROMPT: u16 = 102;
+pub const IDC_LANGRESTART: u16 = 103;
 
 pub const IDD_MAIN: u16 = 110;
-pub const IDC_TAB: u16 = 111;
 
-pub const IDC_LIB_LIST: u16 = 120;
-pub const IDC_LIB_TOKENLABEL: u16 = 121;
-pub const IDC_LIB_TOKEN: u16 = 122;
-pub const IDC_LIB_UNLOCK: u16 = 123;
-pub const IDC_LIB_DOWNLOAD: u16 = 124;
+pub const IDC_GAMETAB: u16 = 200;
 
-pub const IDC_INS_DIRLABEL: u16 = 140;
-pub const IDC_INS_GAMEDIR: u16 = 141;
-pub const IDC_INS_BROWSE: u16 = 142;
-pub const IDC_INS_LIST: u16 = 143;
-pub const IDC_INS_APPLY: u16 = 144;
-pub const IDC_INS_RESTORE: u16 = 145;
+pub const IDC_LBL_GAMEDIR: u16 = 210;
+pub const IDC_GAMEDIR: u16 = 211;
+pub const IDC_BROWSE: u16 = 212;
+pub const IDC_DIRSTATUS: u16 = 213;
 
-pub const IDC_PROGRESS: u16 = 160;
-pub const IDC_STATUS: u16 = 161;
+pub const IDC_LBL_INSTALLED: u16 = 220;
+pub const IDC_LBL_I_VOICE: u16 = 221;
+pub const IDC_I_VOICE: u16 = 222;
+pub const IDC_LBL_I_UILANG: u16 = 223;
+pub const IDC_I_UILANG: u16 = 224;
+pub const IDC_LBL_I_STYLE: u16 = 225;
+pub const IDC_I_STYLE: u16 = 226;
+pub const IDC_INSTALL: u16 = 227;
 
-/// Controls belonging to each view, flipped wholesale on tab change.
-const LIBRARY_VIEW: [u16; 5] = [
-    IDC_LIB_LIST,
-    IDC_LIB_TOKENLABEL,
-    IDC_LIB_TOKEN,
-    IDC_LIB_UNLOCK,
-    IDC_LIB_DOWNLOAD,
+pub const IDC_RIGHTTAB: u16 = 230;
+pub const IDC_LBL_KEY: u16 = 240;
+pub const IDC_KEY: u16 = 241;
+pub const IDC_UNLOCK: u16 = 242;
+pub const IDC_LBL_D_VOICE: u16 = 243;
+pub const IDC_D_VOICE: u16 = 244;
+pub const IDC_LBL_D_UILANG: u16 = 245;
+pub const IDC_D_UILANG: u16 = 246;
+pub const IDC_LBL_D_STYLE: u16 = 247;
+pub const IDC_D_STYLE: u16 = 248;
+pub const IDC_DOWNLOAD: u16 = 249;
+pub const IDC_LBL_BACKUPS: u16 = 260;
+pub const IDC_BACKUPS: u16 = 261;
+pub const IDC_RESTORE: u16 = 262;
+
+pub const IDC_PROGRESS: u16 = 270;
+pub const IDC_STATUS: u16 = 271;
+
+pub const IDC_INFOTAB: u16 = 280;
+pub const IDC_NOTES: u16 = 281;
+pub const IDC_LOGS: u16 = 282;
+
+/// Games the installer can target. Proper nouns, deliberately untranslated.
+/// DESIGN.md: every game tab shares one control set; only STATE differs.
+pub const GAMES: [&str; 3] = ["Richard Burns Rally", "Dirt Rally", "BeamNG"];
+
+/// Right-hand tab pages.
+const RIGHT_DOWNLOAD: i32 = 0;
+const RIGHT_BACKUPS: i32 = 1;
+const DOWNLOAD_PAGE: [u16; 10] = [
+    IDC_LBL_KEY,
+    IDC_KEY,
+    IDC_UNLOCK,
+    IDC_LBL_D_VOICE,
+    IDC_D_VOICE,
+    IDC_LBL_D_UILANG,
+    IDC_D_UILANG,
+    IDC_LBL_D_STYLE,
+    IDC_D_STYLE,
+    IDC_DOWNLOAD,
 ];
-const INSTALL_VIEW: [u16; 6] = [
-    IDC_INS_DIRLABEL,
-    IDC_INS_GAMEDIR,
-    IDC_INS_BROWSE,
-    IDC_INS_LIST,
-    IDC_INS_APPLY,
-    IDC_INS_RESTORE,
-];
+const BACKUPS_PAGE: [u16; 3] = [IDC_LBL_BACKUPS, IDC_BACKUPS, IDC_RESTORE];
 
-const TAB_LIBRARY: i32 = 0;
-const TAB_INSTALL: i32 = 1;
+/// Bottom tab pages.
+const INFO_NOTES: i32 = 0;
+const INFO_LOGS: i32 = 1;
+
+/// The three content categories a complete install needs one pick from.
+const INSTALLED_LISTS: [u16; 3] = [IDC_I_VOICE, IDC_I_UILANG, IDC_I_STYLE];
 
 // ---- Worker → UI messages (task I4). WPARAM/LPARAM payloads documented. ----
 pub const WM_APP: u32 = 0x8000;
@@ -60,6 +90,29 @@ pub const WM_WORKER_STATUS: u32 = WM_APP + 2;
 pub const WM_WORKER_DONE: u32 = WM_APP + 3;
 /// lparam = Box<String> error message for MessageBox.
 pub const WM_WORKER_ERROR: u32 = WM_APP + 4;
+
+/// Per-game state. Switching the ribbon saves the current game's state and
+/// loads the next one's, so one control set serves all three games.
+#[derive(Default, Clone)]
+struct GameState {
+    dir: String,
+}
+
+struct App {
+    games: [GameState; GAMES.len()],
+    current: usize,
+    log: String,
+}
+
+impl App {
+    fn new() -> Self {
+        App {
+            games: Default::default(),
+            current: 0,
+            log: String::new(),
+        }
+    }
+}
 
 // ============================================================
 // Language picker
@@ -93,9 +146,10 @@ unsafe extern "system" fn langpick_proc(
     match msg {
         wm::WM_INITDIALOG => {
             set_dialog_icon(dlg);
-            // The picker itself cannot be localized by the user's choice yet,
-            // so it shows whatever the OS UI language resolves to.
+            // The picker runs before a language is chosen, so it shows whatever
+            // the OS UI language resolves to.
             set_text(dlg, IDC_LANGPROMPT, crate::i18n::IDS_LANG_PROMPT);
+            set_text(dlg, IDC_LANGRESTART, crate::i18n::IDS_LANG_RESTART);
             set_window_text(dlg, &crate::i18n::load_string(crate::i18n::IDS_LANG_TITLE));
             for lang in crate::i18n::Language::ALL {
                 let w = crate::i18n::to_wide(lang.label());
@@ -134,134 +188,258 @@ unsafe extern "system" fn langpick_proc(
 
 /// DialogBoxParamW(IDD_MAIN); pumps until the dialog closes.
 pub fn run_main_dialog() {
+    // The App outlives the dialog proc's frames; reclaimed on WM_NCDESTROY.
+    let app = Box::into_raw(Box::new(App::new()));
     unsafe {
         wm::DialogBoxParamW(
             crate::i18n::instance(),
             make_int_resource(IDD_MAIN),
             core::ptr::null_mut(),
             Some(main_proc),
-            0,
+            app as LPARAM,
         );
     }
+}
+
+/// The App pointer is parked in the dialog's GWLP_USERDATA slot.
+unsafe fn app(dlg: HWND) -> *mut App {
+    wm::GetWindowLongPtrW(dlg, wm::GWLP_USERDATA) as *mut App
 }
 
 unsafe extern "system" fn main_proc(dlg: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> isize {
     match msg {
         wm::WM_INITDIALOG => {
-            init_main_dialog(dlg);
+            wm::SetWindowLongPtrW(dlg, wm::GWLP_USERDATA, lparam);
+            init_main_dialog(dlg, &mut *(lparam as *mut App));
             1
         }
         wm::WM_NOTIFY => {
             let hdr = lparam as *const windows_sys::Win32::UI::Controls::NMHDR;
-            if !hdr.is_null() && (*hdr).idFrom == IDC_TAB as usize && (*hdr).code == TCN_SELCHANGE {
-                let sel =
-                    wm::SendMessageW(wm::GetDlgItem(dlg, IDC_TAB as i32), TCM_GETCURSEL, 0, 0);
-                show_view(dlg, sel as i32);
+            if !hdr.is_null() && (*hdr).code == TCN_SELCHANGE {
+                let state = app(dlg);
+                if state.is_null() {
+                    return 0;
+                }
+                match (*hdr).idFrom as u16 {
+                    IDC_GAMETAB => on_game_change(dlg, &mut *state),
+                    IDC_RIGHTTAB => show_right_page(dlg, tab_sel(dlg, IDC_RIGHTTAB)),
+                    IDC_INFOTAB => show_info_page(dlg, tab_sel(dlg, IDC_INFOTAB)),
+                    _ => {}
+                }
             }
             0
         }
         wm::WM_COMMAND => {
-            on_command(dlg, loword(wparam));
+            let state = app(dlg);
+            if !state.is_null() {
+                on_command(dlg, &mut *state, loword(wparam), hiword(wparam));
+            }
             1
         }
         wm::WM_CLOSE => {
             wm::EndDialog(dlg, 0);
             1
         }
+        wm::WM_NCDESTROY => {
+            let state = app(dlg);
+            if !state.is_null() {
+                drop(Box::from_raw(state));
+                wm::SetWindowLongPtrW(dlg, wm::GWLP_USERDATA, 0);
+            }
+            0
+        }
         _ => 0,
     }
 }
 
-unsafe fn init_main_dialog(dlg: HWND) {
+unsafe fn init_main_dialog(dlg: HWND, state: &mut App) {
     set_dialog_icon(dlg);
     set_window_text(dlg, &crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));
 
-    // The tab control and the view controls are siblings laid out on top of
-    // each other. Controls earlier in the template sit higher in the Z-order,
-    // so without this the tab would paint over both views.
-    let tab = wm::GetDlgItem(dlg, IDC_TAB as i32);
-    wm::SetWindowPos(
-        tab,
-        wm::HWND_BOTTOM,
-        0,
-        0,
-        0,
-        0,
-        wm::SWP_NOMOVE | wm::SWP_NOSIZE | wm::SWP_NOACTIVATE,
-    );
+    // Every tab control must sit BELOW its page controls in the Z-order.
+    // Controls declared earlier in a dialog template are HIGHER in Z-order,
+    // so without this each tab body would paint over its own pages.
+    //
+    // Order matters: each call drops that control to the VERY bottom, so the
+    // last one pushed ends up lowest. The game ribbon contains the other two
+    // tab controls, so it must be pushed LAST or its body hides their headers.
+    for id in [IDC_INFOTAB, IDC_RIGHTTAB, IDC_GAMETAB] {
+        wm::SetWindowPos(
+            wm::GetDlgItem(dlg, id as i32),
+            wm::HWND_BOTTOM,
+            0,
+            0,
+            0,
+            0,
+            wm::SWP_NOMOVE | wm::SWP_NOSIZE | wm::SWP_NOACTIVATE,
+        );
+    }
 
-    add_tab(tab, TAB_LIBRARY, crate::i18n::IDS_TAB_LIBRARY);
-    add_tab(tab, TAB_INSTALL, crate::i18n::IDS_TAB_INSTALL);
+    // Game ribbon across the top (DESIGN.md).
+    let gametab = wm::GetDlgItem(dlg, IDC_GAMETAB as i32);
+    for (i, name) in GAMES.iter().enumerate() {
+        add_tab_text(gametab, i as i32, name);
+    }
+    let righttab = wm::GetDlgItem(dlg, IDC_RIGHTTAB as i32);
+    add_tab(righttab, RIGHT_DOWNLOAD, crate::i18n::IDS_TAB_DOWNLOAD);
+    add_tab(righttab, RIGHT_BACKUPS, crate::i18n::IDS_TAB_BACKUPS);
+    let infotab = wm::GetDlgItem(dlg, IDC_INFOTAB as i32);
+    add_tab(infotab, INFO_NOTES, crate::i18n::IDS_TAB_NOTES);
+    add_tab(infotab, INFO_LOGS, crate::i18n::IDS_TAB_LOGS);
 
     // Localize every caption; the .rc text is only an English fallback.
-    set_text(dlg, IDC_LIB_TOKENLABEL, crate::i18n::IDS_LBL_ACCESSKEY);
-    set_text(dlg, IDC_LIB_UNLOCK, crate::i18n::IDS_BTN_UNLOCK);
-    set_text(dlg, IDC_LIB_DOWNLOAD, crate::i18n::IDS_BTN_DOWNLOAD);
-    set_text(dlg, IDC_INS_DIRLABEL, crate::i18n::IDS_LBL_GAMEDIR);
-    set_text(dlg, IDC_INS_BROWSE, crate::i18n::IDS_BTN_BROWSE);
-    set_text(dlg, IDC_INS_APPLY, crate::i18n::IDS_BTN_APPLY);
-    set_text(dlg, IDC_INS_RESTORE, crate::i18n::IDS_BTN_RESTORE);
+    set_text(dlg, IDC_LBL_GAMEDIR, crate::i18n::IDS_LBL_GAMEDIR);
+    set_text(dlg, IDC_BROWSE, crate::i18n::IDS_BTN_BROWSE);
+    set_text(dlg, IDC_LBL_INSTALLED, crate::i18n::IDS_LBL_INSTALLED);
+    set_text(dlg, IDC_LBL_I_VOICE, crate::i18n::IDS_CAT_VOICE);
+    set_text(dlg, IDC_LBL_I_UILANG, crate::i18n::IDS_CAT_UILANG);
+    set_text(dlg, IDC_LBL_I_STYLE, crate::i18n::IDS_CAT_STYLE);
+    set_text(dlg, IDC_INSTALL, crate::i18n::IDS_BTN_INSTALL);
+    set_text(dlg, IDC_LBL_KEY, crate::i18n::IDS_LBL_ACCESSKEY);
+    set_text(dlg, IDC_UNLOCK, crate::i18n::IDS_BTN_UNLOCK);
+    set_text(dlg, IDC_LBL_D_VOICE, crate::i18n::IDS_CAT_VOICE);
+    set_text(dlg, IDC_LBL_D_UILANG, crate::i18n::IDS_CAT_UILANG);
+    set_text(dlg, IDC_LBL_D_STYLE, crate::i18n::IDS_CAT_STYLE);
+    set_text(dlg, IDC_DOWNLOAD, crate::i18n::IDS_BTN_DOWNLOAD);
+    set_text(dlg, IDC_LBL_BACKUPS, crate::i18n::IDS_LBL_BACKUPS);
+    set_text(dlg, IDC_RESTORE, crate::i18n::IDS_BTN_RESTORE);
+    set_text(dlg, IDC_NOTES, crate::i18n::IDS_NOTES_BODY);
     set_text(dlg, IDCANCEL, crate::i18n::IDS_BTN_CLOSE);
 
-    init_library_list(wm::GetDlgItem(dlg, IDC_LIB_LIST as i32));
-    init_install_list(wm::GetDlgItem(dlg, IDC_INS_LIST as i32));
-
     status(dlg, &crate::i18n::load_string(crate::i18n::IDS_READY));
-    show_view(dlg, TAB_LIBRARY);
-}
-
-unsafe fn init_library_list(list: HWND) {
-    wm::SendMessageW(
-        list,
-        LVM_SETEXTENDEDLISTVIEWSTYLE,
-        0,
-        (LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES) as LPARAM,
+    log(
+        dlg,
+        state,
+        &crate::i18n::load_string(crate::i18n::IDS_LOG_STARTED),
     );
-    add_column(list, 0, crate::i18n::IDS_COL_NAME, 140);
-    add_column(list, 1, crate::i18n::IDS_COL_CATEGORY, 80);
-    add_column(list, 2, crate::i18n::IDS_COL_VERSION, 60);
-    add_column(list, 3, crate::i18n::IDS_COL_SIZE, 70);
-    add_column(list, 4, crate::i18n::IDS_COL_STATE, 110);
+
+    show_right_page(dlg, RIGHT_DOWNLOAD);
+    show_info_page(dlg, INFO_NOTES);
+    load_game(dlg, state);
 }
 
-unsafe fn init_install_list(list: HWND) {
-    // Checkboxes drive the Apply selection; radio behavior inside an
-    // exclusive_group is enforced in LVN_ITEMCHANGED once I5 supplies groups.
-    wm::SendMessageW(
-        list,
-        LVM_SETEXTENDEDLISTVIEWSTYLE,
-        0,
-        (LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES) as LPARAM,
-    );
-    add_column(list, 0, crate::i18n::IDS_COL_NAME, 180);
-    add_column(list, 1, crate::i18n::IDS_COL_CATEGORY, 90);
-    add_column(list, 2, crate::i18n::IDS_COL_VERSION, 70);
-    add_column(list, 3, crate::i18n::IDS_COL_STATE, 110);
+/// Ribbon changed: persist the outgoing game's fields, then show the new one's.
+unsafe fn on_game_change(dlg: HWND, state: &mut App) {
+    save_game(dlg, state);
+    state.current = tab_sel(dlg, IDC_GAMETAB).clamp(0, GAMES.len() as i32 - 1) as usize;
+    load_game(dlg, state);
 }
 
-unsafe fn on_command(dlg: HWND, id: u16) {
+unsafe fn save_game(dlg: HWND, state: &mut App) {
+    state.games[state.current].dir = get_text(dlg, IDC_GAMEDIR);
+}
+
+unsafe fn load_game(dlg: HWND, state: &mut App) {
+    let dir = state.games[state.current].dir.clone();
+    set_window_text(wm::GetDlgItem(dlg, IDC_GAMEDIR as i32), &dir);
+    validate_dir(dlg);
+}
+
+/// DESIGN.md: "the field should be validated".
+unsafe fn validate_dir(dlg: HWND) -> bool {
+    let dir = get_text(dlg, IDC_GAMEDIR);
+    let id = if dir.trim().is_empty() {
+        crate::i18n::IDS_DIR_EMPTY
+    } else if std::path::Path::new(dir.trim()).is_dir() {
+        crate::i18n::IDS_DIR_OK
+    } else {
+        crate::i18n::IDS_DIR_INVALID
+    };
+    set_text(dlg, IDC_DIRSTATUS, id);
+    id == crate::i18n::IDS_DIR_OK
+}
+
+unsafe fn on_command(dlg: HWND, state: &mut App, id: u16, code: u16) {
+    // Re-validate as the user types the folder path.
+    if id == IDC_GAMEDIR && code == EN_CHANGE {
+        validate_dir(dlg);
+        return;
+    }
+    if code != BN_CLICKED && !matches!(id, IDCANCEL | IDOK) {
+        return;
+    }
+
     match id {
         IDCANCEL => {
             wm::EndDialog(dlg, 0);
         }
-        IDC_INS_BROWSE => {
+        IDC_BROWSE => {
             if let Some(dir) = browse_for_folder(dlg) {
-                let w = crate::i18n::to_wide(&dir);
-                wm::SetDlgItemTextW(dlg, IDC_INS_GAMEDIR as i32, w.as_ptr());
+                set_window_text(wm::GetDlgItem(dlg, IDC_GAMEDIR as i32), &dir);
+                save_game(dlg, state);
+                validate_dir(dlg);
             }
         }
-        // Everything below needs the cache/engine work in I5-I7. Until then
-        // say so in the status line rather than failing silently.
-        IDC_LIB_DOWNLOAD | IDC_LIB_UNLOCK | IDC_INS_APPLY | IDC_INS_RESTORE => {
+        IDC_INSTALL => on_install(dlg, state),
+        // These need the cache/engine work in I5-I7. Until then say so on the
+        // status line rather than failing silently.
+        IDC_DOWNLOAD | IDC_UNLOCK | IDC_RESTORE => {
             status(dlg, &crate::i18n::load_string(crate::i18n::IDS_NOT_IMPL));
         }
         _ => {}
     }
 }
 
+/// DESIGN.md: Install "checks if item from each category has been pressed and
+/// then proceeds with installation". Until I7 there is nothing to proceed
+/// with, but the preconditions are real and enforced here.
+unsafe fn on_install(dlg: HWND, state: &mut App) {
+    if !validate_dir(dlg) {
+        report_error(dlg, state, crate::i18n::IDS_ERR_NO_DIR);
+        return;
+    }
+    let all_picked = INSTALLED_LISTS
+        .iter()
+        .all(|&list| wm::SendDlgItemMessageW(dlg, list as i32, LB_GETCURSEL, 0, 0) >= 0);
+    if !all_picked {
+        report_error(dlg, state, crate::i18n::IDS_ERR_NO_PICK);
+        return;
+    }
+    status(dlg, &crate::i18n::load_string(crate::i18n::IDS_NOT_IMPL));
+}
+
+/// DESIGN.md: "If an error happens, then the window should automatically
+/// switch to the logs tab, to inform the user about the error."
+unsafe fn report_error(dlg: HWND, state: &mut App, string_id: u16) {
+    let text = crate::i18n::load_string(string_id);
+    log(dlg, state, &text);
+    status(dlg, &text);
+    set_tab_sel(dlg, IDC_INFOTAB, INFO_LOGS);
+    show_info_page(dlg, INFO_LOGS);
+}
+
+/// Append a line to the log pane. Prefixed with the active game so entries
+/// stay meaningful once the ribbon is in use.
+unsafe fn log(dlg: HWND, state: &mut App, line: &str) {
+    if !state.log.is_empty() {
+        state.log.push_str("\r\n");
+    }
+    state
+        .log
+        .push_str(&format!("[{}] {line}", GAMES[state.current]));
+    let logs = wm::GetDlgItem(dlg, IDC_LOGS as i32);
+    set_window_text(logs, &state.log);
+    // Keep the newest line in view.
+    wm::SendMessageW(logs, EM_LINESCROLL, 0, i16::MAX as LPARAM);
+}
+
+unsafe fn show_right_page(dlg: HWND, page: i32) {
+    for id in DOWNLOAD_PAGE {
+        show(dlg, id, page == RIGHT_DOWNLOAD);
+    }
+    for id in BACKUPS_PAGE {
+        show(dlg, id, page == RIGHT_BACKUPS);
+    }
+}
+
+unsafe fn show_info_page(dlg: HWND, page: i32) {
+    show(dlg, IDC_NOTES, page == INFO_NOTES);
+    show(dlg, IDC_LOGS, page == INFO_LOGS);
+}
+
 /// SHBrowseForFolderW → picked path. None on cancel.
 unsafe fn browse_for_folder(owner: HWND) -> Option<String> {
-    let title = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_BROWSE_PROMPT));
+    let title = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_LBL_GAMEDIR));
     let mut bi: windows_sys::Win32::UI::Shell::BROWSEINFOW = core::mem::zeroed();
     bi.hwndOwner = owner;
     bi.lpszTitle = title.as_ptr();
@@ -281,16 +459,7 @@ unsafe fn browse_for_folder(owner: HWND) -> Option<String> {
     Some(String::from_utf16_lossy(&buf[..len]))
 }
 
-/// Show one view's controls and hide the other's.
-unsafe fn show_view(dlg: HWND, tab: i32) {
-    let library = tab == TAB_LIBRARY;
-    for id in LIBRARY_VIEW {
-        show(dlg, id, library);
-    }
-    for id in INSTALL_VIEW {
-        show(dlg, id, !library);
-    }
-}
+// ---- Small Win32 helpers ----
 
 unsafe fn show(dlg: HWND, id: u16, visible: bool) {
     wm::ShowWindow(
@@ -299,11 +468,28 @@ unsafe fn show(dlg: HWND, id: u16, visible: bool) {
     );
 }
 
+unsafe fn tab_sel(dlg: HWND, id: u16) -> i32 {
+    wm::SendMessageW(wm::GetDlgItem(dlg, id as i32), TCM_GETCURSEL, 0, 0) as i32
+}
+
+unsafe fn set_tab_sel(dlg: HWND, id: u16, index: i32) {
+    wm::SendMessageW(
+        wm::GetDlgItem(dlg, id as i32),
+        TCM_SETCURSEL,
+        index as WPARAM,
+        0,
+    );
+}
+
 unsafe fn add_tab(tab: HWND, index: i32, string_id: u16) {
-    let text = crate::i18n::to_wide(&crate::i18n::load_string(string_id));
+    add_tab_text(tab, index, &crate::i18n::load_string(string_id));
+}
+
+unsafe fn add_tab_text(tab: HWND, index: i32, text: &str) {
+    let w = crate::i18n::to_wide(text);
     let mut item: windows_sys::Win32::UI::Controls::TCITEMW = core::mem::zeroed();
     item.mask = TCIF_TEXT;
-    item.pszText = text.as_ptr() as *mut u16;
+    item.pszText = w.as_ptr() as *mut u16;
     wm::SendMessageW(
         tab,
         TCM_INSERTITEMW,
@@ -312,23 +498,15 @@ unsafe fn add_tab(tab: HWND, index: i32, string_id: u16) {
     );
 }
 
-unsafe fn add_column(list: HWND, index: i32, string_id: u16, width: i32) {
-    let text = crate::i18n::to_wide(&crate::i18n::load_string(string_id));
-    let mut col: windows_sys::Win32::UI::Controls::LVCOLUMNW = core::mem::zeroed();
-    col.mask = LVCF_TEXT | LVCF_WIDTH;
-    col.pszText = text.as_ptr() as *mut u16;
-    col.cx = width;
-    wm::SendMessageW(
-        list,
-        LVM_INSERTCOLUMNW,
-        index as WPARAM,
-        &col as *const _ as LPARAM,
-    );
-}
-
 unsafe fn set_text(dlg: HWND, id: u16, string_id: u16) {
     let w = crate::i18n::to_wide(&crate::i18n::load_string(string_id));
     wm::SetDlgItemTextW(dlg, id as i32, w.as_ptr());
+}
+
+unsafe fn get_text(dlg: HWND, id: u16) -> String {
+    let mut buf = [0u16; 512];
+    let len = wm::GetDlgItemTextW(dlg, id as i32, buf.as_mut_ptr(), buf.len() as i32);
+    String::from_utf16_lossy(&buf[..len as usize])
 }
 
 unsafe fn set_window_text(hwnd: HWND, text: &str) {
@@ -336,7 +514,7 @@ unsafe fn set_window_text(hwnd: HWND, text: &str) {
     wm::SetWindowTextW(hwnd, w.as_ptr());
 }
 
-/// Write the shared status line.
+/// Write the shared status line (DESIGN.md: current file + size during work).
 pub unsafe fn status(dlg: HWND, text: &str) {
     let w = crate::i18n::to_wide(text);
     wm::SetDlgItemTextW(dlg, IDC_STATUS as i32, w.as_ptr());
@@ -352,21 +530,15 @@ unsafe fn set_dialog_icon(dlg: HWND) {
 
 /// Helper used by final error handling (CLAUDE.md: no silent failures).
 pub fn message_box_error(text: &str) {
-    let body = crate::i18n::to_wide(text);
-    let title = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));
-    unsafe {
-        wm::MessageBoxW(
-            core::ptr::null_mut(),
-            body.as_ptr(),
-            title.as_ptr(),
-            wm::MB_OK | wm::MB_ICONERROR,
-        );
-    }
+    message_box(text, wm::MB_ICONERROR);
 }
 
-/// Show an informational box (used by the --selftest-http flag in I3, which
-/// has no console because this is a GUI-subsystem binary).
+/// Informational box; used where there is no console (GUI-subsystem binary).
 pub fn message_box_info(text: &str) {
+    message_box(text, wm::MB_ICONINFORMATION);
+}
+
+fn message_box(text: &str, icon: u32) {
     let body = crate::i18n::to_wide(text);
     let title = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));
     unsafe {
@@ -374,12 +546,12 @@ pub fn message_box_info(text: &str) {
             core::ptr::null_mut(),
             body.as_ptr(),
             title.as_ptr(),
-            wm::MB_OK | wm::MB_ICONINFORMATION,
+            wm::MB_OK | icon,
         );
     }
 }
 
-// ---- Small helpers / constants windows-sys does not re-export here ----
+// ---- Constants windows-sys does not re-export in a usable place ----
 
 const IDI_APPICON: u16 = 1;
 const IDOK: u16 = 1;
@@ -388,6 +560,11 @@ const IDCANCEL: u16 = 2;
 const CB_ADDSTRING: u32 = 0x0143;
 const CB_SETCURSEL: u32 = 0x014E;
 const CB_GETCURSEL: u32 = 0x0147;
+const LB_GETCURSEL: u32 = 0x0188;
+const EM_LINESCROLL: u32 = 0x00B6;
+
+const BN_CLICKED: u16 = 0;
+const EN_CHANGE: u16 = 0x0300;
 
 const ICON_SMALL: WPARAM = 0;
 const ICON_BIG: WPARAM = 1;
@@ -396,9 +573,7 @@ const BIF_RETURNONLYFSDIRS: u32 = 0x0000_0001;
 const BIF_NEWDIALOGSTYLE: u32 = 0x0000_0040;
 
 use windows_sys::Win32::UI::Controls::{
-    LVCF_TEXT, LVCF_WIDTH, LVM_INSERTCOLUMNW, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES,
-    LVS_EX_FULLROWSELECT, LVS_EX_GRIDLINES, TCIF_TEXT, TCM_GETCURSEL, TCM_INSERTITEMW,
-    TCN_SELCHANGE,
+    TCIF_TEXT, TCM_GETCURSEL, TCM_INSERTITEMW, TCM_SETCURSEL, TCN_SELCHANGE,
 };
 
 /// MAKEINTRESOURCEW — a resource id masquerading as a wide string pointer.
@@ -408,4 +583,8 @@ fn make_int_resource(id: u16) -> windows_sys::core::PCWSTR {
 
 fn loword(w: WPARAM) -> u16 {
     (w & 0xFFFF) as u16
+}
+
+fn hiword(w: WPARAM) -> u16 {
+    ((w >> 16) & 0xFFFF) as u16
 }

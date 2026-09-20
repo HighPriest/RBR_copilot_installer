@@ -28,6 +28,11 @@ look better and likely reclaim 40-60 kB. Not done here: it is an art asset,
 not code. Revisit at I10 if the budget gets tight.
 
 ## I2 — Dialog layout (two views)
+
+SUPERSEDED BY I2a. The Library/Install two-view shape below was built and
+verified, then replaced when DESIGN.md made the app multi-game. Kept for the
+record; the notes about listview columns, exclusive-group radio behavior and
+the Apply plan preview describe the OLD layout. Read I2a for what ships.
 - [x] Language-picker dialog (combo + OK/Cancel; Cancel exits app)
 - [x] Main dialog with view toggle (tab control or two buttons):
       LIBRARY view: SysListView32 grouped by category (LVGF groups or
@@ -69,6 +74,65 @@ Pacenotes" / "Biblioteka" / "Klucz dostępu:" / "Zakończ" / "Gotowy." with
 diacritics intact; Browse opens the shell "Browse For Folder" dialog and Esc
 dismisses it; WM_CLOSE exits the process cleanly.
 Size after I2: 202,240 B (197.5 kB).
+
+## I2a — User Interface design (DESIGN.md)
+
+Re-lays the UI to `installer/DESIGN.md`. This REPLACES the I2 two-view
+(Library/Install) shape: the app is now multi-game, so the top-level axis is
+the game, not the activity.
+
+- [x] Game ribbon across the top: one tab per supported game
+      (Richard Burns Rally, Dirt Rally, BeamNG). All tabs share ONE control
+      set ("identical layout and content"); switching swaps per-game STATE,
+      which is far smaller than three copies of every widget.
+- [x] Language widget at startup + "restart to change language" note
+- [x] Game directory input + Browse button + live validation label
+      (empty / not found / found), re-checked on EN_CHANGE and on tab switch
+- [x] Two-column layout inside each game tab
+- [x] Left column: downloaded content, one single-select list per category
+      (co-driver voice, UI language, callouts style) + Install button
+- [x] Install validates a pick exists in EVERY category before proceeding
+- [x] Right column: Download / Backups tabs, Download is the default page
+- [x] Download page: per-category lists + private access-key entry + Unlock
+- [x] Backups page: backup list + Restore
+- [x] Status bar beneath the columns (progress bar + status text)
+- [x] Bottom: Notes tab (user guidance) + Logs tab
+- [x] Errors auto-switch the bottom area to the Logs tab
+- [x] Polish + English strings for all new chrome
+- [x] Scripted UI tests in `tests/` (see below)
+
+I2a implementation notes:
+- Per-game state lives in an `App` struct owned by the dialog via
+  GWLP_USERDATA, freed on WM_NCDESTROY. Currently it holds the game folder;
+  package selections join it in I5.
+- Z-ORDER TRAP: there are now three tab controls, and each
+  `SetWindowPos(HWND_BOTTOM)` drops that control to the very bottom, so the
+  LAST one pushed ends up lowest. The game ribbon visually contains the other
+  two, so it must be pushed last — pushing it first made the ribbon's body
+  paint over the Download/Backups and Notes/Logs headers, which is exactly the
+  bug the screenshot aid caught after the assertions had all passed.
+- Category lists are plain LISTBOXes (single-select by default), which is what
+  "single item has to be selectable" needs; no LVS_EX_CHECKBOXES any more.
+
+STILL DEFERRED (needs data that does not exist until I5-I7):
+- The lists are empty: real content arrives with the manifest/cache in I5.
+- Download / Unlock / Restore set the localized "Not implemented yet." status.
+- Install enforces its preconditions but cannot yet install (engine is I7).
+- Status bar shows text only; per-file name + size need the download loop (I4).
+
+Verified: `tests/ui/Test-UiLayout.ps1` 55/55 in English AND Polish, plus
+screenshots reviewed for both languages across game/right/info tab
+combinations. Size after I2a: 212,992 B (208 kB).
+
+## UI test scripts
+
+`tests/ui/` holds PowerShell that drives the real .exe through user32.dll.
+See `tests/README.md`. Two kinds, stated in each script's `.SYNOPSIS`:
+- `Test-UiLayout.ps1` — AUTOMATED TEST, asserts, exits non-zero on failure.
+  Run in BOTH languages after any change to installer.rc / ui.rs / i18n.rs.
+- `Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, captures PNGs to look at,
+  asserts nothing. Assertions cannot see clipping or overlap; this can.
+Both need Windows with an interactive desktop session.
 
 ## I3 — WinHTTP client
 - [ ] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
