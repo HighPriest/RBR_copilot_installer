@@ -26,7 +26,7 @@ Rust rewrite of the C# Pacenotes installer, with a self-hosted package server.
 Installer (Windows, MSVC):
 
     cd installer
-    .\check-size.ps1       # release build + 500 kB gate
+    .\tests\Test-BinarySize.ps1       # release build + 500 kB gate
 
 ## Contribute  
 

@@ -59,9 +59,12 @@ jobs:
         with:
           workspaces: installer
 
+      # Pure-logic tests + the size gate. The GUI tests under tests/ui/ are NOT
+      # run here: they drive real dialogs and need an interactive desktop
+      # session. Run them locally with tests/Run-AllTests.ps1.
       - name: Test (pure-logic modules)
         run: cargo test --locked
 
       - name: Release build + 500 kB size gate
         shell: pwsh
-        run: .\check-size.ps1
+        run: .\tests\Test-BinarySize.ps1

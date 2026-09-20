@@ -78,6 +78,21 @@ pub fn load_string(id: u16) -> String {
     }
 }
 
+/// Load string `id` and substitute the FIRST `%s` with `arg`.
+///
+/// Deliberately not a printf: the only placeholder any of our strings use is a
+/// single `%s`, and hand-rolling this keeps a formatting crate out of the size
+/// budget. A string with no `%s` comes back unchanged rather than silently
+/// dropping `arg`, so a translation that forgets the placeholder degrades to
+/// a still-readable message.
+pub fn load_string_arg(id: u16, arg: &str) -> String {
+    let template = load_string(id);
+    match template.find("%s") {
+        Some(at) => format!("{}{arg}{}", &template[..at], &template[at + 2..]),
+        None => template,
+    }
+}
+
 /// HINSTANCE of this executable (where the resources live).
 pub fn instance() -> windows_sys::Win32::Foundation::HMODULE {
     unsafe { windows_sys::Win32::System::LibraryLoader::GetModuleHandleW(core::ptr::null()) }
@@ -124,8 +139,9 @@ pub const IDS_LBL_BACKUPS: u16 = 58;
 pub const IDS_NOTES_BODY: u16 = 59;
 // Validation / errors
 pub const IDS_DIR_EMPTY: u16 = 70;
-pub const IDS_DIR_INVALID: u16 = 71;
+pub const IDS_DIR_NOTFOUND: u16 = 71;
 pub const IDS_DIR_OK: u16 = 72;
 pub const IDS_ERR_NO_DIR: u16 = 73;
 pub const IDS_ERR_NO_PICK: u16 = 74;
 pub const IDS_LOG_STARTED: u16 = 75;
+pub const IDS_DIR_NOTGAME: u16 = 76;

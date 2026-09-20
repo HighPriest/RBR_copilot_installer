@@ -35,10 +35,3 @@ pub fn write_rbr_config(
     // TODO(I7)
     Err("not implemented".into())
 }
-
-#[cfg(test)]
-mod tests {
-    // TODO(I7): write_rbr_config gets exact-string assertions against the
-    // expected ini text, captured as a committed fixture in tests/data
-    // (legacy/ is gitignored, so the C# source is not a CI-visible oracle).
-}

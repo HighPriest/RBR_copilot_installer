@@ -31,11 +31,3 @@ impl Sha256 {
 pub fn hex(digest: &[u8; 32]) -> String {
     digest.iter().map(|b| format!("{b:02x}")).collect()
 }
-
-#[cfg(test)]
-mod tests {
-    // TODO(I5): implement, then enable these known vectors:
-    //  sha256("")      = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-    //  sha256("abc")   = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
-    //  sha256(1M 'a')  = cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0
-}

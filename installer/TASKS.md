@@ -1,6 +1,6 @@
 # Installer tasks (I1..I10)
 
-Each task ends with: builds on Windows MSVC, `check-size.ps1` passes,
+Each task ends with: builds on Windows MSVC, `tests/Test-BinarySize.ps1` passes,
 cross-platform `cargo test` green for logic modules.
 
 ## I1 — Toolchain + empty window
@@ -14,7 +14,7 @@ cross-platform `cargo test` green for logic modules.
       glue would add bytes for no behavioral gain.
 - [x] Pin all dependency versions with `=` (root M0 claimed this was done, but
       the installer manifest pinned nothing)
-- [x] check-size.ps1 written and passing (baseline size recorded in TASKS)
+- [x] tests/Test-BinarySize.ps1 written and passing (baseline size recorded in TASKS)
 
 Recorded sizes (release, x86_64-pc-windows-msvc):
 - do-nothing binary before I1 ......... 107,008 B (104.5 kB)
@@ -86,8 +86,10 @@ the game, not the activity.
       set ("identical layout and content"); switching swaps per-game STATE,
       which is far smaller than three copies of every widget.
 - [x] Language widget at startup + "restart to change language" note
-- [x] Game directory input + Browse button + live validation label
-      (empty / not found / found), re-checked on EN_CHANGE and on tab switch
+- [x] Game directory input + Browse button + live validation label, re-checked
+      on EN_CHANGE, after Browse, and on every ribbon switch. Validated AGAINST
+      THE SELECTED GAME (see the gamedir note below), not for mere existence:
+      blank / not found / not this game / confirmed.
 - [x] Two-column layout inside each game tab
 - [x] Left column: downloaded content, one single-select list per category
       (co-driver voice, UI language, callouts style) + Install button
@@ -113,6 +115,15 @@ I2a implementation notes:
   bug the screenshot aid caught after the assertions had all passed.
 - Category lists are plain LISTBOXes (single-select by default), which is what
   "single item has to be selectable" needs; no LVS_EX_CHECKBOXES any more.
+- GAME-FOLDER VALIDATION is per game, in `src/gamedir.rs`: a folder counts as
+  a game's folder only if it holds that game's marker executable
+  (`RichardBurnsRally_SSE.exe`, `dirtrally2.exe`, `BeamNG.drive.exe`) — the
+  same check the legacy `InstallationForm.cs` made. The first cut accepted any
+  directory that existed, which would have let the installer overlay RBR
+  pacenotes into `C:\Windows`, and made the ribbon tab decorative. The status
+  message names the executable so the user knows what was looked for.
+  `gamedir.rs` is pure std and lives in the lib target, so the whole check is
+  tested cross-platform by `tests/gamedir.rs`.
 
 STILL DEFERRED (needs data that does not exist until I5-I7):
 - The lists are empty: real content arrives with the manifest/cache in I5.
@@ -120,19 +131,41 @@ STILL DEFERRED (needs data that does not exist until I5-I7):
 - Install enforces its preconditions but cannot yet install (engine is I7).
 - Status bar shows text only; per-file name + size need the download loop (I4).
 
-Verified: `tests/ui/Test-UiLayout.ps1` 55/55 in English AND Polish, plus
-screenshots reviewed for both languages across game/right/info tab
-combinations. Size after I2a: 212,992 B (208 kB).
+Verified via `tests/Run-AllTests.ps1`: `cargo test` green, size gate green,
+`tests/ui/Test-UiLayout.ps1` 55/55 in English AND Polish, plus screenshots
+reviewed for both languages across game/right/info tab combinations.
+Size after I2a: 220,672 B (215.5 kB).
 
-## UI test scripts
+## Tests — consolidated under `tests/`
 
-`tests/ui/` holds PowerShell that drives the real .exe through user32.dll.
-See `tests/README.md`. Two kinds, stated in each script's `.SYNOPSIS`:
-- `Test-UiLayout.ps1` — AUTOMATED TEST, asserts, exits non-zero on failure.
-  Run in BOTH languages after any change to installer.rc / ui.rs / i18n.rs.
-- `Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, captures PNGs to look at,
-  asserts nothing. Assertions cannot see clipping or overlap; this can.
-Both need Windows with an interactive desktop session.
+All installer checks live in `installer/tests/`; `src/` has no inline
+`#[cfg(test)]` modules and no validation script sits elsewhere in the crate.
+`check-size.ps1` moved to `tests/Test-BinarySize.ps1` (workflows and docs
+updated). See `tests/README.md`.
+
+- [x] `tests/Run-AllTests.ps1` — one entry point (`-SkipUi` for headless)
+- [x] `tests/gamedir.rs` — cross-platform, 11 tests
+- [x] `tests/Test-BinarySize.ps1` — the 500 kB release gate
+- [x] `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST, 55 checks per language
+- [x] `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, asserts nothing
+
+Two rules these follow, and any new test must:
+
+1. NO ARBITRARY INPUTS. A fixture stands for a real user situation. The folder
+   tests build a directory containing a game's marker executable, because that
+   is what the field is for. The earlier suite passed `$env:TEMP` and was green
+   while the code accepted any path that existed.
+2. ASSERT AGAINST THE SOURCE OF TRUTH. The UI test reads expected strings from
+   `res/installer.rc`, so it catches a caption bound to the wrong id or a
+   missing translation; duplicated literals would only prove two copies agree.
+
+Consequently the "Install proceeds once all three categories have a pick" path
+is NOT asserted yet — those lists are filled from the server manifest, which
+arrives in I5. Injecting placeholder rows would prove only that a listbox can
+hold a string. That case lands with the code that populates them.
+
+CI runs `cargo test` + the size gate. The GUI tests need an interactive desktop
+session, so they are run locally via the runner, not gated in CI.
 
 ## I3 — WinHTTP client
 - [ ] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
@@ -200,7 +233,7 @@ Both need Windows with an interactive desktop session.
 - [ ] Keyboard/tab order, default buttons, Esc behavior
 
 ## I10 — Release gate
-- [ ] check-size.ps1 < 500 kB on release build; record final size here: ____
+- [ ] tests/Test-BinarySize.ps1 < 500 kB on release build; record final size here: ____
 - [ ] cargo bloat report saved to docs/bloat.txt
 - [ ] If over budget: replace serde_json with minimal JSON parse/write for
       Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5)

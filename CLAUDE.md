@@ -88,7 +88,7 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 - `installer/` builds only on Windows MSVC target and is excluded from the
   workspace default members on purpose. Do not "fix" that.
 - Check binary size after every installer change:
-  Windows: `installer/check-size.ps1` (fails > 500 kB).
+  Windows: `installer/tests/Test-BinarySize.ps1` (fails > 500 kB).
 
 ## Working conventions for Claude Code sessions
 

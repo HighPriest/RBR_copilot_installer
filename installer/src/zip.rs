@@ -28,9 +28,3 @@ pub fn extract(_zip_bytes: &[u8], _dest_dir: &std::path::Path) -> Result<(), Zip
     // TODO(I6)
     Err(ZipError("not implemented".into()))
 }
-
-#[cfg(test)]
-mod tests {
-    // TODO(I6): fixture zip in tests/data — extract + entries() listing,
-    // plus a zip-slip fixture that must be rejected.
-}

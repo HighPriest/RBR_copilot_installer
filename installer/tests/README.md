@@ -1,82 +1,99 @@
 # installer/tests
 
-Two different kinds of thing live here. Check which kind a script is before
-relying on it — the distinction is deliberate and is stated in each script's
-`.SYNOPSIS` header.
+Every automated check for the installer lives here — Rust tests, the size gate
+and the GUI tests. Nothing that validates the installer sits outside this
+directory, and `src/` carries no inline `#[cfg(test)]` modules.
 
-| Kind | Meaning | Gate CI on it? |
+Run the lot:
+
+```powershell
+pwsh -File tests/Run-AllTests.ps1          # everything
+pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
+```
+
+## What is here
+
+| Path | Kind | Needs a desktop? |
 |---|---|---|
-| **AUTOMATED TEST** | Asserts, prints PASS/FAIL, exits non-zero on failure. | Yes |
-| **AGENT / DEVELOPER AID** | Produces artifacts for a human or AI agent to inspect. Asserts nothing, always exits 0. | No |
-| **SUPPORT MODULE** | Shared helpers. Not runnable on its own. | n/a |
+| `gamedir.rs` | AUTOMATED TEST — game-folder identification | no |
+| `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no |
+| `ui/Test-UiLayout.ps1` | AUTOMATED TEST — drives the real .exe | yes |
+| `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes |
+| `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a |
+| `Run-AllTests.ps1` | runner for all of the above | optional |
 
-## Contents
+**AUTOMATED TEST** asserts and exits non-zero on failure — safe to gate CI on.
+**AGENT / DEVELOPER AID** produces artifacts for a person or an AI agent to
+look at; it asserts nothing and always exits 0, so never gate on it.
+Each script states its kind in its own `.SYNOPSIS`.
 
-### `ui/Win32Ui.psm1` — SUPPORT MODULE
+`cargo test` picks up `gamedir.rs` automatically. It ignores `ui/` and the
+`.ps1` files, so the two suites coexist in one directory without interfering.
 
-Shared `user32.dll` helpers: enumerate dialogs and controls, read/write control
-text, drive tab controls, launch the binary. Imported by both scripts below.
+## How tests here are written
 
-### `ui/Test-UiLayout.ps1` — AUTOMATED TEST
+Two rules, both learned by writing worse versions first.
 
-Drives the real release `.exe` and asserts the dialog layout and behavior match
-[`../DESIGN.md`](../DESIGN.md): control inventory, the three tab strips, page
-show/hide, localization reaching real controls, game-folder validation, the
-Install preconditions, the error → Logs auto-switch, per-game state retention,
-and clean shutdown. 55 checks; exits 1 if any fail.
+### 1. No arbitrary inputs
 
-```powershell
-pwsh -File tests/ui/Test-UiLayout.ps1            # English
-pwsh -File tests/ui/Test-UiLayout.ps1 -Language 1  # Polish
-```
+A test input must stand for a real situation the user can be in. The
+game-folder field exists to tell *"this is your Richard Burns Rally install"*
+from *"this is some other folder"*, so its fixtures are exactly that: a
+directory containing `RichardBurnsRally_SSE.exe`, and one that is not. Handing
+it `$env:TEMP` would assert nothing about the thing the field is for — and
+indeed an earlier version of this suite did that, and happily passed while the
+code accepted **any** directory that existed.
 
-Run it in **both** languages. The Polish pass is what proves the per-language
-STRINGTABLE lookup works and that UTF-8 diacritics survive into real controls.
+Likewise, the "Install proceeds once all three categories have a pick" path is
+deliberately **not** asserted yet. Those lists are filled from the server
+manifest, which task I5 adds; injecting placeholder rows would only prove that
+a listbox can hold a string. That case belongs with the code that populates it.
 
-### `ui/Get-UiScreenshot.ps1` — AGENT / DEVELOPER AID
+### 2. Expected text comes from the resource, not from a copy
 
-Captures PNGs of the dialogs. `Test-UiLayout.ps1` proves a control exists and
-holds the right text; it cannot tell you a label is clipped, two buttons
-overlap, or a panel has a dead area. This closes that gap — run it, then look
-at (or, as an agent, `Read`) the images.
+`ui/Test-UiLayout.ps1` reads `res/installer.rc` via `Get-ResourceStrings` and
+asserts each control shows exactly what the resource defines for the language
+under test. Hardcoding the strings would only prove that two hand-written
+copies agree, and would keep passing if a caption were bound to the wrong id or
+a translation were never added.
 
-```powershell
-pwsh -File tests/ui/Get-UiScreenshot.ps1
-pwsh -File tests/ui/Get-UiScreenshot.ps1 -Language 1 -GameTab 1 -RightTab 1 -InfoTab 1
-```
+The one deliberate exception is the language picker, which is shown *before* a
+language has been chosen and therefore renders in the OS UI language. It cannot
+honor a choice the user has not made, so its captions are asserted to be a
+shipped string for their id in *some* language — which still catches the `<id>`
+fallback that `i18n::load_string` emits for a missing or mis-bound id.
 
-Screenshots go to `$env:TEMP` by default — deliberately not the repo, since
-they are throwaway artifacts. Pass `-OutDir` to change that.
+## Traps these scripts encode
 
-## Requirements and caveats
-
-- **Windows only**, and these need an **interactive desktop session**: they
-  launch real windows and read them back. They will not work on a headless
-  agent. The pure-logic Rust tests (`cargo test --lib`) have no such
-  restriction and are the cross-platform half of the suite.
-- Build first: both scripts default to
-  `target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe`. Pass
-  `-ExePath` to point somewhere else.
-- The scripts kill the process in a `finally` block, so a failed run does not
-  leave a stray window behind.
-
-## Two traps these scripts encode
-
-Both cost real debugging time; the workarounds are commented at their call
-sites so they do not get "simplified" away.
+Do not "simplify" these away; each cost real debugging time and the workaround
+is commented at its call site.
 
 1. **`GetWindowText` does not cross process boundaries.** For a window owned by
    another process it returns only the cached window title. Static and Button
    captions live in that cache and read back fine, but Edit and ListBox
-   contents come back as empty strings — which silently turns assertions into
-   false passes. `Get-CtrlText` uses `WM_GETTEXT`, which USER32 does marshal.
+   contents come back empty — silently turning assertions into false passes.
+   `Get-CtrlText` uses `WM_GETTEXT`, which USER32 does marshal.
 
 2. **`TCM_SETCURSEL` does not notify the parent.** Setting a tab selection that
-   way would skip the app's `TCN_SELCHANGE` handler entirely, so the test would
-   prove nothing. A synthetic `WM_NOTIFY` is not an option either — it needs an
-   `NMHDR` in the target process's address space. `Select-Tab` therefore sends
-   arrow keys, which make the tab control raise a genuine `TCN_SELCHANGE`.
+   way skips the app's `TCN_SELCHANGE` handler, so the test proves nothing. A
+   synthetic `WM_NOTIFY` is not an option either — it needs an `NMHDR` in the
+   target process's address space. `Select-Tab` sends arrow keys, so the tab
+   control raises a genuine `TCN_SELCHANGE`.
 
-A third trap worth knowing when editing these: **PowerShell variable names are
-case-insensitive**, so a local `$tab` will silently clobber a parameter `$Tab`.
-Helper parameters here are named distinctly to avoid it.
+3. **PowerShell `-like` treats `[...]` as a character class.** Log lines are
+   prefixed with `[Game Name]`, so `-like "*[BeamNG]*"` matches almost any
+   text. Use `.Contains()` for those.
+
+4. **PowerShell variable names are case-insensitive.** A local `$tab` silently
+   clobbers a parameter `$Tab`. Helper parameters here are named distinctly.
+
+## Requirements
+
+- The GUI tests are **Windows-only** and need an **interactive desktop
+  session**; they will not run on a headless agent. `gamedir.rs` and the size
+  gate have no such restriction.
+- Build before running the GUI tests: they default to
+  `target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe`. Pass
+  `-ExePath` to point elsewhere.
+- Scripts kill the installer in a `finally` block and delete their fixtures, so
+  a failed run leaves no stray window or temp folder behind.

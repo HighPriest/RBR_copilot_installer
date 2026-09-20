@@ -1,7 +1,7 @@
 # installer/CLAUDE.md — Windows GUI installer
 
 Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 500 kB.
-Run `check-size.ps1` after every change that touches dependencies or adds
+Run `tests/Test-BinarySize.ps1` after every change that touches dependencies or adds
 noticeable code. If size regresses, fix it before continuing.
 
 ## Why the binary stays small — do not break these
@@ -56,12 +56,17 @@ noticeable code. If size regresses, fix it before continuing.
 
 ## Module map
 
-- `main.rs` — WinMain, common-controls init, dialog loop, message routing.
-- `ui.rs` — dlgprocs. TWO views in the main dialog (tab or toggle):
-  Library (server manifest grouped by `category`, per-row Download/state) and
-  Install (game-dir picker + cached packages as checkboxes, radio-style
-  within an `exclusive_group`, Apply/Restore buttons). Progress bar + status
-  shared.
+- `main.rs` — entry point, common-controls init, dialog loop.
+- `ui.rs` — dlgprocs. Layout per `DESIGN.md`: a GAME RIBBON across the top
+  (one tab per game, all sharing one control set — switching swaps per-game
+  state), and inside it the game-folder field, a left column of downloaded
+  content (one single-select list per category + Install), a right column of
+  Download/Backups tabs (per-category available lists + access key), a shared
+  status strip, and Notes/Logs tabs that auto-switch to Logs on an error.
+- `gamedir.rs` — which games exist, their ribbon labels, and the marker
+  executable that identifies each one's folder. Pure std, so the folder check
+  is testable without a desktop. A game folder is NOT "any directory that
+  exists"; see the note under Testing.
 - `http.rs` — WinHTTP wrapper: `get(url, bearer: Option<&str>) -> Vec<u8>`
   with a progress callback. Synchronous; always called from the worker thread.
 - `api.rs` — fetch manifest, download into cache (JSON isolated here).
@@ -105,45 +110,59 @@ first" error.
 
 ## Size audit workflow
 
-- `check-size.ps1` — fails build over 500 kB (release gate).
+- `tests/Test-BinarySize.ps1` — fails build over 500 kB (release gate).
 - When investigating: `cargo bloat --release --target x86_64-pc-windows-msvc`.
 - Budget sketch: WinHTTP+dialog skeleton ~120-180 kB; miniz ~40 kB;
   serde+serde_json ~80-120 kB; cache/ledger/engine ~40 kB. Headroom is real
   but finite — check after each milestone.
 
-## Testing on non-Windows
+## Tests — ALL of them live in `tests/`
 
-Pure-logic modules (`zip.rs`, `sha256.rs`, `cache.rs` index logic,
-`ledger.rs`, `engine.rs` planning, `install.rs` ini generation) must be
-testable with `cargo test` cross-platform: keep Win32 calls out of them,
-inject base paths/writers. Only `main/ui/http` may touch windows-sys.
-Engine planning (diff + exclusive groups + requires) is THE most
-test-worthy logic in the installer — exhaustive table tests.
+There are no inline `#[cfg(test)]` modules in `src/`, and no validation script
+anywhere else in the crate. Read `tests/README.md` before adding one.
 
-The crate is split into a lib target (pure logic, `src/lib.rs`) and the
-Windows-only bin (`src/main.rs`, which owns `http`/`ui`/`i18n`), so
-`cargo test --lib` builds without Win32.
+    pwsh -File tests/Run-AllTests.ps1          # everything
+    pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate
 
-## GUI scripts — USE THESE, don't re-invent them
+- `tests/gamedir.rs` — cross-platform `cargo test`. Game-folder identification.
+- `tests/Test-BinarySize.ps1` — the 500 kB release gate.
+- `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST that drives the real .exe
+  through user32.dll. Run it in BOTH languages (`-Language 0` / `-Language 1`)
+  after ANY change to `res/installer.rc`, `ui.rs` or `i18n.rs`. The Polish pass
+  is what proves the per-language STRINGTABLE lookup and the UTF-8 diacritics.
+- `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID. Writes PNGs so a human
+  or an agent can SEE the layout. Asserts nothing, so never gate on it. Use it
+  whenever you change geometry: assertions cannot reveal an overlap, and a
+  tab-header Z-order bug already slipped past a fully green run once.
+- `tests/ui/Win32Ui.psm1` — shared helpers. Its comments record the traps
+  (`GetWindowText` does not cross process boundaries; `TCM_SETCURSEL` does not
+  notify the parent; `-like` eats `[Game]` prefixes).
 
-`tests/ui/` holds PowerShell that drives the real .exe through user32.dll.
-A `cargo build` cannot catch a control missing from the dialog template, a
-caption that never got localized, a tab page that fails to hide, or a clipped
-label — these can. Read `tests/README.md` first; each script's `.SYNOPSIS`
-states which kind it is.
+The GUI tests need Windows with an interactive desktop session. Everything else
+runs anywhere, which is the point of the lib/bin split: pure modules live in
+the lib target (`src/lib.rs`) and the Windows-only bin (`src/main.rs`) owns
+`http`/`ui`/`i18n`, so `cargo test` never needs Win32.
 
-- `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST. Asserts layout + behavior
-  against `DESIGN.md`; exits non-zero on failure. Run it in BOTH languages
-  (`-Language 0` / `-Language 1`) after ANY change to `res/installer.rc`,
-  `ui.rs` or `i18n.rs`. The Polish pass is what proves the per-language
-  STRINGTABLE lookup and the UTF-8 diacritics.
-- `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID. Writes PNGs of the
-  dialogs so a human or an agent can SEE the layout. Asserts nothing. Use it
-  whenever you change geometry; assertions alone will not reveal an overlap.
-- `tests/ui/Win32Ui.psm1` — shared helpers, plus comments on two traps worth
-  knowing: `GetWindowText` does not cross process boundaries (use WM_GETTEXT,
-  or Edit controls read back empty and assertions falsely pass), and
-  `TCM_SETCURSEL` does not notify the parent (drive tabs with arrow keys so a
-  real `TCN_SELCHANGE` fires).
+### Two rules for writing tests here
 
-Both need Windows and an interactive desktop session; they are not headless.
+1. **No arbitrary inputs.** A fixture must stand for a real situation the user
+   can be in. A game folder is the folder holding THAT GAME's executable, so
+   the fixture is a directory containing `RichardBurnsRally_SSE.exe` — not
+   `$env:TEMP`. An earlier suite used a scratch directory and passed happily
+   while `validate_dir` accepted any path that existed.
+2. **Assert against the source of truth, not a copy.** The UI test reads the
+   expected strings out of `res/installer.rc`, so it catches a caption bound to
+   the wrong id or a missing translation. Duplicating the strings into the test
+   would only prove two hand-written copies agree.
+
+If a field needs a test, that is because it requires data from a precise
+context. Work out what that context is and build it; do not assert that the
+field merely holds something.
+
+### What still belongs under test, and is not yet
+
+Pure-logic modules that are still scaffolding: `zip.rs`, `sha256.rs`,
+`cache.rs` index logic, `ledger.rs`, `engine.rs` planning, `install.rs` ini
+generation. Keep Win32 out of them and inject base paths/writers so they stay
+testable. Engine planning (diff + exclusive groups + requires) is THE most
+test-worthy logic in the installer — it gets exhaustive table tests at I7.

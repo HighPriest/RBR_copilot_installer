@@ -15,7 +15,7 @@ server + shared** (and CI-style checks). VSCode connects to both.
 4. Build + size gate (PowerShell):
 
        cd installer
-       .\check-size.ps1        # release build, fails > 500 kB
+       .\tests\Test-BinarySize.ps1        # release build, fails > 500 kB
 
 5. Tests (pure-logic modules: zip, sha256, install):
 
@@ -55,7 +55,7 @@ Run the server locally:
 2. Ubuntu: `cargo build -p pacenotes-server` → fix/pin versions, commit
    `Cargo.lock`.
 3. Windows: `rustup target list --installed` should show
-   `x86_64-pc-windows-msvc`; then `installer\check-size.ps1` (will fail until
+   `x86_64-pc-windows-msvc`; then `installer\tests\Test-BinarySize.ps1` (will fail until
    task I1 stubs compile — that's the first installer task).
 
 ## 5. Testing against the server from Windows

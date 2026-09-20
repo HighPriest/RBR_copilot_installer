@@ -232,6 +232,54 @@ function Close-Dialog {
     [void][NativeUi]::PostMessageW($Dialog, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
 }
 
+function Get-ResourceStrings {
+    <#
+    .SYNOPSIS
+        Read the expected UI text for one language straight out of
+        res/installer.rc.
+
+    .DESCRIPTION
+        The resource script is the single source of truth for what the UI
+        should say. Copying its strings into the test would only assert that
+        two hand-written copies match, and would keep passing if a caption were
+        wired to the wrong id or a translation were never added. Reading the
+        .rc instead makes the assertion "the control shows what the resource
+        defines for this language", which is the property worth holding.
+
+        Returns a hashtable of IDS_NAME -> text, with \n and \r\n unescaped.
+    #>
+    param(
+        [Parameter(Mandatory)][ValidateSet('en', 'pl')][string]$Language,
+        [string]$RcPath
+    )
+    if (-not $RcPath) { $RcPath = Join-Path $PSScriptRoot '..\..\res\installer.rc' }
+    $text = Get-Content -Raw -Encoding UTF8 (Resolve-Path $RcPath).Path
+
+    $langToken = if ($Language -eq 'en') { 'LANG_ENGLISH' } else { 'LANG_POLISH' }
+    # The STRINGTABLE that follows this LANGUAGE statement, up to its END.
+    $pattern = "LANGUAGE\s+$langToken\s*,[^\r\n]*\r?\n\s*STRINGTABLE\s*\r?\nBEGIN\r?\n(?<body>.*?)\r?\nEND"
+    $m = [regex]::Match($text, $pattern, 'Singleline')
+    if (-not $m.Success) { throw "no STRINGTABLE found for $langToken in $RcPath" }
+
+    $table = @{}
+    foreach ($line in $m.Groups['body'].Value -split "`r?`n") {
+        $entry = [regex]::Match($line, '^\s*(?<id>IDS_[A-Z0-9_]+)\s+"(?<val>.*)"\s*$')
+        if (-not $entry.Success) { continue }
+        $value = $entry.Groups['val'].Value -replace '\\r\\n', "`r`n" -replace '\\n', "`n"
+        $table[$entry.Groups['id'].Value] = $value
+    }
+    if ($table.Count -eq 0) { throw "STRINGTABLE for $langToken parsed as empty" }
+    return $table
+}
+
+function Expand-ResourceArg {
+    <#  Apply the single %s substitution that i18n::load_string_arg performs. #>
+    param([Parameter(Mandatory)][string]$Template, [Parameter(Mandatory)][string]$Value)
+    $at = $Template.IndexOf('%s')
+    if ($at -lt 0) { return $Template }
+    return $Template.Substring(0, $at) + $Value + $Template.Substring($at + 2)
+}
+
 function Start-Installer {
     <#  Launch the release build and return the process plus its exe path. #>
     param([string]$ExePath)

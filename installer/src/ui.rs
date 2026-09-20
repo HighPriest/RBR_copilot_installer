@@ -53,9 +53,9 @@ pub const IDC_INFOTAB: u16 = 280;
 pub const IDC_NOTES: u16 = 281;
 pub const IDC_LOGS: u16 = 282;
 
-/// Games the installer can target. Proper nouns, deliberately untranslated.
-/// DESIGN.md: every game tab shares one control set; only STATE differs.
-pub const GAMES: [&str; 3] = ["Richard Burns Rally", "Dirt Rally", "BeamNG"];
+// The games themselves, their ribbon labels and what makes a folder actually
+// be one of them all live in `pacenotes_installer::gamedir` — pure logic, so
+// it can be tested without a desktop. This module only renders it.
 
 /// Right-hand tab pages.
 const RIGHT_DOWNLOAD: i32 = 0;
@@ -99,8 +99,8 @@ struct GameState {
 }
 
 struct App {
-    games: [GameState; GAMES.len()],
-    current: usize,
+    games: [GameState; pacenotes_installer::gamedir::Game::ALL.len()],
+    current: pacenotes_installer::gamedir::Game,
     log: String,
 }
 
@@ -108,9 +108,13 @@ impl App {
     fn new() -> Self {
         App {
             games: Default::default(),
-            current: 0,
+            current: pacenotes_installer::gamedir::Game::Rbr,
             log: String::new(),
         }
+    }
+
+    fn current_state(&mut self) -> &mut GameState {
+        &mut self.games[self.current.index()]
     }
 }
 
@@ -277,8 +281,8 @@ unsafe fn init_main_dialog(dlg: HWND, state: &mut App) {
 
     // Game ribbon across the top (DESIGN.md).
     let gametab = wm::GetDlgItem(dlg, IDC_GAMETAB as i32);
-    for (i, name) in GAMES.iter().enumerate() {
-        add_tab_text(gametab, i as i32, name);
+    for (i, game) in pacenotes_installer::gamedir::Game::ALL.iter().enumerate() {
+        add_tab_text(gametab, i as i32, game.title());
     }
     let righttab = wm::GetDlgItem(dlg, IDC_RIGHTTAB as i32);
     add_tab(righttab, RIGHT_DOWNLOAD, crate::i18n::IDS_TAB_DOWNLOAD);
@@ -321,38 +325,56 @@ unsafe fn init_main_dialog(dlg: HWND, state: &mut App) {
 /// Ribbon changed: persist the outgoing game's fields, then show the new one's.
 unsafe fn on_game_change(dlg: HWND, state: &mut App) {
     save_game(dlg, state);
-    state.current = tab_sel(dlg, IDC_GAMETAB).clamp(0, GAMES.len() as i32 - 1) as usize;
+    state.current =
+        pacenotes_installer::gamedir::Game::from_index(tab_sel(dlg, IDC_GAMETAB).max(0) as usize);
     load_game(dlg, state);
 }
 
 unsafe fn save_game(dlg: HWND, state: &mut App) {
-    state.games[state.current].dir = get_text(dlg, IDC_GAMEDIR);
+    let dir = get_text(dlg, IDC_GAMEDIR);
+    state.current_state().dir = dir;
 }
 
 unsafe fn load_game(dlg: HWND, state: &mut App) {
-    let dir = state.games[state.current].dir.clone();
+    let dir = state.current_state().dir.clone();
     set_window_text(wm::GetDlgItem(dlg, IDC_GAMEDIR as i32), &dir);
-    validate_dir(dlg);
+    validate_dir(dlg, state);
 }
 
 /// DESIGN.md: "the field should be validated".
-unsafe fn validate_dir(dlg: HWND) -> bool {
+///
+/// Validated against the game the ribbon is on, not merely for existence:
+/// pointing the installer at a real-but-wrong folder is the mistake worth
+/// catching, and it is the one an is_dir() check would wave through.
+unsafe fn validate_dir(dlg: HWND, state: &mut App) -> bool {
+    let game = state.current;
     let dir = get_text(dlg, IDC_GAMEDIR);
-    let id = if dir.trim().is_empty() {
-        crate::i18n::IDS_DIR_EMPTY
-    } else if std::path::Path::new(dir.trim()).is_dir() {
-        crate::i18n::IDS_DIR_OK
-    } else {
-        crate::i18n::IDS_DIR_INVALID
+    let status = pacenotes_installer::gamedir::validate(game, &dir);
+    let text = match status {
+        pacenotes_installer::gamedir::DirStatus::Empty => {
+            crate::i18n::load_string(crate::i18n::IDS_DIR_EMPTY)
+        }
+        pacenotes_installer::gamedir::DirStatus::NotFound => {
+            crate::i18n::load_string(crate::i18n::IDS_DIR_NOTFOUND)
+        }
+        // Name the missing executable: "not a game folder" alone leaves the
+        // user guessing what the installer was looking for.
+        pacenotes_installer::gamedir::DirStatus::NotGame => {
+            crate::i18n::load_string_arg(crate::i18n::IDS_DIR_NOTGAME, game.marker())
+        }
+        pacenotes_installer::gamedir::DirStatus::Ok => {
+            crate::i18n::load_string_arg(crate::i18n::IDS_DIR_OK, game.marker())
+        }
     };
-    set_text(dlg, IDC_DIRSTATUS, id);
-    id == crate::i18n::IDS_DIR_OK
+    set_window_text(wm::GetDlgItem(dlg, IDC_DIRSTATUS as i32), &text);
+    status.is_ok()
 }
 
 unsafe fn on_command(dlg: HWND, state: &mut App, id: u16, code: u16) {
     // Re-validate as the user types the folder path.
     if id == IDC_GAMEDIR && code == EN_CHANGE {
-        validate_dir(dlg);
+        save_game(dlg, state);
+        validate_dir(dlg, state);
         return;
     }
     if code != BN_CLICKED && !matches!(id, IDCANCEL | IDOK) {
@@ -367,7 +389,7 @@ unsafe fn on_command(dlg: HWND, state: &mut App, id: u16, code: u16) {
             if let Some(dir) = browse_for_folder(dlg) {
                 set_window_text(wm::GetDlgItem(dlg, IDC_GAMEDIR as i32), &dir);
                 save_game(dlg, state);
-                validate_dir(dlg);
+                validate_dir(dlg, state);
             }
         }
         IDC_INSTALL => on_install(dlg, state),
@@ -384,7 +406,7 @@ unsafe fn on_command(dlg: HWND, state: &mut App, id: u16, code: u16) {
 /// then proceeds with installation". Until I7 there is nothing to proceed
 /// with, but the preconditions are real and enforced here.
 unsafe fn on_install(dlg: HWND, state: &mut App) {
-    if !validate_dir(dlg) {
+    if !validate_dir(dlg, state) {
         report_error(dlg, state, crate::i18n::IDS_ERR_NO_DIR);
         return;
     }
@@ -416,7 +438,7 @@ unsafe fn log(dlg: HWND, state: &mut App, line: &str) {
     }
     state
         .log
-        .push_str(&format!("[{}] {line}", GAMES[state.current]));
+        .push_str(&format!("[{}] {line}", state.current.title()));
     let logs = wm::GetDlgItem(dlg, IDC_LOGS as i32);
     set_window_text(logs, &state.log);
     // Keep the newest line in view.

@@ -134,11 +134,12 @@ END
 #define IDS_NOTES_BODY     59
 // Validation / errors
 #define IDS_DIR_EMPTY      70
-#define IDS_DIR_INVALID    71
+#define IDS_DIR_NOTFOUND   71
 #define IDS_DIR_OK         72
 #define IDS_ERR_NO_DIR     73
 #define IDS_ERR_NO_PICK    74
 #define IDS_LOG_STARTED    75
+#define IDS_DIR_NOTGAME    76
 
 // ============================================================
 // Dialogs — language-neutral. Text here is an English fallback only;
@@ -280,8 +281,9 @@ BEGIN
     IDS_LBL_BACKUPS     "Available backups"
     IDS_NOTES_BODY      "Pick your game above, set its folder, then choose one item in each category on the left and press Install.\r\nNew content is fetched from the Download tab on the right; a private key unlocks additional content.\r\nFiles replaced during installation are backed up automatically and can be restored from the Backups tab."
     IDS_DIR_EMPTY       "Enter or browse to the game folder."
-    IDS_DIR_INVALID     "That folder does not exist."
-    IDS_DIR_OK          "Folder found."
+    IDS_DIR_NOTFOUND    "That folder does not exist."
+    IDS_DIR_NOTGAME     "This folder does not contain %s."
+    IDS_DIR_OK          "Game folder confirmed: %s found."
     IDS_ERR_NO_DIR      "Set a valid game folder before installing."
     IDS_ERR_NO_PICK     "Select one item in every category before installing."
     IDS_LOG_STARTED     "Installer started."
@@ -326,8 +328,9 @@ BEGIN
     IDS_LBL_BACKUPS     "Dostępne kopie zapasowe"
     IDS_NOTES_BODY      "Wybierz grę powyżej, wskaż jej folder, następnie wybierz po jednej pozycji w każdej kategorii po lewej i naciśnij Instaluj.\r\nNową zawartość pobierzesz w zakładce Pobieranie po prawej; klucz prywatny odblokowuje dodatkową zawartość.\r\nPliki zastąpione podczas instalacji są automatycznie kopiowane i można je przywrócić w zakładce Kopie zapasowe."
     IDS_DIR_EMPTY       "Wpisz lub wskaż folder gry."
-    IDS_DIR_INVALID     "Ten folder nie istnieje."
-    IDS_DIR_OK          "Folder znaleziony."
+    IDS_DIR_NOTFOUND    "Ten folder nie istnieje."
+    IDS_DIR_NOTGAME     "W tym folderze nie ma pliku %s."
+    IDS_DIR_OK          "Folder gry potwierdzony: znaleziono %s."
     IDS_ERR_NO_DIR      "Przed instalacją wskaż prawidłowy folder gry."
     IDS_ERR_NO_PICK     "Przed instalacją wybierz po jednej pozycji w każdej kategorii."
     IDS_LOG_STARTED     "Instalator uruchomiony."

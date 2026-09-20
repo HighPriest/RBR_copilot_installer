@@ -10,6 +10,7 @@
 
 pub mod cache;
 pub mod engine;
+pub mod gamedir;
 pub mod install;
 pub mod ledger;
 pub mod sha256;
