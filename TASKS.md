@@ -24,19 +24,35 @@ Detailed per-crate steps live in `installer/TASKS.md` and `server/TASKS.md`.
 - [x] `cargo test -p pacenotes-shared` green
 
 ## M1a — Protocol v2: install metadata (see root CLAUDE.md "Install model")
-- [ ] Extend PackageInfo: `category: String`,
+- [x] Extend PackageInfo: `category: String`,
       `display_name: Option<String>`, `exclusive_group: Option<String>`,
       `requires: Vec<String>` ("directory/name" refs; serde default = empty)
-- [ ] Unit tests: round-trip incl. new fields; old manifests without the
+- [x] ALSO `game: String` ("rbr"/"dirtrally"/"beamng", serde default "rbr").
+      Not in the original list: `installer/DESIGN.md` made the app multi-game
+      after this was written, and without the field every package would show
+      under every ribbon tab. Constants `GAME_*` mirror
+      `installer/src/gamedir.rs`.
+- [x] Unit tests: round-trip incl. new fields; old manifests without the
       fields still deserialize (serde defaults; `category` defaults to
-      "pacenotes" via #[serde(default = ...)])
-- [ ] `shared::PackageRef` helper: parse/format "directory/name"
+      "pacenotes" via #[serde(default = ...)]); absent optionals are not
+      serialized, so a v1 reader still sees a v1 document
+- [x] `shared::PackageRef` helper: parse/format "directory/name" (rejects
+      `\\`, empty halves and extra separators, so a ref never widens into a
+      path); `PackageInfo::label()`, `required_refs()`, `Manifest::get()`
 
 ## M2 — Server MVP (serves real files, no auth yet)
-- [ ] server/TASKS.md → S1..S4
-- [ ] `GET /health`, `GET /packages` (public only),
+- [x] server/TASKS.md → S1..S4
+- [x] `GET /health`, `GET /packages` (public only),
       `GET /download/{directory}/{name}`
-- [ ] Manual test with curl against a `packages/` dir with one test zip
+- [x] Manual test with curl against a `packages/` dir with one test zip
+      (health 200, anon listing shows only `public`, download byte-identical
+      with correct Content-Length/Type/Disposition, unknown package 404,
+      `..%2F..%2Fdata/auth.db` 404)
+
+NOTE: /download is NOT access-checked yet — a protected directory's zip is
+downloadable by anyone who guesses `directory/name`. `/packages` hides those
+names, which is concealment, not access control. M3/S6 closes it; do not
+deploy M2 publicly.
 
 ## M3 — Server auth
 - [ ] server/TASKS.md → S5..S7

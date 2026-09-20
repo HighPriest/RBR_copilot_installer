@@ -19,6 +19,12 @@ rand = "=0.8.8"           # token minting (admin CLI)
 # `env` feature: flags fall back to PACENOTES_* env vars (server/CLAUDE.md).
 clap = { version = "=4.6.7", features = ["derive", "env"] }
 anyhow = "=1.0.104"
+# tokio-util is used for ReaderStream: tokio::fs::File -> axum Body,
+# so downloads stream instead of buffering a whole zip in memory.
+tokio-util = { version = "=0.7.19", features = ["io"] }
+# Sidecar <name>.toml parsing for `manifest gen` (server-side only: the
+# installer never sees TOML, just the merged manifest JSON).
+toml = "=1.1.6"
 # Versions are pinned exactly (M0); bump deliberately + commit Cargo.lock.
 
 [dev-dependencies]

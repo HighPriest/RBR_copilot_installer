@@ -6,29 +6,29 @@
 - [x] tracing-subscriber wired (env-filter, default info)
 
 ## S2 — Config + skeleton
-- [ ] clap CLI: `serve` subcommand with --listen/--packages/--db-url
+- [x] clap CLI: `serve` subcommand with --listen/--packages/--db-url
       (+ env fallbacks per CLAUDE.md)
-- [ ] axum router: GET /health returns 200 "ok"; graceful shutdown on ctrl-c
+- [x] axum router: GET /health returns 200 "ok"; graceful shutdown on ctrl-c
 
 ## S3 — Manifest store
-- [ ] store.rs: load packages/manifest.json → shared::Manifest; RwLock cache;
+- [x] store.rs: load packages/manifest.json → shared::Manifest; RwLock cache;
       lazy mtime-based reload; validate directory names on load
-- [ ] GET /packages returns public-directory entries only (no auth yet)
-- [ ] `manifest gen` subcommand: scan <dir>/<subdir>/*.zip, subdir = access
+- [x] GET /packages returns public-directory entries only (no auth yet)
+- [x] `manifest gen` subcommand: scan <dir>/<subdir>/*.zip, subdir = access
       directory (validate [a-z0-9_-]+, reject top-level zips), sha256/size/
       updated_at
-- [ ] `manifest gen` sidecar merge: parse <name>.toml (category default
+- [x] `manifest gen` sidecar merge: parse <name>.toml (category default
       "pacenotes", display_name, exclusive_group, requires, description,
       version); preserve version of existing entries when sidecar omits it
-- [ ] `manifest gen` validation + warnings: dangling requires, sidecar w/o
+- [x] `manifest gen` validation + warnings: dangling requires, sidecar w/o
       zip, public package requiring non-public package
-- [ ] Unit tests: sidecar merge + validation cases
+- [x] Unit tests: sidecar merge + validation cases
 
 ## S4 — Downloads
-- [ ] GET /download/{directory}/{name}: manifest (directory,name) lookup →
+- [x] GET /download/{directory}/{name}: manifest (directory,name) lookup →
       stream zip (tokio::fs + axum Body), Content-Length + application/zip;
       404 unknown
-- [ ] Traversal test: directory+name are lookup keys, never paths (assert)
+- [x] Traversal test: directory+name are lookup keys, never paths (assert)
 
 ## S5 — libSQL auth store
 - [ ] migrations/0001_init.sql applied on startup (idempotent)
@@ -62,3 +62,23 @@
 - [ ] README snippet: publish flow = drop zip (+ sidecar) into
       packages/<dir>/ → `manifest gen` → done; access flow =
       `token mint --grant <dir>`
+
+## S3/S4 implementation notes
+
+- Sidecar precedence is sidecar > previous manifest.json > protocol default,
+  per field. That keeps `manifest gen` idempotent (a re-run never downgrades
+  metadata) while letting a publisher change one field by touching one line.
+  `size`/`sha256`/`updated_at` ignore both and always come from the file.
+- A malformed sidecar is FATAL, not a warning: `deny_unknown_fields` plus a
+  hard error means a typo (`categoy = "sounds"`) can never publish a package
+  with silently-default metadata. Everything that is merely suspicious —
+  sidecar without a zip, dangling/ill-formed `requires`, a public package
+  requiring a protected one, a dependency belonging to another game — is a
+  collected warning printed to stderr.
+- `Generated { manifest, warnings }` exists so those warnings are testable
+  rather than only observable in the log.
+- A corrupt manifest.json never fails a request: the store logs and keeps
+  serving the last good copy (empty on first load).
+- Downloads stream via `tokio_util::io::ReaderStream`; Content-Length comes
+  from the file handle, not the manifest, so a stale manifest cannot produce
+  a truncated or over-long response.

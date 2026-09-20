@@ -1,21 +1,18 @@
 //! Pacenotes server — axum + libSQL. See server/CLAUDE.md and TASKS.md.
-//! Skeleton compiles the shape; handlers are filled in tasks S2..S7.
 
 mod auth;
+mod error;
+mod routes;
 mod store;
 
-use anyhow::Result;
-use axum::{routing::get, Router};
-use clap::{Parser, Subcommand};
-
-#[derive(Parser)]
+#[derive(clap::Parser)]
 #[command(name = "pacenotes-server")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
 }
 
-#[derive(Subcommand)]
+#[derive(clap::Subcommand)]
 enum Cmd {
     /// Run the HTTP server.
     Serve {
@@ -31,21 +28,31 @@ enum Cmd {
         // TODO(S7): #[command(subcommand)] mint --grant DIR... /
         // grant / ungrant / revoke / list
     },
-    /// Regenerate packages/manifest.json from zips on disk. Task S3.
+    /// Package manifest maintenance.
     Manifest {
-        // TODO(S3): gen --dir
+        #[command(subcommand)]
+        cmd: ManifestCmd,
+    },
+}
+
+#[derive(clap::Subcommand)]
+enum ManifestCmd {
+    /// Rebuild <dir>/manifest.json from the zips under <dir>/<directory>/.
+    Gen {
+        #[arg(long, default_value = "./packages", env = "PACENOTES_PACKAGES_DIR")]
+        dir: String,
     },
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
-    match Cli::parse().cmd {
+    match <Cli as clap::Parser>::parse().cmd {
         Cmd::Serve {
             listen,
             packages,
@@ -55,30 +62,58 @@ async fn main() -> Result<()> {
             // TODO(S7)
             anyhow::bail!("token admin: not implemented (task S7)")
         }
-        Cmd::Manifest {} => {
-            // TODO(S3)
-            anyhow::bail!("manifest gen: not implemented (task S3)")
-        }
+        Cmd::Manifest {
+            cmd: ManifestCmd::Gen { dir },
+        } => manifest_gen(std::path::Path::new(&dir)),
     }
 }
 
-async fn serve(listen: String, packages: String, db_url: String) -> Result<()> {
+async fn serve(listen: String, packages: String, db_url: String) -> anyhow::Result<()> {
     tracing::info!(%listen, %packages, %db_url, "starting");
 
     // TODO(S5): open libsql, run migrations/0001_init.sql (idempotent).
-    // TODO(S3): store::ManifestStore::new(packages) with lazy reload.
 
-    let app = Router::new()
-        .route("/health", get(|| async { "ok" }))
-        // TODO(S3): .route("/packages", get(handlers::list_packages))
-        // TODO(S4): .route("/download/{directory}/{name}", get(handlers::download))
-        .layer(tower_http::trace::TraceLayer::new_for_http());
+    let state = std::sync::Arc::new(routes::AppState {
+        store: store::ManifestStore::new(&packages),
+    });
+    // Load once at startup so a broken manifest shows up in the log
+    // immediately instead of on the first request.
+    let loaded = state.store.current().packages.len();
+    tracing::info!(packages = loaded, "manifest loaded");
 
     let listener = tokio::net::TcpListener::bind(&listen).await?;
-    axum::serve(listener, app)
+    tracing::info!(addr = %listener.local_addr()?, "listening");
+    axum::serve(listener, routes::router(state))
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
         })
         .await?;
+    Ok(())
+}
+
+/// `manifest gen`: scan the packages tree and rewrite manifest.json.
+/// Publishing flow = drop a zip into packages/<directory>/ → run this.
+fn manifest_gen(dir: &std::path::Path) -> anyhow::Result<()> {
+    let generated = store::ManifestStore::generate(dir)?;
+    let manifest = generated.manifest;
+    let path = dir.join("manifest.json");
+    let json = serde_json::to_string_pretty(&manifest)?;
+    std::fs::write(&path, format!("{json}\n"))
+        .map_err(|e| anyhow::anyhow!("writing {}: {e}", path.display()))?;
+
+    for p in &manifest.packages {
+        println!(
+            "{}/{} {} [{}/{}] ({} bytes)",
+            p.directory, p.name, p.version, p.game, p.category, p.size
+        );
+    }
+    for warning in &generated.warnings {
+        eprintln!("warning: {warning}");
+    }
+    println!(
+        "wrote {} ({} package(s))",
+        path.display(),
+        manifest.packages.len()
+    );
     Ok(())
 }
