@@ -15,9 +15,10 @@ impl Sha256 {
     pub fn update(&mut self, _data: &[u8]) {
         // TODO(I5)
     }
+    /// NOTE: until I5 lands this panics rather than returning a plausible
+    /// wrong digest — a silently-zero hash would defeat download verification.
     pub fn finalize(self) -> [u8; 32] {
-        // TODO(I5)
-        [0u8; 32]
+        unimplemented!("sha256 not implemented (task I5)")
     }
 }
 

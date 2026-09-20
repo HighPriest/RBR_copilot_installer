@@ -1,32 +1,31 @@
 //! Pacenotes Installer — entry point.
 //! Flow mirrors legacy Program.cs: language picker (Cancel = exit) → main dialog.
 //! See installer/CLAUDE.md before editing. Size gate: check-size.ps1.
+//!
+//! Windows-only. The pure logic lives in the sibling lib target (src/lib.rs);
+//! only the modules declared here may touch windows-sys.
 #![windows_subsystem = "windows"]
 #![cfg(windows)]
 
 mod api;
 mod http;
 mod i18n;
-mod install;
-mod sha256;
 mod ui;
-mod zip;
-
-use windows_sys::Win32::UI::Controls::{
-    InitCommonControlsEx, ICC_PROGRESS_CLASS, ICC_STANDARD_CLASSES, ICC_LISTVIEW_CLASSES,
-    INITCOMMONCONTROLSEX,
-};
 
 fn main() {
     unsafe {
-        let icc = INITCOMMONCONTROLSEX {
-            dwSize: core::mem::size_of::<INITCOMMONCONTROLSEX>() as u32,
-            dwICC: ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS | ICC_LISTVIEW_CLASSES,
+        let icc = windows_sys::Win32::UI::Controls::INITCOMMONCONTROLSEX {
+            dwSize: core::mem::size_of::<windows_sys::Win32::UI::Controls::INITCOMMONCONTROLSEX>()
+                as u32,
+            dwICC: windows_sys::Win32::UI::Controls::ICC_STANDARD_CLASSES
+                | windows_sys::Win32::UI::Controls::ICC_PROGRESS_CLASS
+                | windows_sys::Win32::UI::Controls::ICC_LISTVIEW_CLASSES
+                | windows_sys::Win32::UI::Controls::ICC_TAB_CLASSES,
         };
-        InitCommonControlsEx(&icc);
+        windows_sys::Win32::UI::Controls::InitCommonControlsEx(&icc);
     }
 
-    // Task I2: language picker dialog; on Cancel, return (like Program.cs).
+    // Task I2: language picker dialog; on Cancel, exit (like Program.cs).
     let Some(lang) = ui::show_language_picker() else {
         return;
     };
