@@ -63,6 +63,17 @@ pub const CATEGORY_CODRIVER: &str = "codriver";
 pub const CATEGORY_STYLE: &str = "style";
 pub const CATEGORY_PACENOTES: &str = "pacenotes";
 
+/// Every category this protocol knows about. `category` is an open string,
+/// so this is not a whitelist — it is what lets the server recognise a
+/// category name appearing where an access directory belongs, which is the
+/// easiest way to mis-file a package tree.
+pub const KNOWN_CATEGORIES: [&str; 4] = [
+    CATEGORY_LANGUAGE,
+    CATEGORY_CODRIVER,
+    CATEGORY_STYLE,
+    CATEGORY_PACENOTES,
+];
+
 /// The three categories the Configuration scene requires exactly one pick
 /// from, in the order the scene lists them.
 pub const CHOICE_CATEGORIES: [&str; 3] = [CATEGORY_LANGUAGE, CATEGORY_CODRIVER, CATEGORY_STYLE];
@@ -397,14 +408,14 @@ mod tests {
             assert!(super::valid_name(good), "{good:?} should be valid");
         }
         for bad in [
-            "",                     // nothing at all
-            "..",                   // the parent directory
-            "codriver/../../etc",   // climbing out
-            "codriver/./Kamil",     // a no-op segment
-            "/codriver/Kamil",      // absolute
-            "codriver/Kamil/",      // trailing separator
-            "codriver//Kamil",      // empty segment
-            "codriver\\polish",     // Windows separator
+            "",                   // nothing at all
+            "..",                 // the parent directory
+            "codriver/../../etc", // climbing out
+            "codriver/./Kamil",   // a no-op segment
+            "/codriver/Kamil",    // absolute
+            "codriver/Kamil/",    // trailing separator
+            "codriver//Kamil",    // empty segment
+            "codriver\\polish",   // Windows separator
         ] {
             assert!(!super::valid_name(bad), "{bad:?} should be rejected");
         }
@@ -422,11 +433,11 @@ mod tests {
         assert_eq!(r.to_string(), "public/codriver/polish/male/Kamil");
 
         for bad in [
-            "public",                  // no name half
-            "/codriver/Kamil",         // no directory half
-            "public/",                 // empty name
-            "public/../secrets",       // climbing out
-            "public\\codriver/Kamil",  // Windows separator
+            "public",                 // no name half
+            "/codriver/Kamil",        // no directory half
+            "public/",                // empty name
+            "public/../secrets",      // climbing out
+            "public\\codriver/Kamil", // Windows separator
         ] {
             assert!(
                 super::PackageRef::parse(bad).is_none(),

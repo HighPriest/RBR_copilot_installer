@@ -1,7 +1,7 @@
 /target
 **/target
 /server/data/
-/server/packages/**/*.zip
-/server/packages/manifest.json
+/server/data/*/packages/**/*.zip
+/server/data/*/packages/manifest.json
 Cargo.lock.bak
 legacy

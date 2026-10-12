@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026/10/12 — server side of protocol rev. 2
+
+- `manifest gen` recurses: a package's `name` is now its path under the
+  access directory without `.zip`
+  (`packages/public/codriver/polish/male/Kamil.zip` →
+  `public` + `codriver/polish/male/Kamil`), so the operator's folder layout
+  is the installer's Download tree. Names are validated with
+  `shared::valid_name`; rejected or non-UTF-8 names are skipped with a
+  warning instead of entering the manifest.
+- `GET /download/{directory}/{*name}` is a wildcard route so nested names
+  match. The security invariant is untouched: both halves stay manifest
+  lookup keys, only a hit yields a path on disk, and every miss — including
+  percent-encoded traversal — is 404.
+- `GET /motd?lang=xx` serves `<packages>/motd/<lang>.txt` as text/plain,
+  falls back to `en`, 404s when absent (the installer treats that like being
+  offline) and needs no credential. `lang` is restricted to `[a-z]{2,8}`
+  before it touches the filesystem.
+- `manifest gen` now warns when a top-level folder is a known category name,
+  i.e. when the access-directory level has been left out — the mistake the
+  real `server/data` tree had.
+- Sidecars lost their last positional key: `game` aside, nothing about where
+  a package sits comes from a .toml any more.
+
 ## 2026/09/20 — M3: server auth
 
 - libSQL auth store: `db.rs` opens `--db-url` (local file, `:memory:`, or

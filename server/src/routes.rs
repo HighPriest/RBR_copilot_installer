@@ -29,7 +29,14 @@ pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
     axum::Router::new()
         .route("/health", axum::routing::get(health))
         .route("/packages", axum::routing::get(list_packages))
-        .route("/download/{directory}/{name}", axum::routing::get(download))
+        // `{*name}` (wildcard) because a package name is its path under the
+        // access directory and spans the remaining segments:
+        // /download/public/codriver/polish/male/Kamil.
+        .route(
+            "/download/{directory}/{*name}",
+            axum::routing::get(download),
+        )
+        .route("/motd", axum::routing::get(motd))
         .with_state(state)
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
@@ -54,9 +61,11 @@ async fn list_packages(
     Ok(axum::Json(state.store.current().visible_to(&grants)))
 }
 
-/// `GET /download/{directory}/{name}` — `directory` and `name` are manifest
-/// lookup keys, never path fragments (server/CLAUDE.md). Unknown pair → 404,
-/// which is also what a traversal attempt gets.
+/// `GET /download/{directory}/{*name}` — `name` spans every remaining
+/// segment, because it is the package's path under its access directory.
+/// Both halves stay manifest lookup KEYS, never path fragments
+/// (server/CLAUDE.md): only a manifest hit yields a path on disk, so an
+/// unknown pair — including every traversal attempt — is a 404.
 async fn download(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
     axum::extract::Path((directory, name)): axum::extract::Path<(String, String)>,
@@ -106,4 +115,34 @@ async fn download(
         ),
     ];
     Ok(axum::response::IntoResponse::into_response((headers, body)))
+}
+
+#[derive(serde::Deserialize)]
+pub struct MotdQuery {
+    /// Language tag; validated in the store before it touches the
+    /// filesystem. Absent = the fallback language.
+    #[serde(default)]
+    lang: String,
+}
+
+/// `GET /motd?lang=xx` → the message of the day as `text/plain`, falling back
+/// to English. No auth: it is shown before the user has entered anything.
+///
+/// 404 when there is no text at all, which the installer treats exactly like
+/// being offline — so an operator who publishes no MOTD costs the user
+/// nothing.
+async fn motd(
+    axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
+    axum::extract::Query(query): axum::extract::Query<MotdQuery>,
+) -> Result<axum::response::Response, crate::error::AppError> {
+    let Some(text) = state.store.motd(&query.lang) else {
+        return Err(crate::error::AppError::not_found());
+    };
+    Ok(axum::response::IntoResponse::into_response((
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; charset=utf-8",
+        )],
+        text,
+    )))
 }

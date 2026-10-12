@@ -49,7 +49,7 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
   on manifest load. `public` is reserved for anonymous access and must never
   appear in `grants`.
 
-## Security invariants
+## Security invariantsr
 
 - Raw tokens are NEVER stored or logged. Store lowercase hex sha256 only.
   Mint format: `pcn_` + 32 random bytes base64url (admin CLI prints it once).

@@ -15,13 +15,22 @@ struct Server {
 }
 
 impl Server {
-    /// public/basic.zip, alpha/secret.zip, beta/other.zip + a generated
-    /// manifest, served by the real router.
+    /// One package per access directory (`public`, `alpha`, `beta`) plus a
+    /// deeply nested one and a MOTD, generated into a manifest and served by
+    /// the real router.
     async fn start() -> Server {
         let packages = tempfile::tempdir().unwrap();
         write(&packages.path().join("public/basic.zip"), b"public-bytes");
         write(&packages.path().join("alpha/secret.zip"), b"alpha-bytes");
         write(&packages.path().join("beta/other.zip"), b"beta-bytes");
+        // The nested layout the presentation model depends on.
+        write(
+            &packages
+                .path()
+                .join("public/codriver/polish/male/Kamil.zip"),
+            b"kamil-bytes",
+        );
+        write(&packages.path().join("motd/en.txt"), b"English news");
         let generated = pacenotes_server::store::ManifestStore::generate(packages.path()).unwrap();
         write(
             &packages.path().join("manifest.json"),
@@ -67,14 +76,31 @@ impl Server {
         request.send().await.unwrap()
     }
 
-    /// Directories visible in `/packages`, sorted — the listing half of the
-    /// matrix.
+    /// Every package `/packages` returns, as "directory/name" refs.
+    async fn listed(&self, token: Option<&str>) -> Vec<String> {
+        let manifest: pacenotes_shared::Manifest =
+            self.get("/packages", token).await.json().await.unwrap();
+        let mut refs: Vec<String> = manifest
+            .packages
+            .iter()
+            .map(|p| p.package_ref().to_string())
+            .collect();
+        refs.sort();
+        refs
+    }
+
+    /// Which access directories `/packages` reveals, deduplicated and sorted
+    /// — the listing half of the matrix. Deduplicated because a directory
+    /// holds many packages (the fixture's `public` holds two) and what the
+    /// matrix is about is which DIRECTORIES leak, not how many files sit in
+    /// them.
     async fn visible(&self, token: Option<&str>) -> Vec<String> {
         let manifest: pacenotes_shared::Manifest =
             self.get("/packages", token).await.json().await.unwrap();
         let mut directories: Vec<String> =
             manifest.packages.into_iter().map(|p| p.directory).collect();
         directories.sort();
+        directories.dedup();
         directories
     }
 
@@ -97,6 +123,10 @@ impl Server {
         ]
     }
 }
+
+/// A package name with `/` in it has to survive the URL as segments, which
+/// is the whole point of the wildcard route.
+const NESTED: &str = "codriver/polish/male/Kamil";
 
 fn write(path: &std::path::Path, bytes: &[u8]) {
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -305,9 +335,14 @@ async fn error_bodies_are_api_errors() {
 #[tokio::test]
 async fn manifest_changes_are_picked_up_without_a_restart() {
     let server = Server::start().await;
-    assert_eq!(server.visible(None).await, vec!["public"]);
+    let before = server.listed(None).await.len();
+    assert_eq!(
+        server.get("/download/public/extra", None).await.status(),
+        404
+    );
 
-    // Publish a second public package the way a publisher would.
+    // Publish another public package the way a publisher would: drop the zip
+    // in, regenerate the manifest.
     write(
         &server._packages.path().join("public/extra.zip"),
         b"extra-bytes",
@@ -321,9 +356,127 @@ async fn manifest_changes_are_picked_up_without_a_restart() {
             .as_bytes(),
     );
 
-    assert_eq!(server.visible(None).await, vec!["public", "public"]);
+    // The store notices the new manifest mtime on the next request.
+    assert_eq!(server.listed(None).await.len(), before + 1);
     assert_eq!(
         server.get("/download/public/extra", None).await.status(),
         200
     );
+}
+
+#[tokio::test]
+async fn nested_names_download_through_the_wildcard_route() {
+    let server = Server::start().await;
+
+    // The nested package is public, so anonymous gets it...
+    let response = server
+        .get(&format!("/download/public/{NESTED}"), None)
+        .await;
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.headers()["content-length"], "11");
+    // ...with the LEAF as the filename, not the whole path.
+    assert!(
+        response.headers()["content-disposition"]
+            .to_str()
+            .unwrap()
+            .contains("Kamil.zip"),
+        "{:?}",
+        response.headers()["content-disposition"]
+    );
+    assert_eq!(response.bytes().await.unwrap().as_ref(), b"kamil-bytes");
+
+    // ...and it is listed with its path as `name`, which is what lets the
+    // installer build the tree.
+    let manifest: pacenotes_shared::Manifest =
+        server.get("/packages", None).await.json().await.unwrap();
+    let nested = manifest
+        .get(&pacenotes_shared::PackageRef::parse(&format!("public/{NESTED}")).unwrap())
+        .expect("nested package listed");
+    assert_eq!(nested.category(), pacenotes_shared::CATEGORY_CODRIVER);
+    assert_eq!(nested.tree_levels(), vec!["polish", "male"]);
+    assert_eq!(nested.leaf(), "Kamil");
+}
+
+#[tokio::test]
+async fn a_nested_name_is_still_only_a_lookup_key() {
+    let server = Server::start().await;
+
+    // Each of these names a real file on disk, or a prefix of one, and none
+    // is a manifest entry — so each is 404. The `..` cases are
+    // percent-encoded on purpose: an HTTP client collapses dot segments
+    // before sending, so a literal `../` never reaches the server as one,
+    // and `%2F`/`%2E` is how a traversal attempt actually arrives.
+    for path in [
+        // Interior nodes of the tree are not packages.
+        "/download/public/codriver/polish/male",
+        "/download/public/codriver",
+        // Reaching out of the access directory.
+        "/download/public/..%2Fmotd%2Fen",
+        "/download/public/codriver%2F..%2F..%2Falpha%2Fsecret",
+        "/download/public/%2E%2E%2Fmanifest",
+        // The MOTD directory is not an access directory.
+        "/download/motd/en",
+        // Absolute-looking names.
+        "/download/public/%2Fetc%2Fpasswd",
+    ] {
+        assert_eq!(server.get(path, None).await.status(), 404, "{path}");
+    }
+
+    // Filing a package deeper does not make it public: `alpha` has no nested
+    // package, so this is 404 (not 401) — the status must not reveal which
+    // names exist inside a directory the caller cannot see.
+    assert_eq!(
+        server
+            .get(&format!("/download/alpha/{NESTED}"), None)
+            .await
+            .status(),
+        404
+    );
+}
+
+#[tokio::test]
+async fn motd_serves_text_falls_back_and_404s_when_absent() {
+    let server = Server::start().await;
+
+    // Explicit language that exists.
+    let response = server.get("/motd?lang=en", None).await;
+    assert_eq!(response.status(), 200);
+    assert!(
+        response.headers()["content-type"]
+            .to_str()
+            .unwrap()
+            .starts_with("text/plain"),
+        "{:?}",
+        response.headers()["content-type"]
+    );
+    assert_eq!(response.text().await.unwrap(), "English news");
+
+    // A language with no file falls back to English; so does a missing or
+    // malformed one. None of them reaches the filesystem as a path.
+    for query in ["?lang=pl", "", "?lang=", "?lang=../manifest", "?lang=EN"] {
+        let response = server.get(&format!("/motd{query}"), None).await;
+        assert_eq!(response.status(), 200, "{query}");
+        assert_eq!(response.text().await.unwrap(), "English news", "{query}");
+    }
+
+    // Once a translation exists it wins.
+    write(
+        &server._packages.path().join("motd/pl.txt"),
+        "Polskie wieści".as_bytes(),
+    );
+    let response = server.get("/motd?lang=pl", None).await;
+    assert_eq!(response.text().await.unwrap(), "Polskie wieści");
+
+    // No MOTD at all = 404, which the installer treats like being offline.
+    std::fs::remove_dir_all(server._packages.path().join("motd")).unwrap();
+    assert_eq!(server.get("/motd?lang=en", None).await.status(), 404);
+}
+
+#[tokio::test]
+async fn motd_needs_no_credential() {
+    let server = Server::start().await;
+    // Scene 2 calls /motd before the user has entered an access key.
+    assert_eq!(server.get("/motd?lang=en", None).await.status(), 200);
+    let bogus = server.get("/motd?lang=en", Some("not-a-token")).await;
+    assert_eq!(bogus.status(), 200);
 }

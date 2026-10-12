@@ -65,6 +65,27 @@
       packages/<dir>/ → `manifest gen` → done; access flow =
       `token mint --grant <dir>`
 
+## S9 — Protocol rev. 2 server side (DESIGN.md rev. 2)
+- [x] `manifest gen` recurses: `name` = the zip's path under its access
+      directory, without `.zip`, `/`-separated at any depth. Validated with
+      `pacenotes_shared::valid_name`; a name it rejects is skipped with a
+      warning and never reaches the manifest.
+- [x] Non-UTF-8 file names are skipped with a warning: a name that does not
+      round-trip cannot be a lookup key.
+- [x] `GET /download/{directory}/{*name}` is a wildcard route, so a nested
+      name matches. The invariant is unchanged: directory+name are manifest
+      keys, only a hit yields a path, every miss (traversal included) is 404.
+- [x] `GET /motd?lang=xx` → `text/plain` from `<packages>/motd/<lang>.txt`,
+      falling back to `en`, 404 when there is none, no auth. `lang` is
+      restricted to `[a-z]{2,8}` BEFORE it touches the filesystem, because
+      unlike `name` a query parameter cannot be validated by lookup.
+- [x] `motd/` is skipped by `manifest gen`: it sits beside the access
+      directories but is not one.
+- [x] Mis-filing check: a top-level folder whose name is a known category
+      (`codriver`, `language`, `style`, `pacenotes`) warns that the
+      access-directory level is missing — which is exactly how the real
+      `server/data` tree was filed.
+
 ## S3/S4 implementation notes
 
 - Sidecar precedence is sidecar > previous manifest.json > protocol default,
