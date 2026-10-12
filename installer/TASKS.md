@@ -222,9 +222,23 @@ Replaces the I2a layout. Delivered in two parts; this is part 1 (shell +
 scenes 1-3). Part 2 is scenes 4-7, which need the tree model and the engine.
 
 Cross-crate prerequisites:
-- [x] shared: `PackageInfo.tree_path: Vec<String>` (middle tree levels, e.g.
-      ["polish","male"]; serde default empty). `PackageInfo.game` already
-      existed from M1a.
+- [x] shared: the tree comes from the package's STORAGE PATH.
+      `PackageInfo.name` is the path under its access directory
+      (`codriver/polish/male/Kamil`), and `category()` / `tree_levels()` /
+      `leaf()` derive the tree from it. `PackageInfo.game` already existed
+      from M1a.
+      SUPERSEDED: this first shipped as a `tree_path: Vec<String>` field
+      alongside a `category` field. Both are gone. Deriving from the path
+      keeps one source of truth, empties the sidecars of positional metadata,
+      and makes the server's own folder layout meaningful. Doing so reversed
+      a root CLAUDE.md rule ("metadata, NOT paths"), which was rewritten to
+      match — its Install model section records the reversal and why the
+      security reasoning behind the old rule is unaffected (that rule was
+      about package CONTENT, which the installer still never interprets).
+- [x] shared: `valid_name` — `name` is a lookup key that now LOOKS like a
+      path, so this is the choke point that stops it becoming one. Rejects
+      `\`, `.`/`..` segments and empty segments. `PackageRef::parse` splits on
+      the FIRST separator, so a ref can point at a nested package.
 - [x] shared: `GAME_ASSETTOCORSA`; `GAME_DIRT_RALLY` → `GAME_DIRT_RALLY2`
       with the value `dirtrally2`, per DESIGN.md rev. 2's table. The name now
       matches the value, which is Dirt Rally 2.0.
@@ -233,12 +247,15 @@ Cross-crate prerequisites:
       `sounds` / `configs`). Three sources disagreed (shared, DESIGN.md,
       this file); DESIGN.md won. Added `CHOICE_CATEGORIES`, the three the
       Configuration scene requires one pick from.
-- [x] server: the `tree_path` sidecar field is read by `manifest gen`, and
-      its test fixtures follow the renamed ids, so the workspace builds and
-      the protocol is usable end to end.
+- [x] server: kept building and green against the new protocol — the
+      `category` and `tree_path` sidecar keys are gone, so the sidecar holds
+      no positional metadata at all, and the fixtures follow the derived
+      `category()`.
 - [ ] SERVER WORK REQUESTED — see "Server work requested" below. Not done
-      here: `manifest gen` deriving a DEFAULT tree_path from the subfolders
-      between the category folder and the zip, and `GET /motd`.
+      here: recursive package scanning producing a path-shaped `name`, the
+      wildcard download route, and `GET /motd`. Until the first two land the
+      server can only publish FLAT names, which the installer reads as a
+      package that is its own category.
 
 Wizard shell:
 - [x] PropertySheet wizard host; one dialog template per scene in
@@ -326,27 +343,47 @@ Size after I2b part 1: 275,456 B (269 kB) against the 500 kB gate.
 
 ## Server work requested (hand to the server agent)
 
-Both are DESIGN.md rev. 2 requirements that the installer cannot supply for
-itself. The shared protocol side is already in place.
+All three are DESIGN.md rev. 2 requirements the installer cannot supply for
+itself. The shared protocol side is already in place and the workspace builds
+and tests green against it.
 
-1. `manifest gen`: derive a DEFAULT `PackageInfo.tree_path` from the folders
-   between the category folder and the zip, so publishers get the Download
-   scene's tree shape without hand-authoring every sidecar. The field is
-   already read from the sidecar, so an explicit value must keep winning.
-   Example: `packages/public/codriver/polish/male/Kamil.zip` →
-   `tree_path = ["polish", "male"]`.
+1. NESTED PACKAGE STORAGE. `manifest gen` currently scans exactly one level
+   (`packages/<directory>/<name>.zip`) and bails on anything deeper. It needs
+   to recurse, and to set `PackageInfo.name` to the zip's path RELATIVE to its
+   access directory, without the `.zip`:
 
-2. `GET /motd?lang=xx` → `text/plain` from `packages/motd/<lang>.txt`, falling
+       packages/public/codriver/polish/male/Kamil.zip
+         → directory = "public"
+         → name      = "codriver/polish/male/Kamil"
+
+   That path is the whole presentation: `shared` derives `category()` (first
+   segment), `tree_levels()` (middle) and `leaf()` (last) from it. Validate
+   every name with `pacenotes_shared::valid_name` and skip with a warning if
+   it fails — that is what keeps a name from widening into a filesystem path.
+   `valid_name` rejects `\`, `.`/`..` segments and empty segments.
+
+2. DOWNLOAD ROUTE. `GET /download/{directory}/{name}` must become a wildcard
+   (`{*name}` in axum) so a nested name matches. The security invariant does
+   not change and must not: `directory` and `name` stay LOOKUP KEYS into the
+   manifest, and only a manifest hit yields a path on disk. Keep the
+   traversal test; add one for a nested name.
+
+3. `GET /motd?lang=xx` → `text/plain` from `packages/motd/<lang>.txt`, falling
    back to `en`, 404 when there is none, no auth. Scene 2 already calls it and
    treats 404 exactly like being offline, so the installer works today and
    improves the moment this lands.
 
-Note for whoever picks these up: `CATEGORY_*` in shared/ changed value
-(`languages`→`language`, `sounds`→`codriver`, `configs`→`style`) and
-`GAME_DIRT_RALLY`→`GAME_DIRT_RALLY2` (`dirtrally`→`dirtrally2`). The server's
-own test fixtures were updated with it, but any sidecar .toml already authored
-for real packages needs the same rename.
+What already changed in server/ (kept compiling and green, nothing designed):
+- the `category` and `tree_path` sidecar keys are gone — the sidecar has no
+  positional metadata any more, and `deny_unknown_fields` will now reject
+  those keys in any .toml that still carries them;
+- test fixtures and the `manifest gen` summary line follow the derived
+  `category()`.
 
+Anything already authored for real packages needs re-filing rather than
+re-tagging: the folder a zip lives in now IS its category and tree. Also note
+`GAME_DIRT_RALLY`→`GAME_DIRT_RALLY2` (`dirtrally`→`dirtrally2`), and the
+category vocabulary is `language` / `codriver` / `style` / `pacenotes`.
 
 ## I4 — Worker thread + progress protocol  (core landed with I2b part 1)
 
@@ -370,7 +407,7 @@ half arrives with scene 6.
 ## I5 — API + cache
 - [ ] sha256.rs (std-only) + unit tests against known vectors
 - [ ] api.rs: fetch_manifest (GET /packages, parse shared::Manifest incl.
-      game/tree_path/category/display_name/exclusive_group/requires),
+      game/name-as-path/display_name/exclusive_group/requires),
       fetch_motd, health
 - [ ] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
       cache.json index (PackageInfo snapshot per entry, so the tree can show

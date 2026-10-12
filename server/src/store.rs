@@ -233,11 +233,6 @@ impl ManifestStore {
                         .clone()
                         .or_else(|| previous_entry.map(|p| p.game.clone()))
                         .unwrap_or_else(pacenotes_shared::default_game),
-                    category: sidecar
-                        .category
-                        .clone()
-                        .or_else(|| previous_entry.map(|p| p.category.clone()))
-                        .unwrap_or_else(pacenotes_shared::default_category),
                     display_name: sidecar
                         .display_name
                         .clone()
@@ -254,17 +249,6 @@ impl ManifestStore {
                         .requires
                         .clone()
                         .or_else(|| previous_entry.map(|p| p.requires.clone()))
-                        .unwrap_or_default(),
-                    // Installer-side protocol addition (DESIGN.md rev. 2): the
-                    // middle levels of the Download scene's tree. Honoured from
-                    // the sidecar here so the field is usable end to end.
-                    // NOT YET IMPLEMENTED: deriving a default from the
-                    // subfolders between the category folder and the zip — see
-                    // installer/TASKS.md I2b cross-crate prerequisites.
-                    tree_path: sidecar
-                        .tree_path
-                        .clone()
-                        .or_else(|| previous_entry.map(|p| p.tree_path.clone()))
                         .unwrap_or_default(),
                 };
                 package.requires.sort();
@@ -354,15 +338,11 @@ impl Generated {
 struct Sidecar {
     version: Option<String>,
     game: Option<String>,
-    category: Option<String>,
+
     display_name: Option<String>,
     description: Option<String>,
     exclusive_group: Option<String>,
     requires: Option<Vec<String>>,
-    /// Middle levels of the installer's Download tree (DESIGN.md rev. 2),
-    /// outermost first, e.g. ["polish", "male"]. Display strings, not path
-    /// components.
-    tree_path: Option<Vec<String>>,
 }
 
 /// Reads `<name>.toml`. A missing sidecar is the normal case, not an error.
@@ -480,7 +460,7 @@ mod tests {
         assert_eq!(basic.version, "0.0.0");
         // No sidecar, no previous manifest: protocol defaults.
         assert_eq!(basic.game, pacenotes_shared::GAME_RBR);
-        assert_eq!(basic.category, pacenotes_shared::CATEGORY_PACENOTES);
+        assert_eq!(basic.category(), "basic"); // flat name: its own category
         assert!(generated
             .manifest
             .packages
@@ -499,7 +479,6 @@ mod tests {
             br#"
                 version = "2.1.0"
                 game = "dirtrally2"
-                category = "codriver"
                 display_name = "English / Female / Eva"
                 description = "Calm delivery"
                 exclusive_group = "voice"
@@ -508,7 +487,7 @@ mod tests {
         );
         write(
             &dir.join("public/english.toml"),
-            b"game = \"dirtrally2\"\ncategory = \"language\"\n",
+            b"game = \"dirtrally2\"\n",
         );
 
         let generated = generate(dir);
@@ -519,7 +498,7 @@ mod tests {
             .unwrap();
         assert_eq!(eva.version, "2.1.0");
         assert_eq!(eva.game, pacenotes_shared::GAME_DIRT_RALLY2);
-        assert_eq!(eva.category, pacenotes_shared::CATEGORY_CODRIVER);
+        assert_eq!(eva.category(), "eva"); // flat name: its own category
         assert_eq!(eva.label(), "English / Female / Eva");
         assert_eq!(eva.description.as_deref(), Some("Calm delivery"));
         assert_eq!(eva.exclusive_group.as_deref(), Some("voice"));
@@ -542,12 +521,10 @@ mod tests {
                     sha256: "stale".into(),
                     updated_at: 1,
                     game: pacenotes_shared::GAME_BEAMNG.into(),
-                    category: pacenotes_shared::CATEGORY_STYLE.into(),
                     display_name: Some("Numeric".into()),
                     description: Some("Numeric pacenotes".into()),
                     exclusive_group: Some("pacenote-config".into()),
                     requires: Vec::new(),
-                    tree_path: vec!["polish".into(), "male".into()],
                 }],
             },
         );
@@ -562,7 +539,7 @@ mod tests {
         // ...everything it omits keeps what the manifest already published...
         assert_eq!(basic.version, "2.3.4");
         assert_eq!(basic.game, pacenotes_shared::GAME_BEAMNG);
-        assert_eq!(basic.category, pacenotes_shared::CATEGORY_STYLE);
+        assert_eq!(basic.category(), "basic");
         assert_eq!(basic.description.as_deref(), Some("Numeric pacenotes"));
         assert_eq!(basic.exclusive_group.as_deref(), Some("pacenote-config"));
         // ...while size/sha/updated_at always come from the file on disk.
@@ -587,7 +564,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
         write(&dir.join("public/basic.zip"), b"hello");
-        write(&dir.join("public/ghost.toml"), b"category = \"codriver\"\n");
+        write(&dir.join("public/ghost.toml"), b"game = \"rbr\"\n");
 
         let generated = generate(dir);
         assert_eq!(generated.manifest.packages.len(), 1);

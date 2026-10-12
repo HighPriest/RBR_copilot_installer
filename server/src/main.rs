@@ -200,7 +200,12 @@ fn manifest_gen(dir: &std::path::Path) -> anyhow::Result<()> {
     for p in &manifest.packages {
         println!(
             "{}/{} {} [{}/{}] ({} bytes)",
-            p.directory, p.name, p.version, p.game, p.category, p.size
+            p.directory,
+            p.name,
+            p.version,
+            p.game,
+            p.category(),
+            p.size
         );
     }
     for warning in &generated.warnings {

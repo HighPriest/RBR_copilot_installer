@@ -35,19 +35,37 @@ pacenote packages. Two deliverables:
   installer must never execute or interpret package content. Rationale:
   a compromised server must not gain arbitrary installer behavior; an
   interpreter costs size budget; all real packages already conform.
-- What varies between packages is **metadata**, carried by the server
-  manifest (`PackageInfo`), NOT by paths and NOT by files inside the zip:
-  - `category`: UI grouping ("sounds", "configs", "languages", "pacenotes";
-    open string). Replaces the legacy meaning-in-path scheme
-    (`sounds\lang\gender\Voice.zip`). Access `directory` is auth ONLY —
-    category and directory are orthogonal.
-  - `display_name`: human name shown in the UI (replaces path hierarchy,
-    e.g. "English / Female / VoiceName").
+- **Where a package SITS on the server is how it is shown.** `PackageInfo.name`
+  is the package's path under its access directory, without the `.zip`:
+
+      packages/public/codriver/polish/male/Kamil.zip
+               ^dir   ^------------- name -------^
+
+  Its segments ARE the UI tree: first = `category`, middle = tree levels,
+  last = the package. `shared` derives all three (`category()`,
+  `tree_levels()`, `leaf()`); neither side stores them separately. Organising
+  the files on disk organises the installer's Download tree, and sidecars
+  carry no positional metadata at all.
+  - Access `directory` is auth ONLY and is a separate level of the layout, so
+    the same category can appear under `public/` and a private directory.
+  - `name` is a LOOKUP KEY, never joined onto a filesystem path. Validate it
+    with `shared::valid_name` on both sides: no `\`, no `.`/`..` segment, no
+    empty segment. See the security invariants in `server/CLAUDE.md`.
+  - This REVERSED an earlier rule ("metadata, NOT paths", with `category` and
+    `display_name` replacing the legacy `sounds\lang\gender\Voice.zip`
+    scheme). Deriving the tree from storage won because it keeps one source
+    of truth and makes the server's own folders meaningful. The security
+    reasoning behind the old rule is untouched — it was about package
+    CONTENT, and the installer still never interprets anything inside a zip.
+- The rest stays declarative metadata in the manifest, never files in the zip:
+  - `display_name` (optional): renames the LEAF only; the levels above it come
+    from `name`.
   - `exclusive_group` (optional): packages sharing a group overwrite the
     same files (e.g. the pacenote-config variants); the UI radio-selects
     within a group and Apply uninstalls the previous member first.
   - `requires` (optional): list of "directory/name" deps the UI enforces
-    (e.g. voice pack requires its language pack).
+    (e.g. voice pack requires its language pack). The name half may itself
+    contain `/`, so a ref splits on the FIRST separator only.
 - **Cache**: downloads land in a per-user cache
   (`%LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip` + `cache.json`
   index). Sha-keyed: integrity + dedupe. Installing is cache → game dir;
@@ -60,14 +78,15 @@ pacenote packages. Two deliverables:
   once to `backup\` (preserving relative path). Restore = copy back.
   This replaces the legacy backup/FilipekMod/unpacked directory dance.
 - The one built-in special step: `write_rbr_config` (RBR ini generation),
-  hard-coded in the installer, keyed off the selected `configs` package.
+  hard-coded in the installer, keyed off the selected `style` package.
 
 ## Protocol (client ↔ server)
 
 - `GET /packages` — optional `Authorization: Bearer <token>`.
   Returns `shared::Manifest` (JSON) filtered to the `public` directory plus
   the caller's granted directories (silent filtering; /packages never 403s).
-- `GET /download/{directory}/{name}` — same auth rules; streams
+- `GET /download/{directory}/{*name}` — `name` spans the remaining segments,
+  because it is the package's path under its directory. Same auth rules; streams
   `./packages/<directory>/<name>.zip`. 401 bad/expired token on a protected
   directory, 403 valid token without that grant, 404 no such package.
 - `GET /health` — 200, no auth.

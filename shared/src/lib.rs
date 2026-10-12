@@ -11,11 +11,23 @@
 //! to credentials granted that directory. One credential can hold grants for
 //! any number of directories. There are no tiers.
 //!
-//! INSTALL MODEL (protocol v2, milestone M1a): every package zip is a
-//! game-root overlay — extracting it at the game folder puts every file in
-//! its final place, and that is the ONLY install mechanism. Everything that
-//! varies between packages is metadata carried HERE, never paths inside the
-//! zip and never instruction files the installer would have to interpret.
+//! INSTALL MODEL: every package zip is a game-root overlay — extracting it at
+//! the game folder puts every file in its final place, and that is the ONLY
+//! install mechanism. The installer never reads instruction files out of a
+//! package and never interprets paths found INSIDE a zip.
+//!
+//! PRESENTATION MODEL: where a package SITS on the server is how it is shown.
+//! `name` is the package's path under its access directory, so
+//! `codriver/polish/male/Kamil` is category `codriver`, tree levels
+//! `polish` → `male`, leaf `Kamil`. One source of truth: organising the files
+//! on disk organises the UI, and sidecars carry no positional metadata.
+//!
+//! That is a reversal of the earlier rule "metadata, NOT paths" — see the
+//! Presentation model section of the root CLAUDE.md. The security reasoning
+//! behind the old rule is untouched: this is about the SERVER's own storage
+//! layout, which the operator controls, not about anything inside a package.
+//! `directory`, `name` and refs built from them stay LOOKUP KEYS — the server
+//! must still never join them onto a filesystem path (see server/CLAUDE.md).
 
 /// Directory that is always accessible, token or not.
 pub const PUBLIC_DIR: &str = "public";
@@ -36,9 +48,11 @@ pub fn default_game() -> String {
     GAME_RBR.to_string()
 }
 
-/// UI grouping (`PackageInfo::category`). Open string; these are the known
-/// values. Category is orthogonal to the access `directory` — `directory` is
-/// auth only.
+/// UI grouping: the FIRST segment of `PackageInfo::name`, i.e. the top folder
+/// a package sits in under its access directory. Open string; these are the
+/// known values. Category is orthogonal to the access `directory` —
+/// `directory` is auth only, and the two are separate levels of the layout:
+/// `packages/<directory>/<category>/.../<package>.zip`.
 ///
 /// The first three are what the wizard's Configuration scene offers, one
 /// single-select list each (`installer/DESIGN.md` rev. 2 scene 5), so a
@@ -53,20 +67,23 @@ pub const CATEGORY_PACENOTES: &str = "pacenotes";
 /// from, in the order the scene lists them.
 pub const CHOICE_CATEGORIES: [&str; 3] = [CATEGORY_LANGUAGE, CATEGORY_CODRIVER, CATEGORY_STYLE];
 
-/// Default for `PackageInfo::category`, for manifests written before the
-/// field existed.
-pub fn default_category() -> String {
-    CATEGORY_PACENOTES.to_string()
-}
-
 /// One installable package as listed by `GET /packages`.
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct PackageInfo {
     /// Access directory this package belongs to (also its on-disk subdir).
     /// Lowercase [a-z0-9_-]+; validated server-side.
     pub directory: String,
-    /// Name unique WITHIN its directory; also the download path segment and
-    /// the on-disk filename stem (`<packages>/<directory>/<name>.zip`).
+    /// The package's path under its access directory, without the `.zip`:
+    /// `<packages>/<directory>/<name>.zip` on disk, and the tail of the
+    /// download URL. Segments are separated by `/` and carry the whole
+    /// presentation: first = `category`, middle = tree levels, last = the
+    /// package itself.
+    ///
+    /// `codriver/polish/male/Kamil` →
+    /// CODRIVER → polish → male → Kamil.
+    ///
+    /// Validate with [`valid_name`] before trusting one. It is a LOOKUP KEY,
+    /// never to be joined onto a filesystem path.
     pub name: String,
     pub version: String,
     /// Size of the package zip in bytes (for progress bars / free-space checks).
@@ -75,27 +92,11 @@ pub struct PackageInfo {
     pub sha256: String,
     /// Unix seconds of last modification (replaces Supabase `UpdatedAt`).
     pub updated_at: i64,
-    /// Which game this package overlays — the installer's ribbon tab.
-    /// See `GAME_*`.
+    /// Which game this package overlays. See `GAME_*`.
     #[serde(default = "default_game")]
     pub game: String,
-    /// UI grouping. Level 1 of the Download scene's tree. See `CATEGORY_*`.
-    #[serde(default = "default_category")]
-    pub category: String,
-    /// Tree levels BETWEEN the category and the package itself, outermost
-    /// first — e.g. `["polish", "male"]` puts a co-driver voice under
-    /// CODRIVER → polish → male. Empty means the package hangs directly off
-    /// its category.
-    ///
-    /// This is what replaced the legacy scheme of encoding a hierarchy in the
-    /// storage path (`sounds\lang\gender\Voice.zip`): the shape of the tree is
-    /// now declared metadata, so the installer never parses paths to build it.
-    /// Segments are display strings, not path components — the installer must
-    /// not join them into a filesystem path.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub tree_path: Vec<String>,
-    /// Human name shown in the UI. Replaces the legacy scheme of encoding a
-    /// hierarchy in the storage path (`sounds\lang\gender\Voice.zip`).
+    /// Human name shown for the LEAF. The tree levels above it come from
+    /// `name`, so this renames only the package itself.
     /// Falls back to `name` when absent — see `PackageInfo::label`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
@@ -127,10 +128,42 @@ impl PackageInfo {
         }
     }
 
-    /// What the UI shows: `display_name` when the publisher set one, the raw
-    /// `name` otherwise.
+    /// The segments of `name`, i.e. the package's position in the tree.
+    pub fn segments(&self) -> std::str::Split<'_, char> {
+        self.name.split('/')
+    }
+
+    /// Top-level grouping: the first segment. See `CATEGORY_*`.
+    ///
+    /// A `name` with no separator is its own category, which is what a flat
+    /// `packages/<directory>/<package>.zip` layout means.
+    pub fn category(&self) -> &str {
+        self.name.split('/').next().unwrap_or(&self.name)
+    }
+
+    /// The levels BETWEEN the category and the package — `["polish", "male"]`
+    /// for `codriver/polish/male/Kamil`. Empty when the package hangs
+    /// directly off its category.
+    pub fn tree_levels(&self) -> Vec<&str> {
+        let mut segments: Vec<&str> = self.segments().collect();
+        if segments.len() < 2 {
+            return Vec::new();
+        }
+        segments.pop(); // the package itself
+        segments.remove(0); // the category
+        segments
+    }
+
+    /// The last segment: the package on its own, without its tree position.
+    pub fn leaf(&self) -> &str {
+        self.name.rsplit('/').next().unwrap_or(&self.name)
+    }
+
+    /// What the UI shows for this package: `display_name` when the publisher
+    /// set one, otherwise the LEAF — never the whole path, which the tree is
+    /// already showing level by level.
     pub fn label(&self) -> &str {
-        self.display_name.as_deref().unwrap_or(&self.name)
+        self.display_name.as_deref().unwrap_or_else(|| self.leaf())
     }
 
     /// Parsed `requires` entries. Malformed refs are dropped rather than
@@ -153,16 +186,15 @@ pub struct PackageRef {
 }
 
 impl PackageRef {
-    /// Parses exactly `<directory>/<name>`. Rejects anything with a second
-    /// separator, an empty half, or a `\` (the installer runs on Windows,
-    /// where a backslash would read as a path), so a ref can never widen into
-    /// a path.
+    /// Parses `<directory>/<name>`, where `name` may itself contain `/`
+    /// because it is the package's path under that directory. The FIRST
+    /// separator divides them; the rest belong to the name.
+    ///
+    /// Rejects anything `valid_name` rejects, so a ref can never widen into a
+    /// path: no `\`, no `..`, no empty segment, no leading or trailing `/`.
     pub fn parse(text: &str) -> Option<PackageRef> {
-        if text.contains('\\') {
-            return None;
-        }
         let (directory, name) = text.split_once('/')?;
-        if directory.is_empty() || name.is_empty() || name.contains('/') {
+        if directory.is_empty() || directory.contains('\\') || !valid_name(name) {
             return None;
         }
         Some(PackageRef {
@@ -170,6 +202,24 @@ impl PackageRef {
             name: name.to_string(),
         })
     }
+}
+
+/// Is this a usable `PackageInfo::name`?
+///
+/// `name` is a path now, so this is the choke point that keeps it from
+/// becoming a *filesystem* path. Both sides validate: the server when it
+/// generates a manifest and serves a download, the installer when it reads
+/// one, because a manifest can arrive from a server the user does not run.
+///
+/// Rejected: empty, a `\` (Windows would read it as a separator), any `.` or
+/// `..` segment, an empty segment — which covers a leading `/`, a trailing
+/// `/`, and a `//` in the middle.
+pub fn valid_name(name: &str) -> bool {
+    if name.is_empty() || name.contains('\\') {
+        return false;
+    }
+    name.split('/')
+        .all(|segment| !segment.is_empty() && segment != "." && segment != "..")
 }
 
 impl std::fmt::Display for PackageRef {
@@ -230,12 +280,10 @@ mod tests {
             sha256: "ab".repeat(32),
             updated_at: 1_700_000_000,
             game: super::default_game(),
-            category: super::default_category(),
             display_name: None,
             description: None,
             exclusive_group: None,
             requires: Vec::new(),
-            tree_path: Vec::new(),
         }
     }
 
@@ -261,50 +309,130 @@ mod tests {
     #[test]
     fn round_trip_keeps_install_metadata() {
         let mut m = sample();
+        m.packages[1].name = "codriver/polish/male/Kamil".into();
         m.packages[1].game = super::GAME_DIRT_RALLY2.into();
-        m.packages[1].category = super::CATEGORY_CODRIVER.into();
-        m.packages[1].tree_path = vec!["polish".into(), "male".into()];
-        m.packages[1].display_name = Some("English / Female / Eva".into());
+        m.packages[1].display_name = Some("Kamil Filipek".into());
         m.packages[1].exclusive_group = Some("pacenote-config".into());
-        m.packages[1].requires = vec!["public/english-language".into()];
+        m.packages[1].requires = vec!["public/language/english".into()];
 
         let back: super::Manifest =
             serde_json::from_str(&serde_json::to_string(&m).unwrap()).unwrap();
         let p = &back.packages[1];
         assert_eq!(p.game, super::GAME_DIRT_RALLY2);
-        assert_eq!(p.category, super::CATEGORY_CODRIVER);
-        // The tree shape survives the wire: the Download scene nests this
-        // package under CODRIVER -> polish -> male.
-        assert_eq!(p.tree_path, vec!["polish".to_string(), "male".to_string()]);
-        assert_eq!(p.label(), "English / Female / Eva");
+        assert_eq!(p.label(), "Kamil Filipek");
         assert_eq!(p.exclusive_group.as_deref(), Some("pacenote-config"));
+        // A requires ref carries a path on its name side now.
         assert_eq!(
             p.required_refs(),
             vec![super::PackageRef {
                 directory: "public".into(),
-                name: "english-language".into()
+                name: "language/english".into()
             }]
         );
     }
 
-    /// A v1 manifest (no install metadata) must still load: the server may be
-    /// upgraded before every manifest.json is regenerated, and an installer
-    /// cache written by an older build is read by a newer one.
+    /// An older manifest must still LOAD, because an installer cache written
+    /// by an earlier build is read by a newer one.
+    ///
+    /// Note what it does NOT do: a flat `name` carries no tree, so such a
+    /// package becomes its own category. Fields the manifest no longer has
+    /// (`category`, `tree_path`) are ignored rather than rejected. A server
+    /// upgrading to this protocol must re-run `manifest gen` over the new
+    /// folder layout; there is no way to invent a tree for a flat name.
     #[test]
-    fn v1_manifest_still_deserializes() {
-        let v1 = r#"{"packages":[{"directory":"public","name":"basic",
-            "version":"1.0.0","size":5,"sha256":"ab","updated_at":1}]}"#;
-        let m: super::Manifest = serde_json::from_str(v1).unwrap();
+    fn an_older_manifest_still_deserializes() {
+        let old = r#"{"packages":[{"directory":"public","name":"basic",
+            "version":"1.0.0","size":5,"sha256":"ab","updated_at":1,
+            "category":"pacenotes","tree_path":["ignored"]}]}"#;
+        let m: super::Manifest = serde_json::from_str(old).unwrap();
         let p = &m.packages[0];
         assert_eq!(p.game, super::GAME_RBR);
-        assert_eq!(p.category, super::CATEGORY_PACENOTES);
         assert_eq!(p.label(), "basic");
         assert!(p.display_name.is_none());
         assert!(p.exclusive_group.is_none());
         assert!(p.requires.is_empty());
-        // No tree_path means the package hangs straight off its category,
-        // which is what every pre-rev.2 manifest intends.
-        assert!(p.tree_path.is_empty());
+        // Retired fields are ignored, and the flat name is its own category.
+        assert_eq!(p.category(), "basic");
+        assert!(p.tree_levels().is_empty());
+        assert_eq!(p.leaf(), "basic");
+    }
+
+    /// The whole presentation comes out of `name`, so this is the behaviour
+    /// the Download scene's tree and the Configuration scene's lists rest on.
+    #[test]
+    fn a_name_is_the_packages_place_in_the_tree() {
+        let p = pkg(super::PUBLIC_DIR, "codriver/polish/male/Kamil");
+        assert_eq!(p.category(), super::CATEGORY_CODRIVER);
+        assert_eq!(p.tree_levels(), vec!["polish", "male"]);
+        assert_eq!(p.leaf(), "Kamil");
+        // No display_name: the UI shows the leaf, never the whole path, which
+        // the tree is already showing one level at a time.
+        assert_eq!(p.label(), "Kamil");
+
+        // One level under a category: no middle levels.
+        let p = pkg(super::PUBLIC_DIR, "style/Descriptive");
+        assert_eq!(p.category(), super::CATEGORY_STYLE);
+        assert!(p.tree_levels().is_empty());
+        assert_eq!(p.leaf(), "Descriptive");
+
+        // A flat name is its own category and its own leaf.
+        let p = pkg(super::PUBLIC_DIR, "basic");
+        assert_eq!(p.category(), "basic");
+        assert!(p.tree_levels().is_empty());
+        assert_eq!(p.leaf(), "basic");
+    }
+
+    /// `name` is a lookup key that now looks like a path, so the thing that
+    /// stops it BECOMING one is this validator. Every rejected case here is a
+    /// way to escape the packages directory or to confuse the server's own
+    /// path handling.
+    #[test]
+    fn a_name_can_never_widen_into_a_filesystem_path() {
+        for good in [
+            "basic",
+            "style/Descriptive",
+            "codriver/polish/male/Kamil",
+            "language/english",
+        ] {
+            assert!(super::valid_name(good), "{good:?} should be valid");
+        }
+        for bad in [
+            "",                     // nothing at all
+            "..",                   // the parent directory
+            "codriver/../../etc",   // climbing out
+            "codriver/./Kamil",     // a no-op segment
+            "/codriver/Kamil",      // absolute
+            "codriver/Kamil/",      // trailing separator
+            "codriver//Kamil",      // empty segment
+            "codriver\\polish",     // Windows separator
+        ] {
+            assert!(!super::valid_name(bad), "{bad:?} should be rejected");
+        }
+    }
+
+    /// A ref splits on the FIRST separator: everything after it is the name,
+    /// which is itself a path. Without that, no `requires` entry could point
+    /// at a nested package.
+    #[test]
+    fn a_ref_splits_directory_from_a_path_shaped_name() {
+        let r = super::PackageRef::parse("public/codriver/polish/male/Kamil").unwrap();
+        assert_eq!(r.directory, "public");
+        assert_eq!(r.name, "codriver/polish/male/Kamil");
+        // Round-trips, so it can be used as a cache and ledger key.
+        assert_eq!(r.to_string(), "public/codriver/polish/male/Kamil");
+
+        for bad in [
+            "public",                  // no name half
+            "/codriver/Kamil",         // no directory half
+            "public/",                 // empty name
+            "public/../secrets",       // climbing out
+            "public\\codriver/Kamil",  // Windows separator
+        ] {
+            assert!(
+                super::PackageRef::parse(bad).is_none(),
+                "{bad:?} should be rejected"
+            );
+        }
     }
 
     /// Absent optionals stay absent on the wire, so a v1 reader sees a v1
@@ -315,9 +443,11 @@ mod tests {
         assert!(!json.contains("display_name"), "{json}");
         assert!(!json.contains("exclusive_group"), "{json}");
         assert!(!json.contains("requires"), "{json}");
-        // game/category are not optional: they always ship.
+        // game is not optional: it always ships. `category` is NOT a field at
+        // all any more — it is the first segment of `name`.
         assert!(json.contains("\"game\":\"rbr\""), "{json}");
-        assert!(json.contains("\"category\":\"pacenotes\""), "{json}");
+        assert!(!json.contains("category"), "{json}");
+        assert!(!json.contains("tree_path"), "{json}");
     }
 
     #[test]
@@ -330,9 +460,10 @@ mod tests {
         assert!(super::PackageRef::parse("pro").is_none());
         assert!(super::PackageRef::parse("/pro").is_none());
         assert!(super::PackageRef::parse("public/").is_none());
-        assert!(super::PackageRef::parse("public/sub/pro").is_none());
         assert!(super::PackageRef::parse("public\\pro").is_none());
         assert!(super::PackageRef::parse("..\\..\\data/auth.db").is_none());
+        // `public/sub/pro` is now VALID and means a nested package; see
+        // a_ref_splits_directory_from_a_path_shaped_name.
     }
 
     #[test]

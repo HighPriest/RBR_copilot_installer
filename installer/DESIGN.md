@@ -83,8 +83,11 @@ phases of scene 6). No going back once scene 6 starts.
               [ ] GENDER
                   [ ] FILE_NAME
 
-  Level 1 = `category`; middle levels = `tree_path` segments; leaves =
-  packages. Only packages for the detected game are shown.
+  The shape comes from where each package SITS on the server:
+  `PackageInfo.name` is its path under the access directory, so
+  `codriver/polish/male/Kamil` gives level 1 = `category` (`codriver`),
+  middle levels (`polish`, `male`) and the leaf (`Kamil`). Only packages for
+  the detected game are shown.
 - Loading order:
   1. server manifest (with the secret, if any);
   2. merge the download cache: downloaded leaves get the suffix
@@ -155,5 +158,8 @@ log is visible on scenes 6 and 7; any error shows it.
   `TVS_EX_PARTIALCHECKBOXES`; downloaded leaves bold (`TVIS_BOLD`) + suffix.
 - All network work on the worker thread (I4 protocol); the UI thread only
   updates controls.
-- Protocol additions needed: `PackageInfo.game`, `PackageInfo.tree_path`,
-  server `GET /motd`.
+- Protocol: `PackageInfo.game`, and `PackageInfo.name` carrying the package's
+  path under its access directory (first segment = category, middle = tree
+  levels, last = the package). The server still needs recursive package
+  scanning, a wildcard download route and `GET /motd` — see
+  installer/TASKS.md "Server work requested".
