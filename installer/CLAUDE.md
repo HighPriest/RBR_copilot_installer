@@ -29,16 +29,24 @@ noticeable code. If size regresses, fix it before continuing.
 - Packages are game-root overlay zips. ONE install mechanism: extract into
   game dir, record files in the ledger. NEVER interpret or execute anything
   found inside a package.
+- **A package is identified by `game` + `directory` + `name`.** One server
+  serves every game, so `"directory/name"` is NOT unique: two games can both
+  hold `public/style/Numeric Standard`. Every key the installer stores — the
+  cache index, the ledger, any ref it writes down — must carry the game, or
+  one game's package silently shadows another's. `PackageInfo::download_path()`
+  produces exactly that triple, `game/directory/name`, and is also the tail of
+  the download URL; prefer it over assembling keys by hand.
 - **Cache** (`cache.rs`): `%LOCALAPPDATA%\PacenotesInstaller\cache\`
   - `<sha256>.zip` — the payloads, keyed by manifest sha (integrity+dedupe)
-  - `cache.json` — index: (directory, name) → {sha256, version, size,
-    updated_at, category, display_name, exclusive_group, requires} — a
-    snapshot of PackageInfo, so the Install view works fully OFFLINE.
+  - `cache.json` — index: (game, directory, name) → {sha256, version, size,
+    updated_at, display_name, exclusive_group, requires} — a snapshot of
+    PackageInfo, so the Download tree works fully OFFLINE. Category and the
+    tree levels are NOT stored: they are derived from `name`.
   - Download = fetch → sha256 verify → move into cache. Re-download only when
     manifest sha differs from cached sha.
 - **Ledger** (`ledger.rs`): per game dir,
   `Plugins\Pacenote\installer\installed.json`:
-  `{ "packages": { "<directory>/<name>": { "sha256": ..., "version": ...,
+  `{ "packages": { "<game>/<directory>/<name>": { "sha256": ..., "version": ...,
      "files": ["relative\\path", ...] } } }`
   Written atomically (temp + rename) AFTER each successful package
   install/uninstall, not once at the end.
@@ -47,23 +55,24 @@ noticeable code. If size regresses, fix it before continuing.
   never overwrite an existing backup). Restore = copy backup tree back.
   This replaces the legacy backup/FilipekMod/unpacked staging AND the
   oldest-zip restore rule.
-- **Apply** (`engine.rs`): input = user's selection (set of cached package
-  refs) + ledger. Plan = uninstall (ledgered but unselected, plus any
-  ledgered member of an exclusive_group superseded by a new selection) then
-  install (selected but not ledgered, or sha changed = update). Enforce
-  `requires` (selecting a package auto-selects/blocks on its deps being
-  cached). Show the plan in the status area before running.
+- **Install** (`engine.rs`): input = the wizard's result (the three
+  Configuration picks plus the checked `pacenotes` packages) + the ledger.
+  Plan = uninstall (ledgered but no longer chosen, including a ledgered
+  member of a category or `exclusive_group` that a new pick supersedes) then
+  install (chosen but not ledgered, or sha changed = update). Enforce
+  `requires`. Scene 6 runs the plan and is the only progress screen.
 
 ## Module map
 
 - `main.rs` — entry point, common-controls init, `--selftest-http`, launches
   the wizard.
-- `wizard.rs` — the UI. Layout per `DESIGN.md` rev. 2: a comctl32
-  PropertySheet in wizard mode, one page per scene, with `WizardState` shared
-  across pages. Scenes 1-3 (Language, Message of the day, Game folder) are
-  implemented; 4-7 are I2b part 2. Read the RECORDED DEVIATIONS in
-  `TASKS.md` I2b before changing the sheet: Wizard97 headers, PSM_SETNEXTTEXT
-  and pszCaption all had to be worked around, and the comments say why.
+- `wizard.rs` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
+  wizard mode, one page per scene, with `WizardState` shared across pages.
+  Scenes 1-3 (Language, Message of the day, Game folder) are implemented;
+  4-7 are I2b part 2. Before changing the sheet, read Implementation notes in
+  `DESIGN.md`: the scene title, the per-scene button labels and the title bar
+  all work around something the OS does not give, and the reasons are there
+  and at each call site.
 - `ui.rs` — the small Win32 vocabulary the pages are written in: control
   text, combo boxes, the three modal shapes, the folder picker.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;
@@ -78,7 +87,7 @@ noticeable code. If size regresses, fix it before continuing.
 - `api.rs` — fetch manifest, download into cache (JSON isolated here).
 - `cache.rs` — cache dir layout, cache.json read/write, sha verification.
 - `ledger.rs` — installed.json read/write (atomic), file ownership queries.
-- `engine.rs` — plan + execute Apply; backup; restore; uses zip.rs.
+- `engine.rs` — plan + execute the install; backup; restore; uses zip.rs.
 - `sha256.rs` — small std-only sha256 (~100 lines). (No `sha2` crate.)
 - `zip.rs` — zip reader (central directory + miniz_oxide inflate). The
   legacy zip WRITER for backups is no longer needed (backups are plain
@@ -112,7 +121,7 @@ first" error.
 - Final code: every user-reachable failure → `MessageBoxW` with a localized
   string, then either recover or clean exit. No silent catch-and-continue
   (the C# did this; don't copy it).
-- A failed Apply must leave the ledger truthful: ledger updates are per-file
+- A failed install must leave the ledger truthful: ledger updates are per-file
   batch per package, written after that package's action succeeds.
 
 ## Size audit workflow

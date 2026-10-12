@@ -117,26 +117,35 @@ try {
 }
 
 $script:work = Join-Path ([System.IO.Path]::GetTempPath()) ("pacenotes-http-" + [guid]::NewGuid())
-$packages = Join-Path $work 'packages'
+# One server serves every game: <data>/<game>/packages/<directory>/<name>.zip
+$dataRoot = Join-Path $work 'data'
 $proc = $null
 try {
-    # ---- Publish a real overlay zip into public/ and a protected directory --
+    # ---- Publish real overlay zips -----------------------------------------
     # A game-root overlay: extracting at the game dir puts the file in place.
+    # The same directory+name is published under TWO games on purpose: that
+    # pair is no longer unique, and every URL and key has to carry the game.
     $stage = Join-Path $work 'stage\Plugins\Pacenote\config'
     [void](New-Item -ItemType Directory -Force -Path $stage)
     Set-Content -Path (Join-Path $stage 'Voice.ini') -Value "; test overlay`r`nname=TestVoice"
-    foreach ($dir in 'public', 'premium-voices') {
-        [void](New-Item -ItemType Directory -Force -Path (Join-Path $packages $dir))
-        Compress-Archive -Path (Join-Path $work 'stage\Plugins') `
-            -DestinationPath (Join-Path $packages "$dir\testvoice.zip") -Force
+    foreach ($game in 'rbr', 'dirtrally2') {
+        foreach ($dir in 'public', 'premium-voices') {
+            $into = Join-Path $dataRoot "$game\packages\$dir\codriver\polish\male"
+            [void](New-Item -ItemType Directory -Force -Path $into)
+            Compress-Archive -Path (Join-Path $work 'stage\Plugins') `
+                -DestinationPath (Join-Path $into 'Kamil.zip') -Force
+        }
     }
 
-    & $server manifest gen --dir $packages | Out-Null
-    $manifest = Get-Content -Raw (Join-Path $packages 'manifest.json') | ConvertFrom-Json
-    Assert-That 'server published both packages' ($manifest.packages.Count -eq 2) `
+    & $server manifest gen --data $dataRoot | Out-Null
+    $manifest = Get-Content -Raw (Join-Path $dataRoot 'manifest.json') | ConvertFrom-Json
+    Assert-That 'server published all four packages' ($manifest.packages.Count -eq 4) `
         "manifest lists $($manifest.packages.Count)"
-    $public = $manifest.packages | Where-Object { $_.directory -eq 'public' }
-    $protected = $manifest.packages | Where-Object { $_.directory -eq 'premium-voices' }
+    $public = $manifest.packages | Where-Object { $_.directory -eq 'public' -and $_.game -eq 'rbr' }
+    $protected = $manifest.packages | Where-Object { $_.directory -eq 'premium-voices' -and $_.game -eq 'rbr' }
+    # The nested folders became the package's name, which is the UI tree.
+    Assert-That 'a package name is its path under the access directory' `
+    ($public.name -eq 'codriver/polish/male/Kamil') "name is $($public.name)"
 
     # ---- Mint a credential granted only the protected directory ------------
     # --db-url belongs to `token`, not to `mint`.
@@ -149,7 +158,7 @@ try {
 
     # ---- Start it ----------------------------------------------------------
     $proc = Start-Process $server -PassThru -WindowStyle Hidden -ArgumentList @(
-        'serve', '--listen', "127.0.0.1:$Port", '--packages', $packages, '--db-url', $db)
+        'serve', '--listen', "127.0.0.1:$Port", '--data', $dataRoot, '--db-url', $db)
     $base = "http://127.0.0.1:$Port"
     $deadline = (Get-Date).AddSeconds(15)
     do {
@@ -169,7 +178,7 @@ try {
 
     # ---- The manifest fetch M4 asks for -----------------------------------
     Write-Host "`n-- GET /packages (anonymous) --"
-    $r = Invoke-SelfTest -Url "$base/packages"
+    $r = Invoke-SelfTest -Url "$base/packages?game=rbr"
     Assert-That 'packages succeeds' ($r.RESULT -eq 'OK')
     Assert-That 'anonymous listing names the public package' `
     ($r.BODY.Contains("`"name`":`"$($public.name)`"")) "body was [$($r.BODY)]"
@@ -179,9 +188,13 @@ try {
     # bytes must survive the transport exactly.
     Assert-That 'listing carries the sha the server computed' `
     ($r.BODY.Contains($public.sha256))
+    # One server holds every game, so the filter has to be real: the other
+    # game publishes the SAME directory+name, and it must not appear here.
+    Assert-That '?game= filters other games out server-side' `
+    (-not $r.BODY.Contains('dirtrally2')) "body was [$($r.BODY)]"
 
     Write-Host "`n-- GET /packages (with access key) --"
-    $r = Invoke-SelfTest -Url "$base/packages" -Token $token
+    $r = Invoke-SelfTest -Url "$base/packages?game=rbr" -Token $token
     Assert-That 'authenticated listing succeeds' ($r.RESULT -eq 'OK')
     Assert-That 'granted directory now appears' ($r.BODY.Contains('premium-voices')) `
         "body was [$($r.BODY)]"
@@ -190,17 +203,17 @@ try {
 
     # ---- Downloads: the bytes, and the auth outcomes -----------------------
     Write-Host "`n-- GET /download --"
-    $r = Invoke-SelfTest -Url "$base/download/public/$($public.name)"
+    $r = Invoke-SelfTest -Url "$base/download/$($public.game)/$($public.directory)/$($public.name)"
     Assert-That 'public download succeeds' ($r.RESULT -eq 'OK')
     Assert-That 'download returns the whole zip' ([int]$r.BYTES -eq [int]$public.size) `
         "manifest says $($public.size), read $($r.BYTES)"
 
-    $r = Invoke-SelfTest -Url "$base/download/premium-voices/$($protected.name)"
+    $r = Invoke-SelfTest -Url "$base/download/$($protected.game)/$($protected.directory)/$($protected.name)"
     Assert-That 'protected download without a key is refused' ($r.RESULT -eq 'FAIL')
     Assert-That 'refusal is 401, not a transport error' ($r.STATUS -eq '401') `
         "status $($r.STATUS), message $($r.MESSAGE)"
 
-    $r = Invoke-SelfTest -Url "$base/download/premium-voices/$($protected.name)" -Token $token
+    $r = Invoke-SelfTest -Url "$base/download/$($protected.game)/$($protected.directory)/$($protected.name)" -Token $token
     Assert-That 'protected download with the granted key succeeds' ($r.RESULT -eq 'OK') `
         "message $(if ($r.ContainsKey('MESSAGE')) { $r.MESSAGE } else { '' })"
     Assert-That 'protected download returns the whole zip' `
@@ -208,10 +221,17 @@ try {
 
     # ---- 404 must be distinguishable from a dead server --------------------
     Write-Host "`n-- error surfaces --"
-    $r = Invoke-SelfTest -Url "$base/download/public/no-such-package"
+    $r = Invoke-SelfTest -Url "$base/download/rbr/public/no-such-package"
     Assert-That 'missing package fails' ($r.RESULT -eq 'FAIL')
     Assert-That 'missing package reports 404' ($r.STATUS -eq '404') "status $($r.STATUS)"
     Assert-That 'missing package exits non-zero' ($r.ExitCode -ne 0)
+
+    # The game segment is load-bearing, not decoration: a real directory+name
+    # under a game that does not have it must 404 rather than serve the other
+    # game's bytes. This is why cache and ledger keys carry the game too.
+    $r = Invoke-SelfTest -Url "$base/download/beamng/$($public.directory)/$($public.name)"
+    Assert-That 'the same directory+name under another game is 404' `
+    ($r.STATUS -eq '404') "status $($r.STATUS), message $($r.MESSAGE)"
 
     # Port 1 has nothing listening: a transport failure, with no HTTP status.
     $r = Invoke-SelfTest -Url 'http://127.0.0.1:1/health'

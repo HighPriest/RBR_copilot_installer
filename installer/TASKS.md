@@ -3,338 +3,151 @@
 Each task ends with: builds on Windows MSVC, `tests/Test-BinarySize.ps1` passes,
 cross-platform `cargo test` green for logic modules.
 
-## I1 — Toolchain + empty window
-- [x] Install target: `rustup target add x86_64-pc-windows-msvc`
-- [x] build.rs: `embed_resource::compile("res/installer.rc")`
+## I1 — Toolchain + window  (done)
+
+- [x] `rustup target add x86_64-pc-windows-msvc`
+- [x] build.rs compiles `res/installer.rc` via `embed_resource`
 - [x] res/installer.rc: app manifest (common-controls v6, DPI-aware, UTF-8),
-      one empty dialog template, version info
-- [x] main.rs: `InitCommonControlsEx`, show dialog, clean exit
-      AMENDED: plain `fn main`, NOT `wWinMain`. `#![windows_subsystem =
-      "windows"]` already yields a GUI-subsystem binary; hand-rolled wWinMain
-      glue would add bytes for no behavioral gain.
-- [x] Pin all dependency versions with `=` (root M0 claimed this was done, but
-      the installer manifest pinned nothing)
-- [x] tests/Test-BinarySize.ps1 written and passing (baseline size recorded in TASKS)
+      icon, VERSIONINFO
+- [x] Plain `fn main`, not `wWinMain`: `#![windows_subsystem = "windows"]`
+      already yields a GUI-subsystem binary, so the glue would cost bytes for
+      no behavioral gain
+- [x] Every dependency pinned with `=`
+- [x] `tests/Test-BinarySize.ps1`, the 500 kB release gate
 
-Recorded sizes (release, x86_64-pc-windows-msvc):
-- do-nothing binary before I1 ......... 107,008 B (104.5 kB)
-- after I1 (icon + VERSIONINFO) ....... 193,024 B (188.5 kB)
+SIZE FLAG for I10: `rbr.ico` is a single 256x256 PNG-compressed image of
+85,272 B, so the icon alone is ~83 kB — 17% of the gate. It also ships no
+16/32/48 sizes, so Windows downscales the 256 for the titlebar and taskbar.
+A multi-resolution, recompressed .ico would look better AND likely reclaim
+40-60 kB. Not done: it is an art asset, not code.
 
-SIZE FLAG: `rbr.ico` is a single 256x256 PNG-compressed image of 85,272 B, so
-the icon alone is ~83 kB = 17% of the 500 kB gate. It also ships no 16/32/48
-sizes, so Windows downscales the 256 for the titlebar and taskbar (soft-looking
-at small sizes). Generating a multi-resolution, recompressed .ico would both
-look better and likely reclaim 40-60 kB. Not done here: it is an art asset,
-not code. Revisit at I10 if the budget gets tight.
+## I2 / I2a — pre-wizard layouts  (superseded by I2b)
 
-## I2 — Dialog layout (two views)
-
-SUPERSEDED BY I2a. The Library/Install two-view shape below was built and
-verified, then replaced when DESIGN.md made the app multi-game. Kept for the
-record; the notes about listview columns, exclusive-group radio behavior and
-the Apply plan preview describe the OLD layout. Read I2a for what ships.
-- [x] Language-picker dialog (combo + OK/Cancel; Cancel exits app)
-- [x] Main dialog with view toggle (tab control or two buttons):
-      LIBRARY view: SysListView32 grouped by category (LVGF groups or
-      category column), columns: name/version/size/state
-      (cached|update available|not cached), Download button, access-key
-      edit + Unlock
-      INSTALL view: game-dir edit + Browse (SHBrowseForFolderW),
-      SysListView32 of CACHED packages w/ checkboxes (radio behavior inside
-      an exclusive_group enforced in LVN_ITEMCHANGED), Apply + Restore
-      buttons, plan preview in status area
-- [x] Shared: progress bar (msctls_progress32), status static, Close
-- [x] ui.rs: control ID constants, dlgproc skeleton
-- [x] i18n.rs + STRINGTABLE with en + one more language; picker switches it
-
-I2 implementation notes:
-- View toggle is a SysTabControl32. The tab and the two control groups are
-  siblings; WM_INITDIALOG pushes the tab to HWND_BOTTOM (controls declared
-  earlier in a template sit higher in Z-order, so the tab would otherwise
-  paint over both views) and TCN_SELCHANGE ShowWindow()s whole groups.
-- Localization is SetThreadUILanguage + per-language STRINGTABLE, so
-  LoadStringW resolves the right table with no lookup code of our own.
-  Polish wording reuses the legacy InstallationForm.pl.resx terms.
-- Library grouping uses a Category COLUMN (the task allowed "LVGF groups or
-  category column"); real LVGF groups can come later if wanted.
-
-DEFERRED out of I2, because each needs data that does not exist until I5:
-- Radio behavior inside an exclusive_group (LVN_ITEMCHANGED) — needs
-  exclusive_group from the manifest.
-- Apply plan preview in the status area — needs the engine (I7).
-- Button enable/disable state machine — needs real cache/selection state.
-Download / Unlock / Apply / Restore currently set the status line to the
-localized "Not implemented yet." rather than failing silently.
-
-Verified by driving the real .exe (scripted Win32 automation, not just a
-build): both dialogs open; EnumChildWindows confirms the Library group visible
-and the Install group hidden; a synthetic click on the Install tab flips them;
-tab count 2; Library 5 columns, Install 4; Polish run shows "Instalator
-Pacenotes" / "Biblioteka" / "Klucz dostępu:" / "Zakończ" / "Gotowy." with
-diacritics intact; Browse opens the shell "Browse For Folder" dialog and Esc
-dismisses it; WM_CLOSE exits the process cleanly.
-Size after I2: 202,240 B (197.5 kB).
-
-## I2a — User Interface design (DESIGN.md rev. 1)
-
-SUPERSEDED BY I2b. DESIGN.md rev. 2 replaces the ribbon/two-column layout with
-a 7-scene wizard. Reusable from I2a: `gamedir.rs` (marker-exe check), the
-per-language STRINGTABLE approach, the UI test harness and its two rules.
-Dropped: game ribbon, Download/Backups tabs, Notes/Logs tabs;
-
-Re-lays the UI to `installer/DESIGN.md`. This REPLACES the I2 two-view
-(Library/Install) shape: the app is now multi-game, so the top-level axis is
-the game, not the activity.
-
-- [x] Game ribbon across the top: one tab per supported game
-      (Richard Burns Rally, Dirt Rally, BeamNG). All tabs share ONE control
-      set ("identical layout and content"); switching swaps per-game STATE,
-      which is far smaller than three copies of every widget.
-- [x] Language widget at startup + "restart to change language" note
-- [x] Game directory input + Browse button + live validation label, re-checked
-      on EN_CHANGE, after Browse, and on every ribbon switch. Validated AGAINST
-      THE SELECTED GAME (see the gamedir note below), not for mere existence:
-      blank / not found / not this game / confirmed.
-- [x] Two-column layout inside each game tab
-- [x] Left column: downloaded content, one single-select list per category
-      (co-driver voice, UI language, callouts style) + Install button
-- [x] Install validates a pick exists in EVERY category before proceeding
-- [x] Right column: Download / Backups tabs, Download is the default page
-- [x] Download page: per-category lists + private access-key entry + Unlock
-- [x] Backups page: backup list + Restore
-- [x] Status bar beneath the columns (progress bar + status text)
-- [x] Bottom: Notes tab (user guidance) + Logs tab
-- [x] Errors auto-switch the bottom area to the Logs tab
-- [x] Polish + English strings for all new chrome
-- [x] Scripted UI tests in `tests/` (see below)
-
-I2a implementation notes:
-- Per-game state lives in an `App` struct owned by the dialog via
-  GWLP_USERDATA, freed on WM_NCDESTROY. Currently it holds the game folder;
-  package selections join it in I5.
-- Z-ORDER TRAP: there are now three tab controls, and each
-  `SetWindowPos(HWND_BOTTOM)` drops that control to the very bottom, so the
-  LAST one pushed ends up lowest. The game ribbon visually contains the other
-  two, so it must be pushed last — pushing it first made the ribbon's body
-  paint over the Download/Backups and Notes/Logs headers, which is exactly the
-  bug the screenshot aid caught after the assertions had all passed.
-- Category lists are plain LISTBOXes (single-select by default), which is what
-  "single item has to be selectable" needs; no LVS_EX_CHECKBOXES any more.
-- GAME-FOLDER VALIDATION is per game, in `src/gamedir.rs`: a folder counts as
-  a game's folder only if it holds that game's marker executable
-  (`RichardBurnsRally_SSE.exe`, `dirtrally2.exe`, `BeamNG.drive.exe`) — the
-  same check the legacy `InstallationForm.cs` made. The first cut accepted any
-  directory that existed, which would have let the installer overlay RBR
-  pacenotes into `C:\Windows`, and made the ribbon tab decorative. The status
-  message names the executable so the user knows what was looked for.
-  `gamedir.rs` is pure std and lives in the lib target, so the whole check is
-  tested cross-platform by `tests/gamedir.rs`.
-
-STILL DEFERRED (needs data that does not exist until I5-I7):
-- The lists are empty: real content arrives with the manifest/cache in I5.
-- Download / Unlock / Restore set the localized "Not implemented yet." status.
-- Install enforces its preconditions but cannot yet install (engine is I7).
-- Status bar shows text only; per-file name + size need the download loop (I4).
-
-Verified via `tests/Run-AllTests.ps1`: `cargo test` green, size gate green,
-`tests/ui/Test-UiLayout.ps1` 55/55 in English AND Polish, plus screenshots
-reviewed for both languages across game/right/info tab combinations.
-Size after I2a: 220,672 B (215.5 kB).
+Two layouts were built and verified before `DESIGN.md` settled on the wizard:
+a Library/Install two-view dialog, then a game-ribbon with two columns and
+Notes/Logs tabs. Both are gone from the code. What survived them lives on in
+the current design rather than here — the marker-executable folder check
+(`gamedir.rs`), the per-language STRINGTABLE approach, and the UI test
+harness with its two rules. See the CHANGELOG and git history for the detail.
 
 ## Tests — consolidated under `tests/`
 
 All installer checks live in `installer/tests/`; `src/` has no inline
 `#[cfg(test)]` modules and no validation script sits elsewhere in the crate.
-`check-size.ps1` moved to `tests/Test-BinarySize.ps1` (workflows and docs
-updated). See `tests/README.md`.
+The two rules every test here follows, and why, are in `tests/README.md` —
+read it before adding one.
 
 - [x] `tests/Run-AllTests.ps1` — one entry point (`-SkipUi` for headless);
       also runs fmt + clippy, so a green local run means a green CI run
-- [x] `tests/gamedir.rs` — cross-platform, 11 tests
+- [x] `tests/gamedir.rs` — cross-platform game-folder identification
 - [x] `tests/Test-VersionSync.ps1` — Cargo.toml version vs the four
       VERSIONINFO fields in `res/installer.rc`
 - [x] `tests/Test-BinarySize.ps1` — the 500 kB release gate
-- [x] `tests/ui/Test-UiLayout.ps1` — AUTOMATED TEST, 55 checks per language
+- [x] `tests/Test-HttpClient.ps1` — the WinHTTP client against a live server
+- [x] `tests/ui/Test-UiLayout.ps1` — walks the wizard, per language
 - [x] `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, asserts nothing
 
-Two rules these follow, and any new test must:
+CI runs everything except the GUI tests, which need an interactive desktop
+session and are run locally through the runner.
 
-1. NO ARBITRARY INPUTS. A fixture stands for a real user situation. The folder
-   tests build a directory containing a game's marker executable, because that
-   is what the field is for. The earlier suite passed `$env:TEMP` and was green
-   while the code accepted any path that existed.
-2. ASSERT AGAINST THE SOURCE OF TRUTH. The UI test reads expected strings from
-   `res/installer.rc`, so it catches a caption bound to the wrong id or a
-   missing translation; duplicated literals would only prove two copies agree.
+## I3 — WinHTTP client  (done)
 
-Consequently the "Install proceeds once all three categories have a pick" path
-is NOT asserted yet — those lists are filled from the server manifest, which
-arrives in I5. Injecting placeholder rows would prove only that a listbox can
-hold a string. That case lands with the code that populates them.
+- [x] `http.rs`: open/connect/request wrappers; `get(url, bearer)` and
+      `get_streaming(...)` with a sink, because package zips are tens of MB
+      and I5 sha256s them into a cache file as they arrive
+- [x] Chunked read loop (64 KiB) with `progress(read, total)`
+- [x] Explicit timeouts (10s resolve/connect, 30s send/receive) — without
+      them a dead server parks the worker thread and Cancel does nothing,
+      since cancellation is only checked between chunks
+- [x] A body shorter than its Content-Length is an error, not a success
+- [x] WinHTTP error code → readable string (FormatMessageW must be given the
+      winhttp.dll module; those codes are not in the system message table)
+- [x] `--selftest-http URL [--token T] [--out FILE]`; writes a report to the
+      file when asked and a MessageBox otherwise, since a GUI-subsystem
+      binary has no stdout. The token is never written into the report.
 
-CI runs `cargo test` + the size gate. The GUI tests need an interactive desktop
-session, so they are run locally via the runner, not gated in CI.
+Verified end to end against a real `pacenotes-server`, not a mock —
+`tests/Test-HttpClient.ps1`.
 
-## I3 — WinHTTP client
-- [x] http.rs: open/connect/request wrappers; `get(url, bearer) -> Result<Vec<u8>>`
-- [x] Chunked read loop (64 KiB) with `progress(read: u64, total: Option<u64>)`
-- [x] Proper error surface: WinHTTP error code → readable string
-- [x] Manual test binary flag (`--selftest-http URL`) hitting server /health
+## I2b — Wizard  (part 1 done: shell + scenes 1-3)
 
-I3 implementation notes:
-- `get_streaming()` is the real entry point and `get()` buffers on top of it.
-  The task only asked for `-> Vec<u8>`, but package zips are tens of MB and
-  I5 must sha256 them into a cache file as they arrive; adding the sink now
-  costs a few lines and avoids rewriting the read loop later.
-- Timeouts are set explicitly (10s resolve/connect, 30s send/receive). Without
-  them a dead server parks the worker thread forever and Cancel does nothing,
-  since cancellation is only checked between chunks.
-- A response shorter than its Content-Length is an error, not a success. A
-  truncated download would otherwise be written into the cache as a valid
-  package and only fail later, at sha verification, with a confusing message.
-- WinHTTP's error codes (12001+) are NOT in the system message table, so
-  FormatMessageW is given the winhttp.dll module handle. Without that every
-  network failure reads as a bare hex number.
-- `--selftest-http` writes to `--out <file>` when asked and a MessageBox
-  otherwise. This is a GUI-subsystem binary with no stdout; attaching to the
-  parent console would mean console APIs and reopening CONOUT$ for a
-  developer-only flag. `--token` was added so the authenticated paths are
-  reachable too; the token is never written into the report.
-- `Game::id()` / `from_id()` added to gamedir.rs, deferring to
-  `pacenotes_shared::GAME_*`. The shared crate already claimed the two sides
-  matched; nothing enforced it, and I5 filters each ribbon tab by this value,
-  so a drift would silently empty a tab.
+Delivered in two parts. Part 2 is scenes 4-7, which need the tree model and
+the install engine.
 
-Verified END TO END against a real pacenotes-server, not a mock:
-`tests/Test-HttpClient.ps1` 28/28 — publishes an overlay zip via
-`manifest gen`, mints a credential granted one directory, then asserts
-/health 200 with Content-Length honoured, anonymous /packages listing the
-public package and hiding the protected one, the same listing growing once
-the bearer header is sent, public and granted downloads returning exactly the
-manifest's byte count, a protected download without a key giving 401 (not a
-transport error), a missing package giving 404, an unreachable port giving a
-WinHTTP code rendered as English prose, and the access key never appearing in
-the report. Size after I3: 237,056 B (231.5 kB).
+Protocol groundwork (shared), done:
+- [x] The tree comes from the package's STORAGE PATH: `PackageInfo.name` is
+      the path under its access directory (`codriver/polish/male/Kamil`), and
+      `category()` / `tree_levels()` / `leaf()` derive the tree from it
+- [x] `valid_name` — `name` is a lookup key that LOOKS like a path, so this
+      is the choke point that stops it becoming one. `PackageRef::parse`
+      splits on the FIRST separator, so a ref can point at a nested package
+- [x] `GAME_ASSETTOCORSA`, `GAME_DIRT_RALLY2` (`dirtrally2`)
+- [x] Category vocabulary `language` / `codriver` / `style` / `pacenotes`,
+      plus `CHOICE_CATEGORIES` — the three scene 5 requires a pick from
 
-## I2b — Wizard redesign (DESIGN.md rev. 2)  ← PART 1 DONE
-
-Replaces the I2a layout. Delivered in two parts; this is part 1 (shell +
-scenes 1-3). Part 2 is scenes 4-7, which need the tree model and the engine.
-
-Cross-crate prerequisites:
-- [x] shared: the tree comes from the package's STORAGE PATH.
-      `PackageInfo.name` is the path under its access directory
-      (`codriver/polish/male/Kamil`), and `category()` / `tree_levels()` /
-      `leaf()` derive the tree from it. `PackageInfo.game` already existed
-      from M1a.
-      SUPERSEDED: this first shipped as a `tree_path: Vec<String>` field
-      alongside a `category` field. Both are gone. Deriving from the path
-      keeps one source of truth, empties the sidecars of positional metadata,
-      and makes the server's own folder layout meaningful. Doing so reversed
-      a root CLAUDE.md rule ("metadata, NOT paths"), which was rewritten to
-      match — its Install model section records the reversal and why the
-      security reasoning behind the old rule is unaffected (that rule was
-      about package CONTENT, which the installer still never interprets).
-- [x] shared: `valid_name` — `name` is a lookup key that now LOOKS like a
-      path, so this is the choke point that stops it becoming one. Rejects
-      `\`, `.`/`..` segments and empty segments. `PackageRef::parse` splits on
-      the FIRST separator, so a ref can point at a nested package.
-- [x] shared: `GAME_ASSETTOCORSA`; `GAME_DIRT_RALLY` → `GAME_DIRT_RALLY2`
-      with the value `dirtrally2`, per DESIGN.md rev. 2's table. The name now
-      matches the value, which is Dirt Rally 2.0.
-- [x] shared: CATEGORY_* renamed to DESIGN.md rev. 2's vocabulary —
-      `language` / `codriver` / `style` / `pacenotes` (was `languages` /
-      `sounds` / `configs`). Three sources disagreed (shared, DESIGN.md,
-      this file); DESIGN.md won. Added `CHOICE_CATEGORIES`, the three the
-      Configuration scene requires one pick from.
-- [x] server: kept building and green against the new protocol — the
-      `category` and `tree_path` sidecar keys are gone, so the sidecar holds
-      no positional metadata at all, and the fixtures follow the derived
-      `category()`.
-
-Wizard shell:
-- [x] PropertySheet wizard host; one dialog template per scene in
-      `res/installer.rc`; per-scene primary label; Back only from scene 3;
-      Cancel confirms
+Wizard shell, done:
+- [x] PropertySheet host, one dialog template per scene, per-scene primary
+      label, Back only from scene 3, Cancel confirms
 - [x] `WizardState` (language, secret, server online, folder, detected games,
-      game) owned by the sheet, replacing the I2a per-game `App`
-- [x] Remove ribbon / two-column / Notes-Logs code and their strings
+      game) owned by the sheet
+- [x] Old ribbon / two-column / Notes-Logs code and strings removed
 
 Scenes:
 - [x] S1 Language: combo + Continue; default = OS UI language if supported
-- [x] S2 MOTD: read-only text from /motd (offline fallback text); Secret edit
-      (ES_PASSWORD); "Server status: Online/Offline" from /health,
-      "Checking…" until answered; ACCEPT validates a non-empty secret via
+- [x] S2 MOTD: text from /motd with an offline fallback; Secret edit;
+      "Server status" from /health; ACCEPT validates a non-empty secret via
       /packages when online (401 → warning modal, stay)
-- [x] S3 Game folder: path edit + Browse + dropdown with "(Detecting)"
-      placeholder; scan (debounced 400 ms on EN_CHANGE, immediate after
-      Browse); 1 match → set + disabled, >1 → enabled with matches only,
-      0 → placeholder + warning modal (after Browse and on Next only)
+- [x] S3 Game folder: path edit + Browse + dropdown with "(Detecting)";
+      scan debounced 400 ms on EN_CHANGE, immediate after Browse; 1 match →
+      set + disabled, >1 → enabled with matches only, 0 → placeholder +
+      warning modal (after Browse and on Next only)
+- [x] `gamedir.rs`: `detect(folder) -> Vec<Game>`, all four games
+- [x] English + Polish strings for every caption, label and modal in S1-S3
 - [ ] S4 Download — part 2
 - [ ] S5 Configuration — part 2
 - [ ] S6 Installation — part 2
 - [ ] S7 Summary — part 2
+- [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
+      writes, so it follows I7
 - [ ] Log sink: in-memory + `%LOCALAPPDATA%\PacenotesInstaller\install.log`
-- [x] gamedir.rs: Dirt Rally marker `dirtrally2.exe`, Assetto Corsa added
-      (`assettocorsa.exe`), BeamNG kept (DESIGN.md's table lists it; this
-      file's scan list had simply omitted it); `detect(folder) -> Vec<Game>`
-- [x] English + Polish strings for every caption, label and modal in S1-S3
 
-RECORDED DEVIATIONS (DESIGN.md asked for these; here is what shipped and why):
-
-1. CLASSIC WIZARD, NOT WIZARD97. The sheet is created with `PSH_WIZARD`. The
-   Wizard97 header strip draws its title only alongside a header BITMAP;
-   without one it reserved an empty band and ignored BOTH
-   `PROPSHEETPAGEW::pszHeaderTitle` and `PSM_SETHEADERTITLE` — verified on
-   screen. Shipping a bitmap to satisfy it would spend size budget on
-   decoration. The scene title is now a static control in each page template,
-   which also makes it localizable per scene. DESIGN.md allows this fallback.
-
-2. `PSM_SETNEXTTEXT` IS IGNORED by this sheet — confirmed by sending it from
-   OUTSIDE the process, where the button caption did not change either. The
-   per-scene primary label is set by writing the text of comctl32's own
-   button ids (`ID_WIZNEXT`/`ID_WIZFINISH` from prsht.h). Back and Cancel are
-   relabelled the same way, because comctl32 supplies them in the OS language
-   and a Polish wizard would otherwise carry two English buttons.
-
-3. SCENE 1 IS NOT A SMALL WINDOW. A property sheet is one size for every page,
-   sized to the largest, so scene 1 shares the wizard frame. The alternative,
-   a separate modal before the sheet, would give scene 1 a different Cancel
-   behavior from every other scene.
-
-4. `PROPSHEETHEADERW::pszCaption` had no effect; the title bar is set with
-   WM_SETTEXT on the sheet when each scene activates.
-
-5. Scene 1 renders in the OS UI language, because it is shown before the user
-   has chosen one. Its captions are therefore asserted to be a shipped string
-   in SOME language rather than a specific one.
-
-Part 2 (next):
-- [ ] Scenes 4-7, the log sink, and the pure tree-model module
-- [ ] Pure tree-model module (no Win32): manifest + cache → tree nodes with
-      states; check propagation; per-category validation — cross-platform
-      tests with fixtures built from the real package layout
-- [ ] Uninstall/restore scene (DESIGN.md scene 3's UNINSTALL button and the
-      backup-restoration window). Deferred deliberately: it restores from the
-      backup tree the engine writes, which is task I7.
+How the wizard host actually behaves, and the three OS behaviours worked
+around to get there, are in `DESIGN.md` under Implementation notes. Read that
+before touching the sheet.
 
 Tests:
-- [x] tests/gamedir.rs: detect() for 0 / 1 / several markers, case-insensitive
-      exe names, a directory named like a marker, AC + DR2 + BeamNG (21 tests)
-- [x] tests/ui/Test-UiLayout.ps1 rewritten for the wizard: walks S1→S3 in EN
-      and PL against a dead server (the deterministic offline path), asserting
-      captions from installer.rc, the "(Detecting)" placeholder, the dropdown
-      enabled only with several matches, Next blocked until detection, and
-      Back navigation — 41 checks per language
+- [x] `tests/gamedir.rs`: detect() for 0 / 1 / several markers,
+      case-insensitive exe names, a directory named like a marker (21 tests)
+- [x] `tests/ui/Test-UiLayout.ps1` walks S1→S3 in EN and PL against a dead
+      server — the deterministic offline path — asserting captions read from
+      installer.rc, the "(Detecting)" placeholder, the dropdown enabled only
+      with several matches, Next blocked until detection, and Back navigation
 - [x] Screenshots of all three scenes in both languages reviewed
-- [ ] Modal assertions (no-marker warning, bad-secret warning) — the modal
-      blocks the app thread, so driving it needs care; deferred with the
-      scenes that raise more of them
+- [ ] Modal assertions (no-marker warning, bad-secret warning): the modal
+      blocks the app thread, so driving it needs care. Deferred to land with
+      the scenes that raise more of them.
 
-Verified: `tests/Run-AllTests.ps1` green on all seven steps — fmt, clippy,
-cargo test (21 gamedir + 10 shared), version sync, size gate, HTTP 28/28,
-wizard 41/41 in English and 41/41 in Polish.
-Size after I2b part 1: 275,456 B (269 kB) against the 500 kB gate.
+Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
+
+| After | Bytes | |
+| --- | --- | --- |
+| nothing (baseline) | 107,008 | 104.5 kB |
+| I1 — icon + VERSIONINFO | 193,024 | 188.5 kB |
+| I3 — WinHTTP client | 237,056 | 231.5 kB |
+| I2b part 1 — wizard + worker | 275,456 | 269 kB |
+
+## Protocol as it stands
+
+The server serves every game from one instance. Three consequences the
+installer must honour, and which the remaining tasks below carry:
+
+1. Download URLs lead with the game:
+   `GET /download/{game}/{directory}/{*name}`. Build the tail with
+   `PackageInfo::download_path()` — never assemble it by hand.
+2. `GET /packages?game=<id>` filters server-side. Scene 4 asks for the
+   detected game rather than filtering a whole-catalogue document.
+3. `"directory/name"` is NOT unique across games, so the cache index and the
+   install ledger must key on the game too.
 
 ## I4 — Worker thread + progress protocol  (core landed with I2b part 1)
 
@@ -353,18 +166,31 @@ half arrives with scene 6.
       takes one; nothing cancellable runs yet)
 - [ ] Messages carry what scene 6 needs: phase, current file name, bytes
       done / total; plus log lines for the shared log sink
-- [ ] Scene 2 uses it for /health + /motd, scene 4 for /packages
+- [x] Scene 2 uses it for /health + /motd
+- [ ] Scene 4 uses it for `/packages?game=<id>` — the game is known by then,
+      so ask the server for one game's manifest
 
 ## I5 — API + cache
 - [ ] sha256.rs (std-only) + unit tests against known vectors
-- [ ] api.rs: fetch_manifest (GET /packages, parse shared::Manifest incl.
-      game/name-as-path/display_name/exclusive_group/requires),
-      fetch_motd, health
+- [ ] api.rs: `fetch_manifest(game)` → `GET /packages?game=<id>`, so the
+      server filters to one game rather than the client sifting a
+      whole-catalogue document; parse `shared::Manifest` incl.
+      game/name-as-path/display_name/exclusive_group/requires
+- [ ] api.rs: fetch_motd, health
 - [ ] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
       cache.json index (PackageInfo snapshot per entry, so the tree can show
       local-only packages offline); atomic writes
-- [ ] api::download_to_cache → temp file → sha256 verify → move to
-      cache\<sha>.zip + index update; reject mismatch
+- [ ] cache.json keys MUST include the game. `"directory/name"` is not unique
+      across games now that one server serves all of them, so a bare ref
+      would let one game's package shadow another's — use
+      `PackageInfo::download_path()` (`game/directory/name`) or an explicit
+      (game, directory, name) triple. Test two games holding the same
+      directory+name.
+- [ ] api::download_to_cache: build the URL with
+      `PackageInfo::download_path()`, never by hand — the route leads with
+      the game (`/download/{game}/{directory}/{*name}`) and a name may need
+      percent-encoding (e.g. `style/Numeric Standard`). Then temp file →
+      sha256 verify → move to cache\<sha>.zip + index update; reject mismatch
 - [ ] Cache state per leaf: not cached / downloaded / update / local only;
       unit tests (pure, injected paths)
 
@@ -380,6 +206,12 @@ half arrives with scene 6.
 ## I7 — Ledger + engine (the core)
 - [ ] ledger.rs: installed.json read/write (atomic temp+rename), ownership
       query (is file owned by any package?)
+- [ ] Ledger keys MUST include the game, for the same reason as the cache
+      index: `"directory/name"` no longer identifies a package on its own.
+      A ledger is per game FOLDER, so in practice one game — but two games
+      installed from one cache must not collide, and a key that silently
+      means "whichever game wrote it last" is a bug waiting for the first
+      user with both installed.
 - [ ] engine.rs plan(): wizard result (three picks + pacenotes packages) +
       ledger + cache index → ordered actions [Uninstall(ref)...,
       Install(ref)...]; a new pick in a category supersedes the ledgered one

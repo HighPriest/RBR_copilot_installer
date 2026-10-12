@@ -51,12 +51,11 @@ pacenote packages. Two deliverables:
   - `name` is a LOOKUP KEY, never joined onto a filesystem path. Validate it
     with `shared::valid_name` on both sides: no `\`, no `.`/`..` segment, no
     empty segment. See the security invariants in `server/CLAUDE.md`.
-  - This REVERSED an earlier rule ("metadata, NOT paths", with `category` and
-    `display_name` replacing the legacy `sounds\lang\gender\Voice.zip`
-    scheme). Deriving the tree from storage won because it keeps one source
-    of truth and makes the server's own folders meaningful. The security
-    reasoning behind the old rule is untouched — it was about package
-    CONTENT, and the installer still never interprets anything inside a zip.
+  - Deriving the tree from storage keeps one source of truth and makes the
+    operator's own folders meaningful. It does NOT weaken the rule that the
+    installer never interprets package CONTENT: nothing inside a zip is read
+    for meaning, and a compromised server still cannot gain arbitrary
+    installer behavior.
 - The rest stays declarative metadata in the manifest, never files in the zip:
   - `display_name` (optional): renames the LEAF only; the levels above it come
     from `name`.
