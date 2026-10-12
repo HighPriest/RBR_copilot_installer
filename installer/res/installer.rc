@@ -317,7 +317,7 @@ BEGIN
     IDS_LANG_TITLE      "Język"
     IDS_LANG_PROMPT     "Wybierz język:"
     IDS_LANG_RESTART    "Aby później zmienić język, uruchom aplikację ponownie."
-    IDS_LBL_INSTALLED   "Pobrana zawartość"
+    IDS_LBL_INSTALLED   "Konfiguracja pilota"
     IDS_CAT_VOICE       "Głos pilota rajdowego"
     IDS_CAT_UILANG      "Język interfejsu"
     IDS_CAT_STYLE       "Styl notatek"

@@ -55,8 +55,7 @@ Run the server locally:
 2. Ubuntu: `cargo build -p pacenotes-server` → fix/pin versions, commit
    `Cargo.lock`.
 3. Windows: `rustup target list --installed` should show
-   `x86_64-pc-windows-msvc`; then `installer\tests\Test-BinarySize.ps1` (will fail until
-   task I1 stubs compile — that's the first installer task).
+   `x86_64-pc-windows-msvc`; then `installer\tests\Test-BinarySize.ps1`
 
 ## 5. Testing against the server from Windows
 

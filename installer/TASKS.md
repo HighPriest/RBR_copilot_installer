@@ -75,7 +75,12 @@ diacritics intact; Browse opens the shell "Browse For Folder" dialog and Esc
 dismisses it; WM_CLOSE exits the process cleanly.
 Size after I2: 202,240 B (197.5 kB).
 
-## I2a — User Interface design (DESIGN.md)
+## I2a — User Interface design (DESIGN.md rev. 1)
+
+SUPERSEDED BY I2b. DESIGN.md rev. 2 replaces the ribbon/two-column layout with
+a 7-scene wizard. Reusable from I2a: `gamedir.rs` (marker-exe check), the
+per-language STRINGTABLE approach, the UI test harness and its two rules.
+Dropped: game ribbon, Download/Backups tabs, Notes/Logs tabs;
 
 Re-lays the UI to `installer/DESIGN.md`. This REPLACES the I2 two-view
 (Library/Install) shape: the app is now multi-game, so the top-level axis is
@@ -211,64 +216,142 @@ transport error), a missing package giving 404, an unreachable port giving a
 WinHTTP code rendered as English prose, and the access key never appearing in
 the report. Size after I3: 237,056 B (231.5 kB).
 
+## I2b — Wizard redesign (DESIGN.md rev. 2)  ← NEXT
+
+Replaces the I2a layout. Do I4 alongside: scenes 2, 4 and 6 need the worker.
+
+Cross-crate prerequisites (do first, same PR as the shared change):
+- [ ] shared: `PackageInfo.game: String` (GAME_* id) and
+      `PackageInfo.tree_path: Vec<String>` (middle tree levels, e.g.
+      ["polish","male"]; serde default empty); add `GAME_ASSETTOCORSA`
+- [ ] server: sidecar `game` + `tree_path` in `manifest gen` (default
+      tree_path = subfolders between category folder and zip)
+- [ ] server: `GET /motd?lang=xx` → text/plain from `packages/motd/<lang>.txt`,
+      `en` fallback, 404 if none; no auth
+
+Wizard shell:
+- [ ] PropertySheet wizard host (PSH_WIZARD97 / PSH_AEROWIZARD); one dialog
+      template per scene in `res/installer.rc`; per-scene primary label via
+      PSM_SETNEXTTEXT / PSM_SETFINISHTEXT; Back only on scenes 3–5; Cancel
+      confirms, disabled during backup/install. Fallback: host dialog +
+      child pages if the PropertySheet fights the layout — record the choice
+- [ ] `WizardState` (selected language, secret, server online, game, folder,
+      checked package refs, three configuration picks) owned by the sheet,
+      replacing the I2a per-game `App`
+- [ ] Remove ribbon / two-column / Notes-Logs tab code and their strings
+
+Scenes:
+- [ ] S1 Language: combo + Continue; default = OS UI language if supported
+- [ ] S2 MOTD: read-only text from /motd (offline fallback text); Secret
+      edit (ES_PASSWORD); "Server status: Online/Offline" from /health,
+      "Checking…" until answered; ACCEPT validates a non-empty secret via
+      /packages when online (401 → warning modal, stay)
+- [ ] S3 Game folder: path edit + Browse + dropdown with "(Detecting)"
+      placeholder; scan for RichardBurnsRally_SSE.exe / dirtrally2.exe /
+      assettocorsa.exe (debounced on EN_CHANGE, immediate after Browse);
+      1 match → set + disabled, >1 → enabled with matches only, 0 →
+      placeholder + warning modal (after Browse and on Next only)
+- [ ] S4 Download: SysTreeView32 + TVS_CHECKBOXES + TVS_EX_PARTIALCHECKBOXES;
+      build tree category → tree_path → leaf from the manifest filtered by
+      game; merge cache (downloaded = checked + bold + "(downloaded)",
+      cache-only = "(local only)", newer on server = "(update)"); parent ⇄
+      children check propagation; offline = cache-only tree; Download
+      requires ≥1 checked leaf per top-level category (modal names the
+      missing ones); no transfers here
+- [ ] S5 Configuration: three LISTBOXes (Pacenotes Language = language,
+      CoDriver Voice = sounds with "a / b / name" labels, Pacenotes Style =
+      config) from checked leaves; single option preselected; Install
+      enabled when all three picked
+- [ ] S6 Installation: progress bar, phase label, "file — x / y MB", log
+      edit; phases download → backup → install (engine I7); Cancel only in
+      download phase; error → S7 failure state
+- [ ] S7 Summary: success/failure, game + folder, three choices, pacenotes
+      packages, download count/size, backup location; log collapsed on
+      success, expanded on failure; Finish exits
+- [ ] Log sink: in-memory + `%LOCALAPPDATA%\PacenotesInstaller\install.log`
+      (overwritten per run)
+- [ ] gamedir.rs: Dirt Rally marker → `dirtrally2.exe`, add Assetto Corsa
+      (`assettocorsa.exe`); `detect(folder) -> Vec<Game>`
+- [ ] English + Polish strings for every new caption, label and modal
+
+Tests (same two rules as the I2a suite):
+- [ ] tests/gamedir.rs: detect() for 0 / 1 / several markers, case-insensitive
+      exe names, AC + DR2 markers
+- [ ] Pure tree-model module (no Win32): manifest + cache → tree nodes with
+      states; check propagation; per-category validation — cross-platform
+      tests with fixtures built from the real package layout
+      (config/Descriptive, language/english, sounds/polish/male/…)
+- [ ] tests/ui/Test-UiLayout.ps1 rewritten for the wizard: walk S1→S3 in EN
+      and PL, assert captions against installer.rc, the "(Detecting)"
+      placeholder, the no-marker modal, Next disabled until detection
+- [ ] Screenshots of all 7 scenes in both languages reviewed
+
 ## I4 — Worker thread + progress protocol
 - [ ] `WM_APP` message constants (progress %, status-string id, done, error)
 - [ ] Spawn worker via std::thread; UI thread only touches controls
 - [ ] Cancel support: AtomicBool checked in download loop
+- [ ] Messages carry what scene 6 needs: phase, current file name, bytes
+      done / total; plus log lines for the shared log sink
+- [ ] Scene 2 uses it for /health + /motd, scene 4 for /packages
 
 ## I5 — API + cache
 - [ ] sha256.rs (std-only) + unit tests against known vectors
-- [ ] api.rs: fetch_manifest (GET /packages, parse shared::Manifest v2 incl.
-      category/display_name/exclusive_group/requires)
+- [ ] api.rs: fetch_manifest (GET /packages, parse shared::Manifest incl.
+      game/tree_path/category/display_name/exclusive_group/requires),
+      fetch_motd, health
 - [ ] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
-      cache.json index (PackageInfo snapshot per entry); atomic writes
+      cache.json index (PackageInfo snapshot per entry, so the tree can show
+      local-only packages offline); atomic writes
 - [ ] api::download_to_cache → temp file → sha256 verify → move to
       cache\<sha>.zip + index update; reject mismatch
-- [ ] Library state logic: not cached / cached / update available
-      (manifest sha != cached sha); unit tests (pure, injected paths)
+- [ ] Cache state per leaf: not cached / downloaded / update / local only;
+      unit tests (pure, injected paths)
 
 ## I6 — Zip reader
 - [ ] zip.rs reader: central directory parse, miniz_oxide inflate, extract
       with dir-entry handling matching C# ExtractZipFile; also
-      `entries() -> Vec<relative path>` WITHOUT extracting (engine planning)
+      `entries() -> Vec<relative path>` WITHOUT extracting (needed by the
+      backup phase before install)
 - [ ] Zip-slip guard: reject entries escaping the target dir
 - [ ] Cross-platform unit tests: extract fixture zip; entries() listing
-      (NO zip writer — backups are plain file copies now)
+      (NO zip writer — backups are plain file copies)
 
 ## I7 — Ledger + engine (the core)
 - [ ] ledger.rs: installed.json read/write (atomic temp+rename), ownership
       query (is file owned by any package?)
-- [ ] engine.rs plan(): selection + ledger + cache index →
-      ordered actions [Uninstall(ref)..., Install(ref)...]; exclusive_group
-      supersession; requires enforcement (block w/ message if dep not
-      cached); sha-changed = reinstall
-- [ ] engine.rs execute(): per package — uninstall: delete ledgered files
-      (+ prune empty dirs), drop ledger entry; install: for each zip entry,
-      first-touch backup if existing file unowned, extract, then write
-      ledger entry
-- [ ] Backup/restore: backup\<relative path> tree, never overwrite existing
-      backup file; restore copies tree back over game dir
+- [ ] engine.rs plan(): wizard result (three picks + pacenotes packages) +
+      ledger + cache index → ordered actions [Uninstall(ref)...,
+      Install(ref)...]; a new pick in a category supersedes the ledgered one
+      (category acts as the exclusive group for language/sounds/config);
+      requires enforcement; sha-changed = reinstall
+- [ ] engine.rs execute() in scene-6 phase order: download missing →
+      backup (first touch, unowned files only, from zip entries()) →
+      uninstall superseded → install; ledger entry written per package
+- [ ] Backup/restore: backup\<relative path> tree, never overwrite an
+      existing backup file; restore copies tree back (entry point per
+      DESIGN.md open question 1)
 - [ ] install.rs: `write_rbr_config` port — ini text matches C# byte-for-byte
-      (modulo date); unit tests assert exact strings; triggered after Apply
-      when a `configs`-category package is installed
-- [ ] Exhaustive engine plan() table tests + tempdir execute() tests
-      (fresh install, add, remove, switch exclusive variant, update, missing
-      dep, unowned-file backup, restore)
+      (modulo date); unit tests assert exact strings; RBR only, runs after
+      the install phase using the Pacenotes Style + Language picks
+- [ ] Exhaustive plan() table tests + tempdir execute() tests (fresh
+      install, switch style, switch voice, update, local-only package,
+      missing dep, unowned-file backup, restore)
 
 ## I8 — Auth flow
-- [ ] Access-key entry → re-fetch manifest with bearer → packages from
-      granted directories appear in Library
-- [ ] 401/403 → localized MessageBox
-- [ ] Optional: remember key in %APPDATA%\PacenotesInstaller\token (plain
-      file, user-scoped; document the tradeoff)
+- [ ] Secret from scene 2 used as bearer for /packages and /download
+- [ ] 401 on ACCEPT → warning modal; 401/403 during download → logged
+      error, failure summary
+- [ ] Optional: remember the secret in %APPDATA%\PacenotesInstaller\token
+      (plain file, user-scoped; document the tradeoff) and prefill scene 2
 
 ## I9 — Polish
-- [ ] All unwraps in UI paths replaced with MessageBox + graceful handling
-- [ ] Free-disk-space check before download (PackageInfo.size) and before
-      Apply (sum of selected sizes)
-- [ ] Cache housekeeping: "Remove from cache" per row; orphaned <sha>.zip
-      sweep on startup
-- [ ] Keyboard/tab order, default buttons, Esc behavior
+- [ ] All unwraps in UI paths replaced with modal/log + graceful handling
+- [ ] Free-disk-space check before scene 6 (sizes of missing downloads +
+      installs)
+- [ ] Cache housekeeping: orphaned <sha>.zip sweep on startup; decide where
+      "remove from cache" lives now that there is no library view
+- [ ] Remember last game folder per game; prefill scene 3
+- [ ] Keyboard/tab order, default buttons, Esc = Cancel behavior per scene
 
 ## I10 — Release gate
 - [ ] tests/Test-BinarySize.ps1 < 500 kB on release build; record final size here: ____
@@ -277,6 +360,8 @@ the report. Size after I3: 237,056 B (231.5 kB).
       the CD workflows tag the release from Cargo.toml
 - [ ] cargo bloat report saved to docs/bloat.txt
 - [ ] If over budget: replace serde_json with minimal JSON parse/write for
-      Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5)
-- [ ] Manual E2E on clean Windows VM: download several packages, install
-      subset, switch config variant, update a package, uninstall, restore
+      Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5);
+      revisit the 83 kB icon (see I1 size flag)
+- [ ] Manual E2E on clean Windows VM, per game: full wizard online with and
+      without secret, offline run from cache, switch style on re-run,
+      failure path (server dropped mid-download) lands on failure summary
