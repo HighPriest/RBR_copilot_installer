@@ -37,6 +37,9 @@ pub const IDC_S2_SECRET: u16 = 313;
 pub const IDC_S2_STATUS: u16 = 314;
 
 pub const IDD_S3_FOLDER: u16 = 320;
+pub const IDD_S4_DOWNLOAD: u16 = 330;
+pub const IDC_S4_TREE: u16 = 331;
+pub const IDC_S4_STATUS: u16 = 332;
 pub const IDC_S3_PATH_LABEL: u16 = 321;
 pub const IDC_S3_PATH: u16 = 322;
 pub const IDC_S3_BROWSE: u16 = 323;
@@ -74,6 +77,23 @@ pub struct WizardState {
     /// pick when the folder holds several games.
     pub game: Option<pacenotes_installer::gamedir::Game>,
     pub base_url: String,
+
+    // ---- Scene 4 ----
+    /// The Download tree's model. Rebuilt whenever the catalogue is fetched.
+    pub tree: pacenotes_installer::tree::Tree,
+    /// `HTREEITEM` per tree node, parallel to the model's node indices. UI
+    /// state, kept here because a property-sheet page has no storage of its
+    /// own beyond the one pointer it was handed.
+    pub tree_items: Vec<isize>,
+    /// Reentrancy guard: pushing model state back into the control raises the
+    /// same change notification we act on, which would recurse.
+    pub tree_syncing: bool,
+    /// True once a catalogue fetch has been attempted, so re-entering the
+    /// scene does not refetch.
+    pub catalogue_loaded: bool,
+    /// Keys the user committed with Download, in tree order.
+    pub chosen: Vec<String>,
+
     /// Bumped per request so a late answer to a superseded one is dropped.
     request: usize,
 }
@@ -87,6 +107,11 @@ impl WizardState {
             secret_checked: false,
             folder: String::new(),
             detected: Vec::new(),
+            tree: pacenotes_installer::tree::Tree::default(),
+            tree_items: Vec::new(),
+            tree_syncing: false,
+            catalogue_loaded: false,
+            chosen: Vec::new(),
             game: None,
             base_url,
             request: 0,
@@ -108,6 +133,7 @@ pub fn run(base_url: &str) {
         page(IDD_S1_LANGUAGE, Some(s1_proc), state_ptr),
         page(IDD_S2_MOTD, Some(s2_proc), state_ptr),
         page(IDD_S3_FOLDER, Some(s3_proc), state_ptr),
+        page(IDD_S4_DOWNLOAD, Some(s4_proc), state_ptr),
     ];
 
     let caption = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));
@@ -339,6 +365,8 @@ unsafe extern "system" fn s2_proc(dlg: HWND, msg: u32, wparam: WPARAM, lparam: L
                 crate::worker::Message::SecretChecked(outcome) => {
                     on_secret_checked(dlg, st, outcome);
                 }
+                // Scene 4's, and it has its own handler.
+                crate::worker::Message::Packages(_) => {}
             }
             1
         }
@@ -591,3 +619,272 @@ unsafe fn query_cancel(dlg: HWND) -> isize {
 const EN_CHANGE: u16 = 0x0300;
 const BN_CLICKED: u16 = 0;
 const CBN_SELCHANGE: u16 = 1;
+
+// ============================================================
+// Scene 4 — Download
+// ============================================================
+
+unsafe extern "system" fn s4_proc(dlg: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> isize {
+    match msg {
+        wm::WM_INITDIALOG => {
+            adopt_state(dlg, lparam);
+            // Partial checkboxes are an EXTENDED style, so the template cannot
+            // ask for them.
+            let tree = wm::GetDlgItem(dlg, IDC_S4_TREE as i32);
+            wm::SendMessageW(
+                tree,
+                TVM_SETEXTENDEDSTYLE,
+                ctl::TVS_EX_PARTIALCHECKBOXES as WPARAM,
+                ctl::TVS_EX_PARTIALCHECKBOXES as LPARAM,
+            );
+            1
+        }
+        crate::worker::WM_WORKER_DONE => {
+            let Some(message) = crate::worker::take(lparam) else {
+                return 0;
+            };
+            let Some(st) = state(dlg) else { return 0 };
+            if wparam != st.request {
+                return 0; // answer to a request we have moved past
+            }
+            if let crate::worker::Message::Packages(result) = message {
+                let (packages, status) = match result {
+                    Ok(packages) => (packages, None),
+                    // Not fatal: DESIGN.md says an unreachable server falls
+                    // back to whatever is already on this computer.
+                    Err(_) => (Vec::new(), Some(crate::i18n::IDS_S4_FETCH_FAILED)),
+                };
+                build_tree(dlg, st, packages, status);
+            }
+            1
+        }
+        wm::WM_NOTIFY => {
+            let hdr = lparam as *const ctl::NMHDR;
+            if hdr.is_null() {
+                return 0;
+            }
+            match (*hdr).code {
+                ctl::PSN_SETACTIVE => {
+                    set_sheet_caption(dlg);
+                    set_header(dlg, crate::i18n::IDS_S4_TITLE);
+                    set_buttons(dlg, ctl::PSWIZB_BACK | ctl::PSWIZB_NEXT);
+                    set_next_text(dlg, crate::i18n::IDS_BTN_DOWNLOAD);
+                    start_catalogue_fetch(dlg);
+                    reply(dlg, 0)
+                }
+                TVN_ITEMCHANGEDW => on_tree_item_changed(dlg, lparam),
+                ctl::PSN_WIZNEXT => on_download(dlg),
+                ctl::PSN_QUERYCANCEL => query_cancel(dlg),
+                _ => 0,
+            }
+        }
+        _ => 0,
+    }
+}
+
+/// Ask the server for this game's catalogue, once per run.
+unsafe fn start_catalogue_fetch(dlg: HWND) {
+    let Some(st) = state(dlg) else { return };
+    if st.catalogue_loaded {
+        return;
+    }
+    st.catalogue_loaded = true;
+
+    let Some(game) = st.game else {
+        // Scene 3 does not let the user past without one, so this is only
+        // reachable if that ever regresses.
+        build_tree(dlg, st, Vec::new(), Some(crate::i18n::IDS_S4_EMPTY));
+        return;
+    };
+    crate::ui::set_text(dlg, IDC_S4_STATUS, crate::i18n::IDS_S4_LOADING);
+
+    if st.online != Some(true) {
+        // Offline is a documented path, not a failure: build from the cache.
+        build_tree(dlg, st, Vec::new(), Some(crate::i18n::IDS_S4_OFFLINE));
+        return;
+    }
+    let id = st.next_request();
+    let base = st.base_url.clone();
+    let token = if st.secret.is_empty() {
+        None
+    } else {
+        Some(st.secret.clone())
+    };
+    let game_id = game.id();
+    crate::worker::spawn(dlg, id, move || {
+        crate::worker::fetch_packages(base, token, game_id)
+    });
+}
+
+/// Build the model from the catalogue plus the cache, then show it.
+unsafe fn build_tree(
+    dlg: HWND,
+    st: &mut WizardState,
+    packages: Vec<pacenotes_shared::PackageInfo>,
+    status: Option<u16>,
+) {
+    let game = st
+        .game
+        .map(|g| g.id())
+        .unwrap_or(pacenotes_shared::GAME_RBR);
+    // TODO(I5): the real cache index. Until cache.rs lands nothing is
+    // downloaded, so every leaf is NotCached and none start checked.
+    let cached: Vec<pacenotes_installer::tree::CachedPackage> = Vec::new();
+    st.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached);
+
+    populate_tree(dlg, st);
+
+    let status = status.unwrap_or(if st.tree.is_empty() {
+        crate::i18n::IDS_S4_EMPTY
+    } else {
+        crate::i18n::IDS_S4_READY
+    });
+    crate::ui::set_text(dlg, IDC_S4_STATUS, status);
+}
+
+/// Mirror the model into the control. The node index goes in `lParam`, so a
+/// notification maps straight back to the model.
+unsafe fn populate_tree(dlg: HWND, st: &mut WizardState) {
+    let tree = wm::GetDlgItem(dlg, IDC_S4_TREE as i32);
+    st.tree_syncing = true;
+    wm::SendMessageW(tree, TVM_DELETEITEM, 0, TVI_ROOT);
+    st.tree_items = vec![0isize; st.tree.len()];
+
+    let roots: Vec<usize> = st.tree.roots().to_vec();
+    for root in roots {
+        insert_node(tree, st, root, TVI_ROOT);
+    }
+    refresh_checks(dlg, st);
+    st.tree_syncing = false;
+}
+
+unsafe fn insert_node(tree: HWND, st: &mut WizardState, node: usize, parent: isize) {
+    let label = row_label(st, node);
+    let text = crate::i18n::to_wide(&label);
+
+    let mut item: ctl::TVINSERTSTRUCTW = core::mem::zeroed();
+    item.hParent = parent;
+    item.hInsertAfter = TVI_LAST;
+    item.Anonymous.itemex.mask = ctl::TVIF_TEXT | ctl::TVIF_PARAM | ctl::TVIF_STATE;
+    item.Anonymous.itemex.pszText = text.as_ptr() as *mut u16;
+    item.Anonymous.itemex.lParam = node as LPARAM;
+    // Grouping rows open, so the catalogue is visible at a glance.
+    item.Anonymous.itemex.stateMask = ctl::TVIS_EXPANDED;
+    item.Anonymous.itemex.state = if st.tree.node(node).is_leaf() {
+        0
+    } else {
+        ctl::TVIS_EXPANDED
+    };
+
+    let handle = wm::SendMessageW(tree, TVM_INSERTITEMW, 0, &item as *const _ as LPARAM);
+    st.tree_items[node] = handle;
+
+    let children: Vec<usize> = st.tree.children(node).to_vec();
+    for child in children {
+        insert_node(tree, st, child, handle);
+    }
+}
+
+/// The row's text: the model's label plus the localized state suffix. The
+/// model holds no display strings, so the suffix is added here.
+fn row_label(st: &WizardState, node: usize) -> String {
+    let node = st.tree.node(node);
+    let Some(state) = node.state else {
+        return node.label.clone();
+    };
+    let suffix = match state {
+        pacenotes_installer::tree::LeafState::NotCached => return node.label.clone(),
+        pacenotes_installer::tree::LeafState::Downloaded => crate::i18n::IDS_STATE_DOWNLOADED,
+        pacenotes_installer::tree::LeafState::UpdateAvailable => crate::i18n::IDS_STATE_UPDATE,
+        pacenotes_installer::tree::LeafState::LocalOnly => crate::i18n::IDS_STATE_LOCAL,
+    };
+    format!("{} {}", node.label, crate::i18n::load_string(suffix))
+}
+
+/// Push every node's checkbox from the model into the control.
+unsafe fn refresh_checks(dlg: HWND, st: &mut WizardState) {
+    let tree = wm::GetDlgItem(dlg, IDC_S4_TREE as i32);
+    let was_syncing = st.tree_syncing;
+    st.tree_syncing = true;
+    for node in 0..st.tree.len() {
+        let handle = st.tree_items[node];
+        if handle == 0 {
+            continue;
+        }
+        // State image 1 = unchecked, 2 = checked, 3 = partial, and the index
+        // lives in bits 12-15.
+        let image: u32 = match st.tree.check_of(node) {
+            pacenotes_installer::tree::Check::Unchecked => 1,
+            pacenotes_installer::tree::Check::Checked => 2,
+            pacenotes_installer::tree::Check::Partial => 3,
+        };
+        let mut item: ctl::TVITEMEXW = core::mem::zeroed();
+        item.mask = ctl::TVIF_HANDLE | ctl::TVIF_STATE;
+        item.hItem = handle;
+        item.stateMask = ctl::TVIS_STATEIMAGEMASK;
+        item.state = image << 12;
+        wm::SendMessageW(tree, TVM_SETITEMW, 0, &item as *const _ as LPARAM);
+    }
+    st.tree_syncing = was_syncing;
+}
+
+/// The control toggled a checkbox: take it into the model, which propagates
+/// through the subtree, then push the whole model back.
+unsafe fn on_tree_item_changed(dlg: HWND, lparam: LPARAM) -> isize {
+    let Some(st) = state(dlg) else { return 0 };
+    if st.tree_syncing {
+        return 0; // our own write coming back at us
+    }
+    let info = lparam as *const NmTvItemChange;
+    if info.is_null() {
+        return 0;
+    }
+    let node = (*info).lparam as usize;
+    if node >= st.tree.len() {
+        return 0;
+    }
+    // Bits 12-15 hold the state image: 2 is checked, anything else is not.
+    let checked = (((*info).state_new & ctl::TVIS_STATEIMAGEMASK) >> 12) == 2;
+    st.tree.set_checked(node, checked);
+    refresh_checks(dlg, st);
+    0
+}
+
+/// Download pressed: every category in the tree needs a pick, then the
+/// selection is committed for scenes 5 and 6. No transfer happens here —
+/// DESIGN.md keeps all of it on the one progress screen.
+unsafe fn on_download(dlg: HWND) -> isize {
+    let Some(st) = state(dlg) else {
+        return reply(dlg, 0);
+    };
+    let missing = st.tree.categories_missing_a_pick();
+    if !missing.is_empty() {
+        let text = crate::i18n::load_string_arg(crate::i18n::IDS_S4_MISSING, &missing.join(", "));
+        crate::ui::message_box_warning(dlg, &text);
+        return stay(dlg);
+    }
+    st.chosen = st.tree.checked_keys();
+    reply(dlg, 0)
+}
+
+// ---- Tree view bits windows-sys does not re-export usefully ----
+
+const TVM_INSERTITEMW: u32 = 0x1132;
+const TVM_DELETEITEM: u32 = 0x1101;
+const TVM_SETITEMW: u32 = 0x113F;
+const TVM_SETEXTENDEDSTYLE: u32 = 0x112C;
+const TVI_ROOT: isize = -0x10000;
+const TVI_LAST: isize = -0x0FFFE;
+/// TVN_ITEMCHANGEDW. Not in windows-sys; TVN_FIRST (-400) - 17.
+const TVN_ITEMCHANGEDW: u32 = (-417i32) as u32;
+
+/// NMTVITEMCHANGE, which windows-sys does not declare.
+#[repr(C)]
+struct NmTvItemChange {
+    hdr: ctl::NMHDR,
+    change: u32,
+    item: *mut core::ffi::c_void,
+    state_new: u32,
+    state_old: u32,
+    lparam: LPARAM,
+}

@@ -64,6 +64,10 @@ END
 #define IDC_S2_SECRET       313
 #define IDC_S2_STATUS       314
 
+#define IDD_S4_DOWNLOAD     330
+#define IDC_S4_TREE         331
+#define IDC_S4_STATUS       332
+
 #define IDD_S3_FOLDER       320
 #define IDC_S3_PATH_LABEL   321
 #define IDC_S3_PATH         322
@@ -110,6 +114,18 @@ END
 #define IDS_S2_OFFLINE         64
 #define IDS_S2_OFFLINE_MOTD    65
 #define IDS_S2_BADSECRET       66
+
+// Scene 4 — Download (80-99)
+#define IDS_S4_TITLE           80
+#define IDS_S4_LOADING         81
+#define IDS_S4_OFFLINE         82
+#define IDS_S4_EMPTY           83
+#define IDS_S4_READY           84
+#define IDS_S4_MISSING         85
+#define IDS_S4_FETCH_FAILED    86
+#define IDS_STATE_DOWNLOADED   90
+#define IDS_STATE_UPDATE       91
+#define IDS_STATE_LOCAL        92
 
 // Scene 3 — Game folder (70-79)
 #define IDS_S3_TITLE           70
@@ -167,6 +183,19 @@ BEGIN
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
 END
 
+IDD_S4_DOWNLOAD DIALOGEX 0, 0, 290, 150
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
+    CONTROL         "", IDC_S4_TREE, "SysTreeView32",
+                    TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
+                    | TVS_CHECKBOXES | TVS_SHOWSELALWAYS | TVS_DISABLEDRAGDROP
+                    | WS_BORDER | WS_TABSTOP,
+                    14, 24, 262, 96
+    LTEXT           "", IDC_S4_STATUS, 14, 126, 262, 18
+END
+
 // ============================================================
 // Strings. One STRINGTABLE per language; LoadStringW resolves against the
 // thread UI language, which i18n::set_language sets via SetThreadUILanguage.
@@ -214,6 +243,17 @@ BEGIN
     IDS_S3_GAME         "Detected game:"
     IDS_S3_DETECTING    "(Detecting)"
     IDS_S3_NOGAME       "No supported game was found in that folder.\n\nChoose the folder that contains the game's own executable."
+
+    IDS_S4_TITLE        "Download"
+    IDS_S4_LOADING      "Loading the list of available content..."
+    IDS_S4_OFFLINE      "The server could not be reached. Showing only content already on this computer."
+    IDS_S4_EMPTY        "There is nothing available for this game, online or on this computer."
+    IDS_S4_READY        "Tick what you want. Items already on this computer are ticked for you."
+    IDS_S4_MISSING      "Choose at least one item in each of: %s"
+    IDS_S4_FETCH_FAILED "The list of available content could not be read. Showing only content already on this computer."
+    IDS_STATE_DOWNLOADED "(downloaded)"
+    IDS_STATE_UPDATE    "(update)"
+    IDS_STATE_LOCAL     "(local only)"
 END
 
 // Polish wording reuses the legacy InstallationForm.pl.resx terms where the
@@ -259,4 +299,15 @@ BEGIN
     IDS_S3_GAME         "Wykryta gra:"
     IDS_S3_DETECTING    "(Wykrywanie)"
     IDS_S3_NOGAME       "W tym folderze nie znaleziono obsługiwanej gry.\n\nWskaż folder zawierający plik wykonywalny gry."
+
+    IDS_S4_TITLE        "Pobieranie"
+    IDS_S4_LOADING      "Wczytywanie listy dostępnej zawartości..."
+    IDS_S4_OFFLINE      "Nie udało się połączyć z serwerem. Pokazana jest tylko zawartość już obecna na tym komputerze."
+    IDS_S4_EMPTY        "Dla tej gry nie ma nic dostępnego ani online, ani na tym komputerze."
+    IDS_S4_READY        "Zaznacz, czego potrzebujesz. Pozycje już obecne na tym komputerze są zaznaczone."
+    IDS_S4_MISSING      "Wybierz co najmniej jedną pozycję w każdej z kategorii: %s"
+    IDS_S4_FETCH_FAILED "Nie udało się odczytać listy dostępnej zawartości. Pokazana jest tylko zawartość z tego komputera."
+    IDS_STATE_DOWNLOADED "(pobrane)"
+    IDS_STATE_UPDATE    "(aktualizacja)"
+    IDS_STATE_LOCAL     "(tylko lokalnie)"
 END

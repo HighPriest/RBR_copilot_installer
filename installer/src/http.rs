@@ -35,6 +35,17 @@ impl HttpError {
         }
     }
 
+    /// The request succeeded but the body was not what we expected. Distinct
+    /// from a transport failure because the server IS reachable — retrying
+    /// will not help, and the message has to say so.
+    pub fn parse(message: impl Into<String>) -> HttpError {
+        HttpError {
+            code: 0,
+            message: message.into(),
+            status: None,
+        }
+    }
+
     fn logical(message: impl Into<String>, status: Option<u16>) -> HttpError {
         HttpError {
             code: 0,

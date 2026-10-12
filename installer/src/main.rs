@@ -7,6 +7,7 @@
 #![windows_subsystem = "windows"]
 #![cfg(windows)]
 
+mod api;
 mod http;
 mod i18n;
 mod ui;
@@ -30,7 +31,8 @@ fn main() {
             dwICC: windows_sys::Win32::UI::Controls::ICC_STANDARD_CLASSES
                 | windows_sys::Win32::UI::Controls::ICC_PROGRESS_CLASS
                 | windows_sys::Win32::UI::Controls::ICC_LISTVIEW_CLASSES
-                | windows_sys::Win32::UI::Controls::ICC_TAB_CLASSES,
+                | windows_sys::Win32::UI::Controls::ICC_TAB_CLASSES
+                | windows_sys::Win32::UI::Controls::ICC_TREEVIEW_CLASSES,
         };
         windows_sys::Win32::UI::Controls::InitCommonControlsEx(&icc);
     }

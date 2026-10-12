@@ -15,11 +15,14 @@
                                the next two steps run)
       6. Test-HttpClient.ps1 — the WinHTTP client against a live
                                pacenotes-server, including the auth matrix
-      7. Test-UiLayout.ps1   — the real .exe driven through user32.dll,
-                               once per shipped language
+      7. Test-UiLayout.ps1   — scenes 1-3 against a dead server (the
+                               offline path), once per shipped language
+      8. Test-WizardDownload — scenes 1-4 against a LIVE server holding a
+                               nested catalogue
 
-    Step 7 needs Windows with an interactive desktop session, since it shows
-    real windows. Use -SkipUi on a headless machine; everything before it still
+    Steps 7 and 8 need Windows with an interactive desktop session, since they
+    show
+    real windows. Use -SkipUi on a headless machine; everything before them still
     runs — step 6 included, because --selftest-http writes to a file and never
     opens a window.
 
@@ -71,6 +74,9 @@ try {
             Invoke-Step "UI layout ($label)" {
                 pwsh -NoProfile -File (Join-Path $PSScriptRoot 'ui\Test-UiLayout.ps1') -Language $lang
             }
+        }
+        Invoke-Step 'wizard download scene' {
+            pwsh -NoProfile -File (Join-Path $PSScriptRoot 'ui\Test-WizardDownload.ps1')
         }
     }
 } finally {

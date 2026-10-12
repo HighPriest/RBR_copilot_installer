@@ -14,4 +14,5 @@ pub mod gamedir;
 pub mod install;
 pub mod ledger;
 pub mod sha256;
+pub mod tree;
 pub mod zip;

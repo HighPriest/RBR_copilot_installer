@@ -184,3 +184,15 @@ pub const IDS_S3_PATH: u16 = 71;
 pub const IDS_S3_GAME: u16 = 72;
 pub const IDS_S3_DETECTING: u16 = 73;
 pub const IDS_S3_NOGAME: u16 = 74;
+
+// Scene 4 — Download
+pub const IDS_S4_TITLE: u16 = 80;
+pub const IDS_S4_LOADING: u16 = 81;
+pub const IDS_S4_OFFLINE: u16 = 82;
+pub const IDS_S4_EMPTY: u16 = 83;
+pub const IDS_S4_READY: u16 = 84;
+pub const IDS_S4_MISSING: u16 = 85;
+pub const IDS_S4_FETCH_FAILED: u16 = 86;
+pub const IDS_STATE_DOWNLOADED: u16 = 90;
+pub const IDS_STATE_UPDATE: u16 = 91;
+pub const IDS_STATE_LOCAL: u16 = 92;

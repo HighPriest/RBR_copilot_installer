@@ -45,6 +45,8 @@ read it before adding one.
 - [x] `tests/Test-BinarySize.ps1` — the 500 kB release gate
 - [x] `tests/Test-HttpClient.ps1` — the WinHTTP client against a live server
 - [x] `tests/ui/Test-UiLayout.ps1` — walks the wizard, per language
+- [x] `tests/ui/Test-WizardDownload.ps1` — scenes 1-4 against a LIVE server
+      holding a nested catalogue
 - [x] `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID, asserts nothing
 
 CI runs everything except the GUI tests, which need an interactive desktop
@@ -103,10 +105,18 @@ Scenes:
       warning modal (after Browse and on Next only)
 - [x] `gamedir.rs`: `detect(folder) -> Vec<Game>`, all four games
 - [x] English + Polish strings for every caption, label and modal in S1-S3
-- [ ] S4 Download — part 2
-- [ ] S5 Configuration — part 2
-- [ ] S6 Installation — part 2
-- [ ] S7 Summary — part 2
+- [x] S4 Download: SysTreeView32 + TVS_CHECKBOXES + partial checkboxes, built
+      from `/packages?game=<id>`; parent/child check propagation; Download
+      refuses until every category present has a pick and the modal names the
+      ones missing. Offline or a failed fetch falls back to the cache rather
+      than erroring.
+- [x] Pure tree model (`src/tree.rs`, no Win32): manifest + cache → nodes
+      with states, check propagation, per-category validation. Cross-platform
+      tests with fixtures shaped like the real layout (`style/Descriptive`,
+      `codriver/polish/male/Kamil`)
+- [ ] S5 Configuration — three lists from the leaves scene 4 committed
+- [ ] S6 Installation — needs the engine (I7)
+- [ ] S7 Summary
 - [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
       writes, so it follows I7
 - [ ] Log sink: in-memory + `%LOCALAPPDATA%\PacenotesInstaller\install.log`
@@ -127,6 +137,14 @@ Tests:
       blocks the app thread, so driving it needs care. Deferred to land with
       the scenes that raise more of them.
 
+SIZE FLAG — serde_json has landed. Scene 4 is the first code to parse JSON,
+so `serde_json` finally linked and the binary jumped 269 → 329.5 kB, 66% of
+the gate. Still to come: miniz_oxide at I6 (~40 kB), plus cache/ledger/engine.
+That projects to roughly 410 kB, which fits — but the two levers in
+installer/CLAUDE.md §5 are now worth remembering rather than theoretical: the
+83 kB icon (see I1) and swapping serde_json for a hand-rolled parser over the
+three documents the installer actually reads.
+
 Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 
 | After | Bytes | |
@@ -135,6 +153,7 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I1 — icon + VERSIONINFO | 193,024 | 188.5 kB |
 | I3 — WinHTTP client | 237,056 | 231.5 kB |
 | I2b part 1 — wizard + worker | 275,456 | 269 kB |
+| I2b part 2 — tree model + scene 4 | 337408 | 329.5 kB |
 
 ## Protocol as it stands
 

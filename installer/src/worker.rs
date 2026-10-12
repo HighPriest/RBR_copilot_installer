@@ -26,6 +26,9 @@ pub enum Message {
     Motd(Option<String>),
     /// Scene 2: result of validating a non-empty secret with `GET /packages`.
     SecretChecked(SecretOutcome),
+    /// Scene 4: the catalogue for the detected game, or why it could not be
+    /// had. A failure is not fatal — the scene falls back to the cache.
+    Packages(Result<Vec<pacenotes_shared::PackageInfo>, String>),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -80,32 +83,20 @@ pub unsafe fn take(lparam: windows_sys::Win32::Foundation::LPARAM) -> Option<Mes
 
 // ---- The jobs themselves. Pure "do a request, report what happened". ----
 
-/// `GET {base}/health`.
+/// `GET /health`.
 pub fn check_health(base_url: String) -> Message {
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let mut ignore = |_: u64, _: Option<u64>| {};
-    let online =
-        crate::http::get(&format!("{base_url}/health"), None, &mut ignore, &cancel).is_ok();
+    let online = crate::api::Api::new(&base_url, None).health(&cancel);
     Message::Health { online }
 }
 
-/// `GET {base}/motd?lang={lang}`.
+/// `GET /motd?lang=xx`.
 ///
 /// A 404 is the normal answer when the operator has published no text, so it
 /// is reported the same as being offline: the scene shows its built-in copy.
 pub fn fetch_motd(base_url: String, lang: &'static str) -> Message {
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let mut ignore = |_: u64, _: Option<u64>| {};
-    let body = crate::http::get(
-        &format!("{base_url}/motd?lang={lang}"),
-        None,
-        &mut ignore,
-        &cancel,
-    )
-    .ok()
-    .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
-    .filter(|text| !text.trim().is_empty());
-    Message::Motd(body)
+    Message::Motd(crate::api::Api::new(&base_url, None).fetch_motd(lang, &cancel))
 }
 
 /// Validate a secret by asking for the listing it is supposed to widen.
@@ -115,16 +106,21 @@ pub fn fetch_motd(base_url: String, lang: &'static str) -> Message {
 /// network is flaky would strand someone who has everything cached already.
 pub fn check_secret(base_url: String, secret: String) -> Message {
     let cancel = std::sync::atomic::AtomicBool::new(false);
-    let mut ignore = |_: u64, _: Option<u64>| {};
-    let outcome = match crate::http::get(
-        &format!("{base_url}/packages"),
-        Some(&secret),
-        &mut ignore,
-        &cancel,
-    ) {
+    let api = crate::api::Api::new(&base_url, Some(secret));
+    // Any game will do; this asks whether the credential is accepted at all.
+    let outcome = match api.fetch_manifest(pacenotes_shared::GAME_RBR, &cancel) {
         Ok(_) => SecretOutcome::Accepted,
         Err(e) if e.status == Some(401) => SecretOutcome::Rejected,
         Err(_) => SecretOutcome::Unreachable,
     };
     Message::SecretChecked(outcome)
+}
+
+/// `GET /packages?game=<id>` for the game scene 3 detected.
+pub fn fetch_packages(base_url: String, token: Option<String>, game: &'static str) -> Message {
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    match crate::api::Api::new(&base_url, token).fetch_manifest(game, &cancel) {
+        Ok(manifest) => Message::Packages(Ok(manifest.packages)),
+        Err(e) => Message::Packages(Err(e.message)),
+    }
 }
