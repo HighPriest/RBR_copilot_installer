@@ -56,17 +56,23 @@ noticeable code. If size regresses, fix it before continuing.
 
 ## Module map
 
-- `main.rs` — entry point, common-controls init, dialog loop.
-- `ui.rs` — dlgprocs. Layout per `DESIGN.md`: a GAME RIBBON across the top
-  (one tab per game, all sharing one control set — switching swaps per-game
-  state), and inside it the game-folder field, a left column of downloaded
-  content (one single-select list per category + Install), a right column of
-  Download/Backups tabs (per-category available lists + access key), a shared
-  status strip, and Notes/Logs tabs that auto-switch to Logs on an error.
-- `gamedir.rs` — which games exist, their ribbon labels, and the marker
-  executable that identifies each one's folder. Pure std, so the folder check
-  is testable without a desktop. A game folder is NOT "any directory that
-  exists"; see the note under Testing.
+- `main.rs` — entry point, common-controls init, `--selftest-http`, launches
+  the wizard.
+- `wizard.rs` — the UI. Layout per `DESIGN.md` rev. 2: a comctl32
+  PropertySheet in wizard mode, one page per scene, with `WizardState` shared
+  across pages. Scenes 1-3 (Language, Message of the day, Game folder) are
+  implemented; 4-7 are I2b part 2. Read the RECORDED DEVIATIONS in
+  `TASKS.md` I2b before changing the sheet: Wizard97 headers, PSM_SETNEXTTEXT
+  and pszCaption all had to be worked around, and the comments say why.
+- `ui.rs` — the small Win32 vocabulary the pages are written in: control
+  text, combo boxes, the three modal shapes, the folder picker.
+- `worker.rs` — the one background thread. A worker NEVER touches a control;
+  it posts a `Message` and the UI thread acts on it.
+- `gamedir.rs` — which games exist, their dropdown labels, and the marker
+  executable that identifies each one's folder, plus `detect()` which drives
+  the wizard's game dropdown. Pure std, so the folder check is testable
+  without a desktop. A game folder is NOT "any directory that exists"; see the
+  note under Testing.
 - `http.rs` — WinHTTP wrapper: `get(url, bearer: Option<&str>) -> Vec<u8>`
   with a progress callback. Synchronous; always called from the worker thread.
 - `api.rs` — fetch manifest, download into cache (JSON isolated here).
@@ -79,7 +85,8 @@ noticeable code. If size regresses, fix it before continuing.
   file copies) — do not write one.
 - `install.rs` — `write_rbr_config` port (the one built-in special step)
   + RBR-specific path knowledge.
-- `i18n.rs` — string table lookup (localization via .rc STRINGTABLE).
+- `i18n.rs` — string table lookup (localization via .rc STRINGTABLE), the
+  shipped `Language` list, and the OS-UI-language default for scene 1.
 
 ## Porting map (C# legacy/DownloadManager.cs → new model)
 

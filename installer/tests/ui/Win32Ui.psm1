@@ -33,6 +33,7 @@ public static class NativeUi {
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetClassNameW(IntPtr h, StringBuilder s, int m);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowTextW(IntPtr h, StringBuilder s, int m);
   [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool IsWindowEnabled(IntPtr h);
   [DllImport("user32.dll")] public static extern int GetDlgCtrlID(IntPtr h);
   [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
   [DllImport("user32.dll")] public static extern IntPtr GetDlgItem(IntPtr h, int id);
@@ -44,6 +45,7 @@ public static class NativeUi {
   [DllImport("user32.dll")] public static extern IntPtr PostMessageW(IntPtr h, uint m, IntPtr w, IntPtr l);
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
   [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr h);
   public delegate bool EnumProc(IntPtr h, IntPtr l);
 }
@@ -232,6 +234,94 @@ function Close-Dialog {
     [void][NativeUi]::PostMessageW($Dialog, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
 }
 
+# ---- Wizard (PropertySheet) helpers ----
+# comctl32 button ids from prsht.h, and the PSM_PRESSBUTTON indices.
+$script:ID_WIZBACK = 0x3023
+$script:ID_WIZNEXT = 0x3024
+$script:ID_WIZFINISH = 0x3025
+$script:PSM_PRESSBUTTON = 1137   # WM_USER + 113
+$script:PSBTN_BACK = 0
+$script:PSBTN_NEXT = 1
+$script:PSBTN_CANCEL = 5
+
+function Get-ActivePage {
+    <#
+    .SYNOPSIS
+        The wizard page currently showing inside a property sheet.
+
+    .DESCRIPTION
+        Page controls are GRANDchildren of the sheet: the sheet owns a child
+        dialog per page and only one is visible. GetDlgItem on the sheet
+        therefore cannot see them, and a test that tried would conclude every
+        control was missing.
+    #>
+    param([Parameter(Mandatory)][IntPtr]$Sheet)
+    $script:page = [IntPtr]::Zero
+    $cb = [NativeUi+EnumProc] {
+        param($h, $l)
+        if ([NativeUi]::IsWindowVisible($h)) {
+            $c = New-Object System.Text.StringBuilder 64
+            [void][NativeUi]::GetClassNameW($h, $c, 64)
+            if ($c.ToString() -eq '#32770') { $script:page = $h; return $false }
+        }
+        return $true
+    }
+    [void][NativeUi]::EnumChildWindows($Sheet, $cb, [IntPtr]::Zero)
+    return $script:page
+}
+
+function Wait-ForPageControl {
+    <#  Poll until the active page exposes $CtrlId, i.e. the next scene has
+        actually been built. Page switching is asynchronous. #>
+    param(
+        [Parameter(Mandatory)][IntPtr]$Sheet,
+        [Parameter(Mandatory)][int]$CtrlId,
+        [int]$TimeoutMs = 5000
+    )
+    $deadline = (Get-Date).AddMilliseconds($TimeoutMs)
+    while ((Get-Date) -lt $deadline) {
+        $page = Get-ActivePage -Sheet $Sheet
+        if ($page -ne [IntPtr]::Zero -and
+            [NativeUi]::GetDlgItem($page, $CtrlId) -ne [IntPtr]::Zero) {
+            return $page
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    return [IntPtr]::Zero
+}
+
+function Get-WizardButtonText {
+    param([Parameter(Mandatory)][IntPtr]$Sheet, [Parameter(Mandatory)][int]$ButtonId)
+    $h = [NativeUi]::GetDlgItem($Sheet, $ButtonId)
+    if ($h -eq [IntPtr]::Zero) { return $null }
+    $cap = 512
+    $sb = New-Object System.Text.StringBuilder $cap
+    [void][NativeUi]::SendMessageGetText($h, 0x000D, [IntPtr]$cap, $sb)
+    return $sb.ToString()
+}
+
+function Test-WizardButtonEnabled {
+    param([Parameter(Mandatory)][IntPtr]$Sheet, [Parameter(Mandatory)][int]$ButtonId)
+    return [NativeUi]::IsWindowEnabled([NativeUi]::GetDlgItem($Sheet, $ButtonId))
+}
+
+function Press-WizardButton {
+    <#  PSM_PRESSBUTTON drives the sheet exactly as a click would, including
+        the PSN_WIZNEXT round trip to the page — which is the part worth
+        testing. Posting WM_COMMAND to the button would skip it. #>
+    param([Parameter(Mandatory)][IntPtr]$Sheet, [Parameter(Mandatory)][int]$Button)
+    [void][NativeUi]::PostMessageW($Sheet, $script:PSM_PRESSBUTTON, [IntPtr]$Button, [IntPtr]::Zero)
+    Start-Sleep -Milliseconds 500
+}
+
+function Dismiss-Modal {
+    <#  Close a MessageBox the app raised. Posted, not sent: the app's thread
+        is inside a modal loop and a send would deadlock on a busy box. #>
+    param([Parameter(Mandatory)][IntPtr]$Modal)
+    [void][NativeUi]::PostMessageW($Modal, 0x0111, [IntPtr]1, [IntPtr]::Zero)  # WM_COMMAND IDOK
+    Start-Sleep -Milliseconds 400
+}
+
 function Get-ResourceStrings {
     <#
     .SYNOPSIS
@@ -282,15 +372,17 @@ function Expand-ResourceArg {
 
 function Start-Installer {
     <#  Launch the release build and return the process plus its exe path. #>
-    param([string]$ExePath)
+    param([string]$ExePath, [string[]]$ExtraArgs = @())
     if (-not $ExePath) {
         $ExePath = Join-Path $PSScriptRoot '..\..\target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe'
     }
     $ExePath = (Resolve-Path $ExePath).Path
-    return [pscustomobject]@{
-        Process = Start-Process $ExePath -PassThru
-        Path    = $ExePath
+    $proc = if ($ExtraArgs.Count -gt 0) {
+        Start-Process $ExePath -ArgumentList $ExtraArgs -PassThru
+    } else {
+        Start-Process $ExePath -PassThru
     }
+    return [pscustomobject]@{ Process = $proc; Path = $ExePath }
 }
 
 Export-ModuleMember -Function * -Variable *

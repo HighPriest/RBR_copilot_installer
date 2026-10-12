@@ -216,80 +216,153 @@ transport error), a missing package giving 404, an unreachable port giving a
 WinHTTP code rendered as English prose, and the access key never appearing in
 the report. Size after I3: 237,056 B (231.5 kB).
 
-## I2b — Wizard redesign (DESIGN.md rev. 2)  ← NEXT
+## I2b — Wizard redesign (DESIGN.md rev. 2)  ← PART 1 DONE
 
-Replaces the I2a layout. Do I4 alongside: scenes 2, 4 and 6 need the worker.
+Replaces the I2a layout. Delivered in two parts; this is part 1 (shell +
+scenes 1-3). Part 2 is scenes 4-7, which need the tree model and the engine.
 
-Cross-crate prerequisites (do first, same PR as the shared change):
-- [ ] shared: `PackageInfo.game: String` (GAME_* id) and
-      `PackageInfo.tree_path: Vec<String>` (middle tree levels, e.g.
-      ["polish","male"]; serde default empty); add `GAME_ASSETTOCORSA`
-- [ ] server: sidecar `game` + `tree_path` in `manifest gen` (default
-      tree_path = subfolders between category folder and zip)
-- [ ] server: `GET /motd?lang=xx` → text/plain from `packages/motd/<lang>.txt`,
-      `en` fallback, 404 if none; no auth
+Cross-crate prerequisites:
+- [x] shared: `PackageInfo.tree_path: Vec<String>` (middle tree levels, e.g.
+      ["polish","male"]; serde default empty). `PackageInfo.game` already
+      existed from M1a.
+- [x] shared: `GAME_ASSETTOCORSA`; `GAME_DIRT_RALLY` → `GAME_DIRT_RALLY2`
+      with the value `dirtrally2`, per DESIGN.md rev. 2's table. The name now
+      matches the value, which is Dirt Rally 2.0.
+- [x] shared: CATEGORY_* renamed to DESIGN.md rev. 2's vocabulary —
+      `language` / `codriver` / `style` / `pacenotes` (was `languages` /
+      `sounds` / `configs`). Three sources disagreed (shared, DESIGN.md,
+      this file); DESIGN.md won. Added `CHOICE_CATEGORIES`, the three the
+      Configuration scene requires one pick from.
+- [x] server: the `tree_path` sidecar field is read by `manifest gen`, and
+      its test fixtures follow the renamed ids, so the workspace builds and
+      the protocol is usable end to end.
+- [ ] SERVER WORK REQUESTED — see "Server work requested" below. Not done
+      here: `manifest gen` deriving a DEFAULT tree_path from the subfolders
+      between the category folder and the zip, and `GET /motd`.
 
 Wizard shell:
-- [ ] PropertySheet wizard host (PSH_WIZARD97 / PSH_AEROWIZARD); one dialog
-      template per scene in `res/installer.rc`; per-scene primary label via
-      PSM_SETNEXTTEXT / PSM_SETFINISHTEXT; Back only on scenes 3–5; Cancel
-      confirms, disabled during backup/install. Fallback: host dialog +
-      child pages if the PropertySheet fights the layout — record the choice
-- [ ] `WizardState` (selected language, secret, server online, game, folder,
-      checked package refs, three configuration picks) owned by the sheet,
-      replacing the I2a per-game `App`
-- [ ] Remove ribbon / two-column / Notes-Logs tab code and their strings
+- [x] PropertySheet wizard host; one dialog template per scene in
+      `res/installer.rc`; per-scene primary label; Back only from scene 3;
+      Cancel confirms
+- [x] `WizardState` (language, secret, server online, folder, detected games,
+      game) owned by the sheet, replacing the I2a per-game `App`
+- [x] Remove ribbon / two-column / Notes-Logs code and their strings
 
 Scenes:
-- [ ] S1 Language: combo + Continue; default = OS UI language if supported
-- [ ] S2 MOTD: read-only text from /motd (offline fallback text); Secret
-      edit (ES_PASSWORD); "Server status: Online/Offline" from /health,
+- [x] S1 Language: combo + Continue; default = OS UI language if supported
+- [x] S2 MOTD: read-only text from /motd (offline fallback text); Secret edit
+      (ES_PASSWORD); "Server status: Online/Offline" from /health,
       "Checking…" until answered; ACCEPT validates a non-empty secret via
       /packages when online (401 → warning modal, stay)
-- [ ] S3 Game folder: path edit + Browse + dropdown with "(Detecting)"
-      placeholder; scan for RichardBurnsRally_SSE.exe / dirtrally2.exe /
-      assettocorsa.exe (debounced on EN_CHANGE, immediate after Browse);
-      1 match → set + disabled, >1 → enabled with matches only, 0 →
-      placeholder + warning modal (after Browse and on Next only)
-- [ ] S4 Download: SysTreeView32 + TVS_CHECKBOXES + TVS_EX_PARTIALCHECKBOXES;
-      build tree category → tree_path → leaf from the manifest filtered by
-      game; merge cache (downloaded = checked + bold + "(downloaded)",
-      cache-only = "(local only)", newer on server = "(update)"); parent ⇄
-      children check propagation; offline = cache-only tree; Download
-      requires ≥1 checked leaf per top-level category (modal names the
-      missing ones); no transfers here
-- [ ] S5 Configuration: three LISTBOXes (Pacenotes Language = language,
-      CoDriver Voice = sounds with "a / b / name" labels, Pacenotes Style =
-      config) from checked leaves; single option preselected; Install
-      enabled when all three picked
-- [ ] S6 Installation: progress bar, phase label, "file — x / y MB", log
-      edit; phases download → backup → install (engine I7); Cancel only in
-      download phase; error → S7 failure state
-- [ ] S7 Summary: success/failure, game + folder, three choices, pacenotes
-      packages, download count/size, backup location; log collapsed on
-      success, expanded on failure; Finish exits
+- [x] S3 Game folder: path edit + Browse + dropdown with "(Detecting)"
+      placeholder; scan (debounced 400 ms on EN_CHANGE, immediate after
+      Browse); 1 match → set + disabled, >1 → enabled with matches only,
+      0 → placeholder + warning modal (after Browse and on Next only)
+- [ ] S4 Download — part 2
+- [ ] S5 Configuration — part 2
+- [ ] S6 Installation — part 2
+- [ ] S7 Summary — part 2
 - [ ] Log sink: in-memory + `%LOCALAPPDATA%\PacenotesInstaller\install.log`
-      (overwritten per run)
-- [ ] gamedir.rs: Dirt Rally marker → `dirtrally2.exe`, add Assetto Corsa
-      (`assettocorsa.exe`); `detect(folder) -> Vec<Game>`
-- [ ] English + Polish strings for every new caption, label and modal
+- [x] gamedir.rs: Dirt Rally marker `dirtrally2.exe`, Assetto Corsa added
+      (`assettocorsa.exe`), BeamNG kept (DESIGN.md's table lists it; this
+      file's scan list had simply omitted it); `detect(folder) -> Vec<Game>`
+- [x] English + Polish strings for every caption, label and modal in S1-S3
 
-Tests (same two rules as the I2a suite):
-- [ ] tests/gamedir.rs: detect() for 0 / 1 / several markers, case-insensitive
-      exe names, AC + DR2 markers
+RECORDED DEVIATIONS (DESIGN.md asked for these; here is what shipped and why):
+
+1. CLASSIC WIZARD, NOT WIZARD97. The sheet is created with `PSH_WIZARD`. The
+   Wizard97 header strip draws its title only alongside a header BITMAP;
+   without one it reserved an empty band and ignored BOTH
+   `PROPSHEETPAGEW::pszHeaderTitle` and `PSM_SETHEADERTITLE` — verified on
+   screen. Shipping a bitmap to satisfy it would spend size budget on
+   decoration. The scene title is now a static control in each page template,
+   which also makes it localizable per scene. DESIGN.md allows this fallback.
+
+2. `PSM_SETNEXTTEXT` IS IGNORED by this sheet — confirmed by sending it from
+   OUTSIDE the process, where the button caption did not change either. The
+   per-scene primary label is set by writing the text of comctl32's own
+   button ids (`ID_WIZNEXT`/`ID_WIZFINISH` from prsht.h). Back and Cancel are
+   relabelled the same way, because comctl32 supplies them in the OS language
+   and a Polish wizard would otherwise carry two English buttons.
+
+3. SCENE 1 IS NOT A SMALL WINDOW. A property sheet is one size for every page,
+   sized to the largest, so scene 1 shares the wizard frame. The alternative,
+   a separate modal before the sheet, would give scene 1 a different Cancel
+   behavior from every other scene.
+
+4. `PROPSHEETHEADERW::pszCaption` had no effect; the title bar is set with
+   WM_SETTEXT on the sheet when each scene activates.
+
+5. Scene 1 renders in the OS UI language, because it is shown before the user
+   has chosen one. Its captions are therefore asserted to be a shipped string
+   in SOME language rather than a specific one.
+
+Part 2 (next):
+- [ ] Scenes 4-7, the log sink, and the pure tree-model module
 - [ ] Pure tree-model module (no Win32): manifest + cache → tree nodes with
       states; check propagation; per-category validation — cross-platform
       tests with fixtures built from the real package layout
-      (config/Descriptive, language/english, sounds/polish/male/…)
-- [ ] tests/ui/Test-UiLayout.ps1 rewritten for the wizard: walk S1→S3 in EN
-      and PL, assert captions against installer.rc, the "(Detecting)"
-      placeholder, the no-marker modal, Next disabled until detection
-- [ ] Screenshots of all 7 scenes in both languages reviewed
+- [ ] Uninstall/restore scene (DESIGN.md scene 3's UNINSTALL button and the
+      backup-restoration window). Deferred deliberately: it restores from the
+      backup tree the engine writes, which is task I7.
 
-## I4 — Worker thread + progress protocol
-- [ ] `WM_APP` message constants (progress %, status-string id, done, error)
-- [ ] Spawn worker via std::thread; UI thread only touches controls
-- [ ] Cancel support: AtomicBool checked in download loop
+Tests:
+- [x] tests/gamedir.rs: detect() for 0 / 1 / several markers, case-insensitive
+      exe names, a directory named like a marker, AC + DR2 + BeamNG (21 tests)
+- [x] tests/ui/Test-UiLayout.ps1 rewritten for the wizard: walks S1→S3 in EN
+      and PL against a dead server (the deterministic offline path), asserting
+      captions from installer.rc, the "(Detecting)" placeholder, the dropdown
+      enabled only with several matches, Next blocked until detection, and
+      Back navigation — 41 checks per language
+- [x] Screenshots of all three scenes in both languages reviewed
+- [ ] Modal assertions (no-marker warning, bad-secret warning) — the modal
+      blocks the app thread, so driving it needs care; deferred with the
+      scenes that raise more of them
+
+Verified: `tests/Run-AllTests.ps1` green on all seven steps — fmt, clippy,
+cargo test (21 gamedir + 10 shared), version sync, size gate, HTTP 28/28,
+wizard 41/41 in English and 41/41 in Polish.
+Size after I2b part 1: 275,456 B (269 kB) against the 500 kB gate.
+
+## Server work requested (hand to the server agent)
+
+Both are DESIGN.md rev. 2 requirements that the installer cannot supply for
+itself. The shared protocol side is already in place.
+
+1. `manifest gen`: derive a DEFAULT `PackageInfo.tree_path` from the folders
+   between the category folder and the zip, so publishers get the Download
+   scene's tree shape without hand-authoring every sidecar. The field is
+   already read from the sidecar, so an explicit value must keep winning.
+   Example: `packages/public/codriver/polish/male/Kamil.zip` →
+   `tree_path = ["polish", "male"]`.
+
+2. `GET /motd?lang=xx` → `text/plain` from `packages/motd/<lang>.txt`, falling
+   back to `en`, 404 when there is none, no auth. Scene 2 already calls it and
+   treats 404 exactly like being offline, so the installer works today and
+   improves the moment this lands.
+
+Note for whoever picks these up: `CATEGORY_*` in shared/ changed value
+(`languages`→`language`, `sounds`→`codriver`, `configs`→`style`) and
+`GAME_DIRT_RALLY`→`GAME_DIRT_RALLY2` (`dirtrally`→`dirtrally2`). The server's
+own test fixtures were updated with it, but any sidecar .toml already authored
+for real packages needs the same rename.
+
+
+## I4 — Worker thread + progress protocol  (core landed with I2b part 1)
+
+`src/worker.rs` exists because scene 2 cannot ask /health and /motd from the
+UI thread. What it has now is the minimum those scenes needed; the progress
+half arrives with scene 6.
+
+- [x] `WM_APP` message constant + a `Message` enum per job, carried as a
+      leaked `Box` reclaimed by the receiver
+- [x] Spawn worker via std::thread; the UI thread is the only one that
+      touches controls
+- [x] Request ids: a scene bumps one per request so a late answer to a
+      superseded request (a 10 s connect timeout landing after the user moved
+      on) is recognised and dropped
+- [ ] Cancel support: AtomicBool checked in download loop (`http.rs` already
+      takes one; nothing cancellable runs yet)
 - [ ] Messages carry what scene 6 needs: phase, current file name, bytes
       done / total; plus log lines for the shared log sink
 - [ ] Scene 2 uses it for /health + /motd, scene 4 for /packages

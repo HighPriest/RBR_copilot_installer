@@ -7,10 +7,15 @@
 #![windows_subsystem = "windows"]
 #![cfg(windows)]
 
-mod api;
 mod http;
 mod i18n;
 mod ui;
+mod wizard;
+mod worker;
+
+/// Where the packages live. Overridable with `--server <url>` so a test or a
+/// developer can point the wizard at a local pacenotes-server.
+const DEFAULT_SERVER: &str = "http://127.0.0.1:8080";
 
 fn main() {
     // Task I3's manual check, before any UI is created.
@@ -30,15 +35,27 @@ fn main() {
         windows_sys::Win32::UI::Controls::InitCommonControlsEx(&icc);
     }
 
-    // Task I2: language picker dialog; on Cancel, exit (like Program.cs).
-    let Some(lang) = ui::show_language_picker() else {
-        return;
-    };
-    i18n::set_language(lang);
+    // Start in the OS language so scene 1 — which is shown BEFORE the user
+    // can choose — is already readable. Scene 1's Continue re-applies the
+    // pick, which is what every later page is built in.
+    if let Some(os) = i18n::os_language() {
+        i18n::set_language(os);
+    }
 
-    // Task I2/I4: main dialog owns the app lifetime; worker thread posts
-    // WM_APP progress messages back to it.
-    ui::run_main_dialog();
+    wizard::run(&server_url());
+}
+
+/// `--server <url>`, else the default.
+fn server_url() -> String {
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        if arg == "--server" {
+            if let Some(url) = args.next() {
+                return url.trim_end_matches('/').to_string();
+            }
+        }
+    }
+    DEFAULT_SERVER.to_string()
 }
 
 /// `--selftest-http <url> [--token <bearer>] [--out <file>]`
@@ -120,11 +137,14 @@ impl SelfTest {
         match &self.out {
             Some(path) => {
                 if std::fs::write(path, &report).is_err() {
-                    ui::message_box_error(&format!("Cannot write {}", path.display()));
+                    ui::message_box_error(
+                        core::ptr::null_mut(),
+                        &format!("Cannot write {}", path.display()),
+                    );
                     return 2;
                 }
             }
-            None => ui::message_box_info(&report),
+            None => ui::message_box_info(core::ptr::null_mut(), &report),
         }
         code
     }

@@ -19,7 +19,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
-| `ui/Test-UiLayout.ps1` | AUTOMATED TEST — drives the real .exe | yes | no |
+| `ui/Test-UiLayout.ps1` | AUTOMATED TEST — walks the wizard, scenes 1-3 | yes | no |
 | `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes | no |
 | `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
 | `Run-AllTests.ps1` | runner for all of the above, plus fmt + clippy | optional | no |
@@ -69,7 +69,10 @@ a listbox can hold a string. That case belongs with the code that populates it.
 
 `ui/Test-UiLayout.ps1` reads `res/installer.rc` via `Get-ResourceStrings` and
 asserts each control shows exactly what the resource defines for the language
-under test. Hardcoding the strings would only prove that two hand-written
+under test. It runs the wizard against a deliberately dead server
+(`--server http://127.0.0.1:1`) so scene 2 takes its documented OFFLINE path
+and the walk is deterministic; the online paths belong to
+`Test-HttpClient.ps1`. Hardcoding the strings would only prove that two hand-written
 copies agree, and would keep passing if a caption were bound to the wrong id or
 a translation were never added.
 
@@ -102,6 +105,18 @@ is commented at its call site.
 
 4. **PowerShell variable names are case-insensitive.** A local `$tab` silently
    clobbers a parameter `$Tab`. Helper parameters here are named distinctly.
+
+5. **`SetForegroundWindow` is refused to a process that is not already in the
+   foreground**, so a screen grab silently captures whatever IS on top — this
+   produced screenshots of unrelated applications. `Get-UiScreenshot.ps1` uses
+   `PrintWindow` with `PW_RENDERFULLCONTENT`, which asks the window to render
+   itself and ignores z-order.
+
+6. **Wizard page controls are GRANDchildren of the property sheet.** The sheet
+   owns one child dialog per page and only the active one is visible, so
+   `GetDlgItem` on the sheet finds none of them. `Get-ActivePage` finds the
+   visible page first; a test that skipped it would conclude every control was
+   missing.
 
 ## Requirements
 

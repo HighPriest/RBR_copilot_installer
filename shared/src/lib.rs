@@ -22,9 +22,12 @@ pub const PUBLIC_DIR: &str = "public";
 
 /// Games the installer can target (`PackageInfo::game`). Open string: adding
 /// a game must not require a protocol bump, but these are the known values
-/// and they match `installer/src/gamedir.rs`.
+/// and they match `installer/src/gamedir.rs`, which defers to them.
+///
+/// The ids are those in `installer/DESIGN.md` rev. 2.
 pub const GAME_RBR: &str = "rbr";
-pub const GAME_DIRT_RALLY: &str = "dirtrally";
+pub const GAME_DIRT_RALLY2: &str = "dirtrally2";
+pub const GAME_ASSETTOCORSA: &str = "assettocorsa";
 pub const GAME_BEAMNG: &str = "beamng";
 
 /// Default for `PackageInfo::game`: manifests written before the installer
@@ -36,10 +39,19 @@ pub fn default_game() -> String {
 /// UI grouping (`PackageInfo::category`). Open string; these are the known
 /// values. Category is orthogonal to the access `directory` — `directory` is
 /// auth only.
-pub const CATEGORY_SOUNDS: &str = "sounds";
-pub const CATEGORY_CONFIGS: &str = "configs";
-pub const CATEGORY_LANGUAGES: &str = "languages";
+///
+/// The first three are what the wizard's Configuration scene offers, one
+/// single-select list each (`installer/DESIGN.md` rev. 2 scene 5), so a
+/// package in one of them is a CHOICE. `pacenotes` is the odd one out:
+/// those are installed as-is with nothing to pick.
+pub const CATEGORY_LANGUAGE: &str = "language";
+pub const CATEGORY_CODRIVER: &str = "codriver";
+pub const CATEGORY_STYLE: &str = "style";
 pub const CATEGORY_PACENOTES: &str = "pacenotes";
+
+/// The three categories the Configuration scene requires exactly one pick
+/// from, in the order the scene lists them.
+pub const CHOICE_CATEGORIES: [&str; 3] = [CATEGORY_LANGUAGE, CATEGORY_CODRIVER, CATEGORY_STYLE];
 
 /// Default for `PackageInfo::category`, for manifests written before the
 /// field existed.
@@ -67,9 +79,21 @@ pub struct PackageInfo {
     /// See `GAME_*`.
     #[serde(default = "default_game")]
     pub game: String,
-    /// UI grouping within a game tab. See `CATEGORY_*`.
+    /// UI grouping. Level 1 of the Download scene's tree. See `CATEGORY_*`.
     #[serde(default = "default_category")]
     pub category: String,
+    /// Tree levels BETWEEN the category and the package itself, outermost
+    /// first — e.g. `["polish", "male"]` puts a co-driver voice under
+    /// CODRIVER → polish → male. Empty means the package hangs directly off
+    /// its category.
+    ///
+    /// This is what replaced the legacy scheme of encoding a hierarchy in the
+    /// storage path (`sounds\lang\gender\Voice.zip`): the shape of the tree is
+    /// now declared metadata, so the installer never parses paths to build it.
+    /// Segments are display strings, not path components — the installer must
+    /// not join them into a filesystem path.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tree_path: Vec<String>,
     /// Human name shown in the UI. Replaces the legacy scheme of encoding a
     /// hierarchy in the storage path (`sounds\lang\gender\Voice.zip`).
     /// Falls back to `name` when absent — see `PackageInfo::label`.
@@ -211,6 +235,7 @@ mod tests {
             description: None,
             exclusive_group: None,
             requires: Vec::new(),
+            tree_path: Vec::new(),
         }
     }
 
@@ -236,8 +261,9 @@ mod tests {
     #[test]
     fn round_trip_keeps_install_metadata() {
         let mut m = sample();
-        m.packages[1].game = super::GAME_DIRT_RALLY.into();
-        m.packages[1].category = super::CATEGORY_SOUNDS.into();
+        m.packages[1].game = super::GAME_DIRT_RALLY2.into();
+        m.packages[1].category = super::CATEGORY_CODRIVER.into();
+        m.packages[1].tree_path = vec!["polish".into(), "male".into()];
         m.packages[1].display_name = Some("English / Female / Eva".into());
         m.packages[1].exclusive_group = Some("pacenote-config".into());
         m.packages[1].requires = vec!["public/english-language".into()];
@@ -245,8 +271,11 @@ mod tests {
         let back: super::Manifest =
             serde_json::from_str(&serde_json::to_string(&m).unwrap()).unwrap();
         let p = &back.packages[1];
-        assert_eq!(p.game, super::GAME_DIRT_RALLY);
-        assert_eq!(p.category, super::CATEGORY_SOUNDS);
+        assert_eq!(p.game, super::GAME_DIRT_RALLY2);
+        assert_eq!(p.category, super::CATEGORY_CODRIVER);
+        // The tree shape survives the wire: the Download scene nests this
+        // package under CODRIVER -> polish -> male.
+        assert_eq!(p.tree_path, vec!["polish".to_string(), "male".to_string()]);
         assert_eq!(p.label(), "English / Female / Eva");
         assert_eq!(p.exclusive_group.as_deref(), Some("pacenote-config"));
         assert_eq!(
@@ -273,6 +302,9 @@ mod tests {
         assert!(p.display_name.is_none());
         assert!(p.exclusive_group.is_none());
         assert!(p.requires.is_empty());
+        // No tree_path means the package hangs straight off its category,
+        // which is what every pre-rev.2 manifest intends.
+        assert!(p.tree_path.is_empty());
     }
 
     /// Absent optionals stay absent on the wire, so a v1 reader sees a v1

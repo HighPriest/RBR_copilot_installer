@@ -1,21 +1,24 @@
-// installer.rc — dialogs, strings, manifest. Control IDs must match src/ui.rs.
-// Layout follows installer/DESIGN.md. Polish strings below are UTF-8; keep
+// installer.rc — wizard pages, strings, manifest, icon, version.
+// Layout follows installer/DESIGN.md rev. 2 (seven-scene wizard).
+// Control IDs must match src/wizard.rs. Polish strings below are UTF-8; keep
 // this pragma or they will mojibake.
 #pragma code_page(65001)
 #include <windows.h>
+#include <prsht.h>
 
 // Common Controls v6 + DPI awareness manifest
 1 RT_MANIFEST "app.manifest"
 
 // ---- Application icon ----
 // Lowest-numbered icon resource is what Explorer/the taskbar show, so keep
-// IDI_APPICON at 1. Dialogs set it explicitly via WM_SETICON in ui.rs.
+// IDI_APPICON at 1.
 #define IDI_APPICON 1
 IDI_APPICON ICON "../../rbr.ico"
 
 // ---- Version info ----
 // Keep FILEVERSION/PRODUCTVERSION in sync with [package] version in
-// Cargo.toml — the CD workflows read that value to tag releases.
+// Cargo.toml — tests/Test-VersionSync.ps1 enforces it and the CD workflows
+// read that value to tag releases.
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     0,1,0,0
 PRODUCTVERSION  0,1,0,0
@@ -45,205 +48,130 @@ BEGIN
     END
 END
 
-// ---- Control IDs ----
-#define IDD_LANGPICK       100
-#define IDC_LANGCOMBO      101
-#define IDC_LANGPROMPT     102
-#define IDC_LANGRESTART    103
+// ============================================================
+// Control IDs — one block per scene, so a whole page can be addressed.
+// ============================================================
+#define IDC_SCENE_TITLE     299
 
-#define IDD_MAIN           110
+#define IDD_S1_LANGUAGE     300
+#define IDC_S1_PROMPT       301
+#define IDC_S1_COMBO        302
+#define IDC_S1_NOTE         303
 
-// Game ribbon (one tab per supported game; all tabs share this control set,
-// so switching tabs swaps per-game STATE rather than swapping widgets).
-#define IDC_GAMETAB        200
+#define IDD_S2_MOTD         310
+#define IDC_S2_MOTD         311
+#define IDC_S2_SECRET_LABEL 312
+#define IDC_S2_SECRET       313
+#define IDC_S2_STATUS       314
 
-// Game directory row
-#define IDC_LBL_GAMEDIR    210
-#define IDC_GAMEDIR        211
-#define IDC_BROWSE         212
-#define IDC_DIRSTATUS      213
-
-// Left column: downloaded content, one single-select list per category
-#define IDC_LBL_INSTALLED  220
-#define IDC_LBL_I_VOICE    221
-#define IDC_I_VOICE        222
-#define IDC_LBL_I_UILANG   223
-#define IDC_I_UILANG       224
-#define IDC_LBL_I_STYLE    225
-#define IDC_I_STYLE        226
-#define IDC_INSTALL        227
-
-// Right column: Download / Backups tabs
-#define IDC_RIGHTTAB       230
-#define IDC_LBL_KEY        240
-#define IDC_KEY            241
-#define IDC_UNLOCK         242
-#define IDC_LBL_D_VOICE    243
-#define IDC_D_VOICE        244
-#define IDC_LBL_D_UILANG   245
-#define IDC_D_UILANG       246
-#define IDC_LBL_D_STYLE    247
-#define IDC_D_STYLE        248
-#define IDC_DOWNLOAD       249
-#define IDC_LBL_BACKUPS    260
-#define IDC_BACKUPS        261
-#define IDC_RESTORE        262
-
-// Status strip
-#define IDC_PROGRESS       270
-#define IDC_STATUS         271
-
-// Bottom: Notes / Logs tabs
-#define IDC_INFOTAB        280
-#define IDC_NOTES          281
-#define IDC_LOGS           282
-
-// ---- String IDs ----
-#define IDS_CONNECTING      1
-#define IDS_DOWNLOADING     2
-#define IDS_VERIFYING       3
-#define IDS_BACKUP          4
-#define IDS_INSTALLING      5
-#define IDS_DONE            6
-#define IDS_BADKEY          7
-#define IDS_NOPLUGIN        8
-#define IDS_READY           9
-#define IDS_NOT_IMPL       10
-#define IDS_APP_TITLE      20
-#define IDS_BTN_DOWNLOAD   28
-#define IDS_BTN_UNLOCK     29
-#define IDS_BTN_INSTALL    30
-#define IDS_BTN_RESTORE    31
-#define IDS_BTN_CLOSE      32
-#define IDS_BTN_BROWSE     33
-#define IDS_LBL_ACCESSKEY  34
-#define IDS_LBL_GAMEDIR    35
-#define IDS_LANG_TITLE     36
-#define IDS_LANG_PROMPT    37
-#define IDS_LANG_RESTART   38
-// Layout chrome (DESIGN.md)
-#define IDS_LBL_INSTALLED  50
-#define IDS_CAT_VOICE      51
-#define IDS_CAT_UILANG     52
-#define IDS_CAT_STYLE      53
-#define IDS_TAB_DOWNLOAD   54
-#define IDS_TAB_BACKUPS    55
-#define IDS_TAB_NOTES      56
-#define IDS_TAB_LOGS       57
-#define IDS_LBL_BACKUPS    58
-#define IDS_NOTES_BODY     59
-// Validation / errors
-#define IDS_DIR_EMPTY      70
-#define IDS_DIR_NOTFOUND   71
-#define IDS_DIR_OK         72
-#define IDS_ERR_NO_DIR     73
-#define IDS_ERR_NO_PICK    74
-#define IDS_LOG_STARTED    75
-#define IDS_DIR_NOTGAME    76
+#define IDD_S3_FOLDER       320
+#define IDC_S3_PATH_LABEL   321
+#define IDC_S3_PATH         322
+#define IDC_S3_BROWSE       323
+#define IDC_S3_GAME_LABEL   324
+#define IDC_S3_GAME         325
 
 // ============================================================
-// Dialogs — language-neutral. Text here is an English fallback only;
-// ui.rs overwrites every caption in WM_INITDIALOG via load_string().
+// String IDs
+// ============================================================
+// Worker / status (1-19)
+#define IDS_CONNECTING          1
+#define IDS_DOWNLOADING         2
+#define IDS_VERIFYING           3
+#define IDS_BACKUP              4
+#define IDS_INSTALLING          5
+#define IDS_DONE                6
+#define IDS_READY               9
+#define IDS_NOT_IMPL           10
+#define IDS_APP_TITLE          20
+
+// Per-scene primary button labels + shared chrome (30-49)
+#define IDS_BTN_CONTINUE       30
+#define IDS_BTN_ACCEPT         31
+#define IDS_BTN_NEXT           32
+#define IDS_BTN_DOWNLOAD       33
+#define IDS_BTN_INSTALL        34
+#define IDS_BTN_FINISH         35
+#define IDS_BTN_BROWSE         36
+#define IDS_BTN_BACK           38
+#define IDS_BTN_CANCEL         39
+#define IDS_CANCEL_CONFIRM     37
+
+// Scene 1 — Language (50-59)
+#define IDS_S1_TITLE           50
+#define IDS_S1_PROMPT          51
+#define IDS_S1_RESTART         52
+
+// Scene 2 — Message of the day (60-69)
+#define IDS_S2_TITLE           60
+#define IDS_S2_SECRET          61
+#define IDS_S2_CHECKING        62
+#define IDS_S2_ONLINE          63
+#define IDS_S2_OFFLINE         64
+#define IDS_S2_OFFLINE_MOTD    65
+#define IDS_S2_BADSECRET       66
+
+// Scene 3 — Game folder (70-79)
+#define IDS_S3_TITLE           70
+#define IDS_S3_PATH            71
+#define IDS_S3_GAME            72
+#define IDS_S3_DETECTING       73
+#define IDS_S3_NOGAME          74
+
+// ============================================================
+// Wizard pages — language-neutral templates.
+// Text here is an English fallback only; wizard.rs sets every caption from
+// the string table at WM_INITDIALOG, so the shipped UI follows the language
+// chosen on scene 1.
+//
+// A PropertySheet sizes itself to its LARGEST page, so every page shares one
+// size. Scene 1 is therefore not the "small window" DESIGN.md pictures; see
+// installer/TASKS.md I2b for that recorded deviation.
 // ============================================================
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-// ---- Dialog: language picker (mirrors C# LocalizationChangeForm) ----
-IDD_LANGPICK DIALOGEX 0, 0, 200, 86
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Language"
+IDD_S1_LANGUAGE DIALOGEX 0, 0, 290, 150
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "Select language:", IDC_LANGPROMPT, 10, 8, 180, 10
-    COMBOBOX        IDC_LANGCOMBO, 10, 20, 180, 60,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
+    LTEXT           "Select language:", IDC_S1_PROMPT, 14, 30, 260, 10
+    COMBOBOX        IDC_S1_COMBO, 14, 44, 180, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     LTEXT           "Restart the application to change language later.",
-                    IDC_LANGRESTART, 10, 40, 180, 18
-    DEFPUSHBUTTON   "OK", IDOK, 78, 62, 50, 14
-    PUSHBUTTON      "Cancel", IDCANCEL, 133, 62, 50, 14
+                    IDC_S1_NOTE, 14, 66, 262, 20
 END
 
-// ---- Dialog: main window ----
-// One control set shared by every game tab (DESIGN.md: "All tabs should have
-// identical layout and content"). The ribbon swaps per-game state in ui.rs.
-// The tab controls and their page controls are SIBLINGS; ui.rs pushes each tab
-// control to HWND_BOTTOM in WM_INITDIALOG, because controls declared earlier in
-// a template sit HIGHER in the Z-order and the tab would paint over its pages.
-IDD_MAIN DIALOGEX 0, 0, 520, 400
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
-CAPTION "Pacenotes Installer"
+IDD_S2_MOTD DIALOGEX 0, 0, 290, 150
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    CONTROL         "", IDC_GAMETAB, "SysTabControl32",
-                    TCS_TABS | WS_CLIPSIBLINGS | WS_TABSTOP,
-                    7, 7, 506, 362
-
-    // ---- Game directory ----
-    LTEXT           "Game folder:", IDC_LBL_GAMEDIR, 14, 32, 80, 9
-    EDITTEXT        IDC_GAMEDIR, 14, 43, 376, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...", IDC_BROWSE, 396, 42, 54, 15
-    LTEXT           "", IDC_DIRSTATUS, 14, 60, 436, 9
-
-    // ---- Left column: downloaded content, one list per category ----
-    LTEXT           "Downloaded content", IDC_LBL_INSTALLED, 14, 73, 230, 9
-    LTEXT           "Co-driver voice", IDC_LBL_I_VOICE, 14, 86, 230, 9
-    LISTBOX         IDC_I_VOICE, 14, 96, 230, 42,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "UI language", IDC_LBL_I_UILANG, 14, 142, 230, 9
-    LISTBOX         IDC_I_UILANG, 14, 152, 230, 42,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Callouts style", IDC_LBL_I_STYLE, 14, 198, 230, 9
-    LISTBOX         IDC_I_STYLE, 14, 208, 230, 42,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "Install", IDC_INSTALL, 14, 254, 80, 15
-
-    // ---- Right column: Download / Backups ----
-    CONTROL         "", IDC_RIGHTTAB, "SysTabControl32",
-                    TCS_TABS | WS_CLIPSIBLINGS | WS_TABSTOP,
-                    254, 73, 252, 196
-
-    // Download page
-    LTEXT           "Access key:", IDC_LBL_KEY, 260, 93, 40, 9
-    EDITTEXT        IDC_KEY, 302, 91, 130, 13, ES_AUTOHSCROLL | ES_PASSWORD
-    PUSHBUTTON      "Unlock", IDC_UNLOCK, 436, 90, 64, 15
-    LTEXT           "Co-driver voice", IDC_LBL_D_VOICE, 260, 108, 240, 9
-    LISTBOX         IDC_D_VOICE, 260, 118, 240, 34,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "UI language", IDC_LBL_D_UILANG, 260, 156, 240, 9
-    LISTBOX         IDC_D_UILANG, 260, 166, 240, 34,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Callouts style", IDC_LBL_D_STYLE, 260, 204, 240, 9
-    LISTBOX         IDC_D_STYLE, 260, 214, 240, 34,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Download", IDC_DOWNLOAD, 436, 254, 64, 15
-
-    // Backups page
-    LTEXT           "Available backups", IDC_LBL_BACKUPS, 260, 93, 240, 9
-    LISTBOX         IDC_BACKUPS, 260, 103, 240, 145,
-                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Restore", IDC_RESTORE, 436, 254, 64, 15
-
-    // ---- Status strip ----
-    CONTROL         "", IDC_PROGRESS, "msctls_progress32", WS_BORDER,
-                    14, 276, 492, 10
-    LTEXT           "", IDC_STATUS, 14, 290, 492, 9
-
-    // ---- Notes / Logs ----
-    CONTROL         "", IDC_INFOTAB, "SysTabControl32",
-                    TCS_TABS | WS_CLIPSIBLINGS | WS_TABSTOP,
-                    14, 304, 492, 54
-    EDITTEXT        IDC_NOTES, 20, 322, 480, 30,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
+    EDITTEXT        IDC_S2_MOTD, 14, 24, 262, 68,
                     ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
-    EDITTEXT        IDC_LOGS, 20, 322, 480, 30,
-                    ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+    LTEXT           "Secret:", IDC_S2_SECRET_LABEL, 14, 100, 60, 9
+    EDITTEXT        IDC_S2_SECRET, 78, 98, 198, 13, ES_AUTOHSCROLL | ES_PASSWORD
+    LTEXT           "", IDC_S2_STATUS, 14, 122, 262, 10
+END
 
-    PUSHBUTTON      "Close", IDCANCEL, 456, 378, 50, 14
+IDD_S3_FOLDER DIALOGEX 0, 0, 290, 150
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
+    LTEXT           "Game folder:", IDC_S3_PATH_LABEL, 14, 28, 262, 9
+    EDITTEXT        IDC_S3_PATH, 14, 40, 204, 13, ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...", IDC_S3_BROWSE, 224, 39, 52, 15
+    LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 262, 9
+    COMBOBOX        IDC_S3_GAME, 14, 78, 204, 90,
+                    CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
 END
 
 // ============================================================
 // Strings. One STRINGTABLE per language; LoadStringW resolves against the
 // thread UI language, which i18n::set_language sets via SetThreadUILanguage.
 // Every id MUST exist in every table — there is no neutral fallback table.
-// Game names are proper nouns and live in ui.rs, deliberately untranslated.
+// Game names are proper nouns and live in gamedir.rs, untranslated.
 // ============================================================
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 STRINGTABLE
@@ -254,44 +182,42 @@ BEGIN
     IDS_BACKUP          "Writing backup"
     IDS_INSTALLING      "Installing: %s"
     IDS_DONE            "Done"
-    IDS_BADKEY          "Invalid or expired key."
-    IDS_NOPLUGIN        "The plugin configuration directory doesn't exist!\nThere is a high chance the Pacenote plugin is broken. First install the Pacenote plugin from RSF installer."
     IDS_READY           "Ready."
     IDS_NOT_IMPL        "Not implemented yet."
     IDS_APP_TITLE       "Pacenotes Installer"
+
+    IDS_BTN_CONTINUE    "Continue"
+    IDS_BTN_ACCEPT      "ACCEPT"
+    IDS_BTN_NEXT        "Next"
     IDS_BTN_DOWNLOAD    "Download"
-    IDS_BTN_UNLOCK      "Unlock"
     IDS_BTN_INSTALL     "Install"
-    IDS_BTN_RESTORE     "Restore"
-    IDS_BTN_CLOSE       "Close"
+    IDS_BTN_FINISH      "Finish"
     IDS_BTN_BROWSE      "Browse..."
-    IDS_LBL_ACCESSKEY   "Access key:"
-    IDS_LBL_GAMEDIR     "Game folder:"
-    IDS_LANG_TITLE      "Language"
-    IDS_LANG_PROMPT     "Select language:"
-    IDS_LANG_RESTART    "Restart the application to change language later."
-    IDS_LBL_INSTALLED   "Downloaded content"
-    IDS_CAT_VOICE       "Co-driver voice"
-    IDS_CAT_UILANG      "UI language"
-    IDS_CAT_STYLE       "Callouts style"
-    IDS_TAB_DOWNLOAD    "Download"
-    IDS_TAB_BACKUPS     "Backups"
-    IDS_TAB_NOTES       "Notes"
-    IDS_TAB_LOGS        "Logs"
-    IDS_LBL_BACKUPS     "Available backups"
-    IDS_NOTES_BODY      "Pick your game above, set its folder, then choose one item in each category on the left and press Install.\r\nNew content is fetched from the Download tab on the right; a private key unlocks additional content.\r\nFiles replaced during installation are backed up automatically and can be restored from the Backups tab."
-    IDS_DIR_EMPTY       "Enter or browse to the game folder."
-    IDS_DIR_NOTFOUND    "That folder does not exist."
-    IDS_DIR_NOTGAME     "This folder does not contain %s."
-    IDS_DIR_OK          "Game folder confirmed: %s found."
-    IDS_ERR_NO_DIR      "Set a valid game folder before installing."
-    IDS_ERR_NO_PICK     "Select one item in every category before installing."
-    IDS_LOG_STARTED     "Installer started."
+    IDS_BTN_BACK        "< Back"
+    IDS_BTN_CANCEL      "Cancel"
+    IDS_CANCEL_CONFIRM  "Stop the installer and close this window?"
+
+    IDS_S1_TITLE        "Language"
+    IDS_S1_PROMPT       "Select the language for this installation:"
+    IDS_S1_RESTART      "The choice applies to the whole run. Restart the installer to change it."
+
+    IDS_S2_TITLE        "Message of the day"
+    IDS_S2_SECRET       "Secret:"
+    IDS_S2_CHECKING     "Server status: Checking..."
+    IDS_S2_ONLINE       "Server status: Online"
+    IDS_S2_OFFLINE      "Server status: Offline"
+    IDS_S2_OFFLINE_MOTD "The server could not be reached.\r\n\r\nYou can continue: only content already downloaded to this computer will be available."
+    IDS_S2_BADSECRET    "The server did not accept that secret.\n\nClear the field to continue without private content, or correct it and try again."
+
+    IDS_S3_TITLE        "Game folder"
+    IDS_S3_PATH         "Folder the game is installed in:"
+    IDS_S3_GAME         "Detected game:"
+    IDS_S3_DETECTING    "(Detecting)"
+    IDS_S3_NOGAME       "No supported game was found in that folder.\n\nChoose the folder that contains the game's own executable."
 END
 
-// Polish wording reuses the legacy InstallationForm.pl.resx strings where the
-// original had an equivalent control, so returning users see familiar terms
-// ("Pobierz", "Folder Richard Burns Rally", "Glos Pilota Rajdowego").
+// Polish wording reuses the legacy InstallationForm.pl.resx terms where the
+// original had an equivalent control, so returning users see familiar words.
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 STRINGTABLE
 BEGIN
@@ -301,37 +227,36 @@ BEGIN
     IDS_BACKUP          "Zapisywanie kopii zapasowej"
     IDS_INSTALLING      "Aktualnie instaluję: %s"
     IDS_DONE            "Gotowe"
-    IDS_BADKEY          "Nieprawidłowy lub wygasły klucz."
-    IDS_NOPLUGIN        "Katalog konfiguracyjny pluginu nie istnieje!\nPrawdopodobnie plugin Pacenote jest uszkodzony. Najpierw zainstaluj plugin Pacenote z instalatora RSF."
     IDS_READY           "Gotowy."
     IDS_NOT_IMPL        "Jeszcze niezaimplementowane."
     IDS_APP_TITLE       "Instalator Pacenotes"
+
+    IDS_BTN_CONTINUE    "Kontynuuj"
+    IDS_BTN_ACCEPT      "AKCEPTUJ"
+    IDS_BTN_NEXT        "Dalej"
     IDS_BTN_DOWNLOAD    "Pobierz"
-    IDS_BTN_UNLOCK      "Odblokuj"
     IDS_BTN_INSTALL     "Instaluj"
-    IDS_BTN_RESTORE     "Przywróć"
-    IDS_BTN_CLOSE       "Zakończ"
+    IDS_BTN_FINISH      "Zakończ"
     IDS_BTN_BROWSE      "Przeglądaj..."
-    IDS_LBL_ACCESSKEY   "Klucz dostępu:"
-    IDS_LBL_GAMEDIR     "Folder gry:"
-    IDS_LANG_TITLE      "Język"
-    IDS_LANG_PROMPT     "Wybierz język:"
-    IDS_LANG_RESTART    "Aby później zmienić język, uruchom aplikację ponownie."
-    IDS_LBL_INSTALLED   "Konfiguracja pilota"
-    IDS_CAT_VOICE       "Głos pilota rajdowego"
-    IDS_CAT_UILANG      "Język interfejsu"
-    IDS_CAT_STYLE       "Styl notatek"
-    IDS_TAB_DOWNLOAD    "Pobieranie"
-    IDS_TAB_BACKUPS     "Kopie zapasowe"
-    IDS_TAB_NOTES       "Informacje"
-    IDS_TAB_LOGS        "Dziennik"
-    IDS_LBL_BACKUPS     "Dostępne kopie zapasowe"
-    IDS_NOTES_BODY      "Wybierz grę powyżej, wskaż jej folder, następnie wybierz po jednej pozycji w każdej kategorii po lewej i naciśnij Instaluj.\r\nNową zawartość pobierzesz w zakładce Pobieranie po prawej; klucz prywatny odblokowuje dodatkową zawartość.\r\nPliki zastąpione podczas instalacji są automatycznie kopiowane i można je przywrócić w zakładce Kopie zapasowe."
-    IDS_DIR_EMPTY       "Wpisz lub wskaż folder gry."
-    IDS_DIR_NOTFOUND    "Ten folder nie istnieje."
-    IDS_DIR_NOTGAME     "W tym folderze nie ma pliku %s."
-    IDS_DIR_OK          "Folder gry potwierdzony: znaleziono %s."
-    IDS_ERR_NO_DIR      "Przed instalacją wskaż prawidłowy folder gry."
-    IDS_ERR_NO_PICK     "Przed instalacją wybierz po jednej pozycji w każdej kategorii."
-    IDS_LOG_STARTED     "Instalator uruchomiony."
+    IDS_BTN_BACK        "< Wstecz"
+    IDS_BTN_CANCEL      "Anuluj"
+    IDS_CANCEL_CONFIRM  "Zatrzymać instalator i zamknąć to okno?"
+
+    IDS_S1_TITLE        "Język"
+    IDS_S1_PROMPT       "Wybierz język tej instalacji:"
+    IDS_S1_RESTART      "Wybór obowiązuje przez cały przebieg. Aby go zmienić, uruchom instalator ponownie."
+
+    IDS_S2_TITLE        "Wiadomość dnia"
+    IDS_S2_SECRET       "Klucz dostępu:"
+    IDS_S2_CHECKING     "Stan serwera: Sprawdzanie..."
+    IDS_S2_ONLINE       "Stan serwera: Online"
+    IDS_S2_OFFLINE      "Stan serwera: Offline"
+    IDS_S2_OFFLINE_MOTD "Nie udało się połączyć z serwerem.\r\n\r\nMożesz kontynuować: dostępna będzie wyłącznie zawartość wcześniej pobrana na ten komputer."
+    IDS_S2_BADSECRET    "Serwer nie zaakceptował tego klucza.\n\nWyczyść pole, aby kontynuować bez zawartości prywatnej, albo popraw klucz i spróbuj ponownie."
+
+    IDS_S3_TITLE        "Folder gry"
+    IDS_S3_PATH         "Folder, w którym zainstalowana jest gra:"
+    IDS_S3_GAME         "Wykryta gra:"
+    IDS_S3_DETECTING    "(Wykrywanie)"
+    IDS_S3_NOGAME       "W tym folderze nie znaleziono obsługiwanej gry.\n\nWskaż folder zawierający plik wykonywalny gry."
 END

@@ -41,6 +41,44 @@ impl Language {
             Language::Pl => make_langid(LANG_POLISH, SUBLANG_DEFAULT),
         }
     }
+
+    /// Index in `ALL` — also the combo item index on scene 1.
+    pub fn index(self) -> usize {
+        Language::ALL.iter().position(|&l| l == self).unwrap_or(0)
+    }
+
+    pub fn from_index(index: usize) -> Language {
+        Language::ALL.get(index).copied().unwrap_or(Language::En)
+    }
+
+    /// Short tag for `GET /motd?lang=`. Matches the `<lang>.txt` filenames the
+    /// server serves MOTD text from.
+    pub fn tag(self) -> &'static str {
+        match self {
+            Language::En => "en",
+            Language::Pl => "pl",
+        }
+    }
+
+    /// Primary language id of this langid, i.e. ignoring the sublanguage, so
+    /// any Polish locale matches our Polish and any English matches English.
+    fn primary(self) -> u16 {
+        self.langid() & 0x3FF
+    }
+}
+
+/// The language the OS UI is in, if the installer ships it.
+///
+/// DESIGN.md scene 1: this is the combo's default. Compared on the PRIMARY
+/// language only — someone running pl-PL and someone running a Polish build
+/// with a different sublanguage should both land on Polish.
+pub fn os_language() -> Option<Language> {
+    let ui = unsafe { windows_sys::Win32::Globalization::GetUserDefaultUILanguage() };
+    let primary = ui & 0x3FF;
+    Language::ALL
+        .iter()
+        .copied()
+        .find(|l| l.primary() == primary)
 }
 
 /// Set the UI language for the calling thread. Resource lookups made by
@@ -110,38 +148,39 @@ pub const IDS_VERIFYING: u16 = 3;
 pub const IDS_BACKUP: u16 = 4;
 pub const IDS_INSTALLING: u16 = 5;
 pub const IDS_DONE: u16 = 6;
-pub const IDS_BADKEY: u16 = 7;
-pub const IDS_NOPLUGIN: u16 = 8;
 pub const IDS_READY: u16 = 9;
 pub const IDS_NOT_IMPL: u16 = 10;
 pub const IDS_APP_TITLE: u16 = 20;
-pub const IDS_BTN_DOWNLOAD: u16 = 28;
-pub const IDS_BTN_UNLOCK: u16 = 29;
-pub const IDS_BTN_INSTALL: u16 = 30;
-pub const IDS_BTN_RESTORE: u16 = 31;
-pub const IDS_BTN_CLOSE: u16 = 32;
-pub const IDS_BTN_BROWSE: u16 = 33;
-pub const IDS_LBL_ACCESSKEY: u16 = 34;
-pub const IDS_LBL_GAMEDIR: u16 = 35;
-pub const IDS_LANG_TITLE: u16 = 36;
-pub const IDS_LANG_PROMPT: u16 = 37;
-pub const IDS_LANG_RESTART: u16 = 38;
-// Layout chrome (DESIGN.md)
-pub const IDS_LBL_INSTALLED: u16 = 50;
-pub const IDS_CAT_VOICE: u16 = 51;
-pub const IDS_CAT_UILANG: u16 = 52;
-pub const IDS_CAT_STYLE: u16 = 53;
-pub const IDS_TAB_DOWNLOAD: u16 = 54;
-pub const IDS_TAB_BACKUPS: u16 = 55;
-pub const IDS_TAB_NOTES: u16 = 56;
-pub const IDS_TAB_LOGS: u16 = 57;
-pub const IDS_LBL_BACKUPS: u16 = 58;
-pub const IDS_NOTES_BODY: u16 = 59;
-// Validation / errors
-pub const IDS_DIR_EMPTY: u16 = 70;
-pub const IDS_DIR_NOTFOUND: u16 = 71;
-pub const IDS_DIR_OK: u16 = 72;
-pub const IDS_ERR_NO_DIR: u16 = 73;
-pub const IDS_ERR_NO_PICK: u16 = 74;
-pub const IDS_LOG_STARTED: u16 = 75;
-pub const IDS_DIR_NOTGAME: u16 = 76;
+
+// Per-scene primary button labels + shared chrome
+pub const IDS_BTN_CONTINUE: u16 = 30;
+pub const IDS_BTN_ACCEPT: u16 = 31;
+pub const IDS_BTN_NEXT: u16 = 32;
+pub const IDS_BTN_DOWNLOAD: u16 = 33;
+pub const IDS_BTN_INSTALL: u16 = 34;
+pub const IDS_BTN_FINISH: u16 = 35;
+pub const IDS_BTN_BROWSE: u16 = 36;
+pub const IDS_CANCEL_CONFIRM: u16 = 37;
+pub const IDS_BTN_BACK: u16 = 38;
+pub const IDS_BTN_CANCEL: u16 = 39;
+
+// Scene 1 — Language
+pub const IDS_S1_TITLE: u16 = 50;
+pub const IDS_S1_PROMPT: u16 = 51;
+pub const IDS_S1_RESTART: u16 = 52;
+
+// Scene 2 — Message of the day
+pub const IDS_S2_TITLE: u16 = 60;
+pub const IDS_S2_SECRET: u16 = 61;
+pub const IDS_S2_CHECKING: u16 = 62;
+pub const IDS_S2_ONLINE: u16 = 63;
+pub const IDS_S2_OFFLINE: u16 = 64;
+pub const IDS_S2_OFFLINE_MOTD: u16 = 65;
+pub const IDS_S2_BADSECRET: u16 = 66;
+
+// Scene 3 — Game folder
+pub const IDS_S3_TITLE: u16 = 70;
+pub const IDS_S3_PATH: u16 = 71;
+pub const IDS_S3_GAME: u16 = 72;
+pub const IDS_S3_DETECTING: u16 = 73;
+pub const IDS_S3_NOGAME: u16 = 74;

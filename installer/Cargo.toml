@@ -24,6 +24,7 @@ windows-sys = { version = "=0.59.0", features = [
   "Win32_Globalization",         # SetThreadUILanguage (i18n)
   "Win32_UI_WindowsAndMessaging",
   "Win32_UI_Controls",
+  "Win32_UI_Input_KeyboardAndMouse", # EnableWindow
   "Win32_UI_Shell_Common",       # SHBrowseForFolderW + BROWSEINFOW + ITEMIDLIST
   "Win32_Networking_WinHttp",
   "Win32_System_LibraryLoader",
