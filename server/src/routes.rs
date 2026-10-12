@@ -29,11 +29,12 @@ pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
     axum::Router::new()
         .route("/health", axum::routing::get(health))
         .route("/packages", axum::routing::get(list_packages))
-        // `{*name}` (wildcard) because a package name is its path under the
-        // access directory and spans the remaining segments:
-        // /download/public/codriver/polish/male/Kamil.
+        // One server serves every game, so the game leads the download
+        // address. `{*name}` (wildcard) because a package name is its path
+        // under the access directory and spans every remaining segment:
+        // /download/rbr/public/codriver/polish/male/Kamil.
         .route(
-            "/download/{directory}/{*name}",
+            "/download/{game}/{directory}/{*name}",
             axum::routing::get(download),
         )
         .route("/motd", axum::routing::get(motd))
@@ -45,12 +46,23 @@ async fn health() -> &'static str {
     "ok"
 }
 
-/// `GET /packages` — never 401s or 403s: it silently filters to the
-/// directories the caller may see, so a caller cannot enumerate directory
-/// names by probing (server/CLAUDE.md). A revoked, expired or unknown token
-/// therefore yields exactly the anonymous listing.
+#[derive(serde::Deserialize)]
+pub struct PackagesQuery {
+    /// Optional game filter. Absent = every game in one document, which is
+    /// what a client that manages several games wants.
+    game: Option<String>,
+}
+
+/// `GET /packages[?game=xx]` — never 401s or 403s: it silently filters to
+/// the directories the caller may see, so a caller cannot enumerate
+/// directory names by probing (server/CLAUDE.md). A revoked, expired or
+/// unknown token therefore yields exactly the anonymous listing.
+///
+/// An unknown `game` is not an error either: it yields an empty list, the
+/// same as a game with nothing published for it.
 async fn list_packages(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
+    axum::extract::Query(query): axum::extract::Query<PackagesQuery>,
     headers: axum::http::HeaderMap,
 ) -> Result<axum::Json<pacenotes_shared::Manifest>, crate::error::AppError> {
     let token = caller(&state, &headers).await?;
@@ -58,20 +70,24 @@ async fn list_packages(
         Some(t) if t.is_live(crate::auth::now()) => t.grants,
         _ => Vec::new(),
     };
-    Ok(axum::Json(state.store.current().visible_to(&grants)))
+    let mut manifest = state.store.current().visible_to(&grants);
+    if let Some(game) = query.game.as_deref() {
+        manifest = manifest.for_game(game);
+    }
+    Ok(axum::Json(manifest))
 }
 
-/// `GET /download/{directory}/{*name}` — `name` spans every remaining
-/// segment, because it is the package's path under its access directory.
-/// Both halves stay manifest lookup KEYS, never path fragments
+/// `GET /download/{game}/{directory}/{*name}` — `name` spans every
+/// remaining segment, because it is the package's path under its access
+/// directory. All three stay manifest lookup KEYS, never path fragments
 /// (server/CLAUDE.md): only a manifest hit yields a path on disk, so an
-/// unknown pair — including every traversal attempt — is a 404.
+/// unknown triple — including every traversal attempt — is a 404.
 async fn download(
     axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
-    axum::extract::Path((directory, name)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((game, directory, name)): axum::extract::Path<(String, String, String)>,
     headers: axum::http::HeaderMap,
 ) -> Result<axum::response::Response, crate::error::AppError> {
-    let Some((package, path)) = state.store.zip_path(&directory, &name) else {
+    let Some((package, path)) = state.store.zip_path(&game, &directory, &name) else {
         return Err(crate::error::AppError::not_found());
     };
 

@@ -86,6 +86,29 @@
       access-directory level is missing — which is exactly how the real
       `server/data` tree was filed.
 
+## S10 — One server, every game
+- [x] Data root replaces the packages root: `--data` /`PACENOTES_DATA_DIR`
+      (default `./data`), layout `<data>/<game>/packages/<directory>/<name>.zip`,
+      `<data>/motd/<lang>.txt`, `<data>/manifest.json`.
+- [x] `manifest gen` walks games; `PackageInfo::game` comes from the folder
+      name, so `game` is no longer a sidecar key (an old sidecar carrying it
+      fails the run via `deny_unknown_fields`).
+- [x] `GET /packages?game=<id>` filters to one game; absent = every game in
+      one document; an unknown game is an empty list, not an error.
+- [x] `GET /download/{game}/{directory}/{*name}` — the game leads the
+      address, because two games may hold the same directory+name.
+      All three are lookup keys; a miss on any of them is 404.
+- [x] `shared`: `valid_id` (games AND access directories, `[a-z0-9_-]+`),
+      `KNOWN_GAMES`, `Manifest::for_game`, `PackageInfo::download_path`.
+- [x] Mis-filing warnings: category where an access directory belongs,
+      category/`public` where a game belongs, game folder without
+      `packages/`, unknown game id, name needing percent-encoding.
+- [x] Integration tests: two games holding the same `public/basic`, filtered
+      listing, game as a lookup key, sidecar `game` rejected.
+- [x] Real `server/data` re-filed to the layout (categories moved under
+      `public/`); 24 packages publish with correct categories, a 28 MB
+      nested download verified over HTTP.
+
 ## S3/S4 implementation notes
 
 - Sidecar precedence is sidecar > previous manifest.json > protocol default,
@@ -130,3 +153,21 @@
   effect immediately — asserted by tests, not just claimed.
 - base64url is 20 hand-written lines with known-vector tests rather than a
   dependency.
+
+## S10 implementation notes
+
+- `game` could have been a sidecar key, a URL query or a folder level. The
+  folder won for the same reason the tree did: one source of truth, and the
+  operator's layout is already the thing they maintain. The cost is that
+  moving a package between games is a `mv`, which is the point.
+- The game HAD to enter the download URL. With one server, `public/basic`
+  exists under every game, so `/download/{directory}/{*name}` would have
+  been ambiguous — and resolving it by "first match" would silently serve
+  another game's bytes. `PackageInfo::download_path()` builds the tail so
+  both sides agree on the shape.
+- `/packages` without `?game` returns every game deliberately: the installer
+  is a multi-game wizard and one request is cheaper than four. The filter
+  exists for clients that only care about one.
+- Names may contain spaces (`style/Numeric Standard` does, on disk today).
+  That is legal — it only has to survive a URL — so `manifest gen` warns and
+  publishes rather than refusing. A client MUST percent-encode.

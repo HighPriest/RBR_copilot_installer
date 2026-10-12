@@ -5,17 +5,20 @@ normal async Rust. axum + tokio + libSQL. Packages are flat files on disk.
 
 ## Access model (no tiers)
 
-Packages are grouped into **directories** — both an access boundary and the
-literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
+Packages are grouped into **directories** — both an access boundary and a
+literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 
 - `public/` is visible to everyone, credential or not.
 - Every other directory is visible only to credentials **granted** it.
 - One credential can hold grants for any number of directories.
 - A grant covers the whole directory (list + download of everything in it).
   Per-package access = put the package in its own directory.
-- Access directory ≠ UI category. `PackageInfo.category` (sounds/configs/
-  languages/pacenotes/...) is presentation metadata and lives in the
-  manifest; it has NO effect on auth.
+- Access directory ≠ UI category. The category is the FIRST segment of
+  `name`, i.e. the folder below the access directory, and has NO effect on
+  auth. A grant is per directory, whatever categories sit inside it.
+- Access directory ≠ game either. The game is the level ABOVE `packages/`,
+  so the same directory name may exist under several games and a grant for
+  it covers that name in every game.
 
 ## Data model
 
@@ -24,39 +27,64 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
   `PACENOTES_DB_URL` (keep all queries portable, no local-file assumptions).
   Tables: `tokens` + `grants(token_hash, directory)`. See
   migrations/0001_init.sql.
-- **Packages**: `./packages/<directory>/<name>.zip` — game-root overlay
-  zips, dumb payloads, never introspected by the server.
-- **Sidecar metadata** (optional): `./packages/<directory>/<name>.toml`
-  next to its zip, authored by hand:
+- **Data root** (`--data`, default `./data`): ONE server serves every game.
 
-      category = "configs"            # default if absent: "pacenotes"
-      display_name = "Numeric standard calls"
+      data/<game>/packages/<directory>/<name>.zip   packages
+      data/motd/<lang>.txt                          message of the day
+      data/manifest.json                            every game, one document
+      data/auth.db                                  credentials (libSQL)
+
+  Every level means exactly one thing: game, then the literal `packages/`,
+  then the access directory, then the package's `name` — its path below the
+  access directory, nested as deep as the operator likes. Nothing positional
+  comes from a sidecar, which is why `game` is NOT a sidecar key.
+- **Packages**: game-root overlay zips, dumb payloads, never introspected by
+  the server.
+- **Sidecar metadata** (optional): `<name>.toml` next to its zip at whatever
+  depth it lives, authored by hand. Position is NOT in here:
+
+      display_name = "Numeric standard calls"   # renames the LEAF only
       exclusive_group = "pacenote-config"
-      requires = ["public/english"]   # "directory/name" refs
+      requires = ["public/language/polish"]     # "directory/name" refs
       description = "..."
-      version = "2.0.0"               # optional; else keep existing/1.0.0
+      version = "2.0.0"                         # else keep existing/0.0.0
 
-- **manifest.json** (`shared::Manifest`) at `./packages/manifest.json` is
-  what `GET /packages` serves. It is GENERATED: `manifest gen` scans
-  `<dir>/<subdir>/*.zip`, computes size/sha256/updated_at, merges each zip's
-  sidecar .toml, validates `requires` refs point at existing packages, and
-  writes the file. Hand-edits to manifest.json get overwritten — edit
-  sidecars instead. Publishing = drop zip (+ optional sidecar) → run
-  `manifest gen`. No upload API in v1.
+  Unknown keys are a HARD ERROR (`deny_unknown_fields`), so an old sidecar
+  carrying `category`, `tree_path` or `game` fails the run instead of
+  publishing silently-wrong metadata.
+- **manifest.json** (`shared::Manifest`) at `./data/manifest.json` is what
+  `GET /packages` serves. It is GENERATED: `manifest gen` walks
+  `<data>/<game>/packages/<directory>/**/*.zip`, computes
+  size/sha256/updated_at, merges each sidecar, validates `requires` refs,
+  and writes the file. Hand-edits get overwritten — edit sidecars instead.
+  Publishing = drop zip (+ optional sidecar) → run `manifest gen`. No upload
+  API in v1.
 - Manifest is loaded at startup and hot-reloaded on file mtime change
   (checked lazily per request, cached with an RwLock — no inotify dep).
-- Directory names: `[a-z0-9_-]+`, enforced by `manifest gen` and re-checked
-  on manifest load. `public` is reserved for anonymous access and must never
-  appear in `grants`.
+- Game ids and directory names: `[a-z0-9_-]+` (`shared::valid_id`), enforced
+  by `manifest gen` and re-checked on manifest load. `public` is reserved for
+  anonymous access and must never appear in `grants`.
+- Package names: `shared::valid_name` — a `/`-separated path with no `\`, no
+  `.`/`..` segment and no empty segment. Rejected or non-UTF-8 names are
+  skipped with a warning rather than entering the manifest.
+- `manifest gen` warns (does not fail) on the mis-filings that are easy to
+  make: a category name where an access directory belongs, a category or
+  access directory where a game belongs, a game folder without `packages/`,
+  an unknown game id, a sidecar with no zip, and a name that needs
+  percent-encoding in a URL.
 
 ## Security invariantsr
 
 - Raw tokens are NEVER stored or logged. Store lowercase hex sha256 only.
   Mint format: `pcn_` + 32 random bytes base64url (admin CLI prints it once).
-- Download path: `{directory}` and `{name}` from the URL are LOOKUP KEYS into
-  the manifest, never joined into a filesystem path directly. Only a manifest
-  hit yields `packages/<directory>/<name>.zip`. This structurally prevents
-  path traversal — keep it that way.
+- Download path: `{game}`, `{directory}` and `{name}` from the URL are LOOKUP
+  KEYS into the manifest, never joined into a filesystem path directly. Only a
+  manifest hit yields `data/<game>/packages/<directory>/<name>.zip`. This
+  structurally prevents path traversal and is what makes a nested, wildcard
+  `{*name}` safe — keep it that way.
+- `/motd`'s `lang` is the ONE path-ish input that cannot be validated by
+  lookup, because it names a file no manifest lists. It is therefore
+  restricted to `[a-z]{2,8}` before it touches the filesystem.
 - 401 (missing/bad/expired/revoked token on a protected directory) vs 403
   (valid token, directory not granted) vs 404 (no such package). Body =
   `shared::ApiError` JSON. NOTE: /packages never 403s — it silently filters
@@ -69,21 +97,26 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
 ## Endpoints
 
 - `GET /health` → 200 "ok"
-- `GET /packages` → shared::Manifest filtered to public + granted directories
-- `GET /download/{directory}/{name}` → zip stream (tokio fs → axum body),
-  correct Content-Length, `application/zip`; auth per access model above
+- `GET /packages[?game=<id>]` → shared::Manifest filtered to public +
+  granted directories, and to one game when asked (absent = every game)
+- `GET /download/{game}/{directory}/{*name}` → zip stream (tokio fs → axum
+  body), Content-Length from the file handle, `application/zip`,
+  Content-Disposition naming the LEAF; auth per access model above.
+  `{*name}` is a wildcard: a name spans every remaining segment.
+- `GET /motd?lang=xx` → `text/plain` from `data/motd/<lang>.txt`, `en`
+  fallback, 404 when there is none, no auth
 - (v2, not now) POST /admin/* — credential management is a CLI subcommand
 
 ## CLI (clap)
 
-- `pacenotes-server serve --listen 127.0.0.1:8080 --packages ./packages --db-url file:./data/auth.db`
+- `pacenotes-server serve --listen 127.0.0.1:8080 --data ./data --db-url file:./data/auth.db`
 - `pacenotes-server token mint --label "Jan" [--grant premium-voices]... [--expires-days N]`
   (repeatable --grant; a token with zero grants is valid but sees only public)
 - `pacenotes-server token grant <token-or-hash> <directory>`
 - `pacenotes-server token ungrant <token-or-hash> <directory>`
 - `pacenotes-server token revoke <token-or-hash>`
 - `pacenotes-server token list` (shows label, grants, expiry, revoked)
-- `pacenotes-server manifest gen --dir ./packages` — scan + sidecar merge +
+- `pacenotes-server manifest gen --data ./data` — scan + sidecar merge +
   validation as described under Data model. Warnings for: sidecar without
   zip, invalid directory name, top-level zips, dangling `requires`,
   cross-directory `requires` pointing into a NON-public directory from a
@@ -104,7 +137,7 @@ literal on-disk subdirectory: `./packages/<directory>/<name>.zip`.
 ## Conventions
 
 - All config via flags with env fallbacks (PACENOTES_LISTEN, PACENOTES_DB_URL,
-  PACENOTES_PACKAGES_DIR).
+  PACENOTES_DATA_DIR).
 - tracing for logs; never log Authorization headers.
 - Keep handlers thin; logic in `auth.rs` / `store.rs` modules as they grow.
 - Sidecar parsing needs a TOML crate (e.g. `toml`) — fine, the server has no

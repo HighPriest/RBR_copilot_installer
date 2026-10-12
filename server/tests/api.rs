@@ -1,5 +1,9 @@
 //! Integration tests (task S8): a real server on an ephemeral port, a real
-//! packages tree in a tempdir and a real (in-memory) auth DB.
+//! data tree in a tempdir and a real (in-memory) auth DB.
+//!
+//! The tree is the shipped layout — `<data>/<game>/packages/<directory>/…`
+//! with a second game present — so these tests also pin down that one
+//! server serves every game without the games bleeding into each other.
 //!
 //! The matrix that matters is {anonymous, no-grants, dirA, dirA+dirB} ×
 //! {public, dirA, dirB} for BOTH `/packages` filtering and `/download`
@@ -11,37 +15,38 @@
 struct Server {
     base_url: String,
     connection: libsql::Connection,
-    _packages: tempfile::TempDir,
+    _data: tempfile::TempDir,
 }
 
 impl Server {
-    /// One package per access directory (`public`, `alpha`, `beta`) plus a
-    /// deeply nested one and a MOTD, generated into a manifest and served by
-    /// the real router.
+    /// RBR with one package per access directory (`public`, `alpha`, `beta`)
+    /// plus a deeply nested one; a second game sharing the same
+    /// directory AND name; a MOTD beside the games.
     async fn start() -> Server {
-        let packages = tempfile::tempdir().unwrap();
-        write(&packages.path().join("public/basic.zip"), b"public-bytes");
-        write(&packages.path().join("alpha/secret.zip"), b"alpha-bytes");
-        write(&packages.path().join("beta/other.zip"), b"beta-bytes");
+        let data = tempfile::tempdir().unwrap();
+        write(
+            &zip(data.path(), "rbr", "public/basic.zip"),
+            b"public-bytes",
+        );
+        write(&zip(data.path(), "rbr", "alpha/secret.zip"), b"alpha-bytes");
+        write(&zip(data.path(), "rbr", "beta/other.zip"), b"beta-bytes");
         // The nested layout the presentation model depends on.
         write(
-            &packages
-                .path()
-                .join("public/codriver/polish/male/Kamil.zip"),
+            &zip(data.path(), "rbr", "public/codriver/polish/male/Kamil.zip"),
             b"kamil-bytes",
         );
-        write(&packages.path().join("motd/en.txt"), b"English news");
-        let generated = pacenotes_server::store::ManifestStore::generate(packages.path()).unwrap();
+        // Same directory and same name under another game: only the game
+        // keeps these two apart.
         write(
-            &packages.path().join("manifest.json"),
-            serde_json::to_string(&generated.manifest)
-                .unwrap()
-                .as_bytes(),
+            &zip(data.path(), "beamng", "public/basic.zip"),
+            b"beamng-bytes",
         );
+        write(&data.path().join("motd/en.txt"), b"English news");
+        regenerate(data.path());
 
         let connection = pacenotes_server::db::open(":memory:").await.unwrap();
         let state = std::sync::Arc::new(pacenotes_server::routes::AppState {
-            store: pacenotes_server::store::ManifestStore::new(packages.path()),
+            store: pacenotes_server::store::ManifestStore::new(data.path()),
             db: connection.clone(),
         });
 
@@ -56,7 +61,7 @@ impl Server {
         Server {
             base_url,
             connection,
-            _packages: packages,
+            _data: data,
         }
     }
 
@@ -108,15 +113,15 @@ impl Server {
     /// half of the matrix.
     async fn download_statuses(&self, token: Option<&str>) -> [u16; 3] {
         [
-            self.get("/download/public/basic", token)
+            self.get("/download/rbr/public/basic", token)
                 .await
                 .status()
                 .as_u16(),
-            self.get("/download/alpha/secret", token)
+            self.get("/download/rbr/alpha/secret", token)
                 .await
                 .status()
                 .as_u16(),
-            self.get("/download/beta/other", token)
+            self.get("/download/rbr/beta/other", token)
                 .await
                 .status()
                 .as_u16(),
@@ -127,6 +132,24 @@ impl Server {
 /// A package name with `/` in it has to survive the URL as segments, which
 /// is the whole point of the wildcard route.
 const NESTED: &str = "codriver/polish/male/Kamil";
+
+/// `<data>/<game>/packages/<rest>`.
+fn zip(data: &std::path::Path, game: &str, rest: &str) -> std::path::PathBuf {
+    data.join(game)
+        .join(pacenotes_server::store::PACKAGES_DIR)
+        .join(rest)
+}
+
+/// What a publisher runs after dropping files in.
+fn regenerate(data: &std::path::Path) {
+    let generated = pacenotes_server::store::ManifestStore::generate(data).unwrap();
+    write(
+        &data.join("manifest.json"),
+        serde_json::to_string(&generated.manifest)
+            .unwrap()
+            .as_bytes(),
+    );
+}
 
 fn write(path: &std::path::Path, bytes: &[u8]) {
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -181,7 +204,7 @@ async fn listing_and_download_agree_across_the_grant_matrix() {
 async fn download_streams_the_exact_bytes() {
     let server = Server::start().await;
     let token = server.mint(&["alpha"]).await;
-    let response = server.get("/download/alpha/secret", Some(&token)).await;
+    let response = server.get("/download/rbr/alpha/secret", Some(&token)).await;
 
     assert_eq!(response.status(), 200);
     assert_eq!(response.headers()["content-type"], "application/zip");
@@ -203,28 +226,28 @@ async fn unknown_packages_and_traversal_attempts_are_404() {
     // exist.
     assert_eq!(
         server
-            .get("/download/alpha/nope", Some(&token))
+            .get("/download/rbr/alpha/nope", Some(&token))
             .await
             .status(),
         404
     );
     assert_eq!(
         server
-            .get("/download/nosuchdir/x", Some(&token))
+            .get("/download/rbr/nosuchdir/x", Some(&token))
             .await
             .status(),
         404
     );
     assert_eq!(
-        server.get("/download/nosuchdir/x", None).await.status(),
+        server.get("/download/rbr/nosuchdir/x", None).await.status(),
         404
     );
 
     // directory/name are manifest keys, never path fragments.
     for path in [
-        "/download/..%2F..%2Fdata/auth.db",
-        "/download/public/..%2F..%2Fmanifest",
-        "/download/%2Fetc/passwd",
+        "/download/rbr/..%2F..%2Fmanifest",
+        "/download/rbr/public/..%2F..%2Fmanifest",
+        "/download/rbr/public/%2Fetc%2Fpasswd",
     ] {
         assert_eq!(server.get(path, None).await.status(), 404, "{path}");
     }
@@ -307,7 +330,7 @@ async fn error_bodies_are_api_errors() {
     let no_grants = server.mint(&[]).await;
 
     let unauthorized: pacenotes_shared::ApiError = server
-        .get("/download/alpha/secret", None)
+        .get("/download/rbr/alpha/secret", None)
         .await
         .json()
         .await
@@ -316,7 +339,7 @@ async fn error_bodies_are_api_errors() {
     assert!(!unauthorized.message.is_empty());
 
     let forbidden: pacenotes_shared::ApiError = server
-        .get("/download/alpha/secret", Some(&no_grants))
+        .get("/download/rbr/alpha/secret", Some(&no_grants))
         .await
         .json()
         .await
@@ -324,7 +347,7 @@ async fn error_bodies_are_api_errors() {
     assert_eq!(forbidden.code, "forbidden");
 
     let not_found: pacenotes_shared::ApiError = server
-        .get("/download/alpha/nope", None)
+        .get("/download/rbr/alpha/nope", None)
         .await
         .json()
         .await
@@ -337,29 +360,28 @@ async fn manifest_changes_are_picked_up_without_a_restart() {
     let server = Server::start().await;
     let before = server.listed(None).await.len();
     assert_eq!(
-        server.get("/download/public/extra", None).await.status(),
+        server
+            .get("/download/rbr/public/extra", None)
+            .await
+            .status(),
         404
     );
 
     // Publish another public package the way a publisher would: drop the zip
     // in, regenerate the manifest.
     write(
-        &server._packages.path().join("public/extra.zip"),
+        &zip(server._data.path(), "rbr", "public/extra.zip"),
         b"extra-bytes",
     );
-    let generated =
-        pacenotes_server::store::ManifestStore::generate(server._packages.path()).unwrap();
-    write(
-        &server._packages.path().join("manifest.json"),
-        serde_json::to_string(&generated.manifest)
-            .unwrap()
-            .as_bytes(),
-    );
+    regenerate(server._data.path());
 
     // The store notices the new manifest mtime on the next request.
     assert_eq!(server.listed(None).await.len(), before + 1);
     assert_eq!(
-        server.get("/download/public/extra", None).await.status(),
+        server
+            .get("/download/rbr/public/extra", None)
+            .await
+            .status(),
         200
     );
 }
@@ -370,7 +392,7 @@ async fn nested_names_download_through_the_wildcard_route() {
 
     // The nested package is public, so anonymous gets it...
     let response = server
-        .get(&format!("/download/public/{NESTED}"), None)
+        .get(&format!("/download/rbr/public/{NESTED}"), None)
         .await;
     assert_eq!(response.status(), 200);
     assert_eq!(response.headers()["content-length"], "11");
@@ -408,16 +430,16 @@ async fn a_nested_name_is_still_only_a_lookup_key() {
     // and `%2F`/`%2E` is how a traversal attempt actually arrives.
     for path in [
         // Interior nodes of the tree are not packages.
-        "/download/public/codriver/polish/male",
-        "/download/public/codriver",
+        "/download/rbr/public/codriver/polish/male",
+        "/download/rbr/public/codriver",
         // Reaching out of the access directory.
-        "/download/public/..%2Fmotd%2Fen",
-        "/download/public/codriver%2F..%2F..%2Falpha%2Fsecret",
-        "/download/public/%2E%2E%2Fmanifest",
+        "/download/rbr/public/..%2Fmotd%2Fen",
+        "/download/rbr/public/codriver%2F..%2F..%2Falpha%2Fsecret",
+        "/download/rbr/public/%2E%2E%2Fmanifest",
         // The MOTD directory is not an access directory.
-        "/download/motd/en",
+        "/download/rbr/motd/en",
         // Absolute-looking names.
-        "/download/public/%2Fetc%2Fpasswd",
+        "/download/rbr/public/%2Fetc%2Fpasswd",
     ] {
         assert_eq!(server.get(path, None).await.status(), 404, "{path}");
     }
@@ -427,7 +449,7 @@ async fn a_nested_name_is_still_only_a_lookup_key() {
     // names exist inside a directory the caller cannot see.
     assert_eq!(
         server
-            .get(&format!("/download/alpha/{NESTED}"), None)
+            .get(&format!("/download/rbr/alpha/{NESTED}"), None)
             .await
             .status(),
         404
@@ -461,14 +483,14 @@ async fn motd_serves_text_falls_back_and_404s_when_absent() {
 
     // Once a translation exists it wins.
     write(
-        &server._packages.path().join("motd/pl.txt"),
+        &server._data.path().join("motd/pl.txt"),
         "Polskie wieści".as_bytes(),
     );
     let response = server.get("/motd?lang=pl", None).await;
     assert_eq!(response.text().await.unwrap(), "Polskie wieści");
 
     // No MOTD at all = 404, which the installer treats like being offline.
-    std::fs::remove_dir_all(server._packages.path().join("motd")).unwrap();
+    std::fs::remove_dir_all(server._data.path().join("motd")).unwrap();
     assert_eq!(server.get("/motd?lang=en", None).await.status(), 404);
 }
 
@@ -479,4 +501,112 @@ async fn motd_needs_no_credential() {
     assert_eq!(server.get("/motd?lang=en", None).await.status(), 200);
     let bogus = server.get("/motd?lang=en", Some("not-a-token")).await;
     assert_eq!(bogus.status(), 200);
+}
+
+#[tokio::test]
+async fn games_share_one_server_without_bleeding_into_each_other() {
+    let server = Server::start().await;
+
+    // The fixture has rbr/public/basic AND beamng/public/basic: same access
+    // directory, same name. Only the game tells them apart, which is why it
+    // leads the download address.
+    let rbr = server.get("/download/rbr/public/basic", None).await;
+    assert_eq!(rbr.status(), 200);
+    assert_eq!(rbr.bytes().await.unwrap().as_ref(), b"public-bytes");
+
+    let beamng = server.get("/download/beamng/public/basic", None).await;
+    assert_eq!(beamng.status(), 200);
+    assert_eq!(beamng.bytes().await.unwrap().as_ref(), b"beamng-bytes");
+
+    // A game with nothing published is a 404, not someone else's bytes.
+    assert_eq!(
+        server
+            .get("/download/dirtrally2/public/basic", None)
+            .await
+            .status(),
+        404
+    );
+    // And the game segment is a lookup key like the others.
+    for path in [
+        "/download/..%2Fmotd/public/basic",
+        "/download/RBR/public/basic",
+        "/download/rbr%2F..%2Fbeamng/public/basic",
+    ] {
+        assert_eq!(server.get(path, None).await.status(), 404, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn packages_lists_every_game_and_filters_on_request() {
+    let server = Server::start().await;
+
+    // No filter: one document covering every game, which is what a client
+    // managing several games wants.
+    let everything = server.listed(None).await;
+    assert!(
+        everything.iter().any(|r| r.starts_with("public/")),
+        "{everything:?}"
+    );
+    let manifest: pacenotes_shared::Manifest =
+        server.get("/packages", None).await.json().await.unwrap();
+    assert!(manifest.packages.iter().any(|p| p.game == "rbr"));
+    assert!(manifest.packages.iter().any(|p| p.game == "beamng"));
+
+    // ?game= narrows it to one tab's worth.
+    let rbr: pacenotes_shared::Manifest = server
+        .get("/packages?game=rbr", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(!rbr.packages.is_empty());
+    assert!(rbr.packages.iter().all(|p| p.game == "rbr"));
+
+    let beamng: pacenotes_shared::Manifest = server
+        .get("/packages?game=beamng", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(beamng.packages.len(), 1);
+    assert_eq!(beamng.packages[0].download_path(), "beamng/public/basic");
+
+    // An unknown game is an empty list, not an error: the installer's tab for
+    // a game this server carries nothing for just shows nothing.
+    let unknown: pacenotes_shared::Manifest = server
+        .get("/packages?game=nosuchgame", None)
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(unknown.packages.is_empty());
+
+    // Filtering by game does not widen access: beamng's protected
+    // directories would be filtered the same way.
+    let anonymous_games: std::collections::BTreeSet<String> = manifest
+        .packages
+        .iter()
+        .map(|p| p.directory.clone())
+        .collect();
+    assert_eq!(
+        anonymous_games,
+        std::collections::BTreeSet::from(["public".to_string()])
+    );
+}
+
+#[tokio::test]
+async fn the_game_comes_from_the_layout_not_a_sidecar() {
+    let server = Server::start().await;
+
+    // A sidecar that tries to claim another game is a hard error, because
+    // `game` is no longer a sidecar key at all.
+    write(
+        &zip(server._data.path(), "rbr", "public/basic.toml"),
+        b"game = \"beamng\"\n",
+    );
+    let err = pacenotes_server::store::ManifestStore::generate(server._data.path())
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("basic.toml"), "{err}");
+    assert!(err.contains("game"), "{err}");
 }

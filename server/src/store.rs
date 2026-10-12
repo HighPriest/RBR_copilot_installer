@@ -1,12 +1,19 @@
 //! Package store: manifest.json (source of truth for metadata) + zips on disk
-//! under per-access-directory subtrees: <packages>/<directory>/<name>.zip,
-//! where `name` is the zip's path under its access directory WITHOUT the
-//! extension, and may be nested any number of levels deep:
+//! under the data root. ONE server serves every game, so the first level
+//! names the game and each game owns a `packages/` tree, inside which the
+//! first level is the access directory and everything below it is the
+//! package's `name` — its path, `/`-separated, without the `.zip`, at any
+//! depth:
 //!
 //! ```text
-//! packages/public/codriver/polish/male/Kamil.zip
-//!          ^dir   ^------------ name -----^
+//! data/rbr/packages/public/codriver/polish/male/Kamil.zip
+//!      ^game        ^dir   ^------------ name -----^
 //! ```
+//!
+//! `data/motd/<lang>.txt` sits beside the games: the message of the day is
+//! shown before a game has been chosen, so it belongs to no game.
+//! `data/manifest.json` covers every game at once; `GET /packages?game=…`
+//! filters it.
 //!
 //! That path is the whole presentation (root CLAUDE.md "Install model"):
 //! `shared` derives category/tree levels/leaf from it, so the operator's
@@ -18,23 +25,27 @@
 //! CONVENTION (root CLAUDE.md): no `use` statements — types and functions are
 //! written with their full paths at the point of use.
 
-/// Subdirectory of the packages root holding message-of-the-day texts
-/// (`<packages>/motd/<lang>.txt`). It sits alongside the access directories
-/// but is NOT one: it holds no packages and `manifest gen` skips it.
+/// Folder under the data root holding message-of-the-day texts
+/// (`<data>/motd/<lang>.txt`). It sits beside the games but is not one.
 pub const MOTD_DIR: &str = "motd";
 
-/// Directory names are `[a-z0-9_-]+`. Enforced by `manifest gen` and
-/// re-checked on load, so a name can never carry a path separator, `..`,
-/// a drive letter or a leading `/`.
-pub fn valid_directory(name: &str) -> bool {
-    !name.is_empty()
-        && name
-            .bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_' || b == b'-')
+/// Language the MOTD falls back to when the requested one has no file.
+pub const MOTD_FALLBACK_LANG: &str = "en";
+
+/// Language tags accepted by `/motd`: `[a-z]{2,8}`, which covers `en`, `pl`
+/// and longer ISO tags while excluding every character that could reach
+/// outside the motd folder.
+pub fn valid_lang(lang: &str) -> bool {
+    (2..=8).contains(&lang.len()) && lang.bytes().all(|b| b.is_ascii_lowercase())
 }
 
+/// The folder each game keeps its packages in: `<data>/<game>/packages`.
+/// A game folder may hold other things (notes, staging) without confusing
+/// `manifest gen`, because only this subfolder is scanned.
+pub const PACKAGES_DIR: &str = "packages";
+
 pub struct ManifestStore {
-    packages_dir: std::path::PathBuf,
+    data_dir: std::path::PathBuf,
     cache: std::sync::RwLock<Cached>,
 }
 
@@ -46,9 +57,9 @@ struct Cached {
 }
 
 impl ManifestStore {
-    pub fn new(packages_dir: impl Into<std::path::PathBuf>) -> Self {
+    pub fn new(data_dir: impl Into<std::path::PathBuf>) -> Self {
         Self {
-            packages_dir: packages_dir.into(),
+            data_dir: data_dir.into(),
             cache: std::sync::RwLock::new(Cached {
                 manifest: pacenotes_shared::Manifest::default(),
                 mtime: None,
@@ -58,7 +69,7 @@ impl ManifestStore {
     }
 
     pub fn manifest_path(&self) -> std::path::PathBuf {
-        self.packages_dir.join("manifest.json")
+        self.data_dir.join("manifest.json")
     }
 
     /// Lazy reload: compare manifest.json mtime; reload under write lock if
@@ -113,6 +124,7 @@ impl ManifestStore {
     /// `\\`, `.`/`..` segments and empty segments.
     pub fn zip_path(
         &self,
+        game: &str,
         directory: &str,
         name: &str,
     ) -> Option<(pacenotes_shared::PackageInfo, std::path::PathBuf)> {
@@ -120,14 +132,19 @@ impl ManifestStore {
             .current()
             .packages
             .into_iter()
-            .find(|p| p.directory == directory && p.name == name)?;
+            .find(|p| p.game == game && p.directory == directory && p.name == name)?;
         // Defense in depth: an entry with an invalid key never yields a path
         // (read_manifest already rejects such manifests wholesale).
-        if !valid_directory(&pkg.directory) || !pacenotes_shared::valid_name(&pkg.name) {
+        if !pacenotes_shared::valid_id(&pkg.game)
+            || !pacenotes_shared::valid_id(&pkg.directory)
+            || !pacenotes_shared::valid_name(&pkg.name)
+        {
             return None;
         }
         let path = self
-            .packages_dir
+            .data_dir
+            .join(&pkg.game)
+            .join(PACKAGES_DIR)
             .join(&pkg.directory)
             .join(format!("{}.zip", pkg.name));
         Some((pkg, path))
@@ -154,7 +171,7 @@ impl ManifestStore {
 
         for candidate in tried {
             let path = self
-                .packages_dir
+                .data_dir
                 .join(MOTD_DIR)
                 .join(format!("{candidate}.txt"));
             match std::fs::read_to_string(&path) {
@@ -169,143 +186,190 @@ impl ManifestStore {
         None
     }
 
-    /// `manifest gen` (task S3): walk `<dir>/<directory>/**/*.zip`. The top
-    /// level is the access directory (validated `[a-z0-9_-]+`; skipped with a
-    /// warning otherwise); EVERYTHING below it is the package's `name` — its
-    /// path under that directory, `/`-separated, without the `.zip`. Computes
-    /// size/sha256/updated_at and merges each zip's `<name>.toml` sidecar
-    /// (which sits next to the zip, at whatever depth it lives).
+    /// `manifest gen`: walk `<data>/<game>/packages/<directory>/**/*.zip`.
     ///
+    /// Each level means one thing and nothing else:
+    /// - first = the GAME (`[a-z0-9_-]+`; it sets `PackageInfo::game`, which
+    ///   is why no sidecar carries it),
+    /// - then the literal `packages/` folder,
+    /// - then the ACCESS DIRECTORY (`[a-z0-9_-]+`; auth only),
+    /// - then everything below it, which is the package's `name`.
+    ///
+    /// Computes size/sha256/updated_at and merges each zip's `<name>.toml`
+    /// sidecar, which sits next to the zip at whatever depth it lives.
     /// Returns the manifest plus the warnings the publisher should see.
-    /// Top-level zips (no access directory) are an error: every package must
-    /// live in one; `public/` is where anonymous packages go.
-    pub fn generate(dir: &std::path::Path) -> anyhow::Result<Generated> {
-        let previous = read_manifest(&dir.join("manifest.json")).unwrap_or_default();
+    pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<Generated> {
+        let previous = read_manifest(&data_dir.join("manifest.json")).unwrap_or_default();
         let mut generated = Generated {
             manifest: pacenotes_shared::Manifest::default(),
             warnings: Vec::new(),
         };
 
-        for entry in read_dir_sorted(dir)? {
+        for entry in read_dir_sorted(data_dir)? {
             let path = entry.path();
-            let dir_name = entry.file_name().to_string_lossy().into_owned();
+            let game = entry.file_name().to_string_lossy().into_owned();
 
             if path.is_file() {
                 if path.extension().is_some_and(|e| e == "zip") {
                     anyhow::bail!(
-                        "top-level zip {}: every package must live in a directory \
-                         (put anonymous packages in {}/)",
+                        "top-level zip {}: a package belongs under \
+                         <game>/{}/<directory>/",
                         path.display(),
-                        pacenotes_shared::PUBLIC_DIR
+                        PACKAGES_DIR
                     );
                 }
                 continue;
             }
-            if !path.is_dir() {
+            if !path.is_dir() || game == MOTD_DIR {
                 continue;
             }
-            if dir_name == MOTD_DIR {
-                // Message-of-the-day texts, not packages. Served by /motd.
+            if !pacenotes_shared::valid_id(&game) {
+                generated.warn(format!("skipping {game:?}: a game id must be [a-z0-9_-]+"));
                 continue;
             }
-            if !valid_directory(&dir_name) {
+            // Catch the two ways this level gets mis-filed: a category or an
+            // access directory sitting where a game belongs.
+            if pacenotes_shared::KNOWN_CATEGORIES.contains(&game.as_str())
+                || game == pacenotes_shared::PUBLIC_DIR
+            {
                 generated.warn(format!(
-                    "skipping directory {dir_name:?}: not a valid directory name [a-z0-9_-]+"
+                    "{game:?} is at the top level, where a GAME id belongs \
+                     (e.g. {:?}). The layout is \
+                     <game>/{PACKAGES_DIR}/<directory>/<name>.zip.",
+                    pacenotes_shared::GAME_RBR
+                ));
+            }
+            if !pacenotes_shared::KNOWN_GAMES.contains(&game.as_str()) {
+                // Not fatal: the game list is open, and a server may carry a
+                // game this build has not heard of.
+                generated.warn(format!(
+                    "{game:?} is not a game this protocol knows \
+                     ({:?}) — publishing it anyway",
+                    pacenotes_shared::KNOWN_GAMES
+                ));
+            }
+
+            let packages_root = path.join(PACKAGES_DIR);
+            if !packages_root.is_dir() {
+                generated.warn(format!(
+                    "{game}/ has no {PACKAGES_DIR}/ folder — nothing published for it"
                 ));
                 continue;
             }
-            if pacenotes_shared::KNOWN_CATEGORIES.contains(&dir_name.as_str()) {
-                // The commonest filing mistake: the access-directory level
-                // left out, so a category sits where `public` should. Every
-                // package would then report its SECOND folder as its
-                // category, and the whole tree would be shifted up a level.
-                generated.warn(format!(
-                    "{dir_name:?} is the top level, where an access directory \
-                     (e.g. {:?}) belongs — categories go one level down, as \
-                     {}/{dir_name}/…. Everything under it is being published \
-                     with {dir_name:?} as its access directory.",
-                    pacenotes_shared::PUBLIC_DIR,
-                    pacenotes_shared::PUBLIC_DIR
-                ));
-            }
 
-            // One recursive pass per access directory collects zips and
-            // sidecars together, so a sidecar whose zip is missing can be
-            // reported afterwards.
-            let mut found = Found::default();
-            collect(&path, "", &mut found, &mut generated);
+            for directory_entry in read_dir_sorted(&packages_root)? {
+                let directory_path = directory_entry.path();
+                let directory = directory_entry.file_name().to_string_lossy().into_owned();
 
-            for (name, zip_path) in &found.zips {
-                let meta = std::fs::metadata(zip_path)
-                    .map_err(|e| anyhow::anyhow!("stat {}: {e}", zip_path.display()))?;
-                let updated_at = meta
-                    .modified()
-                    .ok()
-                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-                    .map(|d| d.as_secs() as i64)
-                    .unwrap_or(0);
-
-                let previous_entry = previous
-                    .packages
-                    .iter()
-                    .find(|p| p.directory == dir_name && &p.name == name);
-                let sidecar = match read_sidecar(&zip_path.with_extension("toml")) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        // A broken sidecar must not silently publish a package
-                        // with default metadata.
-                        anyhow::bail!("{dir_name}/{name}.toml: {e}");
+                if directory_path.is_file() {
+                    if directory_path.extension().is_some_and(|e| e == "zip") {
+                        anyhow::bail!(
+                            "zip outside an access directory: {} — every package \
+                             must live in one (put anonymous packages in {}/)",
+                            directory_path.display(),
+                            pacenotes_shared::PUBLIC_DIR
+                        );
                     }
-                };
-
-                let mut package = pacenotes_shared::PackageInfo {
-                    directory: dir_name.clone(),
-                    name: name.clone(),
-                    // Version precedence: sidecar wins, else the version the
-                    // previous manifest carried, else "0.0.0".
-                    version: sidecar
-                        .version
-                        .clone()
-                        .or_else(|| previous_entry.map(|p| p.version.clone()))
-                        .unwrap_or_else(|| "0.0.0".to_string()),
-                    size: meta.len(),
-                    sha256: sha256_file(zip_path)?,
-                    updated_at,
-                    game: sidecar
-                        .game
-                        .clone()
-                        .or_else(|| previous_entry.map(|p| p.game.clone()))
-                        .unwrap_or_else(pacenotes_shared::default_game),
-                    display_name: sidecar
-                        .display_name
-                        .clone()
-                        .or_else(|| previous_entry.and_then(|p| p.display_name.clone())),
-                    description: sidecar
-                        .description
-                        .clone()
-                        .or_else(|| previous_entry.and_then(|p| p.description.clone())),
-                    exclusive_group: sidecar
-                        .exclusive_group
-                        .clone()
-                        .or_else(|| previous_entry.and_then(|p| p.exclusive_group.clone())),
-                    requires: sidecar
-                        .requires
-                        .clone()
-                        .or_else(|| previous_entry.map(|p| p.requires.clone()))
-                        .unwrap_or_default(),
-                };
-                package.requires.sort();
-                package.requires.dedup();
-
-                generated.manifest.packages.push(package);
-            }
-
-            for sidecar in &found.sidecars {
-                if !found.zips.iter().any(|(name, _)| name == sidecar) {
+                    continue;
+                }
+                if !directory_path.is_dir() {
+                    continue;
+                }
+                if !pacenotes_shared::valid_id(&directory) {
                     generated.warn(format!(
-                        "{dir_name}/{sidecar}.toml has no {sidecar}.zip next to it \
-                         — the metadata is ignored"
+                        "skipping {game}/{PACKAGES_DIR}/{directory:?}: an access \
+                         directory must be [a-z0-9_-]+"
                     ));
+                    continue;
+                }
+                if pacenotes_shared::KNOWN_CATEGORIES.contains(&directory.as_str()) {
+                    // The commonest filing mistake: the access-directory
+                    // level left out, so a category sits where `public`
+                    // should and every package's category shifts up a level.
+                    generated.warn(format!(
+                        "{game}/{PACKAGES_DIR}/{directory}/ is a CATEGORY name where \
+                         an access directory (e.g. {:?}) belongs — categories go \
+                         one level down, as {}/{directory}/…",
+                        pacenotes_shared::PUBLIC_DIR,
+                        pacenotes_shared::PUBLIC_DIR
+                    ));
+                }
+
+                // One recursive pass per access directory collects zips and
+                // sidecars together, so a sidecar whose zip is missing can be
+                // reported afterwards.
+                let mut found = Found::default();
+                collect(&directory_path, "", &mut found, &mut generated);
+
+                for (name, zip_path) in &found.zips {
+                    let meta = std::fs::metadata(zip_path)
+                        .map_err(|e| anyhow::anyhow!("stat {}: {e}", zip_path.display()))?;
+                    let updated_at = meta
+                        .modified()
+                        .ok()
+                        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                        .map(|d| d.as_secs() as i64)
+                        .unwrap_or(0);
+
+                    let previous_entry = previous
+                        .packages
+                        .iter()
+                        .find(|p| p.game == game && p.directory == directory && &p.name == name);
+                    let sidecar = match read_sidecar(&zip_path.with_extension("toml")) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            // A broken sidecar must not silently publish a
+                            // package with default metadata.
+                            anyhow::bail!("{game}/{directory}/{name}.toml: {e}");
+                        }
+                    };
+
+                    let mut package = pacenotes_shared::PackageInfo {
+                        directory: directory.clone(),
+                        name: name.clone(),
+                        // Version precedence: sidecar wins, else the version
+                        // the previous manifest carried, else "0.0.0".
+                        version: sidecar
+                            .version
+                            .clone()
+                            .or_else(|| previous_entry.map(|p| p.version.clone()))
+                            .unwrap_or_else(|| "0.0.0".to_string()),
+                        size: meta.len(),
+                        sha256: sha256_file(zip_path)?,
+                        updated_at,
+                        // From the layout, never from a sidecar.
+                        game: game.clone(),
+                        display_name: sidecar
+                            .display_name
+                            .clone()
+                            .or_else(|| previous_entry.and_then(|p| p.display_name.clone())),
+                        description: sidecar
+                            .description
+                            .clone()
+                            .or_else(|| previous_entry.and_then(|p| p.description.clone())),
+                        exclusive_group: sidecar
+                            .exclusive_group
+                            .clone()
+                            .or_else(|| previous_entry.and_then(|p| p.exclusive_group.clone())),
+                        requires: sidecar
+                            .requires
+                            .clone()
+                            .or_else(|| previous_entry.map(|p| p.requires.clone()))
+                            .unwrap_or_default(),
+                    };
+                    package.requires.sort();
+                    package.requires.dedup();
+
+                    generated.manifest.packages.push(package);
+                }
+
+                for sidecar in &found.sidecars {
+                    if !found.zips.iter().any(|(name, _)| name == sidecar) {
+                        generated.warn(format!(
+                            "{game}/{directory}/{sidecar}.toml has no {sidecar}.zip \
+                             next to it — the metadata is ignored"
+                        ));
+                    }
                 }
             }
         }
@@ -313,16 +377,6 @@ impl ManifestStore {
         generated.validate_requires();
         Ok(generated)
     }
-}
-
-/// Language the MOTD falls back to when the requested one has no file.
-pub const MOTD_FALLBACK_LANG: &str = "en";
-
-/// Language tags accepted by `/motd`: `[a-z]{2,8}`, which covers `en`, `pl`
-/// and longer ISO tags while excluding every character that could reach
-/// outside the motd directory.
-pub fn valid_lang(lang: &str) -> bool {
-    (2..=8).contains(&lang.len()) && lang.bytes().all(|b| b.is_ascii_lowercase())
 }
 
 /// What one access directory's subtree holds, keyed by package `name`
@@ -386,11 +440,28 @@ fn collect(dir: &std::path::Path, prefix: &str, found: &mut Found, generated: &m
             continue;
         }
 
+        // Not an error — a name only has to survive a URL — but a client
+        // that forgets to percent-encode will 404 on it, so say so once at
+        // publish time instead of leaving it to be debugged over HTTP.
+        if extension == Some("zip") && !url_clean(&name) {
+            generated.warn(format!(
+                "{name:?} contains characters a client must percent-encode \
+                 (space, #, ?, %, +, …) — consider renaming the file"
+            ));
+        }
+
         match extension {
             Some("zip") => found.zips.push((name, path)),
             _ => found.sidecars.push(name),
         }
     }
+}
+
+/// Does every character of this name pass through a URL untouched?
+/// `/` is included because it is the name's own separator.
+fn url_clean(name: &str) -> bool {
+    name.bytes()
+        .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.' | b'~' | b'/'))
 }
 
 /// Appends one segment to a package name. Segments are joined with `/`
@@ -469,7 +540,6 @@ impl Generated {
 #[serde(deny_unknown_fields)]
 struct Sidecar {
     version: Option<String>,
-    game: Option<String>,
 
     display_name: Option<String>,
     description: Option<String>,
@@ -511,7 +581,10 @@ fn read_manifest(path: &std::path::Path) -> anyhow::Result<pacenotes_shared::Man
         .map_err(|e| anyhow::anyhow!("parsing {}: {e}", path.display()))?;
 
     for p in &manifest.packages {
-        if !valid_directory(&p.directory) {
+        if !pacenotes_shared::valid_id(&p.game) {
+            anyhow::bail!("invalid game id {:?} in manifest", p.game);
+        }
+        if !pacenotes_shared::valid_id(&p.directory) {
             anyhow::bail!("invalid directory name {:?} in manifest", p.directory);
         }
         if !pacenotes_shared::valid_name(&p.name) {
@@ -551,15 +624,21 @@ mod tests {
         super::ManifestStore::generate(dir).unwrap()
     }
 
+    /// Path of a package zip in the data root's layout:
+    /// `<data>/<game>/packages/<directory>/<name>.zip`.
+    fn zip(dir: &std::path::Path, game: &str, rest: &str) -> std::path::PathBuf {
+        dir.join(game).join(super::PACKAGES_DIR).join(rest)
+    }
+
     #[test]
     fn name_validation_rejects_traversal() {
-        assert!(super::valid_directory("public"));
-        assert!(super::valid_directory("premium-voices_2"));
-        assert!(!super::valid_directory(""));
-        assert!(!super::valid_directory(".."));
-        assert!(!super::valid_directory("a/b"));
-        assert!(!super::valid_directory("a\\b"));
-        assert!(!super::valid_directory("Premium"));
+        assert!(pacenotes_shared::valid_id("public"));
+        assert!(pacenotes_shared::valid_id("premium-voices_2"));
+        assert!(!pacenotes_shared::valid_id(""));
+        assert!(!pacenotes_shared::valid_id(".."));
+        assert!(!pacenotes_shared::valid_id("a/b"));
+        assert!(!pacenotes_shared::valid_id("a\\b"));
+        assert!(!pacenotes_shared::valid_id("Premium"));
         // Names are validated by `shared::valid_name` now: a name is a path
         // under the access directory, so `/` is legal and `\\`, `.`/`..`
         // segments and empty segments are not.
@@ -575,9 +654,12 @@ mod tests {
     fn generate_scans_subdirs_and_hashes() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
-        write(&dir.join("premium-voices/pro.zip"), b"world!");
-        write(&dir.join("public/notes.txt"), b"ignored");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
+        write(
+            zip(dir, "rbr", "premium-voices/pro.zip").as_path(),
+            b"world!",
+        );
+        write(zip(dir, "rbr", "public/notes.txt").as_path(), b"ignored");
 
         let generated = generate(dir);
         assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -610,20 +692,22 @@ mod tests {
     fn sidecar_supplies_install_metadata() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/english.zip"), b"lang");
-        write(&dir.join("public/eva.zip"), b"voice");
+        write(zip(dir, "rbr", "public/english.zip").as_path(), b"lang");
+        write(zip(dir, "rbr", "public/eva.zip").as_path(), b"voice");
         write(
-            &dir.join("public/eva.toml"),
+            zip(dir, "rbr", "public/eva.toml").as_path(),
             br#"
                 version = "2.1.0"
-                game = "dirtrally2"
                 display_name = "English / Female / Eva"
                 description = "Calm delivery"
                 exclusive_group = "voice"
                 requires = ["public/english"]
             "#,
         );
-        write(&dir.join("public/english.toml"), b"game = \"dirtrally2\"\n");
+        write(
+            zip(dir, "rbr", "public/english.toml").as_path(),
+            b"description = \"UI language\"\n",
+        );
 
         let generated = generate(dir);
         assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -632,7 +716,8 @@ mod tests {
             .get(&pacenotes_shared::PackageRef::parse("public/eva").unwrap())
             .unwrap();
         assert_eq!(eva.version, "2.1.0");
-        assert_eq!(eva.game, pacenotes_shared::GAME_DIRT_RALLY2);
+        // The game comes from the layout, never from a sidecar.
+        assert_eq!(eva.game, pacenotes_shared::GAME_RBR);
         assert_eq!(eva.category(), "eva"); // flat name: its own category
         assert_eq!(eva.label(), "English / Female / Eva");
         assert_eq!(eva.description.as_deref(), Some("Calm delivery"));
@@ -644,7 +729,7 @@ mod tests {
     fn sidecar_wins_over_previous_manifest_but_absent_fields_are_preserved() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
         write_manifest(
             dir,
             &pacenotes_shared::Manifest {
@@ -655,7 +740,9 @@ mod tests {
                     size: 0,
                     sha256: "stale".into(),
                     updated_at: 1,
-                    game: pacenotes_shared::GAME_BEAMNG.into(),
+                    // Matches the zip's folder: a previous entry for another
+                    // game is a different package now.
+                    game: pacenotes_shared::GAME_RBR.into(),
                     display_name: Some("Numeric".into()),
                     description: Some("Numeric pacenotes".into()),
                     exclusive_group: Some("pacenote-config".into()),
@@ -664,7 +751,7 @@ mod tests {
             },
         );
         write(
-            &dir.join("public/basic.toml"),
+            zip(dir, "rbr", "public/basic.toml").as_path(),
             b"display_name = \"Numeric v2\"\n",
         );
 
@@ -673,7 +760,8 @@ mod tests {
         assert_eq!(basic.label(), "Numeric v2");
         // ...everything it omits keeps what the manifest already published...
         assert_eq!(basic.version, "2.3.4");
-        assert_eq!(basic.game, pacenotes_shared::GAME_BEAMNG);
+        // ...except the game, which the layout decides outright.
+        assert_eq!(basic.game, pacenotes_shared::GAME_RBR);
         assert_eq!(basic.category(), "basic");
         assert_eq!(basic.description.as_deref(), Some("Numeric pacenotes"));
         assert_eq!(basic.exclusive_group.as_deref(), Some("pacenote-config"));
@@ -686,8 +774,11 @@ mod tests {
     fn broken_sidecar_fails_the_run() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
-        write(&dir.join("public/basic.toml"), b"categoy = \"sounds\"\n");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
+        write(
+            zip(dir, "rbr", "public/basic.toml").as_path(),
+            b"categoy = \"sounds\"\n",
+        );
 
         // A typo must not publish a package with silently-default metadata.
         let err = super::ManifestStore::generate(dir).unwrap_err().to_string();
@@ -698,8 +789,11 @@ mod tests {
     fn sidecar_without_zip_warns() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
-        write(&dir.join("public/ghost.toml"), b"game = \"rbr\"\n");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
+        write(
+            zip(dir, "rbr", "public/ghost.toml").as_path(),
+            b"version = \"1.0.0\"\n",
+        );
 
         let generated = generate(dir);
         assert_eq!(generated.manifest.packages.len(), 1);
@@ -717,12 +811,12 @@ mod tests {
     fn dangling_and_cross_boundary_requires_warn() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/voice.zip"), b"voice");
+        write(zip(dir, "rbr", "public/voice.zip").as_path(), b"voice");
         write(
-            &dir.join("public/voice.toml"),
+            zip(dir, "rbr", "public/voice.toml").as_path(),
             b"requires = [\"public/missing\", \"not-a-ref\", \"premium/lang\"]\n",
         );
-        write(&dir.join("premium/lang.zip"), b"lang");
+        write(zip(dir, "rbr", "premium/lang.zip").as_path(), b"lang");
 
         let generated = generate(dir);
         let joined = generated.warnings.join("\n");
@@ -737,13 +831,14 @@ mod tests {
     fn requires_across_games_warn() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/voice.zip"), b"voice");
+        write(zip(dir, "rbr", "public/voice.zip").as_path(), b"voice");
         write(
-            &dir.join("public/voice.toml"),
-            b"game = \"rbr\"\nrequires = [\"public/lang\"]\n",
+            zip(dir, "rbr", "public/voice.toml").as_path(),
+            b"requires = [\"public/lang\"]\n",
         );
-        write(&dir.join("public/lang.zip"), b"lang");
-        write(&dir.join("public/lang.toml"), b"game = \"beamng\"\n");
+        // Same name, other game: the dependency is in beamng's tree, so the
+        // rbr package's ref does not resolve within its own game.
+        write(zip(dir, "beamng", "public/lang.zip").as_path(), b"lang");
 
         let joined = generate(dir).warnings.join("\n");
         assert!(joined.contains("game rbr"), "{joined}");
@@ -754,13 +849,22 @@ mod tests {
     fn generate_recurses_and_names_packages_by_their_path() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/codriver/polish/male/Kamil.zip"), b"kamil");
         write(
-            &dir.join("public/codriver/polish/female/Magda.zip"),
+            zip(dir, "rbr", "public/codriver/polish/male/Kamil.zip").as_path(),
+            b"kamil",
+        );
+        write(
+            zip(dir, "rbr", "public/codriver/polish/female/Magda.zip").as_path(),
             b"magda",
         );
-        write(&dir.join("public/language/polish.zip"), b"polish");
-        write(&dir.join("private/style/Descriptive.zip"), b"descriptive");
+        write(
+            zip(dir, "rbr", "public/language/polish.zip").as_path(),
+            b"polish",
+        );
+        write(
+            zip(dir, "rbr", "private/style/Descriptive.zip").as_path(),
+            b"descriptive",
+        );
 
         let generated = generate(dir);
         assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -806,22 +910,30 @@ mod tests {
     fn nested_names_resolve_back_to_their_zip() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/codriver/polish/male/Kamil.zip"), b"kamil");
+        write(
+            zip(dir, "rbr", "public/codriver/polish/male/Kamil.zip").as_path(),
+            b"kamil",
+        );
         write_manifest(dir, &generate(dir).manifest);
 
         let store = super::ManifestStore::new(dir);
         let (package, path) = store
-            .zip_path("public", "codriver/polish/male/Kamil")
+            .zip_path("rbr", "public", "codriver/polish/male/Kamil")
             .unwrap();
         assert_eq!(package.leaf(), "Kamil");
-        assert_eq!(path, dir.join("public/codriver/polish/male/Kamil.zip"));
+        assert_eq!(
+            path,
+            zip(dir, "rbr", "public/codriver/polish/male/Kamil.zip")
+        );
 
         // Partial paths are not packages, and nothing outside the manifest
         // resolves at all.
-        assert!(store.zip_path("public", "codriver/polish/male").is_none());
-        assert!(store.zip_path("public", "codriver").is_none());
         assert!(store
-            .zip_path("public", "codriver/../../manifest")
+            .zip_path("rbr", "public", "codriver/polish/male")
+            .is_none());
+        assert!(store.zip_path("rbr", "public", "codriver").is_none());
+        assert!(store
+            .zip_path("rbr", "public", "codriver/../../manifest")
             .is_none());
     }
 
@@ -829,10 +941,16 @@ mod tests {
     fn sidecars_are_read_next_to_a_nested_zip() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/language/polish.zip"), b"lang");
-        write(&dir.join("public/codriver/polish/male/Kamil.zip"), b"kamil");
         write(
-            &dir.join("public/codriver/polish/male/Kamil.toml"),
+            zip(dir, "rbr", "public/language/polish.zip").as_path(),
+            b"lang",
+        );
+        write(
+            zip(dir, "rbr", "public/codriver/polish/male/Kamil.zip").as_path(),
+            b"kamil",
+        );
+        write(
+            zip(dir, "rbr", "public/codriver/polish/male/Kamil.toml").as_path(),
             br#"
                 version = "3.0.0"
                 display_name = "Kamil Filipek"
@@ -858,9 +976,12 @@ mod tests {
     fn sidecar_keys_that_carried_positional_metadata_are_rejected() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/language/polish.zip"), b"lang");
         write(
-            &dir.join("public/language/polish.toml"),
+            zip(dir, "rbr", "public/language/polish.zip").as_path(),
+            b"lang",
+        );
+        write(
+            zip(dir, "rbr", "public/language/polish.toml").as_path(),
             b"category = \"language\"\n",
         );
 
@@ -913,12 +1034,41 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
         write(&dir.join("motd/en.txt"), b"news");
-        write(&dir.join("public/language/polish.zip"), b"lang");
+        write(
+            zip(dir, "rbr", "public/language/polish.zip").as_path(),
+            b"lang",
+        );
 
         let generated = generate(dir);
         assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
         assert_eq!(generated.manifest.packages.len(), 1);
         assert_eq!(generated.manifest.packages[0].directory, "public");
+    }
+
+    #[test]
+    fn names_needing_url_encoding_warn_but_publish() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        write(
+            zip(dir, "rbr", "public/style/Numeric Standard.zip").as_path(),
+            b"style",
+        );
+
+        let generated = generate(dir);
+        // Still published: the name is legal, a client just has to encode it.
+        assert_eq!(generated.manifest.packages.len(), 1);
+        assert_eq!(
+            generated.manifest.packages[0].name,
+            "style/Numeric Standard"
+        );
+        assert!(
+            generated
+                .warnings
+                .iter()
+                .any(|w| w.contains("percent-encode")),
+            "{:?}",
+            generated.warnings
+        );
     }
 
     #[test]
@@ -934,8 +1084,8 @@ mod tests {
     #[test]
     fn generate_skips_invalid_directory_names() {
         let tmp = tempfile::tempdir().unwrap();
-        write(&tmp.path().join("Bad Dir/x.zip"), b"x");
-        write(&tmp.path().join("public/ok.zip"), b"x");
+        write(zip(tmp.path(), "rbr", "Bad Dir/x.zip").as_path(), b"x");
+        write(zip(tmp.path(), "rbr", "public/ok.zip").as_path(), b"x");
         let generated = generate(tmp.path());
         assert_eq!(generated.manifest.packages.len(), 1);
         assert_eq!(generated.manifest.packages[0].directory, "public");
@@ -946,25 +1096,25 @@ mod tests {
     fn store_reloads_on_mtime_change_and_resolves_paths() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
         let store = super::ManifestStore::new(dir);
         assert!(store.current().packages.is_empty()); // no manifest yet
 
         write_manifest(dir, &generate(dir).manifest);
 
         assert_eq!(store.current().packages.len(), 1);
-        let (pkg, path) = store.zip_path("public", "basic").unwrap();
+        let (pkg, path) = store.zip_path("rbr", "public", "basic").unwrap();
         assert_eq!(pkg.name, "basic");
-        assert_eq!(path, dir.join("public").join("basic.zip"));
-        assert!(store.zip_path("public", "nope").is_none());
-        assert!(store.zip_path("../data", "auth").is_none());
+        assert_eq!(path, zip(dir, "rbr", "public/basic.zip"));
+        assert!(store.zip_path("rbr", "public", "nope").is_none());
+        assert!(store.zip_path("rbr", "../data", "auth").is_none());
     }
 
     #[test]
     fn bad_manifest_json_serves_last_good_copy() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        write(&dir.join("public/basic.zip"), b"hello");
+        write(zip(dir, "rbr", "public/basic.zip").as_path(), b"hello");
         write_manifest(dir, &generate(dir).manifest);
         let store = super::ManifestStore::new(dir);
         assert_eq!(store.current().packages.len(), 1);

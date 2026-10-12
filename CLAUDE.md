@@ -80,15 +80,42 @@ pacenote packages. Two deliverables:
 - The one built-in special step: `write_rbr_config` (RBR ini generation),
   hard-coded in the installer, keyed off the selected `style` package.
 
+## Server layout (one server, every game)
+
+ONE server serves all games. The first level under its data root names the
+game, and each game owns its own packages tree:
+
+    data/rbr/packages/public/codriver/polish/male/Kamil.zip
+         ^game         ^dir   ^------------ name -----^
+    data/motd/<lang>.txt      message of the day (no game: shown before one
+                              is chosen)
+    data/manifest.json        every game in one document
+
+`game` therefore comes from the LAYOUT, never from a sidecar — the same rule
+as `category`/tree position. Game ids and access directory names share one
+rule, `shared::valid_id` (`[a-z0-9_-]+`). `manifest gen` warns when a level
+is mis-filed (a category where an access directory belongs, an access
+directory or category where a game belongs, a game folder with no
+`packages/`) and when a name needs percent-encoding.
+
 ## Protocol (client ↔ server)
 
-- `GET /packages` — optional `Authorization: Bearer <token>`.
+- `GET /packages[?game=<id>]` — optional `Authorization: Bearer <token>`.
   Returns `shared::Manifest` (JSON) filtered to the `public` directory plus
   the caller's granted directories (silent filtering; /packages never 403s).
-- `GET /download/{directory}/{*name}` — `name` spans the remaining segments,
-  because it is the package's path under its directory. Same auth rules; streams
-  `./packages/<directory>/<name>.zip`. 401 bad/expired token on a protected
-  directory, 403 valid token without that grant, 404 no such package.
+  Without `game` the document covers EVERY game; with it, just that one. An
+  unknown game is an empty list, not an error.
+- `GET /download/{game}/{directory}/{*name}` — `name` spans the remaining
+  segments, because it is the package's path under its directory
+  (`PackageInfo::download_path()` builds the whole tail). Same auth rules;
+  streams `./data/<game>/packages/<directory>/<name>.zip`. 401 bad/expired
+  token on a protected directory, 403 valid token without that grant, 404 no
+  such package — and a miss on ANY of the three keys is a 404, so the status
+  never reveals what exists. A name may contain characters that need
+  percent-encoding (e.g. `style/Numeric Standard`); the client must encode.
+- `GET /motd?lang=xx` — `text/plain` from `data/motd/<lang>.txt`, falling
+  back to `en`, 404 when there is none (treat exactly like being offline).
+  No auth. `lang` is restricted to `[a-z]{2,8}` server-side.
 - `GET /health` — 200, no auth.
 
 Any protocol change = change `shared/` first, then both sides in the same PR.

@@ -203,7 +203,7 @@ fn check_grantable(directory: &str) -> anyhow::Result<()> {
             pacenotes_shared::PUBLIC_DIR
         );
     }
-    if !crate::store::valid_directory(directory) {
+    if !pacenotes_shared::valid_id(directory) {
         anyhow::bail!("{directory:?} is not a valid directory name [a-z0-9_-]+");
     }
     Ok(())

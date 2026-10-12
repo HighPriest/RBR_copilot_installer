@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026/10/12 — one server, every game
+
+Decided with the maintainer: one instance serves all games, and the first
+folder level under the data root names the game.
+
+- Layout is now `<data>/<game>/packages/<directory>/<name>.zip`, with
+  `<data>/motd/<lang>.txt` beside the games and one `<data>/manifest.json`
+  covering all of them. `serve`/`manifest gen` take `--data`
+  (`PACENOTES_DATA_DIR`, default `./data`) in place of `--packages`.
+- `PackageInfo.game` comes from that folder, so `game` is no longer a
+  sidecar key: a sidecar still carrying it fails the run. Nothing positional
+  comes from a .toml any more.
+- `GET /packages?game=<id>` filters to one game; without it the document
+  covers every game. An unknown game is an empty list, not an error.
+- `GET /download/{game}/{directory}/{*name}`: the game leads the address,
+  because two games can hold the same directory+name — without it the route
+  would have silently served the wrong game's bytes. All three segments stay
+  lookup keys; a miss on any is 404.
+- `shared` gained `valid_id` (one rule for games and access directories),
+  `KNOWN_GAMES`, `Manifest::for_game` and `PackageInfo::download_path`.
+- `manifest gen` warns on the easy mis-filings (category where an access
+  directory belongs, category/`public` where a game belongs, game folder
+  with no `packages/`, unknown game id, name needing percent-encoding).
+- The real `server/data` tree was re-filed under `public/`: 24 RBR packages
+  now publish with correct categories, and a 28 MB nested download plus a
+  percent-encoded name (`style/Numeric%20Standard`) were verified over HTTP.
+
+INSTALLER SIDE, not done here: the download URL gained a leading game
+segment, `/packages` can be filtered by game, and a cache/ledger key of
+"directory/name" is no longer unique across games — use
+`PackageInfo::download_path()` or prefix the game.
+
 ## 2026/10/12 — server side of protocol rev. 2
 
 - `manifest gen` recurses: a package's `name` is now its path under the

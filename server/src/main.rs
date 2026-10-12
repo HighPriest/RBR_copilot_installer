@@ -13,8 +13,10 @@ enum Cmd {
     Serve {
         #[arg(long, default_value = "127.0.0.1:8080", env = "PACENOTES_LISTEN")]
         listen: String,
-        #[arg(long, default_value = "./packages", env = "PACENOTES_PACKAGES_DIR")]
-        packages: String,
+        /// Data root: <data>/<game>/packages/<directory>/<name>.zip,
+        /// <data>/motd/<lang>.txt, <data>/manifest.json.
+        #[arg(long, default_value = "./data", env = "PACENOTES_DATA_DIR")]
+        data: String,
         #[arg(long, default_value = "file:./data/auth.db", env = "PACENOTES_DB_URL")]
         db_url: String,
     },
@@ -66,10 +68,11 @@ enum TokenCmd {
 
 #[derive(clap::Subcommand)]
 enum ManifestCmd {
-    /// Rebuild <dir>/manifest.json from the zips under <dir>/<directory>/.
+    /// Rebuild <data>/manifest.json from the zips under
+    /// <data>/<game>/packages/<directory>/.
     Gen {
-        #[arg(long, default_value = "./packages", env = "PACENOTES_PACKAGES_DIR")]
-        dir: String,
+        #[arg(long, default_value = "./data", env = "PACENOTES_DATA_DIR")]
+        data: String,
     },
 }
 
@@ -84,21 +87,21 @@ async fn main() -> anyhow::Result<()> {
     match <Cli as clap::Parser>::parse().cmd {
         Cmd::Serve {
             listen,
-            packages,
+            data,
             db_url,
-        } => serve(listen, packages, db_url).await,
+        } => serve(listen, data, db_url).await,
         Cmd::Token { db_url, cmd } => token_admin(&db_url, cmd).await,
         Cmd::Manifest {
-            cmd: ManifestCmd::Gen { dir },
-        } => manifest_gen(std::path::Path::new(&dir)),
+            cmd: ManifestCmd::Gen { data },
+        } => manifest_gen(std::path::Path::new(&data)),
     }
 }
 
-async fn serve(listen: String, packages: String, db_url: String) -> anyhow::Result<()> {
-    tracing::info!(%listen, %packages, %db_url, "starting");
+async fn serve(listen: String, data: String, db_url: String) -> anyhow::Result<()> {
+    tracing::info!(%listen, %data, %db_url, "starting");
 
     let state = std::sync::Arc::new(pacenotes_server::routes::AppState {
-        store: pacenotes_server::store::ManifestStore::new(&packages),
+        store: pacenotes_server::store::ManifestStore::new(&data),
         db: pacenotes_server::db::open(&db_url).await?,
     });
     // Load once at startup so a broken manifest shows up in the log
@@ -187,23 +190,22 @@ async fn token_admin(db_url: &str, cmd: TokenCmd) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// `manifest gen`: scan the packages tree and rewrite manifest.json.
-/// Publishing flow = drop a zip into packages/<directory>/ → run this.
-fn manifest_gen(dir: &std::path::Path) -> anyhow::Result<()> {
-    let generated = pacenotes_server::store::ManifestStore::generate(dir)?;
+/// `manifest gen`: scan the data root and rewrite manifest.json.
+/// Publishing flow = drop a zip into <game>/packages/<directory>/… → run
+/// this.
+fn manifest_gen(data: &std::path::Path) -> anyhow::Result<()> {
+    let generated = pacenotes_server::store::ManifestStore::generate(data)?;
     let manifest = generated.manifest;
-    let path = dir.join("manifest.json");
+    let path = data.join("manifest.json");
     let json = serde_json::to_string_pretty(&manifest)?;
     std::fs::write(&path, format!("{json}\n"))
         .map_err(|e| anyhow::anyhow!("writing {}: {e}", path.display()))?;
 
     for p in &manifest.packages {
         println!(
-            "{}/{} {} [{}/{}] ({} bytes)",
-            p.directory,
-            p.name,
+            "{} {} [{}] ({} bytes)",
+            p.download_path(),
             p.version,
-            p.game,
             p.category(),
             p.size
         );

@@ -16,6 +16,12 @@
 //! install mechanism. The installer never reads instruction files out of a
 //! package and never interprets paths found INSIDE a zip.
 //!
+//! LAYOUT: one server serves every game. The first folder level under the
+//! server's data root names the game, and each game holds its own packages
+//! tree, so a package's full address is
+//! `<data>/<game>/packages/<directory>/<name>.zip` — game, then access
+//! directory, then the name (which is itself a path; see below).
+//!
 //! PRESENTATION MODEL: where a package SITS on the server is how it is shown.
 //! `name` is the package's path under its access directory, so
 //! `codriver/polish/male/Kamil` is category `codriver`, tree levels
@@ -46,6 +52,24 @@ pub const GAME_BEAMNG: &str = "beamng";
 /// went multi-game listed Richard Burns Rally packages only.
 pub fn default_game() -> String {
     GAME_RBR.to_string()
+}
+
+/// Every game this protocol knows about. `game` is an open string, so this
+/// is not a whitelist — it lets the server recognise a game id used where
+/// something else belongs, the same way `KNOWN_CATEGORIES` does.
+pub const KNOWN_GAMES: [&str; 4] = [GAME_RBR, GAME_DIRT_RALLY2, GAME_ASSETTOCORSA, GAME_BEAMNG];
+
+/// Is this a usable game id or access directory name?
+///
+/// Both are single path segments the operator chooses and both end up in a
+/// URL, so they share one rule: `[a-z0-9_-]+`. That excludes every
+/// separator, every dot and every uppercase letter, so neither can widen
+/// into a path or collide case-insensitively on Windows.
+pub fn valid_id(id: &str) -> bool {
+    !id.is_empty()
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_' || b == b'-')
 }
 
 /// UI grouping: the FIRST segment of `PackageInfo::name`, i.e. the top folder
@@ -177,6 +201,14 @@ impl PackageInfo {
         self.display_name.as_deref().unwrap_or_else(|| self.leaf())
     }
 
+    /// The tail of this package's download URL:
+    /// `GET /download/<game>/<directory>/<name>`. One server serves every
+    /// game, so the game is part of the address — without it two games'
+    /// `public/language/polish` would be the same URL.
+    pub fn download_path(&self) -> String {
+        format!("{}/{}/{}", self.game, self.directory, self.name)
+    }
+
     /// Parsed `requires` entries. Malformed refs are dropped rather than
     /// failing the whole manifest — the server warns about them at
     /// `manifest gen` time, where the publisher can still fix them.
@@ -252,6 +284,14 @@ impl Manifest {
     pub fn visible_to(mut self, grants: &[String]) -> Self {
         self.packages
             .retain(|p| p.is_public() || grants.iter().any(|g| g == &p.directory));
+        self
+    }
+
+    /// Keep only one game's packages — what `GET /packages?game=…` returns
+    /// and what an installer tab shows. Without the filter a caller gets
+    /// every game in one document, which is the default.
+    pub fn for_game(mut self, game: &str) -> Self {
+        self.packages.retain(|p| p.game == game);
         self
     }
 
@@ -492,6 +532,39 @@ mod tests {
         assert!(m
             .get(&super::PackageRef::parse("beta/nope").unwrap())
             .is_none());
+    }
+
+    #[test]
+    fn download_path_includes_the_game() {
+        let mut p = pkg(super::PUBLIC_DIR, "codriver/polish/male/Kamil");
+        assert_eq!(p.download_path(), "rbr/public/codriver/polish/male/Kamil");
+        p.game = super::GAME_BEAMNG.into();
+        assert_eq!(
+            p.download_path(),
+            "beamng/public/codriver/polish/male/Kamil"
+        );
+    }
+
+    #[test]
+    fn for_game_filters_one_tab_worth() {
+        let mut m = sample();
+        m.packages[1].game = super::GAME_BEAMNG.into();
+        assert_eq!(m.clone().for_game(super::GAME_RBR).packages.len(), 2);
+        assert_eq!(m.clone().for_game(super::GAME_BEAMNG).packages.len(), 1);
+        assert!(m.for_game("nosuchgame").packages.is_empty());
+    }
+
+    #[test]
+    fn valid_id_is_the_rule_for_games_and_directories() {
+        assert!(super::valid_id("public"));
+        assert!(super::valid_id("rbr"));
+        assert!(super::valid_id("premium-voices_2"));
+        assert!(!super::valid_id(""));
+        assert!(!super::valid_id("Public"));
+        assert!(!super::valid_id(".."));
+        assert!(!super::valid_id("a/b"));
+        assert!(!super::valid_id("a\\b"));
+        assert!(!super::valid_id("a.b"));
     }
 
     #[test]
