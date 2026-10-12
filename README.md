@@ -23,6 +23,16 @@ Rust rewrite of the C# Pacenotes installer, with a self-hosted package server.
     cargo build            # shared + server (any OS)
     cargo test             # shared tests + server unit tests
 
+## Run a server
+
+`deploy/` holds a Podman Quadlet that builds and deploys straight from this
+repository, plus a Caddy site block. Start with **`deploy/README.md`** — it
+covers the data layout, publishing packages, access keys and MOTD.
+
+    cp deploy/pacenotes.container deploy/pacenotes.config.env \
+       ~/.config/containers/systemd/
+    systemctl --user daemon-reload && systemctl --user start pacenotes
+
 Installer (Windows, MSVC):
 
     cd installer

@@ -1,0 +1,20 @@
+# Pacenotes package server — add to /home/user/caddy/caddy_etc/Caddyfile.
+#
+# `pacenotes` is the ContainerName in deploy/pacenotes.container, resolved by podman's DNS.
+pacenotes.example.com {
+	# Packages are tens of MB, so the response is streamed, not buffered.
+	reverse_proxy pacenotes:8080 {
+		flush_interval -1
+	}
+}
+
+# Optional: reach it from this host; needs the NetworkAlias in caddy.container (deploy/README.md).
+http://pacenotes.example.com {
+	bind 0.0.0.0 [::1] {
+		protocols h1
+	}
+	reverse_proxy pacenotes:8080 {
+		flush_interval -1
+	}
+	log
+}

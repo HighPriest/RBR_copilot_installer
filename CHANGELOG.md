@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026/10/13 — deployable server (deploy/)
+
+Everything needed to put a real server in front of the installer for
+testing:
+
+- `deploy/Containerfile` — multi-stage build (rust:1-slim → debian-slim),
+  binds `0.0.0.0:8080` because the CLI's loopback default would be
+  unreachable from Caddy, and pins `CARGO_BUILD_JOBS=1` for the 3 GB host.
+- `deploy/entrypoint.sh` — `manifest gen` then `serve`, so publishing a
+  package is "copy the zip in, restart the unit". A failed generation leaves
+  the previous manifest serving rather than taking the server down.
+- `deploy/pacenotes.container` + `pacenotes.config.env` — Podman Quadlet
+  following the host's `example.container` pattern (clone branch → build →
+  discard checkout), with one volume (`~/pacenotes/data` → `/data`), a
+  healthcheck on `/health`, and no published port: Caddy is the only route
+  in and terminates TLS. Validated with podman's own quadlet generator.
+- `deploy/Caddyfile.snippet` — `pacenotes.example.com` reverse-proxying to
+  `pacenotes:8080`, plus the optional internal `http://` block.
+- `deploy/README.md` — configuration and deployment walkthrough: data
+  layout, publishing, sidecars, MOTD, access keys, installer test commands,
+  operations table and troubleshooting.
+- `libsql` lost its `replication` feature (tonic/tonic-web/prost-build/
+  libsql_replication): embedded replicas are not something this server
+  creates, and the dependency tree was the bulk of the image build.
+  `core` + `remote` + `tls` keep Turso-by-`--db-url` intact. Tests unchanged
+  and green.
+
+Two departures from the `example.container` pattern, both deliberate:
+`podman image prune -f` without `--external` (the `--external` form deletes
+concurrent builds' intermediate containers — see below), and
+`StartLimitBurst=3`/`StartLimitIntervalSec=1h` so a crash cannot loop a
+release build.
+
+HOST NOTE: `example.service` is currently stuck restarting every ~40s, and its
+`ExecStartPre=podman image prune -f --external` deletes other builds'
+containers, which is why building anything else on this host fails with
+`identifier is not a container` / `layer not known`.
+
 ## 2026/10/12 — one server, every game
 
 Decided with the maintainer: one instance serves all games, and the first

@@ -56,8 +56,10 @@
       dirB} matrix for /packages filtering and /download statuses; expired
       token; revoked token; ungrant takes effect; 404; traversal
       (`server/tests/api.rs`, 9 tests on an ephemeral port + in-memory DB)
-- [ ] deploy/: Caddyfile (reverse_proxy + auto-HTTPS), systemd unit or
-      Dockerfile (static musl build optional)
+- [x] deploy/: Containerfile + entrypoint, Podman Quadlet
+      (`pacenotes.container` + `pacenotes.config.env`, builds from git like
+      `example.container`), Caddy site block, and `deploy/README.md` covering
+      configuration, publishing, access keys, MOTD and troubleshooting
 - [ ] Author sidecar .toml for the real packages (config variants share
       exclusive_group "pacenote-config"; voice packs requires their
       language pack; categories: sounds/configs/languages/pacenotes)
@@ -171,3 +173,31 @@
 - Names may contain spaces (`style/Numeric Standard` does, on disk today).
   That is legal — it only has to survive a URL — so `manifest gen` warns and
   publishes rather than refusing. A client MUST percent-encode.
+
+## S8 deploy notes
+
+- The Quadlet follows the host's existing `example.container` pattern: every
+  start clones the branch, builds the image and deletes the checkout, so
+  `systemctl --user restart pacenotes` IS the deployment.
+- Two deliberate departures from that pattern:
+  - `podman image prune -f` WITHOUT `--external`. The `--external` form also
+    deletes buildah's intermediate containers, which kills any concurrent
+    podman build on the host. That is how the first attempts to build this
+    image failed (`identifier is not a container`, `layer not known`,
+    rustc reporting missing files under `target/`) while `example.service` was
+    looping through its own build.
+  - `StartLimitIntervalSec=1h` + `StartLimitBurst=3`, because a restart loop
+    re-runs a Rust release build each time.
+- `CARGO_BUILD_JOBS=1` in the Containerfile: the host has 3 GB of RAM, and an
+  OOM during the build shows up as the same "vanishing layer" symptom rather
+  than an honest error message.
+- `libsql` lost its `replication` feature (tonic, tonic-web, prost-build,
+  libsql_replication). Embedded replicas are not something this server
+  creates; `core` + `remote` + `tls` still satisfy "moving auth to Turso is a
+  --db-url change". `prost` remains via hrana, which `remote` requires.
+- The container binds `0.0.0.0:8080`, not the CLI's `127.0.0.1` default — on
+  loopback it would be unreachable from Caddy — and publishes no host port:
+  Caddy terminates TLS and is the only route in.
+- `entrypoint.sh` runs `manifest gen` before `serve`, so publishing is "copy
+  the zip, restart the unit". A failed generation does not stop the server:
+  it serves the previous manifest.

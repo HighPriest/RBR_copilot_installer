@@ -1,0 +1,57 @@
+# Pacenotes package/auth server.
+#
+# Build context is the REPOSITORY ROOT (the server depends on ../shared by
+# path), so build it as:
+#
+#   podman build -f deploy/Containerfile -t localhost/pacenotes-server:latest .
+#
+# The installer is not built here: it is Windows-only and excluded from the
+# workspace on purpose (root CLAUDE.md).
+
+FROM docker.io/library/rust:1-slim-bookworm AS builder
+
+# libsql compiles bundled SQLite, so a C toolchain is required. No OpenSSL:
+# the server speaks plain HTTP and Caddy terminates TLS (server/CLAUDE.md).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+# Cargo.lock comes along so `--locked` builds the versions CI tested.
+COPY Cargo.toml Cargo.lock ./
+COPY shared ./shared
+COPY server ./server
+
+# A parallel release build OOM-kills rustc on a 3 GB host, which podman reports as a vanishing layer.
+ARG CARGO_BUILD_JOBS=1
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
+
+RUN cargo build --release --locked -p pacenotes-server \
+ && strip target/release/pacenotes-server
+
+
+FROM docker.io/library/debian:bookworm-slim
+
+# ca-certificates: only needed if --db-url ever points at remote Turso.
+# curl: the container healthcheck (HealthCmd in the quadlet) uses it.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /src/target/release/pacenotes-server /usr/local/bin/pacenotes-server
+COPY deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Everything mutable: packages, MOTD texts, the manifest and the auth DB (deploy/README.md).
+VOLUME ["/data"]
+
+# Caddy reaches the container over the podman network, so a loopback bind would be unreachable.
+ENV PACENOTES_LISTEN=0.0.0.0:8080 \
+    PACENOTES_DATA_DIR=/data \
+    PACENOTES_DB_URL=file:/data/auth.db \
+    RUST_LOG=info
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
