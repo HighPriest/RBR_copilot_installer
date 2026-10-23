@@ -154,6 +154,7 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I3 — WinHTTP client | 237,056 | 231.5 kB |
 | I2b part 1 — wizard + worker | 275,456 | 269 kB |
 | I2b part 2 — tree model + scene 4 | 337408 | 329.5 kB |
+| I5 — sha256 + cache + verified download | 402432 | 393 kB |
 
 ## Protocol as it stands
 
@@ -190,22 +191,24 @@ half arrives with scene 6.
       so ask the server for one game's manifest
 
 ## I5 — API + cache
-- [ ] sha256.rs (std-only) + unit tests against known vectors
-- [ ] api.rs: `fetch_manifest(game)` → `GET /packages?game=<id>`, so the
+- [x] sha256.rs (std-only), tested against the published FIPS/CAVP vectors
+      AND against chunked input — the chunking case caught a real buffering
+      bug that every published vector missed, because they arrive in one call
+- [x] api.rs: `fetch_manifest(game)` → `GET /packages?game=<id>`, so the
       server filters to one game rather than the client sifting a
       whole-catalogue document; parse `shared::Manifest` incl.
       game/name-as-path/display_name/exclusive_group/requires
-- [ ] api.rs: fetch_motd, health
-- [ ] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
+- [x] api.rs: fetch_motd, health
+- [x] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
       cache.json index (PackageInfo snapshot per entry, so the tree can show
       local-only packages offline); atomic writes
-- [ ] cache.json keys MUST include the game. `"directory/name"` is not unique
+- [x] cache.json keys include the game. `"directory/name"` is not unique
       across games now that one server serves all of them, so a bare ref
       would let one game's package shadow another's — use
       `PackageInfo::download_path()` (`game/directory/name`) or an explicit
       (game, directory, name) triple. Test two games holding the same
       directory+name.
-- [ ] api::download_to_cache: build the URL with
+- [x] api::download_to_cache: builds the URL with
       `PackageInfo::download_path()`, never by hand — the route leads with
       the game (`/download/{game}/{directory}/{*name}`) and a name may need
       percent-encoding (e.g. `style/Numeric Standard`). Then temp file →

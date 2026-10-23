@@ -1,5 +1,15 @@
-//! The per-user package cache: sha-keyed payloads plus a `cache.json` index,
-//! so the Download tree works offline. Its root is injected, never resolved here.
-//!
-//! TODO(I5): `Cache` with load/save (atomic), `payload_path(sha)`, per-package
-//! state, and the orphan sweep of I9.
+//! The per-user package cache: payloads named `<sha256>.zip`, which gives
+//! integrity and dedupe, plus a `cache.json` index keyed by
+//! `game/directory/name`. The root is injected, so it is testable anywhere.
+
+mod index;
+mod location;
+mod payloads;
+
+pub use index::Cache;
+pub use location::default_root;
+
+const INDEX_FILE: &str = "cache.json";
+
+#[cfg(test)]
+mod tests;

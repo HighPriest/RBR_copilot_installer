@@ -69,8 +69,9 @@ noticeable code. If size regresses, fix it before continuing.
 ## Module map
 
 - `main.rs` — entry point, common-controls init, launches the wizard.
-- `selftest_http.rs` — `--selftest-http`, the WinHTTP check that
-  `tests/Test-HttpClient.ps1` drives.
+- `selftest/` — `--selftest-http`, the WinHTTP check that
+  `tests/Test-HttpClient.ps1` drives, and `--selftest-download`.
+- `package_download.rs` — fetch a package into the cache, verified by sha256.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.

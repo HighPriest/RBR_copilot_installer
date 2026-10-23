@@ -1,5 +1,5 @@
 /// What the cache holds for one package, as the tree needs to see it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CachedPackage {
     pub game: String,
     pub directory: String,

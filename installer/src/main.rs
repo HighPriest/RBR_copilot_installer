@@ -6,7 +6,8 @@
 mod api;
 mod http;
 mod i18n;
-mod selftest_http;
+mod package_download;
+mod selftest;
 mod ui;
 mod wizard;
 mod worker;
@@ -16,7 +17,10 @@ mod worker;
 const DEFAULT_SERVER: &str = env!("PACENOTES_DEFAULT_SERVER");
 
 fn main() {
-    if let Some(selftest) = selftest_http::SelfTest::from_args() {
+    if let Some(selftest) = selftest::HttpSelfTest::from_args() {
+        std::process::exit(selftest.run());
+    }
+    if let Some(selftest) = selftest::DownloadSelfTest::from_args() {
         std::process::exit(selftest.run());
     }
 

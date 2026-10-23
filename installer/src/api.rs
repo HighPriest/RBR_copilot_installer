@@ -42,9 +42,28 @@ impl Api {
         let url = format!("{}/health", self.base_url);
         crate::http::get(&url, None, &mut ignore_progress, cancel).is_ok()
     }
+
+    /// Built from `PackageInfo::download_path()`, whose leading game keeps two
+    /// games' identical `directory/name` apart.
+    pub fn download_url(&self, package: &pacenotes_shared::PackageInfo) -> String {
+        format!(
+            "{}/download/{}",
+            self.base_url,
+            encode_path(&package.download_path())
+        )
+    }
 }
 
 fn ignore_progress(_bytes_so_far: u64, _content_length: Option<u64>) {}
+
+/// Percent-encodes every segment and keeps `/` as the separator; real names
+/// contain spaces (`style/Numeric Standard`).
+pub fn encode_path(path: &str) -> String {
+    path.split('/')
+        .map(encode_segment)
+        .collect::<Vec<_>>()
+        .join("/")
+}
 
 /// Escapes everything outside RFC 3986's unreserved set, `/` included.
 pub fn encode_segment(segment: &str) -> String {

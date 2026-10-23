@@ -1,18 +1,16 @@
-//! `--selftest-http <url> [--token <bearer>] [--out <file>]`: one real GET
-//! through `http`, reported to a file or a MessageBox, since a GUI-subsystem
-//! binary has no stdout. `tests/Test-HttpClient.ps1` drives it.
-
 const PREVIEW_CHARS: usize = 400;
 
-pub struct SelfTest {
+/// `--selftest-http <url> [--token <bearer>] [--out <file>]`: one GET through
+/// `http`, which `tests/Test-HttpClient.ps1` drives against a live server.
+pub struct HttpSelfTest {
     url: String,
     /// Never written into the report, which may become a test artifact.
     token: Option<String>,
     out: Option<std::path::PathBuf>,
 }
 
-impl SelfTest {
-    pub fn from_args() -> Option<SelfTest> {
+impl HttpSelfTest {
+    pub fn from_args() -> Option<HttpSelfTest> {
         let mut arguments = std::env::args().skip(1);
         let mut url = None;
         let mut token = None;
@@ -25,11 +23,10 @@ impl SelfTest {
                 _ => {}
             }
         }
-        url.map(|url| SelfTest { url, token, out })
+        url.map(|url| HttpSelfTest { url, token, out })
     }
 
-    /// The process exit code: 0 when the GET succeeded, 1 when it failed, 2
-    /// when the report could not be written.
+    /// The process exit code: 0 when the GET succeeded.
     pub fn run(&self) -> i32 {
         let cancel = std::sync::atomic::AtomicBool::new(false);
         let mut content_length = None;
@@ -40,20 +37,7 @@ impl SelfTest {
                 Ok(body) => (0, self.success_report(&body, content_length)),
                 Err(e) => (1, self.failure_report(&e)),
             };
-
-        match &self.out {
-            Some(path) => {
-                if std::fs::write(path, &report).is_err() {
-                    crate::ui::message_box_error(
-                        core::ptr::null_mut(),
-                        &format!("Cannot write {}", path.display()),
-                    );
-                    return 2;
-                }
-            }
-            None => crate::ui::message_box_info(core::ptr::null_mut(), &report),
-        }
-        exit_code
+        super::report::deliver(self.out.as_deref(), &report, exit_code)
     }
 
     fn success_report(&self, body: &[u8], content_length: Option<u64>) -> String {
