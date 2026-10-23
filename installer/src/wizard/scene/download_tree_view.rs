@@ -55,7 +55,6 @@ pub unsafe fn populate(dialog: HWND, state: &mut crate::wizard::state::WizardSta
     state.tree_syncing = false;
 }
 
-/// Grouping rows start expanded, so the catalogue is visible at a glance.
 unsafe fn insert_node(
     control: HWND,
     state: &mut crate::wizard::state::WizardState,
@@ -69,12 +68,9 @@ unsafe fn insert_node(
     item.Anonymous.itemex.mask = ctl::TVIF_TEXT | ctl::TVIF_PARAM | ctl::TVIF_STATE;
     item.Anonymous.itemex.pszText = text.as_ptr() as *mut u16;
     item.Anonymous.itemex.lParam = node as LPARAM;
+    // Collapsed, so the opening view shows every category that needs a pick.
     item.Anonymous.itemex.stateMask = ctl::TVIS_EXPANDED;
-    item.Anonymous.itemex.state = if state.tree.node(node).is_leaf() {
-        0
-    } else {
-        ctl::TVIS_EXPANDED
-    };
+    item.Anonymous.itemex.state = 0;
 
     let handle = wm::SendMessageW(control, TVM_INSERTITEMW, 0, &item as *const _ as LPARAM);
     state.tree_items[node] = handle;

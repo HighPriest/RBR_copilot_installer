@@ -85,6 +85,15 @@ function Invoke-SelfTest {
     return $report
 }
 
+<#  A report only carries the keys its outcome produced — a success has no
+    CODE, a transport failure has no BODY — and Set-StrictMode turns a missing
+    key into a thrown error. #>
+function Get-ReportField {
+    param([Parameter(Mandatory)]$Report, [Parameter(Mandatory)][string]$Key, [string]$Default = '')
+    if ($Report.ContainsKey($Key)) { return [string]$Report[$Key] }
+    return $Default
+}
+
 Write-Host "=== Public endpoint: $Server ===" -ForegroundColor Cyan
 Write-Host "exe: $ExePath`n"
 
@@ -92,9 +101,9 @@ try {
     # Every later check depends on the handshake.
     Write-Host '-- TLS handshake --'
     $r = Invoke-SelfTest -Url "$Server/health"
-    $tlsOk = $r.CODE -ne '12175'
+    $tlsOk = (Get-ReportField $r CODE) -ne '12175'
     Assert-That 'the TLS handshake completes (WinHTTP -> Schannel)' $tlsOk `
-    ("WinHTTP {0}: {1}" -f $r.CODE, $r.MESSAGE)
+    ("WinHTTP {0}: {1}" -f (Get-ReportField $r CODE '-'), (Get-ReportField $r MESSAGE))
     if (-not $tlsOk) {
         Write-Host @'
 
@@ -109,33 +118,36 @@ try {
         throw 'TLS failed; skipping the rest'
     }
 
-    Assert-That '/health answers 200' ($r.RESULT -eq 'OK') "report says $($r.RESULT)"
-    Assert-That "/health says 'ok'" ($r.BODY -eq 'ok') "got [$($r.BODY)]"
+    Assert-That '/health answers 200' ((Get-ReportField $r RESULT) -eq 'OK') "report says $(Get-ReportField $r RESULT)"
+    Assert-That "/health says 'ok'" ((Get-ReportField $r BODY) -eq 'ok') "got [$(Get-ReportField $r BODY)]"
 
     Write-Host "`n-- catalogue --"
     $r = Invoke-SelfTest -Url "$Server/packages?game=rbr"
-    Assert-That '/packages?game=rbr answers' ($r.RESULT -eq 'OK') "report says $($r.MESSAGE)"
-    if ($r.RESULT -eq 'OK') {
+    Assert-That '/packages?game=rbr answers' ((Get-ReportField $r RESULT) -eq 'OK') "report says $(Get-ReportField $r MESSAGE)"
+    if ((Get-ReportField $r RESULT) -eq 'OK') {
         # BODY is truncated to a preview, so report rather than parse it.
-        Assert-That 'the catalogue is not empty' ($r.BODY -like '*"packages"*[*{*') `
-            "body began [$($r.BODY)]"
-        Write-Host "    bytes: $($r.BYTES)"
-        Write-Host "    first of it: $($r.BODY.Substring(0, [Math]::Min(200, $r.BODY.Length)))"
+        $body = Get-ReportField $r BODY
+        Assert-That 'the catalogue lists packages' ($body -like '*"packages"*') "body began [$body]"
+        # .Contains, not -like: "[]" is a wildcard character class (tests/README.md).
+        Assert-That 'the catalogue is not empty' (-not $body.Contains('"packages":[]')) "body began [$body]"
+        Write-Host "    bytes: $(Get-ReportField $r BYTES)"
+        Write-Host "    first of it: $($body.Substring(0, [Math]::Min(220, $body.Length)))"
     }
 
     # A 404 is a valid answer here, not a failure.
     Write-Host "`n-- message of the day --"
     $r = Invoke-SelfTest -Url "$Server/motd?lang=en"
-    if ($r.RESULT -eq 'OK') {
-        Assert-That '/motd returns text' ($r.BYTES -gt 0)
-        Write-Host "    says: $($r.BODY)"
+    if ((Get-ReportField $r RESULT) -eq 'OK') {
+        Assert-That '/motd returns text' ([int](Get-ReportField $r BYTES 0) -gt 0)
+        Write-Host "    says: $(Get-ReportField $r BODY)"
     } else {
-        Assert-That '/motd is 404 (none published) rather than broken' ($r.STATUS -eq '404') `
-            "status $($r.STATUS), message $($r.MESSAGE)"
+        Assert-That '/motd is 404 (none published) rather than broken' ((Get-ReportField $r STATUS) -eq '404') `
+            "status $(Get-ReportField $r STATUS), message $(Get-ReportField $r MESSAGE)"
         Write-Host '    none published; scene 2 shows its built-in offline copy.'
     }
 } catch {
-    Write-Host "  stopped: $($_.Exception.Message)" -ForegroundColor Yellow
+    # Register it: a run that stopped early must never reach the success line.
+    Assert-That "the check ran to completion" $false $_.Exception.Message
 } finally {
     Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
 }

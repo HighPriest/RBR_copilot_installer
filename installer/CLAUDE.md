@@ -8,6 +8,10 @@ noticeable code. If size regresses, fix it before continuing.
 
 1. **HTTPS = WinHTTP** (`Win32_Networking_WinHttp`). The OS provides TLS
    (Schannel). Never add reqwest/hyper/rustls/native-tls/openssl.
+   VERIFIED against the real endpoint: handshake, chain and SNI all work
+   through WinHTTP. Keep it verified — every other test talks plain HTTP to
+   loopback, so `tests/Test-PublicEndpoint.ps1` is the ONLY thing that takes
+   the `WINHTTP_FLAG_SECURE` branch. Run it when the deployment changes.
 2. **UI = raw Win32 dialogs** from `res/installer.rc` templates, compiled by
    `embed-resource` in build.rs, driven by `DialogBoxParamW`/`CreateDialogParamW`
    and a dlgproc. Never add a GUI framework crate.
