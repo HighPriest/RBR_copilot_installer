@@ -28,6 +28,8 @@ libsql = { version = "=0.6.0", default-features = false, features = [
   "remote",
   "tls",
 ] }
+# Only for `rusqlite`, without which libsql-sys calls Unix-only APIs and fails to build on Windows.
+libsql-sys = { version = "=0.8.0", features = ["rusqlite"] }
 sha2 = "=0.10.9"          # token hashing (server has no size budget)
 rand = "=0.8.8"           # token minting (admin CLI)
 # `env` feature: flags fall back to PACENOTES_* env vars (server/CLAUDE.md).

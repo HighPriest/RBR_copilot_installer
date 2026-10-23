@@ -60,6 +60,9 @@ jobs:
         with:
           workspaces: installer
 
+      - name: Default server (the local address from .env.example)
+        run: Copy-Item .env.example .env
+
       # The installer is excluded from the workspace, so the `server` job's
       # fmt/clippy never reach it. Lint it here or it goes unlinted entirely.
       - name: Format check

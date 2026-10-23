@@ -24,6 +24,8 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `ui/Test-UiLayout.ps1` | AUTOMATED TEST — walks the wizard, scenes 1-3 | yes | no |
 | `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes | no |
 | `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
+| `Test-PublicEndpoint.ps1` | MANUAL CHECK — the real server over HTTPS | no | no |
+| `ui/Test-WizardDownload.ps1` | AUTOMATED TEST — scenes 1-4, live catalogue | yes | no |
 | `Run-AllTests.ps1` | runner for all of the above, plus fmt + clippy | optional | no |
 
 `Run-AllTests.ps1` also runs `cargo fmt --check` and `cargo clippy` under
@@ -31,13 +33,23 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 the Cargo workspace, so the root `server` CI job's fmt/clippy never touch it —
 without these it would go unlinted.
 
-The GUI tests are the only ones CI skips: they drive real dialogs and need an
-interactive desktop session. Run them locally before pushing UI changes.
+CI skips the GUI tests (they drive real dialogs and need an interactive
+desktop session) and `Test-PublicEndpoint.ps1` (it depends on a machine
+someone else runs).
 
-**AUTOMATED TEST** asserts and exits non-zero on failure — safe to gate CI on.
-**AGENT / DEVELOPER AID** produces artifacts for a person or an AI agent to
-look at; it asserts nothing and always exits 0, so never gate on it.
-Each script states its kind in its own `.SYNOPSIS`.
+`Test-PublicEndpoint.ps1` earns its place despite not being a gate: every
+other test talks plain HTTP to loopback, so it is the ONLY one that takes the
+`WINHTTP_FLAG_SECURE` branch and exercises the Schannel handshake. That path
+is the justification for shipping no TLS crate at all, so it needs something
+that can actually fail. Run it when the deployment changes.
+
+Three kinds, and each script states which it is in its own `.SYNOPSIS`:
+
+| Kind | Meaning | Gate CI on it? |
+|---|---|---|
+| **AUTOMATED TEST** | Asserts, hermetic, exits non-zero on failure. | Yes |
+| **AGENT / DEVELOPER AID** | Produces artifacts for a person or an agent to look at. Asserts nothing, always exits 0. | No |
+| **MANUAL CHECK** | Asserts, but against something OUTSIDE this repo. | No — a red result often says nothing about the code |
 
 `Test-HttpClient.ps1` builds and runs a real `pacenotes-server`: WinHTTP
 cannot be unit tested, so the only honest test is against the server the

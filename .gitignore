@@ -5,3 +5,4 @@
 /server/data/*/packages/manifest.json
 Cargo.lock.bak
 legacy
+/installer/.env

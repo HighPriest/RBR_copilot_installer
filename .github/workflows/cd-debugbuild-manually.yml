@@ -62,6 +62,18 @@ jobs:
       with:
         workspaces: installer
 
+    - name: Default server (the repository variable, else the local example)
+      working-directory: installer
+      shell: pwsh
+      env:
+        PACENOTES_DEFAULT_SERVER: ${{ vars.PACENOTES_DEFAULT_SERVER }}
+      run: |
+        if ($env:PACENOTES_DEFAULT_SERVER) {
+          "PACENOTES_DEFAULT_SERVER=$env:PACENOTES_DEFAULT_SERVER" | Set-Content .env
+        } else {
+          Copy-Item .env.example .env
+        }
+
     - name: Test pure-logic modules
       working-directory: installer
       run: cargo test --locked

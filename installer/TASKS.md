@@ -155,6 +155,33 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I2b part 1 — wizard + worker | 275,456 | 269 kB |
 | I2b part 2 — tree model + scene 4 | 337408 | 329.5 kB |
 
+## HTTPS against the real server — VERIFIED, and one server-side blocker
+
+The installer now defaults to `https://pacenotes.example.com`, so the WinHTTP ->
+Schannel path is finally exercised. `tests/Test-PublicEndpoint.ps1` is the
+MANUAL CHECK for it (never a CI gate: it depends on a machine we do not run).
+
+- [x] The client's TLS works. `--selftest-http https://example.com/` returns
+      `STATUS: 502, CODE: 0` — a 502 means the handshake COMPLETED and the
+      server answered, which is the whole no-TLS-crate bet proven against a
+      real certificate.
+- [ ] BLOCKED ON THE SERVER: `https://pacenotes.example.com` fails the handshake
+      with WinHTTP 12175 (ERROR_WINHTTP_SECURE_FAILURE). It is not the
+      client: .NET fails identically, with
+      `TLS alert: InternalError` from the remote party. DNS resolves
+      (192.0.2.10) and TCP 443 connects, so the box is up.
+
+      A raw handshake with SNI `example.com` succeeds and presents `CN=example.com`;
+      the same handshake with SNI `pacenotes.example.com` gets the internal-error
+      alert. Caddy answers that way when it has no certificate for the
+      requested hostname — and `deploy/Caddyfile.snippet` in this repo names
+      the site `pacenotes.example.com`, not `pacenotes.example.com`. So the deployed
+      Caddyfile most likely has no site block for the hostname actually in
+      use, and never obtained a cert for it.
+
+      The wizard degrades correctly meanwhile: scene 2 shows "Server status:
+      Offline" and its built-in offline notice, which was confirmed on screen.
+
 ## Protocol as it stands
 
 The server serves every game from one instance. Three consequences the

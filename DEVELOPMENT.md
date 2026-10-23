@@ -12,12 +12,24 @@ server + shared** (and CI-style checks). VSCode connects to both.
    (needed for link.exe and the resource compiler used by embed-resource).
 3. VSCode extensions: `rust-lang.rust-analyzer`, `vadimcn.vscode-lldb`
    (debugging), `ms-vscode-remote.remote-ssh` (for the server side).
-4. Build + size gate (PowerShell):
+4. **Required before the first build:** the server the installer talks to by
+   default comes from `installer/.env`, which git ignores so that no
+   deployment's address is ever committed. Without it `cargo build` and
+   `cargo test` both fail.
+
+       cd installer
+       Copy-Item .env.example .env       # http://127.0.0.1:8080, a local server
+
+   For a release build, set `PACENOTES_DEFAULT_SERVER` in that file to the
+   public HTTPS address. The release workflows write it from the repository
+   variable of the same name, and fail when that variable is unset.
+   `--server <url>` still overrides it at run time.
+5. Build + size gate (PowerShell):
 
        cd installer
        .\tests\Test-BinarySize.ps1        # release build, fails > 500 kB
 
-5. Tests (pure-logic modules: zip, sha256, install):
+6. Tests (pure-logic modules: zip, sha256, install):
 
        cd installer
        cargo test

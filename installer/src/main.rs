@@ -11,8 +11,9 @@ mod ui;
 mod wizard;
 mod worker;
 
-/// Overridden by `--server <url>`, which is how the tests reach a local server.
-const DEFAULT_SERVER: &str = "http://127.0.0.1:8080";
+/// From `installer/.env`, read by build.rs; `--server <url>` overrides it, which
+/// is how the tests reach a local server.
+const DEFAULT_SERVER: &str = env!("PACENOTES_DEFAULT_SERVER");
 
 fn main() {
     if let Some(selftest) = selftest_http::SelfTest::from_args() {

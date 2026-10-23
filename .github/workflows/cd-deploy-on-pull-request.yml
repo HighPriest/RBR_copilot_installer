@@ -72,6 +72,18 @@ jobs:
       with:
         workspaces: installer
 
+    - name: Default server (the public address, from the repository variable)
+      working-directory: installer
+      shell: pwsh
+      env:
+        PACENOTES_DEFAULT_SERVER: ${{ vars.PACENOTES_DEFAULT_SERVER }}
+      run: |
+        if (-not $env:PACENOTES_DEFAULT_SERVER) {
+          Write-Error "Set the repository variable PACENOTES_DEFAULT_SERVER to the public server URL."
+          exit 1
+        }
+        "PACENOTES_DEFAULT_SERVER=$env:PACENOTES_DEFAULT_SERVER" | Set-Content .env
+
     - name: Test pure-logic modules
       working-directory: installer
       run: cargo test --locked
