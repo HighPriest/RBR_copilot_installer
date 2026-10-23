@@ -1,5 +1,7 @@
 /target
 **/target
+# A local server run's data root, auth.db included (DEVELOPMENT.md §5.1).
+/data/
 /server/data/
 /server/data/*/packages/**/*.zip
 /server/data/*/packages/manifest.json

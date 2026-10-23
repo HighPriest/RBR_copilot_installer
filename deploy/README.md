@@ -1,7 +1,6 @@
 # Deploying the Pacenotes server
 
-Written for: whoever administers the box that hosts the package server
-(today: the `server` user on `vps.example.com`).
+Written for: whoever administers the box that hosts the package server.
 
 One Podman Quadlet builds the server straight from git, one Caddy site block
 puts it on HTTPS, and one directory holds everything mutable. There is no
@@ -68,8 +67,7 @@ Edit `~/.config/containers/systemd/pacenotes.config.env`. At minimum check
 `GIT_REPO_URL` and `BRANCH_TO_BUILD`; leave `PACENOTES_LISTEN=0.0.0.0:8080`
 alone (on `127.0.0.1` the container would be unreachable from Caddy).
 
-Pulling over SSH means the host needs a key the git remote accepts — the same
-one `example.container` uses. Test it before starting the unit:
+Pulling over SSH means the host needs a key the git remote accepts — Test it before starting the unit:
 
 ```sh
 git ls-remote "$(. ~/.config/containers/systemd/pacenotes.config.env; echo $GIT_REPO_URL)" >/dev/null && echo "git access OK"
@@ -260,7 +258,7 @@ rejected.
 `No such file or directory` under `target/`). Another podman build on this
 host ran `podman image prune -f --external`, which deletes *concurrent*
 builds' intermediate containers. The quadlets here (including
-`example.container`) do exactly that in `ExecStartPre`, so do not build two of
+`pacenotes.container`) do exactly that in `ExecStartPre`, so do not build two of
 them at once — and if one of those units is stuck in a restart loop, fix that
 first. To build regardless, use a separate storage root:
 

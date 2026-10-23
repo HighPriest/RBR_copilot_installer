@@ -33,11 +33,6 @@ concurrent builds' intermediate containers — see below), and
 `StartLimitBurst=3`/`StartLimitIntervalSec=1h` so a crash cannot loop a
 release build.
 
-HOST NOTE: `example.service` is currently stuck restarting every ~40s, and its
-`ExecStartPre=podman image prune -f --external` deletes other builds'
-containers, which is why building anything else on this host fails with
-`identifier is not a container` / `layer not known`.
-
 ## 2026/10/12 — one server, every game
 
 Decided with the maintainer: one instance serves all games, and the first

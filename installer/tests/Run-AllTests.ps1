@@ -17,14 +17,14 @@
                                pacenotes-server, including the auth matrix
       7. Test-UiLayout.ps1   — scenes 1-3 against a dead server (the
                                offline path), once per shipped language
-      8. Test-WizardDownload — scenes 1-4 against a LIVE server holding a
-                               nested catalogue
+      8. Test-WizardDownload — the whole wizard, scenes 1-7, against a LIVE
+                               server holding a nested catalogue, with real
+                               downloads into a throwaway cache
 
     Steps 7 and 8 need Windows with an interactive desktop session, since they
-    show
-    real windows. Use -SkipUi on a headless machine; everything before them still
-    runs — step 6 included, because --selftest-http writes to a file and never
-    opens a window.
+    show real windows. Use -SkipUi on a headless machine; everything before
+    them still runs — step 6 included, because --selftest-http writes to a
+    file and never opens a window.
 
 .PARAMETER SkipUi
     Skip the GUI tests (use on a headless agent or in a container).

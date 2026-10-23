@@ -82,25 +82,36 @@ M4 IS COMPLETE. The installer opens, is localized, validates a game folder per
 game, and can talk to the server. It cannot yet DO anything with what it
 fetches — parsing the manifest into the ribbon's lists is I5 (M5).
 
-NOTE: `installer/DESIGN.md` arrived after this list was written and changed the
-installer's shape: it targets THREE games (Richard Burns Rally, Dirt Rally,
-BeamNG) behind a game ribbon, not RBR alone. The per-game folder field is
-validated against that game's marker executable. See `installer/TASKS.md` I2a.
-All installer checks live in `installer/tests/`; run them with
+NOTE: `installer/DESIGN.md` arrived after this list was written and changed
+the installer's shape twice. It targets FOUR games (Richard Burns Rally,
+Dirt Rally 2.0, Assetto Corsa, BeamNG), and rev. 2 replaced the game-ribbon
+layout with a SEVEN-SCENE WIZARD — one game per run, chosen on scene 3 and
+validated against that game's marker executable. Anywhere below that says
+"ribbon", "tab" or "Library view" predates that and means a wizard scene.
+See `installer/TASKS.md` I2a/I2b. All installer checks live in
+`installer/tests/`; run them with
 `pwsh -File installer/tests/Run-AllTests.ps1`.
 
 ## M5 — Installer cache + install engine
-- [ ] installer/TASKS.md → I4..I7
-- [ ] Download tab: per-category lists, download → per-user cache
-      (sha-keyed, verified), cached/not-cached state shown
-      (the old "Library view" wording predates `installer/DESIGN.md`; the UI
-      is now a game ribbon with per-category lists, and the lists stay empty
-      until this milestone fills them from the manifest)
-- [ ] Install engine: ledger (installed.json per game dir), overlay extract,
-      one-time backup of non-ledger files, uninstall from ledger
+- [x] installer/TASKS.md → I4 (worker + progress/cancel protocol)
+- [x] installer/TASKS.md → I5 (api, std-only sha256, the sha-keyed cache,
+      verified downloads)
+- [x] Download scene: one tree built from where packages SIT on the server,
+      download → per-user cache (sha-keyed, verified), per-leaf state shown
+      (not cached / downloaded / update / local only)
+- [x] Scenes 5-7: the three configuration picks, a progress scene that
+      really downloads, and a summary
+- [ ] installer/TASKS.md → I6 (zip reader)
+- [ ] Install engine (I7): ledger (installed.json per game dir), overlay
+      extract, one-time backup of non-ledger files, uninstall from ledger
 - [ ] Apply = diff selected-vs-ledger; exclusive groups honored;
       `requires` enforced
 - [ ] Port `write_rbr_config` (the one built-in special step)
+
+M5 IS HALF DONE. The wizard runs end to end and everything selected is
+downloaded and verified into the cache — but nothing is written to the game
+folder yet, and scene 6's log and scene 7's headline say exactly that rather
+than claiming an install. I6 and I7 close it.
 
 ## M6 — Installer auth + polish
 - [ ] installer/TASKS.md → I8..I10
@@ -110,6 +121,9 @@ All installer checks live in `installer/tests/`; run them with
 
 ## M7 — Ship
 - [ ] Server: Dockerfile or systemd unit + Caddyfile (auto-HTTPS)
+  - [ ] Build both server and installer executables in CI.
+  - [ ] Store artifacts of the build in CI
+  - [ ] Server: During deployment from Quadlet, source the executable from CI
 - [ ] Sidecar .toml files authored for the real packages (categories,
       display names, exclusive_group on the config variants, requires on
       voice packs)

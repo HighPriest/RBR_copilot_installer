@@ -57,8 +57,8 @@
       token; revoked token; ungrant takes effect; 404; traversal
       (`server/tests/api.rs`, 9 tests on an ephemeral port + in-memory DB)
 - [x] deploy/: Containerfile + entrypoint, Podman Quadlet
-      (`pacenotes.container` + `pacenotes.config.env`, builds from git like
-      `example.container`), Caddy site block, and `deploy/README.md` covering
+      (`pacenotes.container` + `pacenotes.config.env`, builds from git),
+      Caddy site block, and `deploy/README.md` covering
       configuration, publishing, access keys, MOTD and troubleshooting
 - [ ] Author sidecar .toml for the real packages (config variants share
       exclusive_group "pacenote-config"; voice packs requires their
@@ -176,7 +176,7 @@
 
 ## S8 deploy notes
 
-- The Quadlet follows the host's existing `example.container` pattern: every
+- The Quadlet follows the host's existing `pacenotes.container` pattern: every
   start clones the branch, builds the image and deletes the checkout, so
   `systemctl --user restart pacenotes` IS the deployment.
 - Two deliberate departures from that pattern:
@@ -184,7 +184,7 @@
     deletes buildah's intermediate containers, which kills any concurrent
     podman build on the host. That is how the first attempts to build this
     image failed (`identifier is not a container`, `layer not known`,
-    rustc reporting missing files under `target/`) while `example.service` was
+    rustc reporting missing files under `target/`) while `pacenotes.service` was
     looping through its own build.
   - `StartLimitIntervalSec=1h` + `StartLimitBurst=3`, because a restart loop
     re-runs a Rust release build each time.

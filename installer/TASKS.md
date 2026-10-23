@@ -331,6 +331,15 @@ can be stopped.
 - [ ] If over budget: replace serde_json with minimal JSON parse/write for
       Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5);
       revisit the 83 kB icon (see I1 size flag)
+- [ ] Decide what to do about `vcruntime140.dll`. The release binary imports
+      it, so a machine without the VC++ 2015-2022 redistributable refuses to
+      start it with a dialog that says nothing useful. Most gaming PCs have
+      it, which is exactly why this would be found by the one user who does
+      not. Either document the dependency (README does now) or build with
+      `-C target-feature=+crt-static` and re-measure against the gate — a
+      static CRT costs size, and the budget is the reason to decide rather
+      than assume.
 - [ ] Manual E2E on clean Windows VM, per game: full wizard online with and
       without secret, offline run from cache, switch style on re-run,
-      failure path (server dropped mid-download) lands on failure summary
+      failure path (server dropped mid-download) lands on failure summary.
+      A CLEAN VM is also what settles the vcruntime question above
