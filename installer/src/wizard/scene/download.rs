@@ -91,7 +91,7 @@ unsafe fn start_catalogue_fetch(dialog: HWND) {
 
     let request = state.next_request();
     let base_url = state.base_url.clone();
-    let token = Some(state.secret.clone()).filter(|secret| !secret.is_empty());
+    let token = state.token();
     let game_id = game.id();
     crate::worker::spawn(dialog, request, move || {
         crate::worker::fetch_packages(base_url, token, game_id)
@@ -111,6 +111,7 @@ unsafe fn build_tree(
         .unwrap_or(pacenotes_shared::GAME_RBR);
     let cached = state.cache.entries();
     state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached);
+    state.packages = packages;
 
     super::download_tree_view::populate(dialog, state);
 

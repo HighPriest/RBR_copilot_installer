@@ -36,6 +36,11 @@ impl HttpError {
     pub(super) fn cancelled() -> HttpError {
         HttpError::logical(CANCELLED, None)
     }
+
+    /// The caller asked to stop, which is not a failure to report.
+    pub fn is_cancelled(&self) -> bool {
+        self.code == 0 && self.status.is_none() && self.message == CANCELLED
+    }
 }
 
 /// WinHTTP's own codes (12001+) live in winhttp.dll's message table, not the

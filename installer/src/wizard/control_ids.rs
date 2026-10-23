@@ -32,3 +32,14 @@ pub const IDC_S5_VOICE_LABEL: u16 = 343;
 pub const IDC_S5_VOICE: u16 = 344;
 pub const IDC_S5_STYLE_LABEL: u16 = 345;
 pub const IDC_S5_STYLE: u16 = 346;
+
+pub const IDD_S6_INSTALL: u16 = 350;
+pub const IDC_S6_PHASE: u16 = 351;
+pub const IDC_S6_PROGRESS: u16 = 352;
+pub const IDC_S6_ITEM: u16 = 353;
+pub const IDC_S6_LOG: u16 = 354;
+
+pub const IDD_S7_SUMMARY: u16 = 360;
+pub const IDC_S7_RESULT: u16 = 361;
+pub const IDC_S7_DETAIL: u16 = 362;
+pub const IDC_S7_LOG: u16 = 363;

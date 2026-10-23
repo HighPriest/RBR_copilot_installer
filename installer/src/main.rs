@@ -31,7 +31,7 @@ fn main() {
         i18n::set_language(os_language);
     }
 
-    wizard::run(&server_url());
+    wizard::run(&server_url(), cache_root());
 }
 
 fn init_common_controls() {
@@ -48,13 +48,30 @@ fn init_common_controls() {
 }
 
 fn server_url() -> String {
+    argument_after("--server")
+        .map(|url| url.trim_end_matches('/').to_string())
+        .unwrap_or_else(|| DEFAULT_SERVER.to_string())
+}
+
+/// `--cache <dir>` gives a test run a cache of its own; otherwise the per-user
+/// cache, or a throwaway one in the temp folder when that cannot be located.
+fn cache_root() -> std::path::PathBuf {
+    argument_after("--cache")
+        .map(std::path::PathBuf::from)
+        .or_else(pacenotes_installer::cache::default_root)
+        .unwrap_or_else(|| {
+            std::env::temp_dir()
+                .join("PacenotesInstaller")
+                .join("cache")
+        })
+}
+
+fn argument_after(flag: &str) -> Option<String> {
     let mut arguments = std::env::args().skip(1);
     while let Some(argument) = arguments.next() {
-        if argument == "--server" {
-            if let Some(url) = arguments.next() {
-                return url.trim_end_matches('/').to_string();
-            }
+        if argument == flag {
+            return arguments.next();
         }
     }
-    DEFAULT_SERVER.to_string()
+    None
 }

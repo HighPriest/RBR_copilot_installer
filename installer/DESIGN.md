@@ -146,7 +146,16 @@ that tells two voices apart.
      packages; RBR additionally runs `write_rbr_config`.
 - Backup runs AFTER download because it needs each package's file list, and
   that list comes from reading the package's own zip.
+- Phase 1 downloads everything TICKED on scene 4 that is not already in the
+  cache — not just the scene 5 picks. The user ticked what they want to have;
+  they chose separately what to install.
+- The scene has no buttons of its own: no Back (DESIGN.md allows no going
+  back once it starts) and no Next, because it walks on to the summary by
+  itself when the run ends.
 - Cancel allowed during phase 1 only; partial downloads are discarded.
+  Pressing it VETOES the window close: the flag is raised, the worker stops
+  between chunks and reports it, and the wizard reaches scene 7 — rather
+  than the window vanishing while a thread still holds its handle.
 - On error: stop, keep the log visible, go to scene 7 in failure state.
 
 ## Scene 7 — Summary
@@ -154,7 +163,10 @@ that tells two voices apart.
 - Result: success / failure.
 - What was done: game + folder, the three installed choices, `pacenotes`
   packages, number and total size of downloads, backup location.
-- Log pane: collapsed on success, expanded on failure.
+- Log pane: collapsed on success, expanded on failure. Collapsed means
+  hidden with the detail block stretched over its room, not a smaller box —
+  a successful run's log is noise and a failed one's is the point.
+- Cancel is disabled here: the run is over, and **Finish** is the way out.
 - **Finish** closes the app.
 
 ## Logging

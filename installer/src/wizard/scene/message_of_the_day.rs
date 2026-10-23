@@ -75,7 +75,9 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
             crate::ui::set_text_raw(dialog, crate::wizard::control_ids::IDC_S2_MOTD, &text);
         }
         crate::worker::Message::SecretChecked(outcome) => on_secret_checked(dialog, outcome),
-        crate::worker::Message::Motd(None) | crate::worker::Message::Packages(_) => {}
+        crate::worker::Message::Motd(None)
+        | crate::worker::Message::Packages(_)
+        | crate::worker::Message::Installed(_) => {}
     }
 }
 

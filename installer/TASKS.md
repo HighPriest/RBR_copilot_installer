@@ -128,11 +128,28 @@ Scenes:
       exactly the part that tells two voices apart. Scene 4's tree and scene
       2's MOTD took the extra room too; scene 1 has space around it, which
       DESIGN.md allows
-- [ ] S6 Installation — needs the engine (I7)
-- [ ] S7 Summary
+- [x] S6 Installation — phase label, progress bar, current package with its
+      own byte count, live log pane. The DOWNLOAD phase is real and verified;
+      backup and install wait for I6/I7 and say so in the log rather than
+      being faked. No Back and no Next: the page runs itself and walks on to
+      the summary. Cancel is enabled only while the download can still be
+      stopped, and it VETOES the close — the flag is raised, the worker
+      reports `Cancelled` between chunks and the wizard reaches scene 7,
+      instead of the window vanishing while a thread still holds its handle
+- [x] S7 Summary — result, game and folder, the three picks, the no-choice
+      packages, how much came down the wire, and where the log file is. The
+      log pane is hidden on success with the detail block stretched over it,
+      and shown on failure. Finish closes; Cancel is disabled, since there is
+      nothing left to stop
+- [x] The result headline currently reports a download with no install,
+      because that is what happens. When I7 lands it becomes `IDS_S7_OK` —
+      that one `match` arm in `show_summary` is the whole change
 - [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
       writes, so it follows I7
-- [ ] Log sink: in-memory + `%LOCALAPPDATA%\PacenotesInstaller\install.log`
+- [x] Log sink (`src/runlog.rs`): in-memory + a line-by-line flush to
+      `%LOCALAPPDATA%\PacenotesInstaller\install.log`, truncated per run.
+      Flushed per line because the run worth reading about is the one that
+      died; buffering would drop exactly the interesting part
 
 How the wizard host actually behaves, and the three OS behaviours worked
 around to get there, are in `DESIGN.md` under Implementation notes. Read that
@@ -181,6 +198,7 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I2b part 2 — tree model + scene 4 | 337408 | 329.5 kB |
 | I5 — sha256 + cache + verified download | 402432 | 393 kB |
 | I2b — scene 5 + the bigger page | 412160 | 402.5 kB |
+| I2b — scenes 6 and 7 + the run log | 427520 | 417.5 kB |
 
 ## Protocol as it stands
 
@@ -195,11 +213,11 @@ installer must honour, and which the remaining tasks below carry:
 3. `"directory/name"` is NOT unique across games, so the cache index and the
    install ledger must key on the game too.
 
-## I4 — Worker thread + progress protocol  (core landed with I2b part 1)
+## I4 — Worker thread + progress protocol  (done)
 
 `src/worker.rs` exists because scene 2 cannot ask /health and /motd from the
-UI thread. What it has now is the minimum those scenes needed; the progress
-half arrives with scene 6.
+UI thread. Scene 6 completed it: a job that reports as it goes, and one that
+can be stopped.
 
 - [x] `WM_APP` message constant + a `Message` enum per job, carried as a
       leaked `Box` reclaimed by the receiver
@@ -208,13 +226,20 @@ half arrives with scene 6.
 - [x] Request ids: a scene bumps one per request so a late answer to a
       superseded request (a 10 s connect timeout landing after the user moved
       on) is recognised and dropped
-- [ ] Cancel support: AtomicBool checked in download loop (`http.rs` already
-      takes one; nothing cancellable runs yet)
-- [ ] Messages carry what scene 6 needs: phase, current file name, bytes
-      done / total; plus log lines for the shared log sink
+- [x] Cancel support: an `Arc<AtomicBool>` the UI raises and the download
+      loop reads between chunks. Scene 6 vetoes the window close and waits
+      for the worker to report `Cancelled`, so no thread is left posting to
+      a page that has gone
+- [x] `WM_WORKER_PROGRESS` carries what scene 6 needs: phase, the package
+      being worked on, its own bytes done/total, the phase's bytes
+      done/total, and a log line when there is one. Posts are throttled to
+      10 a second — a 64 KiB chunk of a 40 MB package arrives hundreds of
+      times a second, and a post per chunk would spend the UI thread
+      redrawing a bar
+- [x] `spawn_reporting` hands the job a `Reporter`, not the window handle,
+      so the "a worker never touches a control" rule holds by construction
 - [x] Scene 2 uses it for /health + /motd
-- [ ] Scene 4 uses it for `/packages?game=<id>` — the game is known by then,
-      so ask the server for one game's manifest
+- [x] Scene 4 uses it for `/packages?game=<id>`, scene 6 for the downloads
 
 ## I5 — API + cache
 - [x] sha256.rs (std-only), tested against the published FIPS/CAVP vectors

@@ -1,6 +1,7 @@
 //! The Win32 vocabulary the wizard pages are written in.
 
 mod combo_box;
+mod control_layout;
 mod control_text;
 mod folder_picker;
 mod list_box;
@@ -8,6 +9,7 @@ mod message_box;
 mod resource;
 
 pub use combo_box::{combo_add, combo_reset, combo_select, combo_selection};
+pub use control_layout::{scroll_to_end, show, stretch_to_bottom_of};
 pub use control_text::{enable, get_text, set_text, set_text_raw, set_window_text};
 pub use folder_picker::browse_for_folder;
 pub use list_box::{list_add, list_reset, list_select, list_selection};

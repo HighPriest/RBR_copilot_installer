@@ -70,6 +70,17 @@ END
 #define IDC_S3_GAME_LABEL   324
 #define IDC_S3_GAME         325
 
+#define IDD_S6_INSTALL      350
+#define IDC_S6_PHASE        351
+#define IDC_S6_PROGRESS     352
+#define IDC_S6_ITEM         353
+#define IDC_S6_LOG          354
+
+#define IDD_S7_SUMMARY      360
+#define IDC_S7_RESULT       361
+#define IDC_S7_DETAIL       362
+#define IDC_S7_LOG          363
+
 #define IDD_S5_CONFIG       340
 #define IDC_S5_LANG_LABEL   341
 #define IDC_S5_LANG         342
@@ -143,6 +154,28 @@ END
 #define IDS_S5_MISSING        104
 #define IDS_S5_NONE           105
 
+// Scene 6 — Installation (110-129)
+#define IDS_S6_TITLE          110
+#define IDS_S6_DOWNLOADING    111
+#define IDS_S6_BACKUP         112
+#define IDS_S6_INSTALLING     113
+#define IDS_S6_FINISHED       114
+#define IDS_S6_NOTHING        115
+#define IDS_S6_CANCELLING     116
+#define IDS_S6_STARTED        117
+
+// Scene 7 — Summary (130-149)
+#define IDS_S7_TITLE          130
+#define IDS_S7_OK             131
+#define IDS_S7_FAILED         132
+#define IDS_S7_CANCELLED      133
+#define IDS_S7_PENDING_ENGINE 134
+#define IDS_S7_GAME           135
+#define IDS_S7_DOWNLOADS      136
+#define IDS_S7_EXTRAS         137
+#define IDS_S7_LOGFILE        138
+#define IDS_S7_NOTHING_TODO   139
+
 // Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
 // A PropertySheet takes its largest page's size, so every page shares one: 330x215 DLU, for scene 5's three lists.
 // The lists are full width because a third of it clips the part of a co-driver's path that tells two voices apart.
@@ -214,6 +247,35 @@ BEGIN
                     LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
 END
 
+IDD_S6_INSTALL DIALOGEX 0, 0, 330, 215
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_S6_PHASE, 14, 28, 302, 10
+    CONTROL         "", IDC_S6_PROGRESS, "msctls_progress32",
+                    WS_BORDER, 14, 42, 302, 12
+    LTEXT           "", IDC_S6_ITEM, 14, 60, 302, 10
+    EDITTEXT        IDC_S6_LOG, 14, 76, 302, 130,
+                    ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
+                    | WS_VSCROLL | NOT WS_TABSTOP
+END
+
+// The log is hidden on success, and the detail block then stretches over it.
+IDD_S7_SUMMARY DIALOGEX 0, 0, 330, 215
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    // Three lines, because the Polish result sentence wraps to three.
+    LTEXT           "", IDC_S7_RESULT, 14, 28, 302, 30
+    EDITTEXT        IDC_S7_DETAIL, 14, 62, 302, 56,
+                    ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+    EDITTEXT        IDC_S7_LOG, 14, 124, 302, 82,
+                    ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
+                    | WS_VSCROLL | NOT WS_TABSTOP
+END
+
 // Strings: one STRINGTABLE per language, and every id must exist in every table.
 // Game names are proper nouns, kept untranslated in src/gamedir.rs.
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -275,6 +337,26 @@ BEGIN
     IDS_S5_STYLE        "Pacenotes style:"
     IDS_S5_MISSING      "Choose one option under: %s"
     IDS_S5_NONE         "(nothing was selected on the previous screen)"
+
+    IDS_S6_TITLE        "Installation"
+    IDS_S6_DOWNLOADING  "Downloading"
+    IDS_S6_BACKUP       "Backing up files that will be replaced"
+    IDS_S6_INSTALLING   "Installing"
+    IDS_S6_FINISHED     "Finished"
+    IDS_S6_NOTHING      "Everything you selected is already on this computer."
+    IDS_S6_CANCELLING   "Stopping..."
+    IDS_S6_STARTED      "Starting."
+
+    IDS_S7_TITLE        "Summary"
+    IDS_S7_OK           "Installation complete."
+    IDS_S7_FAILED       "The installation did not finish: %s"
+    IDS_S7_CANCELLED    "Cancelled. Nothing was installed, and the unfinished download was discarded."
+    IDS_S7_PENDING_ENGINE "Everything selected was downloaded and verified. Installing it into the game folder is not implemented yet, so the game folder was not touched."
+    IDS_S7_GAME         "Game: %s"
+    IDS_S7_DOWNLOADS    "Downloaded this run: %s"
+    IDS_S7_EXTRAS       "Pacenotes packages: %s"
+    IDS_S7_LOGFILE      "Log file: %s"
+    IDS_S7_NOTHING_TODO "Nothing needed downloading."
 END
 
 // Polish reuses the legacy InstallationForm.pl.resx terms, so returning users see familiar words.
@@ -337,4 +419,24 @@ BEGIN
     IDS_S5_STYLE        "Styl pacenotes:"
     IDS_S5_MISSING      "Wybierz jedną pozycję w: %s"
     IDS_S5_NONE         "(na poprzednim ekranie nie wybrano nic)"
+
+    IDS_S6_TITLE        "Instalacja"
+    IDS_S6_DOWNLOADING  "Pobieranie"
+    IDS_S6_BACKUP       "Tworzenie kopii zapasowej zastępowanych plików"
+    IDS_S6_INSTALLING   "Instalowanie"
+    IDS_S6_FINISHED     "Zakończono"
+    IDS_S6_NOTHING      "Wszystko, co wybrano, jest już na tym komputerze."
+    IDS_S6_CANCELLING   "Zatrzymywanie..."
+    IDS_S6_STARTED      "Rozpoczynam."
+
+    IDS_S7_TITLE        "Podsumowanie"
+    IDS_S7_OK           "Instalacja zakończona."
+    IDS_S7_FAILED       "Instalacja nie została ukończona: %s"
+    IDS_S7_CANCELLED    "Anulowano. Nic nie zostało zainstalowane, a nieukończone pobieranie odrzucono."
+    IDS_S7_PENDING_ENGINE "Wszystko, co wybrano, zostało pobrane i zweryfikowane. Instalowanie w folderze gry nie jest jeszcze zaimplementowane, więc folder gry pozostał nietknięty."
+    IDS_S7_GAME         "Gra: %s"
+    IDS_S7_DOWNLOADS    "Pobrano w tym przebiegu: %s"
+    IDS_S7_EXTRAS       "Pakiety pacenotes: %s"
+    IDS_S7_LOGFILE      "Plik dziennika: %s"
+    IDS_S7_NOTHING_TODO "Nie trzeba było nic pobierać."
 END

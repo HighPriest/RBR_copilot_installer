@@ -333,6 +333,8 @@ function Invoke-TreeCheckRoots {
     }
 
     for ($row = 0; $row -lt $roots.Count; $row++) {
+        # A click toggles and cached rows start ticked, so only unticked rows are clicked.
+        if ((Get-TreeStateImage -Tree $h -Item $roots[$row]) -eq 2) { continue }
         $x = $indent + [int]($height / 2)
         $y = $row * $height + [int]($height / 2)
         $point = [IntPtr](($y -shl 16) -bor $x)

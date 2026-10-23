@@ -4,11 +4,15 @@ mod configuration;
 mod download;
 mod download_tree_view;
 mod game_folder;
+mod installation;
 mod language;
 mod message_of_the_day;
+mod summary;
 
 pub use configuration::configuration_page;
 pub use download::download_page;
 pub use game_folder::game_folder_page;
+pub use installation::installation_page;
 pub use language::language_page;
 pub use message_of_the_day::motd_page;
+pub use summary::summary_page;

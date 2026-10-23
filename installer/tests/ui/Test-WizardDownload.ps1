@@ -42,6 +42,7 @@ $IDC_S4_TREE = 331; $IDC_S4_STATUS = 332
 $IDC_S5_LANG_LABEL = 341; $IDC_S5_LANG = 342
 $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
+$IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
 $PSBTN_NEXT = 1
 $TVM_GETCOUNT = 0x1105
 
@@ -118,7 +119,10 @@ try {
     [void](New-Item -ItemType Directory -Force -Path $gameFolder)
     [void](New-Item -ItemType File -Path (Join-Path $gameFolder 'RichardBurnsRally_SSE.exe'))
 
-    $launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$port")
+    # A cache of its own, so the run downloads for real and never touches the user's cache.
+    $cacheDir = Join-Path $work 'cache'
+    $launch = Start-Installer -ExePath $ExePath -ExtraArgs @(
+        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
     $proc = $launch.Process
 
     $sheet = Wait-ForDialog -OwnerPid $proc.Id
@@ -245,11 +249,45 @@ try {
         Assert-That "a $($pair.Name) can be chosen" ($selected -eq 1) "selection came back $selected"
     }
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
-    $modal6 = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 2500
-    # Silence proves every keyboard pick reached the model through LBN_SELCHANGE.
-    Assert-That 'Install with all three chosen is accepted' ($null -eq $modal6) `
-        'a warning was raised, so a pick never reached the model'
-    if ($modal6) { Dismiss-Modal -Modal $modal6.Handle }
+
+    Write-Host "`n-- scenes 6 and 7: installation and summary --"
+    # Scene 7 appearing proves Install was accepted, which needs every pick in the model.
+    $page7 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+    Assert-That 'Install with all three chosen runs and reaches the summary' `
+    ($page7 -ne [IntPtr]::Zero)
+    if ($page7 -eq [IntPtr]::Zero) { throw 'scene 7 never appeared' }
+
+    Assert-Equal 'scene 7 title' (Get-CtrlText $page7 $IDC_SCENE_TITLE) $S['IDS_S7_TITLE']
+    Assert-Equal 'primary button reads Finish' `
+    (Get-WizardButtonText -Sheet $h -ButtonId 0x3024) $S['IDS_BTN_FINISH']
+    # Until the engine lands, a download and no install is what really happened.
+    Assert-Equal 'the result line reports what really happened' `
+    (Get-CtrlText $page7 $IDC_S7_RESULT) $S['IDS_S7_PENDING_ENGINE']
+
+    $detail = Get-CtrlText $page7 $IDC_S7_DETAIL
+    Assert-That 'the summary names the game folder' ($detail.Contains($gameFolder)) `
+        "summary said [$detail]"
+    foreach ($caption in 'IDS_S5_LANGUAGE', 'IDS_S5_VOICE', 'IDS_S5_STYLE') {
+        Assert-That "the summary reports the $($S[$caption].TrimEnd(':')) pick" `
+        ($detail.Contains($S[$caption])) "summary said [$detail]"
+    }
+    # Every package was ticked and the cache started empty.
+    Assert-That 'the summary counts what was downloaded' `
+    ($detail.Contains("$($CATALOGUE.Count) (")) "summary said [$detail]"
+
+    # DESIGN.md collapses the log on success; hidden, it still holds the record.
+    Assert-That 'the log pane is collapsed on success' `
+    (-not (Test-CtrlVisible -Dialog $page7 -CtrlId $IDC_S7_LOG))
+    $logText = Get-CtrlText $page7 $IDC_S7_LOG
+    Assert-That 'the log recorded the download phase' `
+    ($logText.Contains('downloading rbr/public/')) "log said [$logText]"
+    Assert-That 'the log says the install phase did not run' `
+    ($logText.Contains('not implemented yet')) "log said [$logText]"
+
+    $payloads = @(Get-ChildItem -Path $cacheDir -Filter '*.zip' -ErrorAction SilentlyContinue)
+    Assert-That 'the verified payloads are in the cache' ($payloads.Count -ge 1) `
+        "cache holds $($payloads.Count) payloads"
+    Assert-That 'the cache index was written' (Test-Path (Join-Path $cacheDir 'cache.json'))
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

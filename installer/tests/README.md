@@ -22,10 +22,10 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `ui/Test-UiLayout.ps1` | AUTOMATED TEST — walks the wizard, scenes 1-3 | yes | no |
-| `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs | yes | no |
+| `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs of scenes 1-7 | yes | no |
 | `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
 | `Test-PublicEndpoint.ps1` | MANUAL CHECK — the real server over HTTPS | no | no |
-| `ui/Test-WizardDownload.ps1` | AUTOMATED TEST — scenes 1-4, live catalogue | yes | no |
+| `ui/Test-WizardDownload.ps1` | AUTOMATED TEST — scenes 1-7, live catalogue, real downloads | yes | no |
 | `Run-AllTests.ps1` | runner for all of the above, plus fmt + clippy | optional | no |
 
 `Run-AllTests.ps1` also runs `cargo fmt --check` and `cargo clippy` under
@@ -50,6 +50,13 @@ Three kinds, and each script states which it is in its own `.SYNOPSIS`:
 | **AUTOMATED TEST** | Asserts, hermetic, exits non-zero on failure. | Yes |
 | **AGENT / DEVELOPER AID** | Produces artifacts for a person or an agent to look at. Asserts nothing, always exits 0. | No |
 | **MANUAL CHECK** | Asserts, but against something OUTSIDE this repo. | No — a red result often says nothing about the code |
+
+Anything that downloads is given a throwaway cache with `--cache`. Without
+it a run would read back whatever a previous run left in the per-user cache —
+so the suite would pass or fail depending on history — and would quietly fill
+a developer's profile with fixture packages. `Get-UiScreenshot.ps1` takes the
+same flag, for the same reason: a scene 6 with nothing to download is not
+worth a screenshot.
 
 `Test-HttpClient.ps1` builds and runs a real `pacenotes-server`: WinHTTP
 cannot be unit tested, so the only honest test is against the server the

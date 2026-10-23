@@ -7,7 +7,9 @@ pub mod engine;
 pub mod gamedir;
 pub mod install;
 pub mod ledger;
+pub mod runlog;
 pub mod sha256;
+pub mod size;
 pub mod tree;
 pub mod zip;
 

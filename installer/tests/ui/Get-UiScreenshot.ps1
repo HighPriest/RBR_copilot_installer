@@ -19,7 +19,14 @@
     usual cause of clipped labels, so check both when changing a layout.
 
 .PARAMETER Scenes
-    How many scenes to walk and capture, from 1. Default 5 (all that exist).
+    How many scenes to walk and capture, from 1. Default 5 — scenes 6 and 7
+    DOWNLOAD everything the catalogue offers, so ask for them deliberately.
+
+.PARAMETER CacheDir
+    Where scene 6 should put what it downloads. Give it a throwaway folder
+    when capturing scenes 6-7, or the captures land in the real per-user
+    cache and the next run finds everything already there (and a scene 6 with
+    nothing to do is not worth a screenshot).
 
 .PARAMETER Server
     Which server to point the wizard at. The default is a dead address, which
@@ -44,11 +51,12 @@
 [CmdletBinding()]
 param(
     [ValidateSet(0, 1)][int]$Language = 0,
-    [ValidateRange(1, 5)][int]$Scenes = 5,
+    [ValidateRange(1, 7)][int]$Scenes = 5,
     [string]$GameFolder,
     [string]$OutDir = $env:TEMP,
     [string]$ExePath,
-    [string]$Server = 'http://127.0.0.1:1'
+    [string]$Server = 'http://127.0.0.1:1',
+    [string]$CacheDir
 )
 
 Set-StrictMode -Version Latest
@@ -61,6 +69,10 @@ $IDC_S2_MOTD = 311
 $IDC_S3_PATH = 322
 $IDC_S4_TREE = 331
 $IDC_S5_LANG = 342
+$IDC_S5_VOICE = 344
+$IDC_S5_STYLE = 346
+$IDC_S6_PROGRESS = 352
+$IDC_S7_RESULT = 361
 $PSBTN_NEXT = 1
 
 function Save-WindowPng {
@@ -103,7 +115,9 @@ if (-not $GameFolder) {
 }
 
 # A dead server by default keeps scene 2 on its offline path; -Server gives scenes 4 and 5 real content.
-$launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', $Server)
+$extra = @('--server', $Server)
+if ($CacheDir) { $extra += @('--cache', $CacheDir) }
+$launch = Start-Installer -ExePath $ExePath -ExtraArgs $extra
 $proc = $launch.Process
 
 try {
@@ -150,6 +164,24 @@ try {
     if ($page -eq [IntPtr]::Zero) { throw 'scene 5 never appeared' }
     Start-Sleep -Milliseconds 500
     Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s5-lang$Language.png")
+    if ($Scenes -lt 6) { return }
+
+    # Answer all three questions, then let the run start.
+    foreach ($id in $IDC_S5_LANG, $IDC_S5_VOICE, $IDC_S5_STYLE) {
+        [void](Select-ListItem -Dialog $page -CtrlId $id -Index 0)
+    }
+    Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
+    $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S6_PROGRESS
+    if ($page -eq [IntPtr]::Zero) { throw 'scene 6 never appeared' }
+    # Mid-flight, since a progress scene is only worth seeing while something moves.
+    Start-Sleep -Seconds 2
+    Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s6-lang$Language.png")
+    if ($Scenes -lt 7) { return }
+
+    $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S7_RESULT -TimeoutMs 600000
+    if ($page -eq [IntPtr]::Zero) { throw 'scene 7 never appeared' }
+    Start-Sleep -Milliseconds 500
+    Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s7-lang$Language.png")
 } finally {
     if (-not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($temp) { Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue }

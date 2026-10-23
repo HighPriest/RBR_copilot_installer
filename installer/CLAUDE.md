@@ -68,19 +68,31 @@ noticeable code. If size regresses, fix it before continuing.
 
 ## Module map
 
-- `main.rs` — entry point, common-controls init, launches the wizard.
+- `main.rs` — entry point, common-controls init, the developer flags
+  (`--server`, `--cache`), launches the wizard. `--cache` points a run at a
+  throwaway cache, so the UI suite downloads for real.
 - `selftest/` — `--selftest-http`, the WinHTTP check that
   `tests/Test-HttpClient.ps1` drives, and `--selftest-download`.
 - `package_download.rs` — fetch a package into the cache, verified by sha256.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.
-  Control ids mirror `res/installer.rc` in `control_ids.rs`. Before changing
-  the sheet, read Implementation notes in `DESIGN.md`: the scene title, the
+  Control ids mirror `res/installer.rc` in `control_ids.rs`. All seven scenes
+  exist; scene 6 runs only the download phase until `zip.rs` (I6) and
+  `engine.rs` (I7) land, and its log and summary say so. Before changing the
+  sheet, read Implementation notes in `DESIGN.md`: the scene title, the
   per-scene button labels and the title bar all work around something the OS
   does not give.
 - `ui/` — the small Win32 vocabulary the pages are written in: control
-  text, combo boxes, the three modal shapes, the folder picker.
+  text, combo boxes, list boxes, the three modal shapes, the folder picker.
+- `choices.rs` — scene 5's model: the three single-select lists and the
+  no-choice extras, derived from what scene 4 committed. Pure.
+- `tree/` — scene 4's model: manifest + cache → rows, states, checks. Pure.
+- `runlog.rs` — the run log: in memory for the pane, flushed line by line to
+  `%LOCALAPPDATA%\PacenotesInstaller\install.log`. The UI thread owns it, as
+  it owns the controls.
+- `size.rs` — byte counts as a person reads them ("41.6 MB"), in binary units
+  so they match Explorer.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;
   it posts a `Message` and the UI thread acts on it.
 - `gamedir.rs` — which games exist, their dropdown labels, and the marker

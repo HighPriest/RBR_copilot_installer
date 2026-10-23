@@ -116,7 +116,7 @@ unsafe fn on_install(dialog: HWND) -> isize {
 }
 
 /// Matched by category rather than position, so a reordered list cannot be mislabelled.
-fn category_caption(category: &str) -> u16 {
+pub(super) fn category_caption(category: &str) -> u16 {
     match category {
         pacenotes_shared::CATEGORY_LANGUAGE => crate::i18n::IDS_S5_LANGUAGE,
         pacenotes_shared::CATEGORY_CODRIVER => crate::i18n::IDS_S5_VOICE,

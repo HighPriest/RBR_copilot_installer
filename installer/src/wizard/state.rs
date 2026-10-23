@@ -15,6 +15,8 @@ pub struct WizardState {
     pub base_url: String,
     pub cache: pacenotes_installer::cache::Cache,
 
+    /// The catalogue behind the tree, whose sizes and digests scene 6 needs.
+    pub packages: Vec<pacenotes_shared::PackageInfo>,
     pub tree: pacenotes_installer::tree::Tree,
     /// `HTREEITEM` per tree node, by node index.
     pub tree_items: Vec<isize>,
@@ -26,11 +28,20 @@ pub struct WizardState {
     /// Rebuilt from the tree each time scene 5 activates.
     pub config: pacenotes_installer::choices::Configuration,
 
+    /// Shown on scenes 6 and 7, and written to disk as it grows.
+    pub log: pacenotes_installer::runlog::Log,
+    /// Raised by the UI thread, read by the worker between chunks.
+    pub cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    /// Set when scene 6 starts its run, since the sheet activates the page again afterwards.
+    pub install_started: bool,
+    /// `None` while the run is still going.
+    pub outcome: Option<crate::worker::Outcome>,
+
     request: usize,
 }
 
 impl WizardState {
-    pub fn new(base_url: String) -> WizardState {
+    pub fn new(base_url: String, cache_root: std::path::PathBuf) -> WizardState {
         WizardState {
             language: crate::i18n::Language::En,
             secret: String::new(),
@@ -40,13 +51,20 @@ impl WizardState {
             detected: Vec::new(),
             game: None,
             base_url,
-            cache: open_cache(),
+            cache: pacenotes_installer::cache::Cache::open(cache_root),
+            packages: Vec::new(),
             tree: pacenotes_installer::tree::Tree::default(),
             tree_items: Vec::new(),
             tree_syncing: false,
             catalogue_loaded: false,
             chosen: Vec::new(),
             config: pacenotes_installer::choices::Configuration::default(),
+            log: pacenotes_installer::runlog::Log::create(
+                pacenotes_installer::runlog::default_path(),
+            ),
+            cancel: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            install_started: false,
+            outcome: None,
             request: 0,
         }
     }
@@ -60,14 +78,9 @@ impl WizardState {
     pub fn is_current_request(&self, request: usize) -> bool {
         request == self.request
     }
-}
 
-/// A cache that cannot be located behaves as an empty one in the temp folder.
-fn open_cache() -> pacenotes_installer::cache::Cache {
-    let root = pacenotes_installer::cache::default_root().unwrap_or_else(|| {
-        std::env::temp_dir()
-            .join("PacenotesInstaller")
-            .join("cache")
-    });
-    pacenotes_installer::cache::Cache::open(root)
+    /// The access key for a request, or `None` for anonymous.
+    pub fn token(&self) -> Option<String> {
+        Some(self.secret.clone()).filter(|secret| !secret.is_empty())
+    }
 }
