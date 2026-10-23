@@ -19,6 +19,12 @@ pub unsafe extern "system" fn download_page(
             on_worker_done(dialog, wparam, lparam);
             1
         }
+        super::download_tree_view::WM_SYNC_CHECKS => {
+            if let Some(state) = crate::wizard::page::state(dialog) {
+                super::download_tree_view::refresh_checks(dialog, state);
+            }
+            1
+        }
         wm::WM_NOTIFY => match crate::wizard::page::notify_code(lparam) {
             Some(ctl::PSN_SETACTIVE) => {
                 crate::wizard::page::set_sheet_caption(dialog);
@@ -103,8 +109,7 @@ unsafe fn build_tree(
         .game
         .map(|game| game.id())
         .unwrap_or(pacenotes_shared::GAME_RBR);
-    // TODO(I5): read the cache index; until then nothing is cached.
-    let cached: Vec<pacenotes_installer::tree::CachedPackage> = Vec::new();
+    let cached = state.cache.entries();
     state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached);
 
     super::download_tree_view::populate(dialog, state);

@@ -27,6 +27,11 @@ pub fn run(base_url: &str) {
             Some(crate::wizard::scene::download_page),
             state_pointer,
         ),
+        page(
+            crate::wizard::control_ids::IDD_S5_CONFIG,
+            Some(crate::wizard::scene::configuration_page),
+            state_pointer,
+        ),
     ];
 
     let caption = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));

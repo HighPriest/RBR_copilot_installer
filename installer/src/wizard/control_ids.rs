@@ -24,3 +24,11 @@ pub const IDC_S3_GAME: u16 = 325;
 pub const IDD_S4_DOWNLOAD: u16 = 330;
 pub const IDC_S4_TREE: u16 = 331;
 pub const IDC_S4_STATUS: u16 = 332;
+
+pub const IDD_S5_CONFIG: u16 = 340;
+pub const IDC_S5_LANG_LABEL: u16 = 341;
+pub const IDC_S5_LANG: u16 = 342;
+pub const IDC_S5_VOICE_LABEL: u16 = 343;
+pub const IDC_S5_VOICE: u16 = 344;
+pub const IDC_S5_STYLE_LABEL: u16 = 345;
+pub const IDC_S5_STYLE: u16 = 346;

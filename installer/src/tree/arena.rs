@@ -27,6 +27,27 @@ impl Tree {
         &self.nodes[index].children
     }
 
+    /// Labels from the category row down to `index`, inclusive.
+    pub fn path_of(&self, index: usize) -> Vec<&str> {
+        let mut labels = Vec::new();
+        let mut current = Some(index);
+        while let Some(node) = current {
+            labels.push(self.nodes[node].label.as_str());
+            current = self.nodes[node].parent;
+        }
+        labels.reverse();
+        labels
+    }
+
+    /// The category as the server spells it, for comparing with `CATEGORY_*`.
+    pub fn category_of(&self, index: usize) -> &str {
+        let mut current = index;
+        while let Some(parent) = self.nodes[current].parent {
+            current = parent;
+        }
+        &self.nodes[current].label
+    }
+
     /// Every leaf under `index`, or in the whole tree for `None`, in display order.
     pub fn leaves_under(&self, index: Option<usize>) -> Vec<usize> {
         let mut leaves = Vec::new();

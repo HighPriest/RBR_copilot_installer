@@ -13,6 +13,8 @@ const TVI_ROOT: isize = -0x10000;
 const TVI_LAST: isize = -0x0FFFE;
 /// `TVN_FIRST - 17`, which windows-sys does not declare.
 pub const TVN_ITEMCHANGEDW: u32 = (-417i32) as u32;
+/// Posted to the page to push the model's checkboxes into the control.
+pub const WM_SYNC_CHECKS: u32 = wm::WM_APP + 10;
 
 /// The state image lives in bits 12-15: 1 unchecked, 2 checked, 3 partial.
 const STATE_IMAGE_SHIFT: u32 = 12;
@@ -94,7 +96,7 @@ fn row_label(state: &crate::wizard::state::WizardState, node: usize) -> String {
 }
 
 /// Pushes every node's checkbox from the model into the control.
-unsafe fn refresh_checks(dialog: HWND, state: &mut crate::wizard::state::WizardState) {
+pub unsafe fn refresh_checks(dialog: HWND, state: &mut crate::wizard::state::WizardState) {
     let control = tree_control(dialog);
     let was_syncing = state.tree_syncing;
     state.tree_syncing = true;
@@ -136,7 +138,8 @@ pub unsafe fn on_item_changed(dialog: HWND, lparam: LPARAM) -> isize {
     }
     let image = (change.state_new & ctl::TVIS_STATEIMAGEMASK) >> STATE_IMAGE_SHIFT;
     state.tree.set_checked(node, image == STATE_IMAGE_CHECKED);
-    refresh_checks(dialog, state);
+    // Posted: written from inside the click, the clicked row would be redrawn with its old state.
+    wm::PostMessageW(dialog, WM_SYNC_CHECKS, 0, 0);
     0
 }
 

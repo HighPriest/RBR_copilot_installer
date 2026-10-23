@@ -40,6 +40,8 @@ read it before adding one.
 - [x] `tests/Run-AllTests.ps1` — one entry point (`-SkipUi` for headless);
       also runs fmt + clippy, so a green local run means a green CI run
 - [x] `tests/gamedir.rs` — cross-platform game-folder identification
+- [x] `tests/tree.rs`, `tests/choices.rs` — the two scene models
+- [x] `tests/sha256.rs`, `tests/cache.rs` — the digest and the package cache
 - [x] `tests/Test-VersionSync.ps1` — Cargo.toml version vs the four
       VERSIONINFO fields in `res/installer.rc`
 - [x] `tests/Test-BinarySize.ps1` — the 500 kB release gate
@@ -114,7 +116,18 @@ Scenes:
       with states, check propagation, per-category validation. Cross-platform
       tests with fixtures shaped like the real layout (`style/Descriptive`,
       `codriver/polish/male/Kamil`)
-- [ ] S5 Configuration — three lists from the leaves scene 4 committed
+- [x] S5 Configuration — three single-select lists built from the leaves
+      scene 4 committed, each option labelled with its path inside its
+      category (`polish / male / Kamil`), a sole option preselected, Install
+      refusing until every list that HAS options has a pick. Pure model in
+      `src/choices.rs`; the picks survive a trip Back to scene 4 and forward
+      again, as long as the package is still ticked
+- [x] One page size for every scene is now 330x215 DLU, forced by scene 5:
+      three lists have to be visible at once, and full width because a
+      co-driver is identified by its whole path — a third of the width clips
+      exactly the part that tells two voices apart. Scene 4's tree and scene
+      2's MOTD took the extra room too; scene 1 has space around it, which
+      DESIGN.md allows
 - [ ] S6 Installation — needs the engine (I7)
 - [ ] S7 Summary
 - [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
@@ -132,10 +145,22 @@ Tests:
       server — the deterministic offline path — asserting captions read from
       installer.rc, the "(Detecting)" placeholder, the dropdown enabled only
       with several matches, Next blocked until detection, and Back navigation
-- [x] Screenshots of all three scenes in both languages reviewed
-- [ ] Modal assertions (no-marker warning, bad-secret warning): the modal
-      blocks the app thread, so driving it needs care. Deferred to land with
-      the scenes that raise more of them.
+- [x] `tests/choices.rs`: scene 5's model against the real catalogue's shape —
+      list order, the path label that tells two same-named voices apart,
+      preselection, `pacenotes` as a no-choice extra, and a pick surviving
+      (or correctly not surviving) a change of ticks on scene 4 (9 tests)
+- [x] `tests/ui/Test-WizardDownload.ps1` now walks on into scene 5: ticking
+      every category gets past the Download gate, each list offers exactly
+      what the catalogue filed under it, nothing is preselected where there
+      is a real choice, Install warns and names the unanswered lists, and
+      three picks satisfy it
+- [x] Screenshots of all five scenes in both languages reviewed, scenes 4-5
+      against the live public catalogue (`-Server`), which is the only place
+      the longest real labels show up
+- [x] Modal assertions (missing-category warning, missing-pick warning): both
+      gates are asserted, including that the modal NAMES what is missing.
+      This is also what exposed `Dismiss-Modal` never closing a box — see
+      trap 7 in `tests/README.md`.
 
 SIZE FLAG — serde_json has landed. Scene 4 is the first code to parse JSON,
 so `serde_json` finally linked and the binary jumped 269 → 329.5 kB, 66% of
@@ -155,6 +180,7 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I2b part 1 — wizard + worker | 275,456 | 269 kB |
 | I2b part 2 — tree model + scene 4 | 337408 | 329.5 kB |
 | I5 — sha256 + cache + verified download | 402432 | 393 kB |
+| I2b — scene 5 + the bigger page | 412160 | 402.5 kB |
 
 ## Protocol as it stands
 
@@ -213,8 +239,11 @@ half arrives with scene 6.
       the game (`/download/{game}/{directory}/{*name}`) and a name may need
       percent-encoding (e.g. `style/Numeric Standard`). Then temp file →
       sha256 verify → move to cache\<sha>.zip + index update; reject mismatch
-- [ ] Cache state per leaf: not cached / downloaded / update / local only;
-      unit tests (pure, injected paths)
+- [x] Cache state per leaf: not cached / downloaded / update / local only
+      (`tree::LeafState`), with scene 4 reading the real index — an entry
+      whose payload has vanished is withheld rather than offered and then
+      failing at install time. Pure tests with injected paths in
+      `tests/tree.rs` and `tests/cache.rs`
 
 ## I6 — Zip reader
 - [ ] zip.rs reader: central directory parse, miniz_oxide inflate, extract

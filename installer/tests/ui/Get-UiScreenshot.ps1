@@ -19,7 +19,14 @@
     usual cause of clipped labels, so check both when changing a layout.
 
 .PARAMETER Scenes
-    How many scenes to walk and capture, from 1. Default 3 (all that exist).
+    How many scenes to walk and capture, from 1. Default 5 (all that exist).
+
+.PARAMETER Server
+    Which server to point the wizard at. The default is a dead address, which
+    keeps scenes 1-3 identical every run — but it leaves scenes 4 and 5 empty,
+    since there is no catalogue to show. Pass a real server to capture those
+    two with content; the live public endpoint is the useful one, because its
+    co-driver paths are the longest text this layout has to hold.
 
 .PARAMETER GameFolder
     Folder to type into scene 3. Defaults to a throwaway folder containing a
@@ -37,10 +44,11 @@
 [CmdletBinding()]
 param(
     [ValidateSet(0, 1)][int]$Language = 0,
-    [ValidateRange(1, 3)][int]$Scenes = 3,
+    [ValidateRange(1, 5)][int]$Scenes = 5,
     [string]$GameFolder,
     [string]$OutDir = $env:TEMP,
-    [string]$ExePath
+    [string]$ExePath,
+    [string]$Server = 'http://127.0.0.1:1'
 )
 
 Set-StrictMode -Version Latest
@@ -51,6 +59,8 @@ Add-Type -AssemblyName System.Drawing
 $IDC_S1_COMBO = 302
 $IDC_S2_MOTD = 311
 $IDC_S3_PATH = 322
+$IDC_S4_TREE = 331
+$IDC_S5_LANG = 342
 $PSBTN_NEXT = 1
 
 function Save-WindowPng {
@@ -92,8 +102,8 @@ if (-not $GameFolder) {
     $GameFolder = $temp
 }
 
-# A dead server keeps scene 2 on its offline path, so every capture is the same.
-$launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', 'http://127.0.0.1:1')
+# A dead server by default keeps scene 2 on its offline path; -Server gives scenes 4 and 5 real content.
+$launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', $Server)
 $proc = $launch.Process
 
 try {
@@ -123,6 +133,23 @@ try {
     Invoke-EditChanged -Dialog $page -CtrlId $IDC_S3_PATH
     Start-Sleep -Milliseconds 900
     Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s3-lang$Language.png")
+    if ($Scenes -lt 4) { return }
+
+    Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
+    $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S4_TREE
+    if ($page -eq [IntPtr]::Zero) { throw 'scene 4 never appeared' }
+    # One opened category shows the nesting once the catalogue has arrived.
+    Start-Sleep -Seconds 3
+    Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s4-lang$Language.png")
+    if ($Scenes -lt 5) { return }
+
+    # Scene 5 lists what scene 4 committed, so tick everything first.
+    [void](Invoke-TreeCheckRoots -Dialog $page -CtrlId $IDC_S4_TREE)
+    Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
+    $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S5_LANG
+    if ($page -eq [IntPtr]::Zero) { throw 'scene 5 never appeared' }
+    Start-Sleep -Milliseconds 500
+    Save-WindowPng -Window $sheetH -Path (Join-Path $OutDir "wizard-s5-lang$Language.png")
 } finally {
     if (-not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($temp) { Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue }

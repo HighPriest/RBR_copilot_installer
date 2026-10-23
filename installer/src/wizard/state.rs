@@ -13,6 +13,7 @@ pub struct WizardState {
     /// The single detection, or the user's pick when the folder holds several games.
     pub game: Option<pacenotes_installer::gamedir::Game>,
     pub base_url: String,
+    pub cache: pacenotes_installer::cache::Cache,
 
     pub tree: pacenotes_installer::tree::Tree,
     /// `HTREEITEM` per tree node, by node index.
@@ -22,6 +23,8 @@ pub struct WizardState {
     pub catalogue_loaded: bool,
     /// The keys committed with Download, in tree order.
     pub chosen: Vec<String>,
+    /// Rebuilt from the tree each time scene 5 activates.
+    pub config: pacenotes_installer::choices::Configuration,
 
     request: usize,
 }
@@ -37,11 +40,13 @@ impl WizardState {
             detected: Vec::new(),
             game: None,
             base_url,
+            cache: open_cache(),
             tree: pacenotes_installer::tree::Tree::default(),
             tree_items: Vec::new(),
             tree_syncing: false,
             catalogue_loaded: false,
             chosen: Vec::new(),
+            config: pacenotes_installer::choices::Configuration::default(),
             request: 0,
         }
     }
@@ -55,4 +60,14 @@ impl WizardState {
     pub fn is_current_request(&self, request: usize) -> bool {
         request == self.request
     }
+}
+
+/// A cache that cannot be located behaves as an empty one in the temp folder.
+fn open_cache() -> pacenotes_installer::cache::Cache {
+    let root = pacenotes_installer::cache::default_root().unwrap_or_else(|| {
+        std::env::temp_dir()
+            .join("PacenotesInstaller")
+            .join("cache")
+    });
+    pacenotes_installer::cache::Cache::open(root)
 }

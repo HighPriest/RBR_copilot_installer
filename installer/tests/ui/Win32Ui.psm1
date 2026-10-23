@@ -61,10 +61,31 @@ $script:CB_GETCURSEL = 0x0147
 $script:CB_SETCURSEL = 0x014E
 $script:LB_ADDSTRING = 0x0180
 $script:LB_SETCURSEL = 0x0186
+$script:LB_GETCURSEL = 0x0188
+$script:LB_GETCOUNT = 0x018B
+$script:LB_GETITEMHEIGHT = 0x01A1
+$script:LB_SETTOPINDEX = 0x0197
 $script:TCM_GETITEMCOUNT = 0x1304
 $script:TCM_GETCURSEL = 0x130B
+# Tree view: only the HTREEITEM-based messages are usable cross-process.
+$script:TVM_GETNEXTITEM = 0x110A
+$script:TVM_SELECTITEM = 0x110B
+$script:TVM_GETCOUNT = 0x1105
+$script:TVM_GETITEMHEIGHT = 0x111C
+$script:TVM_GETINDENT = 0x1106
+$script:TVM_GETITEMSTATE = 0x1127
+$script:TVIS_STATEIMAGEMASK = 0xF000
+$script:TVGN_ROOT = 0
+$script:TVGN_NEXT = 1
+$script:TVGN_CARET = 9
+$script:WM_LBUTTONDOWN = 0x0201
+$script:WM_LBUTTONUP = 0x0202
+$script:MK_LBUTTON = 1
+$script:BM_CLICK = 0x00F5
 $script:VK_RIGHT = 0x27
 $script:VK_LEFT = 0x25
+$script:VK_HOME = 0x24
+$script:VK_DOWN = 0x28
 
 function Get-ProcessDialogs {
     <#  All visible top-level dialogs ("#32770") owned by a process. #>
@@ -219,13 +240,108 @@ function Select-Tab {
     return (Get-TabSelection -Dialog $Dialog -TabCtrlId $TabCtrlId)
 }
 
-function Add-ListItem {
-    <#  Push an item into a listbox so selection-dependent paths can be tested
-        before the real package lists exist (they arrive in task I5). #>
-    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId, [string]$Value = 'test item')
+function Get-ListCount {
+    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
     $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
-    [void][NativeUi]::SendMessageString($h, $script:LB_ADDSTRING, [IntPtr]::Zero, $Value)
-    [void][NativeUi]::SendMessageW($h, $script:LB_SETCURSEL, [IntPtr]0, [IntPtr]::Zero)
+    return [int][NativeUi]::SendMessageW($h, $script:LB_GETCOUNT, [IntPtr]::Zero, [IntPtr]::Zero)
+}
+
+function Get-ListSelection {
+    <#  -1 when nothing is selected (LB_ERR). #>
+    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
+    $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
+    return [int][NativeUi]::SendMessageW($h, $script:LB_GETCURSEL, [IntPtr]::Zero, [IntPtr]::Zero)
+}
+
+function Select-ListItem {
+    <#  Pick a listbox item by CLICKING it.
+
+        Not LB_SETCURSEL: that changes the selection without notifying the
+        parent, so the app's LBN_SELCHANGE handler never runs and the model
+        never learns what was picked — the assertion would pass while the pick
+        went nowhere (the same trap as Select-Tab). Not keys either: Home/Down
+        sent to the control do move the selection, measured, but the parent
+        gets no LBN_SELCHANGE, so the app still saw nothing chosen. A click
+        on the row is handled from the message alone and notifies.
+
+        The row is located from the control's own item height, and the list is
+        scrolled to the top first so index and row coincide. Item TEXT cannot
+        be read cross-process at all (LB_GETTEXT wants a buffer in the
+        target's address space and USER32 does not marshal it), which is why
+        callers assert on counts and selection indices. #>
+    param(
+        [Parameter(Mandatory)][IntPtr]$Dialog,
+        [Parameter(Mandatory)][int]$CtrlId,
+        [Parameter(Mandatory)][int]$Index
+    )
+    $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
+    [void][NativeUi]::SendMessageW($h, $script:LB_SETTOPINDEX, [IntPtr]0, [IntPtr]::Zero)
+    $height = [int][NativeUi]::SendMessageW($h, $script:LB_GETITEMHEIGHT, [IntPtr]0, [IntPtr]::Zero)
+    $point = [IntPtr]((($Index * $height + [int]($height / 2)) -shl 16) -bor 8)
+    [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONDOWN, [IntPtr]$script:MK_LBUTTON, $point)
+    [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONUP, [IntPtr]0, $point)
+    Start-Sleep -Milliseconds 150
+    return (Get-ListSelection -Dialog $Dialog -CtrlId $CtrlId)
+}
+
+function Get-TreeRowCount {
+    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
+    $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
+    return [int][NativeUi]::SendMessageW($h, $script:TVM_GETCOUNT, [IntPtr]::Zero, [IntPtr]::Zero)
+}
+
+function Get-TreeStateImage {
+    <#  The item's state-image index: 1 unchecked, 2 checked, 3 partial.
+
+        TVM_GETITEMSTATE is one of the few tree messages usable from another
+        process — it takes an HTREEITEM and a mask and returns a plain value,
+        with no TVITEM to place in the target's address space. #>
+    param([Parameter(Mandatory)][IntPtr]$Tree, [Parameter(Mandatory)][IntPtr]$Item)
+    $state = [int][NativeUi]::SendMessageW($Tree, $script:TVM_GETITEMSTATE, $Item, [IntPtr]$script:TVIS_STATEIMAGEMASK)
+    return (($state -band $script:TVIS_STATEIMAGEMASK) -shr 12)
+}
+
+function Invoke-TreeCheckRoots {
+    <#  Tick every top-level row of a checkbox tree, the way a user would.
+
+        CLICKS, not keys. VK_SPACE sent to the control toggles nothing from
+        outside the process — measured: all four rows stayed on state image 1,
+        and once a single unrelated row flipped instead. A WM_LBUTTONDOWN on
+        the state icon is handled from the message alone, raises the real
+        TVN_ITEMCHANGED, and so exercises the app's own propagation. Writing
+        the state image with TVM_SETITEM would not: it needs a TVITEM in the
+        target's address space, and it would skip the notification that is the
+        whole point.
+
+        The geometry is only valid for TOP-LEVEL rows with every row
+        collapsed, which is how this tree opens: row i then sits at
+        y = i * itemheight, and a root's state icon sits just past the
+        expand button, i.e. one indent in. Both measurements come from the
+        control (TVM_GETITEMHEIGHT, TVM_GETINDENT) rather than being assumed.
+
+        Returns the number of roots that ended up ticked. #>
+    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
+    $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
+    $height = [int][NativeUi]::SendMessageW($h, $script:TVM_GETITEMHEIGHT, [IntPtr]::Zero, [IntPtr]::Zero)
+    $indent = [int][NativeUi]::SendMessageW($h, $script:TVM_GETINDENT, [IntPtr]::Zero, [IntPtr]::Zero)
+
+    $roots = @()
+    $item = [NativeUi]::SendMessageW($h, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_ROOT, [IntPtr]::Zero)
+    while ($item -ne [IntPtr]::Zero -and $roots.Count -lt 64) {
+        $roots += $item
+        $item = [NativeUi]::SendMessageW($h, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_NEXT, $item)
+    }
+
+    for ($row = 0; $row -lt $roots.Count; $row++) {
+        $x = $indent + [int]($height / 2)
+        $y = $row * $height + [int]($height / 2)
+        $point = [IntPtr](($y -shl 16) -bor $x)
+        [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONDOWN, [IntPtr]$script:MK_LBUTTON, $point)
+        [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONUP, [IntPtr]0, $point)
+        Start-Sleep -Milliseconds 150
+    }
+    Start-Sleep -Milliseconds 250
+    return ($roots | Where-Object { (Get-TreeStateImage -Tree $h -Item $_) -eq 2 }).Count
 }
 
 function Close-Dialog {
@@ -313,10 +429,30 @@ function Press-WizardButton {
 }
 
 function Dismiss-Modal {
-    <#  Close a MessageBox the app raised. Posted, not sent: the app's thread
-        is inside a modal loop and a send would deadlock on a busy box. #>
+    <#  Close a MessageBox the app raised, by clicking the button it actually
+        has.
+
+        NOT a posted WM_COMMAND with IDOK: the single OK button of a
+        MessageBox is not reliably control id 1. Measured on this app's own
+        warning boxes, the OK button came back as id 2, so posting IDOK left
+        the box standing — and a box left standing is poison for a UI test,
+        because the page underneath stays disabled while its child controls
+        still answer messages directly. That reads as "the click did nothing"
+        several steps later, nowhere near the cause.
+
+        BM_CLICK goes to the button itself, which then raises whatever command
+        id it owns. Posted, not sent: the app's thread is inside the modal
+        loop and a send would deadlock on a busy box. #>
     param([Parameter(Mandatory)][IntPtr]$Modal)
-    [void][NativeUi]::PostMessageW($Modal, 0x0111, [IntPtr]1, [IntPtr]::Zero)  # WM_COMMAND IDOK
+    $button = Get-ControlInventory -Dialog $Modal | Where-Object { $_.Class -eq 'Button' } | Select-Object -First 1
+    if ($button) {
+        [void][NativeUi]::PostMessageW($button.Handle, $script:BM_CLICK, [IntPtr]0, [IntPtr]::Zero)
+    }
+    else {
+        # No button to click (should not happen for MessageBox); ask the box
+        # to close itself.
+        [void][NativeUi]::PostMessageW($Modal, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
+    }
     Start-Sleep -Milliseconds 400
 }
 

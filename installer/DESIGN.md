@@ -24,7 +24,10 @@ and install phases of scene 6). No going back once scene 6 starts.
 
 The window is ONE size for every scene — a property sheet sizes itself to its
 largest page — so a scene with little content, such as scene 1, simply has
-space around it.
+space around it. That size is 330x215 DLU, set by scene 5: three lists have
+to be visible at once, and each at full width, because a co-driver is
+identified by its whole path and a narrower column clips exactly the part
+that tells two voices apart.
 
 ## Scene 1 — Language
 
@@ -120,8 +123,16 @@ space around it.
   | Pacenotes Style | `style` |
 
 - A list with exactly one option is preselected.
-- Checked `pacenotes`-category packages are installed as-is (no choice).
-- **Install** enabled when all three lists have a selection.
+- Checked `pacenotes`-category packages are installed as-is (no choice), and
+  so is anything under a category the installer does not know.
+- **Install** requires a pick in every list that HAS options; a warning modal
+  names the ones still unanswered. A category the server publishes nothing
+  under leaves an empty, disabled list that says so — scene 4 does not demand
+  a tick there either, and dead-ending the wizard on a catalogue the operator
+  is entitled to publish would be worse than installing without it.
+- Going Back to scene 4 and changing the ticks rebuilds the lists. A pick
+  still on offer is kept; one whose package was unticked is dropped and the
+  question is asked again.
 
 ## Scene 6 — Installation
 

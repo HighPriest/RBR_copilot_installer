@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
-    AUTOMATED TEST. Walks the wizard to scene 4 against a REAL server holding
-    a nested catalogue, and asserts the Download scene. Exits 0/1.
+    AUTOMATED TEST. Walks the wizard to scenes 4 and 5 against a REAL server
+    holding a nested catalogue, and asserts the Download and Configuration
+    scenes. Exits 0/1.
 
 .DESCRIPTION
     Test-UiLayout.ps1 covers scenes 1-3 against a DEAD server — the offline
@@ -38,6 +39,9 @@ $IDC_S1_COMBO = 302
 $IDC_S2_MOTD = 311; $IDC_S2_STATUS = 314
 $IDC_S3_PATH = 322
 $IDC_S4_TREE = 331; $IDC_S4_STATUS = 332
+$IDC_S5_LANG_LABEL = 341; $IDC_S5_LANG = 342
+$IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
+$IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $PSBTN_NEXT = 1
 $TVM_GETCOUNT = 0x1105
 
@@ -180,6 +184,72 @@ try {
     }
     $still = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE -TimeoutMs 3000
     Assert-That 'and the wizard stays on scene 4' ($still -ne [IntPtr]::Zero)
+
+    # Ticking every category is what the gate asked for.
+    $ticked = Invoke-TreeCheckRoots -Dialog $page -CtrlId $IDC_S4_TREE
+    Assert-That 'every category can be ticked' ($ticked -eq 4) "ticked $ticked roots, expected 4"
+    Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
+
+    Write-Host "`n-- scene 5: configuration --"
+    $page5 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S5_LANG
+    Assert-That 'a tick in every category gets past the gate' ($page5 -ne [IntPtr]::Zero)
+    if ($page5 -eq [IntPtr]::Zero) { throw 'scene 5 never appeared' }
+
+    Assert-Equal 'scene 5 title' (Get-CtrlText $page5 $IDC_SCENE_TITLE) $S['IDS_S5_TITLE']
+    Assert-Equal 'primary button reads Install' `
+    (Get-WizardButtonText -Sheet $h -ButtonId 0x3024) $S['IDS_BTN_INSTALL']
+    Assert-Equal 'language list caption' (Get-CtrlText $page5 $IDC_S5_LANG_LABEL) $S['IDS_S5_LANGUAGE']
+    Assert-Equal 'voice list caption' (Get-CtrlText $page5 $IDC_S5_VOICE_LABEL) $S['IDS_S5_VOICE']
+    Assert-Equal 'style list caption' (Get-CtrlText $page5 $IDC_S5_STYLE_LABEL) $S['IDS_S5_STYLE']
+
+    # Expected counts come from $CATALOGUE, so the fixture cannot go stale against them.
+    $perCategory = @{}
+    foreach ($rel in $CATALOGUE) {
+        $category = ($rel -split '/')[0]
+        $perCategory[$category] = 1 + $(if ($perCategory.ContainsKey($category)) { $perCategory[$category] } else { 0 })
+    }
+    foreach ($pair in @(
+            @{ Name = 'language'; Id = $IDC_S5_LANG },
+            @{ Name = 'codriver'; Id = $IDC_S5_VOICE },
+            @{ Name = 'style'; Id = $IDC_S5_STYLE })) {
+        $count = Get-ListCount -Dialog $page5 -CtrlId $pair.Id
+        Assert-That "the $($pair.Name) list offers every ticked package" `
+        ($count -eq $perCategory[$pair.Name]) `
+            "list holds $count, catalogue has $($perCategory[$pair.Name])"
+        # With several options the installer must not choose for the user.
+        Assert-That "nothing is preselected in the $($pair.Name) list" `
+        ((Get-ListSelection -Dialog $page5 -CtrlId $pair.Id) -eq -1)
+    }
+
+    Write-Host "`n-- install gate --"
+    Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
+    $modal5 = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 4000
+    Assert-That 'Install with nothing chosen raises a warning' ($null -ne $modal5)
+    if ($modal5) {
+        $said = (Get-ControlInventory -Dialog $modal5.Handle |
+            Where-Object { $_.Class -eq 'Static' } | ForEach-Object { $_.Text }) -join ' '
+        foreach ($caption in 'IDS_S5_LANGUAGE', 'IDS_S5_VOICE', 'IDS_S5_STYLE') {
+            # The modal names each list by its label without the colon.
+            $named = $S[$caption].TrimEnd(':')
+            Assert-That "warning names '$named'" ($said.Contains($named)) "warning said [$said]"
+        }
+        Dismiss-Modal -Modal $modal5.Handle
+    }
+
+    # Answering all three satisfies the gate.
+    foreach ($pair in @(
+            @{ Name = 'language'; Id = $IDC_S5_LANG },
+            @{ Name = 'codriver'; Id = $IDC_S5_VOICE },
+            @{ Name = 'style'; Id = $IDC_S5_STYLE })) {
+        $selected = Select-ListItem -Dialog $page5 -CtrlId $pair.Id -Index 1
+        Assert-That "a $($pair.Name) can be chosen" ($selected -eq 1) "selection came back $selected"
+    }
+    Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
+    $modal6 = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 2500
+    # Silence proves every keyboard pick reached the model through LBN_SELCHANGE.
+    Assert-That 'Install with all three chosen is accepted' ($null -eq $modal6) `
+        'a warning was raised, so a pick never reached the model'
+    if ($modal6) { Dismiss-Modal -Modal $modal6.Handle }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

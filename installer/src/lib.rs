@@ -2,6 +2,7 @@
 //! The Windows-only binary (`main.rs`) owns `http`, `ui` and `i18n`.
 
 pub mod cache;
+pub mod choices;
 pub mod engine;
 pub mod gamedir;
 pub mod install;

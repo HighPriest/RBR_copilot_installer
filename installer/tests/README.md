@@ -74,10 +74,12 @@ it `$env:TEMP` would assert nothing about the thing the field is for — and
 indeed an earlier version of this suite did that, and happily passed while the
 code accepted **any** directory that existed.
 
-Likewise, the "Install proceeds once all three categories have a pick" path is
-deliberately **not** asserted yet. Those lists are filled from the server
-manifest, which task I5 adds; injecting placeholder rows would only prove that
-a listbox can hold a string. That case belongs with the code that populates it.
+Likewise, the "Install proceeds once all three categories have a pick" path
+was deliberately **not** asserted while those lists were empty: injecting
+placeholder rows would only have proved that a listbox can hold a string. It
+is asserted now, in `ui/Test-WizardDownload.ps1`, because scene 5 fills the
+lists from a real catalogue served by a real server — and the rows it checks
+for are counted from that catalogue rather than written out a second time.
 
 ### 2. Expected text comes from the resource, not from a copy
 
@@ -131,6 +133,23 @@ is commented at its call site.
    `GetDlgItem` on the sheet finds none of them. `Get-ActivePage` finds the
    visible page first; a test that skipped it would conclude every control was
    missing.
+
+7. **A MessageBox's OK button is not reliably control id 1.** On this app's
+   own warning boxes it came back as id 2, so the posted `WM_COMMAND` IDOK
+   that `Dismiss-Modal` used to send closed nothing. A box left standing is
+   particularly nasty here: the page underneath is disabled, yet its child
+   controls still answer messages sent straight to them, so the symptom is a
+   click that "does nothing" several steps later. `Dismiss-Modal` now clicks
+   whichever button the box actually has.
+
+8. **Tree and list selections must be made by CLICK, not by key.** Sending
+   `VK_SPACE` to a checkbox tree from outside the process toggled nothing,
+   and `VK_HOME`/`VK_DOWN` moved a listbox selection without the parent ever
+   getting `LBN_SELCHANGE` — so the app never learned what was picked. A
+   `WM_LBUTTONDOWN` on the row is handled from the message alone and raises
+   the real notification. `Invoke-TreeCheckRoots` and `Select-ListItem` take
+   the geometry from the control (item height, indent) rather than assuming
+   it.
 
 ## Requirements
 

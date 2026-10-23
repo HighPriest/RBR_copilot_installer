@@ -70,6 +70,14 @@ END
 #define IDC_S3_GAME_LABEL   324
 #define IDC_S3_GAME         325
 
+#define IDD_S5_CONFIG       340
+#define IDC_S5_LANG_LABEL   341
+#define IDC_S5_LANG         342
+#define IDC_S5_VOICE_LABEL  343
+#define IDC_S5_VOICE        344
+#define IDC_S5_STYLE_LABEL  345
+#define IDC_S5_STYLE        346
+
 // String IDs
 // Worker / status (1-19)
 #define IDS_CONNECTING          1
@@ -127,58 +135,83 @@ END
 #define IDS_S3_DETECTING       73
 #define IDS_S3_NOGAME          74
 
+// Scene 5 — Configuration (100-109)
+#define IDS_S5_TITLE          100
+#define IDS_S5_LANGUAGE       101
+#define IDS_S5_VOICE          102
+#define IDS_S5_STYLE          103
+#define IDS_S5_MISSING        104
+#define IDS_S5_NONE           105
+
 // Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
-// A PropertySheet takes its largest page's size, so every page shares one.
+// A PropertySheet takes its largest page's size, so every page shares one: 330x215 DLU, for scene 5's three lists.
+// The lists are full width because a third of it clips the part of a co-driver's path that tells two voices apart.
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-IDD_S1_LANGUAGE DIALOGEX 0, 0, 290, 150
+IDD_S1_LANGUAGE DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
-    LTEXT           "Select language:", IDC_S1_PROMPT, 14, 30, 260, 10
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "Select language:", IDC_S1_PROMPT, 14, 30, 302, 10
     COMBOBOX        IDC_S1_COMBO, 14, 44, 180, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     LTEXT           "Restart the application to change language later.",
-                    IDC_S1_NOTE, 14, 66, 262, 20
+                    IDC_S1_NOTE, 14, 66, 302, 20
 END
 
-IDD_S2_MOTD DIALOGEX 0, 0, 290, 150
+IDD_S2_MOTD DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
-    EDITTEXT        IDC_S2_MOTD, 14, 24, 262, 68,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    EDITTEXT        IDC_S2_MOTD, 14, 24, 302, 132,
                     ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
-    LTEXT           "Secret:", IDC_S2_SECRET_LABEL, 14, 100, 60, 9
-    EDITTEXT        IDC_S2_SECRET, 78, 98, 198, 13, ES_AUTOHSCROLL | ES_PASSWORD
-    LTEXT           "", IDC_S2_STATUS, 14, 122, 262, 10
+    LTEXT           "Secret:", IDC_S2_SECRET_LABEL, 14, 166, 60, 9
+    EDITTEXT        IDC_S2_SECRET, 78, 164, 238, 13, ES_AUTOHSCROLL | ES_PASSWORD
+    LTEXT           "", IDC_S2_STATUS, 14, 188, 302, 10
 END
 
-IDD_S3_FOLDER DIALOGEX 0, 0, 290, 150
+IDD_S3_FOLDER DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
-    LTEXT           "Game folder:", IDC_S3_PATH_LABEL, 14, 28, 262, 9
-    EDITTEXT        IDC_S3_PATH, 14, 40, 204, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...", IDC_S3_BROWSE, 224, 39, 52, 15
-    LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 262, 9
-    COMBOBOX        IDC_S3_GAME, 14, 78, 204, 90,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "Game folder:", IDC_S3_PATH_LABEL, 14, 28, 302, 9
+    EDITTEXT        IDC_S3_PATH, 14, 40, 244, 13, ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...", IDC_S3_BROWSE, 264, 39, 52, 15
+    LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 302, 9
+    COMBOBOX        IDC_S3_GAME, 14, 78, 244, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
 END
 
-IDD_S4_DOWNLOAD DIALOGEX 0, 0, 290, 150
+IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 262, 12
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
     CONTROL         "", IDC_S4_TREE, "SysTreeView32",
                     TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
                     | TVS_CHECKBOXES | TVS_SHOWSELALWAYS | TVS_DISABLEDRAGDROP
                     | WS_BORDER | WS_TABSTOP,
-                    14, 24, 262, 96
-    LTEXT           "", IDC_S4_STATUS, 14, 126, 262, 18
+                    14, 24, 302, 158
+    LTEXT           "", IDC_S4_STATUS, 14, 188, 302, 18
+END
+
+IDD_S5_CONFIG DIALOGEX 0, 0, 330, 215
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_S5_LANG_LABEL, 14, 26, 302, 9
+    LISTBOX         IDC_S5_LANG, 14, 37, 302, 46,
+                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "", IDC_S5_VOICE_LABEL, 14, 90, 302, 9
+    LISTBOX         IDC_S5_VOICE, 14, 101, 302, 46,
+                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "", IDC_S5_STYLE_LABEL, 14, 154, 302, 9
+    LISTBOX         IDC_S5_STYLE, 14, 165, 302, 46,
+                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
 END
 
 // Strings: one STRINGTABLE per language, and every id must exist in every table.
@@ -235,6 +268,13 @@ BEGIN
     IDS_STATE_DOWNLOADED "(downloaded)"
     IDS_STATE_UPDATE    "(update)"
     IDS_STATE_LOCAL     "(local only)"
+
+    IDS_S5_TITLE        "Configuration"
+    IDS_S5_LANGUAGE     "Pacenotes language:"
+    IDS_S5_VOICE        "Co-driver voice:"
+    IDS_S5_STYLE        "Pacenotes style:"
+    IDS_S5_MISSING      "Choose one option under: %s"
+    IDS_S5_NONE         "(nothing was selected on the previous screen)"
 END
 
 // Polish reuses the legacy InstallationForm.pl.resx terms, so returning users see familiar words.
@@ -290,4 +330,11 @@ BEGIN
     IDS_STATE_DOWNLOADED "(pobrane)"
     IDS_STATE_UPDATE    "(aktualizacja)"
     IDS_STATE_LOCAL     "(tylko lokalnie)"
+
+    IDS_S5_TITLE        "Konfiguracja"
+    IDS_S5_LANGUAGE     "Język pacenotes:"
+    IDS_S5_VOICE        "Głos pilota:"
+    IDS_S5_STYLE        "Styl pacenotes:"
+    IDS_S5_MISSING      "Wybierz jedną pozycję w: %s"
+    IDS_S5_NONE         "(na poprzednim ekranie nie wybrano nic)"
 END
