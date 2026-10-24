@@ -69,15 +69,25 @@ pacenote packages. Two deliverables:
   (`%LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip` + `cache.json`
   index). Sha-keyed: integrity + dedupe. Installing is cache → game dir;
   works offline, works for multiple game dirs.
-- **Ledger**: each game dir gets `Plugins\Pacenote\installer\installed.json`
-  recording, per installed package, the exact files written. Uninstall =
-  delete ledgered files. Apply = diff (selected vs ledger) → uninstall
-  removed, install added.
+- **Ledger**: each game dir gets `.pacenotes\installed.json` recording, per
+  installed package, the exact files written. Uninstall = delete ledgered
+  files. Apply = diff (selected vs ledger) → uninstall removed, install
+  added. The location is the SAME for every game: a path inside the plugin
+  tree would be RBR-only, and the plugin tree is written by other tools.
 - **Backup**: before overwriting a file NOT owned by the ledger, copy it
-  once to `backup\` (preserving relative path). Restore = copy back.
+  once to `.pacenotes\backup\` (preserving relative path). Restore = copy
+  back. A file whose bytes already match what is about to be written is NOT
+  copied: there is nothing to preserve, and a blind copy would duplicate
+  hundreds of MB of identical content on the first run.
   This replaces the legacy backup/FilipekMod/unpacked directory dance.
-- The one built-in special step: `write_rbr_config` (RBR ini generation),
-  hard-coded in the installer, keyed off the selected `style` package.
+- **Per-game configuration step**: after the install phase, each game may
+  run a step of ITS OWN. There is no shared abstraction and no attempt to
+  make one: the games do not share a file layout, several do not have a
+  plugin system at all, and their installers may have to edit game files
+  directly. RBR's step modifies the existing Pacenote config (or writes one
+  from a built-in template when there is none); another game's step will
+  look nothing like it. What is shared is the plumbing — the step reports
+  the files it wrote, and they are ledgered and backed up like any other.
 
 ## Server layout (one server, every game)
 

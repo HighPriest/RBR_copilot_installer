@@ -100,7 +100,7 @@ impl Configuration {
         }
     }
 
-    /// The pick for one `CATEGORY_*`, such as the style `write_rbr_config` is keyed off.
+    /// The pick for one `CATEGORY_*`, by name, so a reordered `CHOICE_CATEGORIES` cannot misdirect it.
     pub fn selected_key(&self, category: &str) -> Option<&str> {
         self.lists
             .iter()

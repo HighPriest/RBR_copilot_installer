@@ -140,10 +140,17 @@ that tells two voices apart.
   ("Numeric 1to7.zip — 1.2 / 4.8 MB"), live log pane.
 - Phases, in order:
   1. **Download** checked packages missing from the cache (sha256 verified);
-  2. **Backup** files the install will overwrite and the installer does not
-     already own (first touch only, under `backup\` in the game folder);
-  3. **Install** the three configured packages + checked `pacenotes`
-     packages; RBR additionally runs `write_rbr_config`.
+  2. **Uninstall** what a new pick supersedes — before anything is written,
+     because the style packages all own the SAME 49 paths and uninstalling
+     after installing would delete the new one's files;
+  3. **Backup** files the install will overwrite and the installer does not
+     already own (first touch only, under `.pacenotes\backup\` in the game
+     folder), skipping any whose bytes already match what will replace them;
+  4. **Install** the three configured packages + checked `pacenotes`
+     packages;
+  5. **Configure** — the chosen game's own step, if it has one. RBR's sets
+     the pacenotes language in the Pacenote plugin's config. Other games get
+     their own step or none; see "Per-game configuration" below.
 - Backup runs AFTER download because it needs each package's file list, and
   that list comes from reading the package's own zip.
 - Phase 1 downloads everything TICKED on scene 4 that is not already in the
@@ -162,7 +169,10 @@ that tells two voices apart.
 
 - Result: success / failure.
 - What was done: game + folder, the three installed choices, `pacenotes`
-  packages, number and total size of downloads, backup location.
+  packages, number and total size of downloads, what the game's own
+  configuration step changed, and the backup location — named only when
+  something was actually backed up, since a run that replaced nothing of
+  the user's has no backup to point at.
 - Log pane: collapsed on success, expanded on failure. Collapsed means
   hidden with the detail block stretched over its room, not a smaller box —
   a successful run's log is noise and a failed one's is the point.
@@ -176,6 +186,54 @@ Every scene appends to an in-memory log, also written to
 log is visible on scenes 6 and 7; any error shows it.
 
 ## Implementation notes
+
+### Installer state in the game folder
+
+One directory, the same for every game:
+
+    <game folder>\.pacenotes\installed.json      the ledger
+    <game folder>\.pacenotes\backup\<rel path>   first-touch backups
+
+Not inside the plugin tree. `Plugins\Pacenote\installer\` is where the C#
+version kept it, but that path exists only for RBR, and for RBR it sits in
+a directory that packages and the RSF installer also write to — something
+else cleaning up there would take the ledger with it. One location means
+one rule, no per-game table, and all installer state is one thing to find,
+copy with the folder, or delete.
+
+### Per-game configuration
+
+After the install phase the chosen game may run a step of its own. There is
+deliberately **no shared abstraction** for these: the games do not share a
+file layout, several have no plugin system at all, and a step may have to
+edit the game's own files rather than a plugin's config. A single
+"ini key = value" mechanism would fit RBR and mislead everyone adding the
+next game.
+
+Each game therefore owns its step outright, and the only contract is the
+plumbing: a step reports the files it wrote or changed, and those are
+ledgered and backed up exactly like extracted ones, so uninstall and
+restore need to know nothing about what the step did.
+
+**RBR's step** modifies the Pacenote plugin's `Plugins\Pacenote\PaceNote.ini`:
+
+- The co-driver packages already ship that file, complete, with
+  `sounds=<the voice's own path>` and the author's own `language=`,
+  `muteReplayPacenotes` and comments. So the step EDITS it — setting
+  `language` to the user's pick, and `sounds` to the chosen voice — and
+  leaves every other line exactly as the author wrote it.
+- If the file is not there, it is written from a built-in template holding
+  the plugin's documented defaults.
+- If `Plugins\Pacenote\config\` is missing entirely, the plugin is not
+  installed: the step reports that, as the C# version's message did, rather
+  than writing config for something that is not there.
+
+What it does NOT do is regenerate the file the way `CreateRBRConfiguration`
+did. The packages have outgrown that: a regenerated file would discard each
+voice's `muteReplayPacenotes`, the author's comments, and any key the plugin
+gains later. The style half of that old function is obsolete outright — the
+style packages now ship the `config\pacenotes\*.ini` files it used to write,
+with the correct `file0=packages\FilipekMod_<style>.ini` per style.
 
 ### Wizard host
 

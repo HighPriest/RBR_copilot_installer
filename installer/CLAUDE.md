@@ -48,15 +48,20 @@ noticeable code. If size regresses, fix it before continuing.
     tree levels are NOT stored: they are derived from `name`.
   - Download = fetch → sha256 verify → move into cache. Re-download only when
     manifest sha differs from cached sha.
-- **Ledger** (`ledger.rs`): per game dir,
-  `Plugins\Pacenote\installer\installed.json`:
+- **Ledger** (`ledger.rs`): per game dir, `.pacenotes\installed.json`:
   `{ "packages": { "<game>/<directory>/<name>": { "sha256": ..., "version": ...,
-     "files": ["relative\\path", ...] } } }`
+     "exclusive_group": ..., "files": ["relative/path", ...] } } }`
   Written atomically (temp + rename) AFTER each successful package
-  install/uninstall, not once at the end.
+  install/uninstall, not once at the end. Paths are `/`-separated, as
+  `zip::entries` returns them: the ledger must read the same on any machine.
+  `.pacenotes\` rather than somewhere in the plugin tree, because that path
+  is RBR-only and is written to by other tools.
 - **Backup**: before writing a file that exists on disk but is NOT owned by
-  any ledger entry, copy it to `backup\<relative path>` (first time only —
-  never overwrite an existing backup). Restore = copy backup tree back.
+  any ledger entry, copy it to `.pacenotes\backup\<relative path>` (first
+  time only — never overwrite an existing backup). A file whose bytes
+  already match what is about to replace it is skipped: nothing to preserve,
+  and copying it would duplicate hundreds of MB on the first run over an
+  existing manual install. Restore = copy backup tree back.
   This replaces the legacy backup/FilipekMod/unpacked staging AND the
   oldest-zip restore rule.
 - **Install** (`engine.rs`): input = the wizard's result (the three
@@ -110,8 +115,12 @@ noticeable code. If size regresses, fix it before continuing.
 - `zip.rs` — zip reader (central directory + miniz_oxide inflate). The
   legacy zip WRITER for backups is no longer needed (backups are plain
   file copies) — do not write one.
-- `install.rs` — `write_rbr_config` port (the one built-in special step)
-  + RBR-specific path knowledge.
+- `install.rs` — dispatch to the chosen game's own configuration step, plus
+  one module per game that has one (`install/rbr.rs`). There is NO shared
+  abstraction over these on purpose: the games share no file layout, some
+  have no plugin system, and a step may have to edit game files directly.
+  The only contract is that a step reports the files it wrote, so they are
+  ledgered and backed up like extracted ones.
 - `i18n/` — string table lookup (localization via .rc STRINGTABLE), the
   shipped `Language` list, and the OS-UI-language default for scene 1.
 
@@ -123,7 +132,7 @@ noticeable code. If size regresses, fix it before continuing.
 | `ListAllFiles` + recursion | replaced: flat manifest fetch |
 | `DownloadFile`/`saveFile` | replaced: `api.rs` download → cache (sha compare supersedes the updated_at mtime check) |
 | `ExtractZipFile` | ported: `zip.rs` extract, same dir-entry handling |
-| `CreateRBRConfiguration` | PORTED as `install::write_rbr_config` — ini text byte-for-byte (modulo date); may shrink where config packages already ship inis |
+| `CreateRBRConfiguration` | SUPERSEDED, measured against the live catalogue: the style packages now ship the `config\pacenotes\*.ini` files it generated, and the voice packages ship a complete `PaceNote.ini`. RBR's step EDITS `language` and `sounds` in that file and preserves the rest; it writes the file from a template only when absent. Regenerating it would discard the author's `muteReplayPacenotes`, comments and any newer key |
 | `backupRBRConfiguration` | superseded by engine backup (per-file, first-touch). The C# stream bug is moot |
 | `unpack/install/uninstall RBRConfiguration` | superseded by cache + ledger + engine |
 | `restoreRBRBackup` (oldest-zip rule) | superseded by backup-tree restore |

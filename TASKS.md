@@ -106,7 +106,12 @@ See `installer/TASKS.md` I2a/I2b. All installer checks live in
       extract, one-time backup of non-ledger files, uninstall from ledger
 - [ ] Apply = diff selected-vs-ledger; exclusive groups honored;
       `requires` enforced
-- [ ] Port `write_rbr_config` (the one built-in special step)
+- [ ] Per-game configuration step, each game owning its own (no shared
+      abstraction — the games share no file layout and some have no plugin
+      system). RBR's edits the pacenotes language and voice into the
+      Pacenote plugin's config, preserving the rest; it is NOT a port of
+      `write_rbr_config`, whose output the packages have outgrown. See
+      `installer/TASKS.md` I7 and `installer/DESIGN.md`.
 
 M5 IS HALF DONE. The wizard runs end to end and everything selected is
 downloaded and verified into the cache — but nothing is written to the game
