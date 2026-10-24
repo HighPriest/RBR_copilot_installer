@@ -33,7 +33,8 @@ BEGIN
             VALUE "FileDescription",  "Pacenotes Installer for Richard Burns Rally"
             VALUE "FileVersion",      "0.1.0.0"
             VALUE "InternalName",     "pacenotes-installer"
-            VALUE "LegalCopyright",   "MIT"
+            // Explorer shows this as "Copyright", so it holds LICENSE's copyright line.
+            VALUE "LegalCopyright",   "(c) 2026 HighPriest. MIT licensed."
             VALUE "OriginalFilename", "pacenotes-installer.exe"
             VALUE "ProductName",      "Pacenotes Installer"
             VALUE "ProductVersion",   "0.1.0.0"

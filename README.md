@@ -148,5 +148,5 @@ server-side work) before opening one, and keep the task lists and
 
 ### License
 
-MIT, declared in the workspace `Cargo.toml`. The repository does not yet
-carry a `LICENSE` file.
+[MIT](LICENSE) — © 2026 HighPriest. Also declared as `license = "MIT"` in
+the workspace `Cargo.toml`, which is what the crate metadata carries.
