@@ -25,6 +25,10 @@ fn cached(game: &str, directory: &str, name: &str, sha: &str) -> super::CachedPa
         sha256: sha.to_string(),
         version: "1.0.0".into(),
         display_name: None,
+        exclusive_group: None,
+        requires: Vec::new(),
+        size: 0,
+        updated_at: 0,
     }
 }
 
@@ -242,15 +246,48 @@ fn only_checked_leaves_without_a_payload_need_downloading() {
         tree.checked_needing_download(),
         vec!["rbr/public/language/english".to_string()]
     );
+}
 
-    let cache = vec![cached(RBR, "public", "language/english", "OLD")];
+/// A republished package must reach whoever already has the old one.
+#[test]
+fn an_update_is_ticked_by_default_and_still_downloaded() {
+    let cache = vec![cached(RBR, "public", "language/english", "OLD-SHA")];
     let tree = super::Tree::build(RBR, &catalogue(), &cache);
     let stale = find(&tree, &["language", "english"]);
+
     assert_eq!(
         tree.node(stale).state,
         Some(super::LeafState::UpdateAvailable)
     );
-    assert!(super::LeafState::UpdateAvailable.is_present());
+    assert_eq!(tree.check_of(stale), super::Check::Checked);
+    assert!(super::LeafState::UpdateAvailable.has_payload());
+    assert!(tree
+        .checked_needing_download()
+        .contains(&"rbr/public/language/english".to_string()));
+}
+
+#[test]
+fn a_leaf_already_at_the_right_sha_is_not_refetched() {
+    let cache = vec![cached(RBR, "public", "style/Descriptive", "s1")];
+    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let leaf = find(&tree, &["style", "Descriptive"]);
+
+    assert_eq!(tree.node(leaf).state, Some(super::LeafState::Downloaded));
+    assert_eq!(tree.check_of(leaf), super::Check::Checked);
+    assert!(tree.checked_needing_download().is_empty());
+}
+
+/// The server no longer has it, so there is nothing to fetch.
+#[test]
+fn a_local_only_leaf_is_never_queued_for_download() {
+    let cache = vec![cached(RBR, "public", "style/Withdrawn", "w1")];
+    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let leaf = find(&tree, &["style", "Withdrawn"]);
+
+    assert_eq!(tree.node(leaf).state, Some(super::LeafState::LocalOnly));
+    assert!(super::LeafState::LocalOnly.has_payload());
+    assert!(!super::LeafState::LocalOnly.needs_download());
+    assert!(tree.checked_needing_download().is_empty());
 }
 
 #[test]

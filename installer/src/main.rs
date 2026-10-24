@@ -8,6 +8,7 @@ mod http;
 mod i18n;
 mod package_download;
 mod selftest;
+mod single_instance;
 mod ui;
 mod wizard;
 mod worker;
@@ -29,6 +30,14 @@ fn main() {
     // Scene 1 is shown before the user can choose, so it starts in the OS language.
     if let Some(os_language) = i18n::os_language() {
         i18n::set_language(os_language);
+    }
+
+    if single_instance::another_instance_running() {
+        ui::message_box_warning(
+            core::ptr::null_mut(),
+            &i18n::load_string(i18n::IDS_ALREADY_RUNNING),
+        );
+        return;
     }
 
     wizard::run(&server_url(), cache_root());

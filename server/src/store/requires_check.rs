@@ -1,5 +1,5 @@
-/// Every `requires` entry that is malformed, dangling, crosses into another
-/// game, or leads a public package to a protected one.
+/// Every `requires` entry that is malformed, has no package in the requiring
+/// package's own game, or leads a public package to a protected one.
 pub fn requires_problems(manifest: &pacenotes_shared::Manifest) -> Vec<String> {
     let mut problems = Vec::new();
     for package in &manifest.packages {
@@ -11,9 +11,10 @@ pub fn requires_problems(manifest: &pacenotes_shared::Manifest) -> Vec<String> {
                 ));
                 continue;
             };
-            let Some(dependency) = manifest.get(&reference) else {
+            let Some(dependency) = manifest.get(&package.game, &reference) else {
                 problems.push(format!(
-                    "{owner} requires {reference}, which does not exist"
+                    "{} {owner} requires {reference}, which does not exist in game {}",
+                    package.game, package.game
                 ));
                 continue;
             };
@@ -21,12 +22,6 @@ pub fn requires_problems(manifest: &pacenotes_shared::Manifest) -> Vec<String> {
                 problems.push(format!(
                     "{owner} is public but requires {reference}, which is not — \
                      anonymous users would see a package they cannot complete"
-                ));
-            }
-            if dependency.game != package.game {
-                problems.push(format!(
-                    "{owner} (game {}) requires {reference} (game {})",
-                    package.game, dependency.game
                 ));
             }
         }

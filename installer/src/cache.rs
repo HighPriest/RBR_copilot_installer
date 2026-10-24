@@ -6,7 +6,7 @@ mod index;
 mod location;
 mod payloads;
 
-pub use index::Cache;
+pub use index::{Cache, IndexState};
 pub use location::default_root;
 
 const INDEX_FILE: &str = "cache.json";

@@ -8,6 +8,10 @@ fn entry(game: &str, name: &str, sha: &str) -> crate::tree::CachedPackage {
         sha256: sha.into(),
         version: "1.0.0".into(),
         display_name: None,
+        exclusive_group: None,
+        requires: Vec::new(),
+        size: 0,
+        updated_at: 0,
     }
 }
 
@@ -107,7 +111,66 @@ fn a_corrupt_index_reads_as_empty_and_keeps_the_payloads() {
     let cache = super::Cache::open(&dir.0);
     assert!(cache.entries().is_empty());
     assert!(dir.0.join("aa.zip").is_file());
+    assert_eq!(cache.index_state(), super::IndexState::Unreadable);
+}
+
+/// A sweep trusting an unreadable index would delete every download the user has.
+#[test]
+fn nothing_is_an_orphan_when_the_index_could_not_be_read() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-no-sweep");
+    put_payload(&dir.0, "aa");
+    put_payload(&dir.0, "bb");
+    std::fs::write(dir.0.join(super::INDEX_FILE), b"{ truncated").unwrap();
+
+    assert!(super::Cache::open(&dir.0).orphans().is_empty());
+}
+
+/// A newer build may give the same keys another meaning.
+#[test]
+fn an_index_from_a_newer_build_is_not_trusted() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-future");
+    put_payload(&dir.0, "aa");
+    std::fs::write(
+        dir.0.join(super::INDEX_FILE),
+        br#"{"version": 9999, "packages": {}}"#,
+    )
+    .unwrap();
+
+    let cache = super::Cache::open(&dir.0);
+    assert_eq!(cache.index_state(), super::IndexState::Unreadable);
+    assert!(cache.orphans().is_empty());
+    assert!(dir.0.join("aa.zip").is_file());
+}
+
+#[test]
+fn a_missing_index_is_told_apart_from_an_unreadable_one() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-first-run");
+    put_payload(&dir.0, "stray");
+
+    let cache = super::Cache::open(&dir.0);
+    assert_eq!(cache.index_state(), super::IndexState::Missing);
+    assert!(cache.orphans().is_empty());
+
+    let mut cache = super::Cache::open(&dir.0);
+    put_payload(&dir.0, "kept");
+    cache.insert(entry("rbr", "style/Kept", "kept")).unwrap();
+    assert_eq!(cache.index_state(), super::IndexState::Loaded);
     assert_eq!(cache.orphans().len(), 1);
+}
+
+#[test]
+fn saving_never_removes_the_old_index_first() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-replace");
+    put_payload(&dir.0, "aa");
+    let mut cache = super::Cache::open(&dir.0);
+    cache.insert(entry("rbr", "style/A", "aa")).unwrap();
+
+    let before = std::fs::read(dir.0.join(super::INDEX_FILE)).expect("first index");
+    cache.insert(entry("rbr", "style/B", "aa")).unwrap();
+    let after = std::fs::read(dir.0.join(super::INDEX_FILE)).expect("index still there");
+
+    assert_ne!(before, after);
+    assert_eq!(super::Cache::open(&dir.0).entries().len(), 2);
 }
 
 #[test]
@@ -119,7 +182,6 @@ fn a_missing_cache_is_an_empty_one() {
     assert!(cache.get("rbr/public/anything").is_none());
 }
 
-/// Rewriting over an existing index is where a naive rename fails on Windows.
 #[test]
 fn saving_leaves_no_temp_file() {
     let dir = crate::scratch_dir::ScratchDir::new("cache-atomic");

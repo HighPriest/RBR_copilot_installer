@@ -67,7 +67,10 @@ async fn nested_names_download_through_the_wildcard_route() {
     let manifest = server.manifest("/packages", None).await;
     let reference = format!("public/{}", common::NESTED_NAME);
     let nested = manifest
-        .get(&pacenotes_shared::PackageRef::parse(&reference).unwrap())
+        .get(
+            pacenotes_shared::GAME_RBR,
+            &pacenotes_shared::PackageRef::parse(&reference).unwrap(),
+        )
         .expect("nested package listed");
     assert_eq!(nested.category(), pacenotes_shared::CATEGORY_CODRIVER);
     assert_eq!(nested.tree_levels(), vec!["polish", "male"]);

@@ -10,6 +10,7 @@ pub use language::{os_language, set_language, Language};
 pub use string_table::{instance, load_string, load_string_arg};
 pub use wide_string::to_wide;
 
+pub const IDS_ALREADY_RUNNING: u16 = 11;
 pub const IDS_APP_TITLE: u16 = 20;
 
 pub const IDS_BTN_CONTINUE: u16 = 30;

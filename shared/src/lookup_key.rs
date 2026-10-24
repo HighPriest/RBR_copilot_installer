@@ -10,11 +10,16 @@ pub fn valid_id(id: &str) -> bool {
 }
 
 /// Is this a usable `PackageInfo::name`: `/`-separated segments, none empty,
-/// none `.` or `..`, and no `\` anywhere?
+/// none `.` or `..`, and no `\` or control character anywhere?
 ///
 /// Both sides call it, because a manifest can come from a server the user does not run.
 pub fn valid_name(name: &str) -> bool {
     if name.is_empty() || name.contains('\\') {
+        return false;
+    }
+    // A name becomes text the installer writes, such as `sounds=` in an ini,
+    // so a control character would let a server inject whole lines.
+    if name.chars().any(|c| c.is_ascii_control()) {
         return false;
     }
     name.split('/')
@@ -58,5 +63,20 @@ mod tests {
         ] {
             assert!(!super::valid_name(bad), "{bad:?} should be rejected");
         }
+    }
+
+    #[test]
+    fn a_name_can_never_carry_a_control_character() {
+        for bad in [
+            "codriver/Kamil\nmuteReplayPacenotes=1",
+            "codriver/Kamil\r\nenableGUI=0",
+            "codriver/\tKamil",
+            "codriver/Ka\0mil",
+            "codriver/Kamil\u{7f}",
+        ] {
+            assert!(!super::valid_name(bad), "{bad:?} should be rejected");
+        }
+        assert!(super::valid_name("style/Numeric Standard"));
+        assert!(super::valid_name("codriver/polish/male/Miłosz"));
     }
 }

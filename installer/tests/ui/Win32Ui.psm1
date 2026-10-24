@@ -507,12 +507,21 @@ function Expand-ResourceArg {
 }
 
 function Start-Installer {
-    <#  Launch the release build and return the process plus its exe path. #>
+    <#  Launch the release build and return the process plus its exe path.
+
+        Refuses while another copy runs, whose single-instance modal would
+        otherwise surface as "scene 1 never appeared". #>
     param([string]$ExePath, [string[]]$ExtraArgs = @())
     if (-not $ExePath) {
         $ExePath = Join-Path $PSScriptRoot '..\..\target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe'
     }
     $ExePath = (Resolve-Path $ExePath).Path
+    $running = @(Get-Process -Name 'pacenotes-installer' -ErrorAction SilentlyContinue)
+    if ($running.Count -gt 0) {
+        throw ("pacenotes-installer is already running (pid $($running.Id -join ', ')). " +
+            'The installer allows one instance, so this run would only see the ' +
+            '"already running" modal. Close it and try again.')
+    }
     $proc = if ($ExtraArgs.Count -gt 0) {
         Start-Process $ExePath -ArgumentList $ExtraArgs -PassThru
     } else {

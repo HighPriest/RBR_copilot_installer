@@ -162,6 +162,20 @@ fn a_damaged_entry_is_refused_rather_than_installed() {
     assert!(error.0.contains("download it again"), "{}", error.0);
 }
 
+/// A short list would become a short ledger, leaving files nothing owns.
+#[test]
+fn a_truncated_central_directory_is_refused_not_half_read() {
+    let mut damaged = DEFLATED.to_vec();
+    let last_record = damaged
+        .windows(4)
+        .rposition(|window| window == [0x50, 0x4b, 0x01, 0x02])
+        .expect("a central directory record");
+    damaged[last_record..last_record + 4].copy_from_slice(b"XXXX");
+
+    let error = super::entries(&damaged).expect_err("a short directory must be refused");
+    assert!(error.0.contains("entries but only"), "{}", error.0);
+}
+
 #[test]
 fn something_that_is_not_a_zip_is_reported_as_such() {
     assert!(super::entries(b"").is_err());

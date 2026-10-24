@@ -9,8 +9,12 @@ impl super::Cache {
         self.payload_path(sha256).is_file()
     }
 
-    /// Payloads no index entry refers to, for the I9 sweep.
+    /// Payloads no index entry refers to, for the I9 sweep, and none unless
+    /// the index was really read, or a damaged index would condemn the whole cache.
     pub fn orphans(&self) -> Vec<std::path::PathBuf> {
+        if self.state != super::IndexState::Loaded {
+            return Vec::new();
+        }
         let known = self.known_digests();
         let Ok(entries) = std::fs::read_dir(&self.root) else {
             return Vec::new();

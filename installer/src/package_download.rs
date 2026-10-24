@@ -12,7 +12,7 @@ pub fn download_to_cache(
 ) -> Result<(), crate::http::HttpError> {
     std::fs::create_dir_all(cache.root())
         .map_err(|e| local_failure("cannot create the download cache", e))?;
-    // Named per package, so two concurrent runs never share a temp file.
+    // Named per package; two installer instances are kept apart by the single-instance check.
     let temp = cache.root().join(format!(
         "{}.part",
         pacenotes_installer::sha256::hex_digest(package.download_path().as_bytes())
@@ -81,14 +81,7 @@ fn promote(
             .map_err(|e| local_failure("cannot move the download into the cache", e))?;
     }
     cache
-        .insert(pacenotes_installer::tree::CachedPackage {
-            game: package.game.clone(),
-            directory: package.directory.clone(),
-            name: package.name.clone(),
-            sha256: package.sha256.clone(),
-            version: package.version.clone(),
-            display_name: package.display_name.clone(),
-        })
+        .insert(pacenotes_installer::tree::CachedPackage::of(package))
         .map_err(|e| local_failure("cannot update the cache index", e))
 }
 

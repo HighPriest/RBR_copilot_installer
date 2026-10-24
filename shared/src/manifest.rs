@@ -21,9 +21,12 @@ impl Manifest {
         self.visible_to(&[])
     }
 
-    pub fn get(&self, reference: &crate::PackageRef) -> Option<&crate::PackageInfo> {
+    /// Within one game, since every game may publish the same `directory/name`.
+    pub fn get(&self, game: &str, reference: &crate::PackageRef) -> Option<&crate::PackageInfo> {
         self.packages.iter().find(|package| {
-            package.directory == reference.directory && package.name == reference.name
+            package.game == game
+                && package.directory == reference.directory
+                && package.name == reference.name
         })
     }
 }
@@ -62,11 +65,37 @@ mod tests {
         let manifest = sample();
         let reference = crate::PackageRef::parse("beta/FilipekMod_beta_pack").unwrap();
         assert_eq!(
-            manifest.get(&reference).unwrap().name,
+            manifest.get(crate::GAME_RBR, &reference).unwrap().name,
             "FilipekMod_beta_pack"
         );
         let missing = crate::PackageRef::parse("beta/nope").unwrap();
-        assert!(manifest.get(&missing).is_none());
+        assert!(manifest.get(crate::GAME_RBR, &missing).is_none());
+    }
+
+    #[test]
+    fn get_does_not_cross_games() {
+        let mut beamng = crate::fixtures::package(crate::PUBLIC_DIR, "language/polish");
+        beamng.game = crate::GAME_BEAMNG.to_string();
+        beamng.version = "beamng-version".into();
+        let mut rbr = crate::fixtures::package(crate::PUBLIC_DIR, "language/polish");
+        rbr.version = "rbr-version".into();
+        let manifest = super::Manifest {
+            packages: vec![beamng, rbr],
+        };
+
+        let reference = crate::PackageRef::parse("public/language/polish").unwrap();
+        assert_eq!(
+            manifest.get(crate::GAME_RBR, &reference).unwrap().version,
+            "rbr-version"
+        );
+        assert_eq!(
+            manifest
+                .get(crate::GAME_BEAMNG, &reference)
+                .unwrap()
+                .version,
+            "beamng-version"
+        );
+        assert!(manifest.get(crate::GAME_ASSETTOCORSA, &reference).is_none());
     }
 
     #[test]

@@ -73,7 +73,7 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
   an unknown game id, a sidecar with no zip, and a name that needs
   percent-encoding in a URL.
 
-## Security invariantsr
+## Security invariants
 
 - Raw tokens are NEVER stored or logged. Store lowercase hex sha256 only.
   Mint format: `pcn_` + 32 random bytes base64url (admin CLI prints it once).

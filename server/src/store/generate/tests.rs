@@ -8,7 +8,10 @@ fn write_package(data_dir: &std::path::Path, game: &str, rest: &str, bytes: &[u8
 fn find<'a>(generated: &'a super::Generated, reference: &str) -> &'a pacenotes_shared::PackageInfo {
     generated
         .manifest
-        .get(&pacenotes_shared::PackageRef::parse(reference).unwrap())
+        .get(
+            pacenotes_shared::GAME_RBR,
+            &pacenotes_shared::PackageRef::parse(reference).unwrap(),
+        )
         .unwrap()
 }
 
@@ -170,8 +173,9 @@ fn dangling_and_cross_boundary_requires_warn() {
     assert!(warnings.contains("is public but requires"), "{warnings}");
 }
 
+/// The only `public/lang` is beamng's, so the rbr package's dependency is missing.
 #[test]
-fn requires_across_games_warn() {
+fn requires_resolve_within_one_game_only() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     write_package(dir, "rbr", "public/voice.zip", b"voice");
@@ -186,8 +190,29 @@ fn requires_across_games_warn() {
     let warnings = crate::store::fixture_tree::generate(dir)
         .warnings
         .join("\n");
-    assert!(warnings.contains("game rbr"), "{warnings}");
-    assert!(warnings.contains("game beamng"), "{warnings}");
+    assert!(
+        warnings.contains("does not exist in game rbr"),
+        "{warnings}"
+    );
+}
+
+/// `beamng` sorts first, so a game-blind lookup would find its package instead.
+#[test]
+fn a_same_named_package_in_another_game_does_not_shadow_the_real_one() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    write_package(dir, "rbr", "public/voice.zip", b"voice");
+    write_package(
+        dir,
+        "rbr",
+        "public/voice.toml",
+        b"requires = [\"public/lang\"]\n",
+    );
+    write_package(dir, "rbr", "public/lang.zip", b"lang");
+    write_package(dir, "beamng", "public/lang.zip", b"lang");
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
 }
 
 #[test]

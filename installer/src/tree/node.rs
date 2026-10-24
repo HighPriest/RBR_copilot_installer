@@ -11,11 +11,17 @@ pub enum LeafState {
 }
 
 impl LeafState {
-    pub fn is_present(self) -> bool {
+    /// Whether some payload is on this computer, an outdated one included, so the leaf installs offline.
+    pub fn has_payload(self) -> bool {
         matches!(
             self,
             LeafState::Downloaded | LeafState::UpdateAvailable | LeafState::LocalOnly
         )
+    }
+
+    /// Not the negation of `has_payload`: an update has old bytes yet still needs the new ones.
+    pub fn needs_download(self) -> bool {
+        matches!(self, LeafState::NotCached | LeafState::UpdateAvailable)
     }
 }
 

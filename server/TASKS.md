@@ -61,8 +61,9 @@
       Caddy site block, and `deploy/README.md` covering
       configuration, publishing, access keys, MOTD and troubleshooting
 - [ ] Author sidecar .toml for the real packages (config variants share
-      exclusive_group "pacenote-config"; voice packs requires their
-      language pack; categories: sounds/configs/languages/pacenotes)
+      exclusive_group "pacenote-config"; voice packs require their language
+      pack). NOT categories: those come from the folder layout now, and a
+      `category` key in a sidecar is a hard error
 - [ ] README snippet: publish flow = drop zip (+ sidecar) into
       packages/<dir>/ → `manifest gen` → done; access flow =
       `token mint --grant <dir>`

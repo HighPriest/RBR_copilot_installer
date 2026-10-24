@@ -52,14 +52,14 @@ impl super::Tree {
             .collect()
     }
 
-    /// The checked leaves whose payload is not on this computer.
+    /// The checked leaves scene 6 fetches, updates included.
     pub fn checked_needing_download(&self) -> Vec<String> {
         self.checked_leaves()
             .into_iter()
             .filter(|&leaf| {
-                !self.nodes[leaf]
+                self.nodes[leaf]
                     .state
-                    .is_some_and(super::LeafState::is_present)
+                    .is_some_and(super::LeafState::needs_download)
             })
             .filter_map(|leaf| self.nodes[leaf].key.clone())
             .collect()

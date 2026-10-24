@@ -33,7 +33,7 @@ impl super::Tree {
             children: Vec::new(),
             key: Some(row.key),
             state: Some(row.state),
-            checked: row.state.is_present(),
+            checked: row.state.has_payload(),
         };
         self.push(node, parent);
     }

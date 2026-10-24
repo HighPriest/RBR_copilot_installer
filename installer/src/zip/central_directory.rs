@@ -44,6 +44,13 @@ pub fn read(zip: &[u8]) -> Result<Vec<Entry>, super::ZipError> {
         entries.push(entry);
         at = next;
     }
+    // A short list would become a short ledger, leaving files nothing owns.
+    if entries.len() != count {
+        return Err(super::ZipError::new(format!(
+            "this package is damaged: it lists {count} entries but only {} could be read",
+            entries.len()
+        )));
+    }
     Ok(entries)
 }
 

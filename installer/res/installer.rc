@@ -100,6 +100,7 @@ END
 #define IDS_DONE                6
 #define IDS_READY               9
 #define IDS_NOT_IMPL           10
+#define IDS_ALREADY_RUNNING    11
 #define IDS_APP_TITLE          20
 
 // Per-scene primary button labels + shared chrome (30-49)
@@ -290,6 +291,7 @@ BEGIN
     IDS_DONE            "Done"
     IDS_READY           "Ready."
     IDS_NOT_IMPL        "Not implemented yet."
+    IDS_ALREADY_RUNNING "The Pacenotes Installer is already running.\n\nClose the other window and try again. Two copies would overwrite each other's downloads and installation records."
     IDS_APP_TITLE       "Pacenotes Installer"
 
     IDS_BTN_CONTINUE    "Continue"
@@ -372,6 +374,7 @@ BEGIN
     IDS_DONE            "Gotowe"
     IDS_READY           "Gotowy."
     IDS_NOT_IMPL        "Jeszcze niezaimplementowane."
+    IDS_ALREADY_RUNNING "Instalator Pacenotes jest już uruchomiony.\n\nZamknij drugie okno i spróbuj ponownie. Dwie kopie nadpisywałyby sobie nawzajem pobrane pliki i zapis instalacji."
     IDS_APP_TITLE       "Instalator Pacenotes"
 
     IDS_BTN_CONTINUE    "Kontynuuj"
