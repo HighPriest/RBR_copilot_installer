@@ -270,14 +270,47 @@ can be stopped.
       failing at install time. Pure tests with injected paths in
       `tests/tree.rs` and `tests/cache.rs`
 
-## I6 — Zip reader
-- [ ] zip.rs reader: central directory parse, miniz_oxide inflate, extract
-      with dir-entry handling matching C# ExtractZipFile; also
-      `entries() -> Vec<relative path>` WITHOUT extracting (needed by the
-      backup phase before install)
-- [ ] Zip-slip guard: reject entries escaping the target dir
-- [ ] Cross-platform unit tests: extract fixture zip; entries() listing
-      (NO zip writer — backups are plain file copies)
+## I6 — Zip reader  (done)
+- [x] zip.rs reader: EOCD scan, central-directory walk, miniz_oxide inflate
+      (method 8) and stored (method 0), extract creating the directories a
+      .NET zip does NOT carry entries for — which is every real package,
+      since `Plugins/` and the directory holding a nested file are never
+      entries. Overwrites, as C# ExtractZipFile did: a package is an overlay
+      and owns its files
+- [x] `entries() -> Vec<String>` WITHOUT extracting, for the backup phase.
+      Directory entries are excluded: an empty directory is not something to
+      back up, ledger or delete
+- [x] Paths come back `/`-separated on every host, because they are the
+      ledger's keys and a ledger must read the same on another machine. The
+      filesystem separator appears only when joining onto a real directory
+- [x] Zip-slip guard (`safe_relative`): rejects `..` segments, a leading
+      separator, and anything containing `:` (drive, drive-relative path, or
+      an NTFS alternate data stream). `\` counts as a separator, because
+      Windows archivers write it and treating it as an ordinary character
+      would both mis-name the file and let `..\..\x` through. A package with
+      such an entry fails WHOLE — listing it fails too, so nothing is
+      half-installed
+- [x] CRC32 per entry. The sha256 was verified once, at download, possibly
+      months before the install; the cache file has been on a disk since.
+      The checksum is already in the archive, and checking it is what stops
+      rotted bytes reaching a game folder. Nibble table (64 B) rather than
+      the usual 256-entry one (1 kB), for the budget
+- [x] Zip64 is detected and refused by name, rather than misread
+- [x] CP437 for entry names without the UTF-8 flag, as .NET does — the
+      encoding the existing packages were written with
+- [x] Cross-platform tests (11) against REAL archives: `Compress-Archive`
+      output, deflated and stored, with the zip-slip case made by renaming
+      an entry in place (`aa/evil.txt` is as long as `../evil.txt`, so no
+      offset moves and no zip writer is needed). See
+      `tests/fixtures/README.md`
+- [x] MANUAL CHECK `cargo test --test zip -- --ignored` over a directory of
+      real packages. Run against the live catalogue: 24 packages, 11,872
+      files, every one listed, extracted and CRC-verified
+
+SIZE NOTE: still 417.5 kB — unchanged, because `main.rs` does not call the
+reader yet, so LTO drops it and miniz_oxide with it. The ~40 kB this costs
+lands with I7, when the engine actually extracts something. Do not read the
+unchanged number as "zip was free".
 
 ## I7 — Ledger + engine (the core)
 - [ ] ledger.rs: installed.json read/write (atomic temp+rename), ownership

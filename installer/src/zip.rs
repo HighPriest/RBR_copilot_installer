@@ -1,16 +1,20 @@
-//! A minimal zip reader over miniz_oxide, matching the legacy `ExtractZipFile`.
-//! There is no writer: backups are plain file copies.
+//! A zip reader over miniz_oxide, for game-root overlays: what is in a package,
+//! and putting it on disk where it says. No entry is ever interpreted, and there
+//! is no writer, since backups are plain file copies.
 //!
-//! TODO(I6): implement both functions.
+//! Paths are `/`-separated on every host, because they are also the ledger's keys.
+//! An archive and each entry are held in memory whole; real packages stay under 50 MB.
 
-pub struct ZipError(pub String);
+mod central_directory;
+mod crc32;
+mod entry_data;
+mod entry_name;
+mod extraction;
+mod zip_error;
 
-/// Entry paths in zip order, without extracting.
-pub fn entries(_zip_bytes: &[u8]) -> Result<Vec<String>, ZipError> {
-    Err(ZipError("not implemented".into()))
-}
+pub use entry_name::safe_relative;
+pub use extraction::{entries, extract};
+pub use zip_error::ZipError;
 
-/// Must refuse any entry that would land outside `dest_dir`.
-pub fn extract(_zip_bytes: &[u8], _dest_dir: &std::path::Path) -> Result<(), ZipError> {
-    Err(ZipError("not implemented".into()))
-}
+#[cfg(test)]
+mod tests;
