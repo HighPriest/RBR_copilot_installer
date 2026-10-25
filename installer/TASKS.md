@@ -345,7 +345,7 @@ leaves the repo buildable and tested:
 - **I7c** (done) `engine.rs plan()` — a pure function over selection + ledger +
   cache. Table tests, no filesystem.
 - **I7d** (done) `engine.rs execute()`, restore points, backup. Tempdir tests.
-- **I7e** `install.rs` — the RBR configuration step.
+- **I7e** (done) `install.rs` — the RBR configuration step.
 - **I7f** Wiring: scene 6's two new phases, the ledger merged into the
   tree (P1), the removal confirmation, conflict detection and logging.
 

@@ -6,22 +6,9 @@
 //! RBR's step edits `language` and `sounds` in the co-driver's own
 //! `PaceNote.ini` and keeps every other line, because the packages now ship
 //! the files the legacy `CreateRBRConfiguration` generated.
-//!
-//! TODO(I7):
-//! - `configure(game, game_dir, &Configuration) -> Result<Vec<String>, String>`,
-//!   dispatching on the game and returning `/`-separated paths for the ledger
-//! - `mod rbr`: set the two keys, write from a template when the file is
-//!   absent, and report "install the Pacenote plugin first" when
-//!   `PACENOTE_CONFIG_DIR` is missing
-//! - `sounds` is the voice's path below its category
-//!   (`codriver/polish/male/KamilFilipek` → `polish/male/KamilFilipek`), kept
-//!   as shipped and logged when `Plugins\Pacenote\sounds\<that path>` is absent
 
-/// `(percent, status)`.
-pub type Report<'a> = &'a mut dyn FnMut(u8, &str);
+mod configure;
+mod ini;
+mod rbr;
 
-/// Windows separators are intentional: RBR expects them.
-pub const PACENOTE_CONFIG_DIR: &str = "Plugins\\Pacenote\\config";
-
-/// The plugin's settings, shipped by the co-driver packages and edited in place.
-pub const PACENOTE_SETTINGS: &str = "Plugins\\Pacenote\\PaceNote.ini";
+pub use configure::{configure, ConfigureError, Configured};

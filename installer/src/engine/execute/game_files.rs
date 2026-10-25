@@ -1,12 +1,3 @@
-/// Joined segment by segment, so the platform never re-parses the string as a path.
-pub fn join_relative(base: &std::path::Path, relative: &str) -> std::path::PathBuf {
-    let mut path = base.to_path_buf();
-    for segment in relative.split('/') {
-        path.push(segment);
-    }
-    path
-}
-
 /// Through a temp file renamed into place, since a truncated file would be
 /// loaded by the game and then hash as someone else's change.
 pub fn write_atomic(path: &std::path::Path, bytes: &[u8]) -> Result<(), super::ExecuteError> {

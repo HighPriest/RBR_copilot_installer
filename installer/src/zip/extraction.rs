@@ -52,7 +52,7 @@ pub fn extract(
 
     let mut written = Vec::new();
     for entry in &entries {
-        let target = join(dest_dir, &entry.path);
+        let target = crate::relative_path::join(dest_dir, &entry.path);
         if entry.is_dir {
             create_dir(&target)?;
             continue;
@@ -72,13 +72,4 @@ pub fn extract(
 fn create_dir(path: &std::path::Path) -> Result<(), super::ZipError> {
     std::fs::create_dir_all(path)
         .map_err(|e| super::ZipError::new(format!("cannot create {}: {e}", path.display())))
-}
-
-/// Joined segment by segment, so the platform never re-parses the string as a path.
-fn join(dest: &std::path::Path, relative: &str) -> std::path::PathBuf {
-    let mut path = dest.to_path_buf();
-    for segment in relative.split('/') {
-        path.push(segment);
-    }
-    path
 }

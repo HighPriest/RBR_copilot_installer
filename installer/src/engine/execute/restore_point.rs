@@ -25,7 +25,7 @@ pub fn restore_dir(game_dir: &std::path::Path, point: &str) -> std::path::PathBu
 
 /// Where `point` keeps its copy of the file at `relative`.
 pub fn saved_copy(game_dir: &std::path::Path, point: &str, relative: &str) -> std::path::PathBuf {
-    super::game_files::join_relative(&restore_dir(game_dir, point).join("files"), relative)
+    crate::relative_path::join(&restore_dir(game_dir, point).join("files"), relative)
 }
 
 fn unix_now() -> i64 {

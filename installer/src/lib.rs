@@ -13,5 +13,7 @@ pub mod size;
 pub mod tree;
 pub mod zip;
 
+mod relative_path;
+
 #[cfg(test)]
 mod scratch_dir;

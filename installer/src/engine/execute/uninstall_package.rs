@@ -31,7 +31,7 @@ fn put_back(
     entry: &crate::ledger::LedgerEntry,
     file: &crate::ledger::LedgerFile,
 ) -> Result<Option<String>, super::ExecuteError> {
-    let target = super::game_files::join_relative(run.game_dir, &file.path);
+    let target = crate::relative_path::join(run.game_dir, &file.path);
     let shared = run
         .ledger
         .owners_of(&file.path)
@@ -90,7 +90,7 @@ fn prune_empty_dirs(game_dir: &std::path::Path, entry: &crate::ledger::LedgerEnt
         .files
         .values()
         .filter_map(|file| {
-            super::game_files::join_relative(game_dir, &file.path)
+            crate::relative_path::join(game_dir, &file.path)
                 .parent()
                 .map(std::path::Path::to_path_buf)
         })

@@ -42,7 +42,7 @@ pub fn install_package(
         let bytes = crate::zip::read_entry(&payload, &file.path)
             .map_err(|e| super::ExecuteError::extract(key, e))?;
         super::game_files::write_atomic(
-            &super::game_files::join_relative(run.game_dir, &file.path),
+            &crate::relative_path::join(run.game_dir, &file.path),
             &bytes,
         )?;
         if let Some(recorded) = entry.files.get_mut(&crate::ledger::fold(&file.path)) {
@@ -89,7 +89,7 @@ fn preserve_prior(
     file: &crate::zip::FileEntry,
     payload: &[u8],
 ) -> Result<crate::ledger::Prior, super::ExecuteError> {
-    let target = super::game_files::join_relative(run.game_dir, &file.path);
+    let target = crate::relative_path::join(run.game_dir, &file.path);
     // An owned file's original was recorded by whichever entry first replaced it.
     if !target.exists() || run.ledger.owns(&file.path) {
         return Ok(crate::ledger::Prior::Absent);
