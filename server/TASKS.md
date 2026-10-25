@@ -202,3 +202,50 @@
 - `entrypoint.sh` runs `manifest gen` before `serve`, so publishing is "copy
   the zip, restart the unit". A failed generation does not stop the server:
   it serves the previous manifest.
+
+## S10 — Conflict reports from installers (decided 2026-10-25)
+
+The installer no longer blocks a user when two selected packages write the
+same file: the later one wins, it is logged, and the installer reports it
+here. The reasoning is in `installer/CLAUDE.md` under "Overlapping files" —
+only the operator can fix a catalogue that ships two packages fighting over
+one path, and they cannot fix what they never hear about.
+
+- [ ] `POST /report/conflict`, no auth (an anonymous user hits conflicts
+      too), `application/json`:
+
+      { "at": "2026-10-25T18:15:00Z", "game": "rbr",
+        "installer": "0.2.0",
+        "packages": ["public/language/polish",
+                     "public/codriver/polish/male/Kamil"],
+        "files": ["Plugins/Pacenote/PaceNote.ini"] }
+
+- [ ] Body capped hard (a few kB) and the file list truncated server-side.
+      This is an unauthenticated write endpoint: treat every field as
+      hostile, validate `game` with `valid_id` and the refs with
+      `PackageRef::parse`, and never echo any of it back.
+- [ ] Rate-limit per IP. A broken client could otherwise report on every
+      run, and this endpoint exists to be noticed, not to be a megaphone.
+- [ ] Store append-only — one JSON line per report under
+      `data/reports/conflicts-<date>.jsonl` is enough, and needs no schema
+      or migration. No DB table: these are diagnostics, not state the
+      server reasons about.
+- [ ] `manifest gen` should eventually read them and warn about pairs that
+      overlap, which turns a user's bad day into a publishing-time check.
+- [ ] Nothing in a report identifies a user: package refs and relative
+      paths are catalogue data the server already has. Keep it that way —
+      no token, no hostname, no local paths. Document it in
+      `deploy/README.md` so the operator can answer the question honestly.
+
+## S11 — Manifest version (decided 2026-10-25, see also S1 in DESIGN-REVIEW.md)
+
+Choice categories live in the installer, not the manifest (localized UI
+text cannot come from the server). So a server that grows new categories is
+ahead of an old installer, and the installer has to be able to tell.
+
+- [ ] `Manifest` carries a version. `shared/` changes first, then both
+      sides in the same PR.
+- [ ] `manifest gen` writes the current version.
+- [ ] The installer compares it with the highest it understands and, when
+      the manifest is newer, blocks DOWNLOADING only — reconfiguring and
+      uninstalling what the user already has must keep working.

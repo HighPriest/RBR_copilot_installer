@@ -48,28 +48,100 @@ noticeable code. If size regresses, fix it before continuing.
     tree levels are NOT stored: they are derived from `name`.
   - Download = fetch → sha256 verify → move into cache. Re-download only when
     manifest sha differs from cached sha.
-- **Ledger** (`ledger.rs`): per game dir, `.pacenotes\installed.json`:
-  `{ "packages": { "<game>/<directory>/<name>": { "sha256": ..., "version": ...,
-     "exclusive_group": ..., "files": ["relative/path", ...] } } }`
-  Written atomically (temp + rename) AFTER each successful package
-  install/uninstall, not once at the end. Paths are `/`-separated, as
-  `zip::entries` returns them: the ledger must read the same on any machine.
+- **Ledger** (`ledger.rs`): per game dir, `.pacenotes\installed.json`.
   `.pacenotes\` rather than somewhere in the plugin tree, because that path
-  is RBR-only and is written to by other tools.
-- **Backup**: before writing a file that exists on disk but is NOT owned by
-  any ledger entry, copy it to `.pacenotes\backup\<relative path>` (first
-  time only — never overwrite an existing backup). A file whose bytes
-  already match what is about to replace it is skipped: nothing to preserve,
-  and copying it would duplicate hundreds of MB on the first run over an
-  existing manual install. Restore = copy backup tree back.
-  This replaces the legacy backup/FilipekMod/unpacked staging AND the
-  oldest-zip restore rule.
+  is RBR-only and is written to by other tools. Written atomically
+  (temp + rename) AFTER each successful package install/uninstall, not once
+  at the end.
+
+      "<game>/<directory>/<name>": {
+        "sha256": …, "version": …, "exclusive_group": …,
+        "state": "installed" | "installing",
+        "files": {
+          "plugins/pacenote/pacenote.ini": {        // key: case-folded
+            "path": "Plugins/Pacenote/PaceNote.ini", // as actually written
+            "sha256": …,                             // what WE wrote
+            "prior": "backup" | "identical" | "absent"
+          }
+        }
+      }
+
+  Every part of that shape pays for itself, and a plain list of paths
+  cannot do any of it:
+  - **case-folded keys**, original spelling kept. NTFS ignores case, so
+    `Plugins/Pacenote` and `plugins/pacenote` are one file. Comparing keys
+    byte-for-byte answers "does another package still own this?" wrongly,
+    and the wrong answer deletes a file another package needs.
+  - **per-file `sha256`** of what we wrote. Steam's verify, the RSF
+    installer, a plugin update or the user's own editor can replace a file
+    after we installed it. Uninstall deletes a file only when it still
+    matches; otherwise it is left alone and logged. Someone else's work is
+    not ours to remove.
+  - **`prior`** — what was there before us. `backup`: the original is in a
+    restore point. `identical`: the bytes already matched, so nothing was
+    copied, and the original can be recovered from the cached payload.
+    `absent`: there was no file, so uninstall deletes it. Without this, the
+    byte-identical skip quietly turns files the user already had into files
+    the installer owns and later deletes.
+  - **`state: "installing"`**, written BEFORE extracting. A run that dies
+    mid-extract leaves half-written files that are in no ledger entry — so
+    the next run would treat them as the user's own and back them up as the
+    pristine originals. The write-ahead entry makes them recognisably ours.
+  - Paths are `/`-separated, as `zip::entries` returns them: a ledger must
+    read the same on any machine.
+- **Backup / restore points**: a run that replaces anything writes a dated
+  restore point, `.pacenotes\restore\<timestamp>\` holding the files it
+  replaced plus `ledger.json` as it was BEFORE the run. A file whose bytes
+  already match what will replace it is not copied — nothing to preserve,
+  and copying would duplicate hundreds of MB on a first run over an
+  existing manual install; it is recorded as `prior: "identical"` instead.
+  Restoring to a point is not just copying files back: it also removes what
+  was installed after it, which is what the ledger snapshot is for. See
+  `DESIGN.md` "Restore".
 - **Install** (`engine.rs`): input = the wizard's result (the three
   Configuration picks plus the checked `pacenotes` packages) + the ledger.
   Plan = uninstall (ledgered but no longer chosen, including a ledgered
   member of a category or `exclusive_group` that a new pick supersedes) then
   install (chosen but not ledgered, or sha changed = update). Enforce
   `requires`. Scene 6 runs the plan and is the only progress screen.
+- **Overlapping files** (two selected packages writing the same path):
+  install order decides, the later one wins, and the run log says so. No
+  gate and no refusal — a user must never be blocked by a catalogue mistake
+  they cannot fix. The cost is accepted and known: after uninstalling the
+  winner the file survives (another entry still owns it) holding the
+  winner's bytes, so the folder drifts from what any one package expects.
+  That is why the conflict is REPORTED to the server (`POST /report/conflict`)
+  rather than only logged: the operator is the only one who can fix it, and
+  they cannot fix what they never hear about.
+- **Exclusivity** is enforced in the ENGINE only. A choice category is an
+  implicit group, handled by scene 5 asking for one pick. For
+  `exclusive_group`, `plan()` uninstalls the ledgered member before
+  installing the new one. Neither scene 4 nor scene 5 gates it: two members
+  ticked in one run both install, the later wins, and the overlap rule
+  above reports it.
+- **Choice categories are per game, and they live in `gamedir.rs`** — not in
+  `shared`, where one list drove scene 5 for all four games, and not in the
+  manifest. Each game declares which categories it asks a single pick from,
+  with a localized LABEL and EXPLANATION per category: that text belongs in
+  the `.rc` string tables with every other string, and shipping UI text
+  through the manifest would mean the server deciding what the installer
+  says, in languages it cannot know. These lists change rarely; an
+  installer release for a new game is the right cost.
+  - Only a game's choice categories are MANDATORY on scene 4. An operator
+    adding an `extras/` folder must not turn it into a question every user
+    has to answer.
+  - A game with no choice categories skips scene 5 entirely.
+- **Minimum manifest version.** Because the installer, not the server,
+  knows the categories, a server that grows new ones is ahead of an old
+  installer. So `Manifest` carries a version, every installer declares the
+  highest it understands, and a manifest newer than that means the build is
+  out of date. The rule for what happens then matters as much as the check:
+  - It blocks DOWNLOADING only. An out-of-date installer may still
+    reconfigure, repair and uninstall what is already on the machine — the
+    user did not break anything by not updating, and taking their existing
+    setup away from them would be the worst possible response.
+  - The prompt appears when the user tries to download, not at startup.
+  See S1 in `DESIGN-REVIEW.md`; this is the part of it decided now.
 
 ## Module map
 

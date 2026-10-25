@@ -126,6 +126,19 @@ directory or category where a game belongs, a game folder with no
   back to `en`, 404 when there is none (treat exactly like being offline).
   No auth. `lang` is restricted to `[a-z]{2,8}` server-side.
 - `GET /health` — 200, no auth.
+- `POST /report/conflict` — no auth, JSON. An installer reports that two
+  selected packages wrote the same file. It does NOT block the user: the
+  later package wins and the operator, who is the only one who can fix
+  such a catalogue, gets told. Carries no user identity and no local
+  paths — package refs and relative paths are catalogue data the server
+  already has. Unauthenticated write, so: capped body, validated fields,
+  rate-limited, append-only storage. See `server/TASKS.md` S10.
+- The manifest carries a VERSION. Choice categories live in the installer
+  (their labels and explanations are localized UI text, which cannot come
+  from the server), so a catalogue can outgrow an old build. An installer
+  that sees a newer manifest blocks DOWNLOADING only — reconfiguring and
+  uninstalling what the user already has keeps working. See `server/TASKS.md`
+  S11.
 
 Any protocol change = change `shared/` first, then both sides in the same PR.
 

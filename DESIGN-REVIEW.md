@@ -25,25 +25,30 @@ O = deployment and CI. U = support and observability.
 
 ## 1. Summary
 
-| ID | Finding | Severity |
-|---|---|---|
-| D1 | Packages marked "(update)" are never downloaded, so a republished package never reaches anyone who has the old one cached | Critical |
-| P1 | The tree ticks packages based on the per-user **cache**, but Apply compares against the per-folder **ledger**. Anything installed but not cached gets uninstalled silently | Critical |
-| P3 | Skipping the backup for byte-identical files makes the installer the owner of files the user already had. Uninstalling then deletes them, and there is no backup to restore | Critical |
-| P6 | If an install fails partway, the next run backs up the half-written files as if they were the user's originals | Critical |
-| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High |
-| D3 | `/download` reveals which protected packages exist (401 vs 404). **Reproduced** | High |
-| D5 | Metadata removed from a sidecar stays in the manifest. A rebuilt manifest differs from the published one, and replicas drift apart. **Reproduced** | High |
-| P2 | Uninstall deletes ledgered files even after Steam, RSF or the user has replaced them | High |
-| P5 | Ledger paths are compared byte-for-byte, but NTFS ignores case | High |
-| C1 | Redirecting downloads to object storage or a CDN would break the current client: WinHTTP follows redirects, probably with the `Authorization` header | High |
-| S4 | Publishing is not atomic: a download can stream a half-copied zip, and replacing a zip in place makes every client fail its sha check | High |
-| O1 | Every restart, including recovery after a crash, rebuilds the image from the branch tip. Publishing content therefore also deploys code | High |
-| D10 | The server never shuts down gracefully in the container. SIGTERM is ignored (PID 1), and podman force-kills it after its stop timeout | Medium |
-| D4 | `manifest gen` reports false cross-game `requires` warnings because `Manifest::get` ignores the game. **Reproduced** | Medium |
-| D6 | `Cache::save` deletes the old file and then renames. A crash in between empties the cache index, and the planned orphan sweep would then delete every download | Medium (High once I9 lands) |
-| D8, D9 | The auth row decoder fails open. A DB error returns 500 even for public downloads | Medium |
-| D11 | Production has no access logs at all | Medium |
+**Status column added 2026-10-25**, when Period 1 was worked through. "Fixed"
+means the code changed and a test covers it; "Specified" means the decision
+is recorded and the work is a line in `installer/TASKS.md` I7; blank means
+untouched, and belongs to a later period. Section 10 has the detail.
+
+| ID | Finding | Severity | Status |
+|---|---|---|---|
+| D1 | Packages marked "(update)" are never downloaded, so a republished package never reaches anyone who has the old one cached | Critical | **Fixed** |
+| P1 | The tree ticks packages based on the per-user **cache**, but Apply compares against the per-folder **ledger**. Anything installed but not cached gets uninstalled silently | Critical | Specified (I7) |
+| P3 | Skipping the backup for byte-identical files makes the installer the owner of files the user already had. Uninstalling then deletes them, and there is no backup to restore | Critical | Specified (I7) |
+| P6 | If an install fails partway, the next run backs up the half-written files as if they were the user's originals | Critical | Specified (I7) |
+| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High | Period 2 |
+| D3 | `/download` reveals which protected packages exist (401 vs 404). **Reproduced** | High | Period 2 |
+| D5 | Metadata removed from a sidecar stays in the manifest. A rebuilt manifest differs from the published one, and replicas drift apart. **Reproduced** | High | Period 2 |
+| P2 | Uninstall deletes ledgered files even after Steam, RSF or the user has replaced them | High | Specified (I7) |
+| P5 | Ledger paths are compared byte-for-byte, but NTFS ignores case | High | Specified (I7) |
+| C1 | Redirecting downloads to object storage or a CDN would break the current client: WinHTTP follows redirects, probably with the `Authorization` header | High | Period 2 |
+| S4 | Publishing is not atomic: a download can stream a half-copied zip, and replacing a zip in place makes every client fail its sha check | High | Period 2 |
+| O1 | Every restart, including recovery after a crash, rebuilds the image from the branch tip. Publishing content therefore also deploys code | High | Period 2 |
+| D10 | The server never shuts down gracefully in the container. SIGTERM is ignored (PID 1), and podman force-kills it after its stop timeout | Medium | Period 2 |
+| D4 | `manifest gen` reports false cross-game `requires` warnings because `Manifest::get` ignores the game. **Reproduced** | Medium | **Fixed** |
+| D6 | `Cache::save` deletes the old file and then renames. A crash in between empties the cache index, and the planned orphan sweep would then delete every download | Medium (High once I9 lands) | **Fixed** |
+| D8, D9 | The auth row decoder fails open. A DB error returns 500 even for public downloads | Medium | Period 2 |
+| D11 | Production has no access logs at all | Medium | Period 2 |
 
 ---
 
@@ -798,90 +803,118 @@ then both sides in the same PR.
 
 ### Period 1: before writing I7
 
-#### Decisions (record them in `installer/CLAUDE.md` before coding)
+**Status: handled on 2026-10-25** (commits `396e6f4` and the one that
+follows it). The decisions are recorded in `installer/CLAUDE.md`,
+`installer/DESIGN.md` and the I7 checklist in `installer/TASKS.md`; the
+code fixes are done and tested; the "build into I7" items are requirements
+on I7 rather than work that could be finished before it exists, so they are
+reproduced in that checklist and ticked here as *specified*, not as built.
 
-- [ ] **P2–P6** Ledger schema: per-file `sha256`, `prior`
+#### Decisions (recorded in `installer/CLAUDE.md`)
+
+- [x] **P2–P6** Ledger schema: per-file `sha256`, `prior`
       (`backup` | `identical` | `absent`), case-folded keys with the original
       spelling kept, and `state: "installing"` for write-ahead.
-- [ ] **P7** How overlapping files across categories are handled: refuse at
-      plan time, or keep an ownership stack.
-- [ ] **P8** One exclusivity rule: choice categories are implicit groups, and
-      `exclusive_group` covers everything else. Pick radio behaviour on
-      scene 4, or a refusal on Download.
-- [ ] **P9** Per-game choice categories (`gamedir.rs` or the manifest). Only
-      those are mandatory on scene 4.
-- [ ] **P10** Install root per game: confirm game root vs user folder for
-      each of the four games, BeamNG first.
-- [ ] **P14** Restore design: one backup tree with dates. Restore also
-      deletes files that packages added, and clears the ledger.
+      **Adopted as proposed.**
+- [x] **P7** Overlapping files: **last writer wins, logged, and reported to
+      the server**. Neither of the two options offered — a user must never
+      be blocked by a catalogue mistake they cannot fix, and a line in a
+      log nobody reads does not reach the one person who can fix it. The
+      installer therefore sends a conflict report (`POST /report/conflict`;
+      `server/TASKS.md` S10). The known cost is accepted and written down:
+      after uninstalling the winner, the file survives holding the winner's
+      bytes.
+- [x] **P8** Exclusivity: **engine only**. A choice category is an implicit
+      group (scene 5 asks for one pick); `exclusive_group` is superseded in
+      `plan()`. No gate on scene 4. Two members ticked in one run both
+      install, the later wins — which is exactly the P7 case, and is
+      reported the same way.
+- [x] **P9** Choice categories move to a per-game list in `gamedir.rs`,
+      each with a localized label AND explanation. Not the manifest: that
+      text is localized UI, and the server cannot know the installer's
+      languages. Only choice categories are mandatory on scene 4.
+      **Consequence accepted and specified:** the manifest needs a version,
+      and an installer older than the catalogue blocks DOWNLOADING only —
+      reconfiguring and uninstalling keep working (`server/TASKS.md` S11).
+- [x] **P10** Install root becomes a per-game property alongside the
+      categories. RBR = the game folder, as today. The other three stay
+      undecided until that game has packages, and deciding is part of
+      adding the game; the BeamNG note (mods under `%LOCALAPPDATA%`) is
+      recorded there so it is not rediscovered.
+- [x] **P14** Restore: **dated restore points**, chosen from a list, each
+      pairing the replaced files with the ledger as it was. Restoring also
+      REMOVES what was installed after that point — copying files back
+      alone leaves a broken package's added files behind, which is the bug
+      the legacy restore had. The scene previews what the restore will do
+      before it does it.
 
 #### Shared
 
-- [ ] **D4** Replace `Manifest::get(&PackageRef)` with a game-scoped lookup,
-      use it in `validate_requires`, and document that `requires` refs
-      resolve within the package's own game.
-- [ ] **D12** `valid_name` rejects bytes below 0x20.
+- [x] **D4** `Manifest::get(game, &PackageRef)`, used in
+      `validate_requires`; refs resolve within the package's own game, and
+      a same-named package in another game no longer shadows the real one.
+- [x] **D12** `valid_name` rejects control characters (below 0x20, and
+      0x7f).
 
 #### Installer: fix in the existing code
 
-- [ ] **D1** Split `is_present()` into `has_payload()` and `needs_download()`.
-      Add a test that an "(update)" leaf appears in
-      `checked_needing_download()`.
-- [ ] **D6** Rename straight over `cache.json` (no `remove_file`), add a
-      `version` to `Index`, and make `open` tell missing, unreadable and
-      parsed apart.
-- [ ] **D6** Sweep rules for I9: never after an unreadable index, and only
-      orphans older than N days.
-- [ ] **D7** Named mutex at startup, with an "already running" modal.
-- [ ] **D12** Store `exclusive_group`, `requires`, `size` and `updated_at` in
-      the cache index.
-- [ ] **D12** Fail zip parsing when the number of parsed entries differs from
-      the EOCD count.
+- [x] **D1** `has_payload()` / `needs_download()`, with three tests: an
+      update is ticked AND downloaded, a current leaf is not refetched, a
+      local-only leaf is never queued.
+- [x] **D6** Rename straight over `cache.json`; `version` in `Index`;
+      `open` tells Missing, Unreadable and Loaded apart. The old comment
+      was measured and was wrong — `std::fs::rename` replaces on Windows.
+- [x] **D6** Sweep rules: `orphans()` returns nothing unless the index was
+      genuinely read, so the rule cannot be forgotten by the I9 caller.
+      "Only orphans older than N days" is recorded in the `orphans()` doc
+      comment for I9, which is where the age policy belongs.
+- [x] **D7** Named mutex at startup with an "already running" modal.
+      Verified with two live processes. The UI harness refuses to launch
+      while another copy runs, so this never masquerades as a missing scene.
+- [x] **D12** The cache index stores `exclusive_group`, `requires`, `size`
+      and `updated_at`.
+- [x] **D12** Zip parsing fails when the entry count disagrees with the
+      EOCD record.
 
-#### Installer: build into I7
+#### Installer: build into I7 (specified, not yet built)
 
-- [ ] **P1** Merge the ledger into the tree as an "installed" state, ticked by
-      default. Show ledgered packages missing from the server and the cache
-      as "installed (unavailable)".
-- [ ] **P1** Before phase 2, confirm the list of packages to be removed.
-- [ ] **P2** On uninstall, delete a file only if its hash still matches what
-      was written. Otherwise leave it and log it.
-- [ ] **P3** For `prior: identical`, restore the file from the cached payload
-      instead of deleting it, and pin those payloads against the sweep.
-- [ ] **P4** Uninstall handles each file by its `prior`: copy the backup back,
-      restore from the payload, or delete.
-- [ ] **P5** Case-folded ledger keys. `safe_relative` rejects trailing dots
-      and spaces and reserved device names. Duplicate zip entries are
-      removed before extraction.
-- [ ] **P6** Pre-flight before any uninstall: CRC-check every entry, check
-      free space for installs plus backups (§7), probe writability, and
-      check that the game is not running (**P12**).
-- [ ] **P6** Write-ahead `installing` state, with recovery on the next start.
-- [ ] **P6** Write each file to a temp name, then rename it.
-- [ ] **P7** Implement the overlap rule decided above.
-- [ ] Table tests for the cases above: a file replaced by Steam, an identical
-      pre-existing file, case-variant paths, recovery after a crash
-      mid-install, an overlap.
+Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
+
+- [x] **P1** Ledger merged into the tree as an "installed" state, ticked by
+      default; ledgered packages missing from server and cache shown as
+      "installed (unavailable)".
+- [x] **P1** Confirm the removal list before phase 2.
+- [x] **P2** Uninstall deletes a file only when its hash still matches.
+- [x] **P3** `prior: identical` restores from the cached payload; those
+      payloads are pinned against the sweep.
+- [x] **P4** Uninstall handles each file by its `prior`.
+- [x] **P5** Case-folded ledger keys; `safe_relative` rejects trailing dots
+      and spaces and reserved device names; duplicate zip entries removed.
+- [x] **P6** Pre-flight before any uninstall (CRC, free space, writability,
+      game not running — **P12**).
+- [x] **P6** Write-ahead `installing` state with recovery.
+- [x] **P6** Temp name then rename, per file.
+- [x] **P7** The overlap rule above, plus the report.
+- [x] Table tests for all of it, listed in the I7 checklist.
 
 #### CI
 
-- [ ] **O2** Confirm that CI triggers on the default branch (`master` vs
-      `main`).
+- [x] **O2** Checked: both remotes' HEAD is `master`, so `ci.yml` triggers
+      correctly. The `main` in the session header was a tool's guess, not
+      the repository's default branch. No change needed.
 
 #### Documentation, fix now
 
-- [ ] [installer/tests/tree.rs:298](installer/tests/tree.rs#L298): the comment
-      contradicts the assertion (D1).
-- [ ] [installer/src/cache.rs:116](installer/src/cache.rs#L116): the rename
-      comment (D6).
-- [ ] [installer/src/api.rs:102](installer/src/api.rs#L102): the `.part`
-      comment (D7).
-- [ ] [installer/CLAUDE.md:46](installer/CLAUDE.md#L46): the cache index
-      fields (D12).
-- [ ] [installer/DESIGN.md:74](installer/DESIGN.md#L74): the restore scene
-      (P14).
-- [ ] [server/TASKS.md:65](server/TASKS.md#L65): stale sidecar categories.
-- [ ] [server/CLAUDE.md:76](server/CLAUDE.md#L76): typo "invariantsr".
+- [x] `installer/tests/tree.rs`: the comment that contradicted its
+      assertion is gone; the test now asserts the download (D1).
+- [x] `installer/src/cache.rs`: the rename comment (D6).
+- [x] `installer/src/api.rs`: the `.part` comment (D7).
+- [x] `installer/CLAUDE.md`: the cache index fields — the code now stores
+      what the document claimed (D12).
+- [x] `installer/DESIGN.md`: the restore scene, rewritten around restore
+      points (P14).
+- [x] `server/TASKS.md`: stale sidecar categories.
+- [x] `server/CLAUDE.md`: typo "invariantsr".
 
 ### Period 2: before the first public release
 

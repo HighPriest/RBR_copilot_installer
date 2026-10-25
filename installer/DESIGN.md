@@ -71,9 +71,47 @@ that tells two voices apart.
 
 ## Restore scene (reached from scene 3's UNINSTALL)
 
-- List of selectable previous backup packages.
-- **Restore** enabled when a package is selected.
-- Switches to the progress scene and restores everything in that backup.
+The case this exists for: **a user has been handed a bad package.** They do
+not want the installer gone, they want yesterday back. So Restore is "take
+this game folder back to how it was at a point in time", not "copy some
+files back".
+
+- A list of **restore points**, newest first, each showing its date and
+  what it was: `2026-11-02 18:15 — before installing Kamil 3.0.0`. A run
+  that changed nothing creates none.
+- The selected point shows a **preview before anything happens** — the
+  whole point of restoring after a bad package is knowing what you are
+  getting back:
+
+      Restoring to 2026-10-21 09:40 would:
+        put back    3 files replaced since then
+        remove      2 packages installed since then (1,204 files)
+        keep        Kamil 2.1.0, Descriptive, polish
+
+- **Restore** then runs on the progress scene (scene 6) like any other
+  phase, with the same log.
+
+Restoring is TWO operations, and the second is the one the legacy installer
+never had:
+
+1. **Put back** the files replaced since that point, taking each from the
+   newest restore point at or after it that holds the file, so the oldest
+   version wins.
+2. **Remove** what was installed after that point. Copying files back
+   cannot do this: a broken package that ADDED files leaves every one of
+   them behind, and the user still has the broken install. This needs to
+   know what was installed and when, which is what the ledger snapshot
+   inside each restore point is for.
+
+A restore point is therefore `.pacenotes\restore\<timestamp>\` holding the
+replaced files plus `ledger.json` as it was before that run. Restoring
+replaces the live ledger with that snapshot, so the installer's own record
+matches the folder afterwards — otherwise the next run would "uninstall"
+packages that are no longer there and reinstall ones that are.
+
+Points are never pruned automatically. They are small (only files actually
+replaced, and never the byte-identical ones), and the one a user needs is
+the one an automatic policy would have deleted.
 
 ## Scene 4 — Download
 
@@ -107,10 +145,21 @@ that tells two voices apart.
   parent as partially checked.
 - Unchecking a downloaded leaf only excludes it from this run; it is not
   removed from the cache.
-- **Download**: requires at least one checked leaf in every top-level
-  category present in the tree; otherwise a warning modal names the missing
-  categories. The button commits the selection; transfers run in scene 6
-  so there is a single progress screen.
+- **Download**: requires at least one checked leaf in every **choice**
+  category the game declares; otherwise a warning modal names the missing
+  ones. Any other category the operator publishes — `pacenotes`, or a new
+  `extras/` folder — is optional, because adding a folder on the server
+  must not add a question every user is forced to answer.
+- Nothing here gates `exclusive_group`. Two members of one group can be
+  ticked and both will install, the later winning; see "Overlapping files"
+  in `installer/CLAUDE.md` for why that is preferred to blocking the user.
+- The button commits the selection; transfers run in scene 6 so there is a
+  single progress screen.
+- **If the server's manifest is newer than this build understands**,
+  Download stops with "a newer installer is needed" and a link, because the
+  catalogue may use categories this build does not know. Everything else
+  stays available: reconfiguring, repairing and uninstalling what is
+  already on the machine never depends on the manifest version.
 
 ## Scene 5 — Configuration
 
@@ -121,6 +170,10 @@ that tells two voices apart.
   | Pacenotes Language | `language` |
   | CoDriver Voice | `codriver` (shown with its path, e.g. "polish / male / KamilFilipek") |
   | Pacenotes Style | `style` |
+
+The three lists are not a fixed set: each game declares its own choice
+categories in `gamedir.rs`, with a localized label and a one-line
+explanation per category. A game that declares none skips this scene.
 
 - A list with exactly one option is preselected.
 - Checked `pacenotes`-category packages are installed as-is (no choice), and
