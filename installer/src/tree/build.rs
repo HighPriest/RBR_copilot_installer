@@ -1,13 +1,16 @@
 impl super::Tree {
-    /// The tree for ONE game: what the server listed plus what the cache holds,
-    /// with every leaf already on this computer starting checked.
+    /// The tree for ONE game: what the server listed, what the cache holds and
+    /// what the game folder's ledger has `installed`. A leaf starts checked when
+    /// it is installed or cached, because Apply uninstalls what is unchecked.
     pub fn build(
         game: &str,
         packages: &[pacenotes_shared::PackageInfo],
         cached: &[super::CachedPackage],
+        installed: &[String],
     ) -> super::Tree {
-        let mut rows = listed_rows(game, packages, cached);
-        rows.extend(local_only_rows(game, cached, &rows));
+        let mut rows = listed_rows(game, packages, cached, installed);
+        rows.extend(local_only_rows(game, cached, installed, &rows));
+        rows.extend(unavailable_rows(game, installed, &rows));
         rows.sort_by(|a, b| {
             category_rank(&a.segments[0])
                 .cmp(&category_rank(&b.segments[0]))
@@ -33,7 +36,8 @@ impl super::Tree {
             children: Vec::new(),
             key: Some(row.key),
             state: Some(row.state),
-            checked: row.state.has_payload(),
+            installed: row.installed,
+            checked: row.installed || row.state.has_payload(),
         };
         self.push(node, parent);
     }
@@ -57,6 +61,7 @@ impl super::Tree {
             children: Vec::new(),
             key: None,
             state: None,
+            installed: false,
             checked: false,
         };
         self.push(node, parent)
@@ -69,6 +74,7 @@ struct Row {
     label: String,
     key: String,
     state: super::LeafState,
+    installed: bool,
 }
 
 /// The server's packages for `game`, with the cache deciding each one's state;
@@ -78,6 +84,7 @@ fn listed_rows(
     game: &str,
     packages: &[pacenotes_shared::PackageInfo],
     cached: &[super::CachedPackage],
+    installed: &[String],
 ) -> Vec<Row> {
     packages
         .iter()
@@ -92,6 +99,7 @@ fn listed_rows(
             Row {
                 segments: package.segments().map(str::to_string).collect(),
                 label: package.label().to_string(),
+                installed: installed.contains(&key),
                 key,
                 state,
             }
@@ -100,24 +108,52 @@ fn listed_rows(
 }
 
 /// Cached packages for `game` that the server did not list.
-fn local_only_rows(game: &str, cached: &[super::CachedPackage], listed: &[Row]) -> Vec<Row> {
+fn local_only_rows(
+    game: &str,
+    cached: &[super::CachedPackage],
+    installed: &[String],
+    listed: &[Row],
+) -> Vec<Row> {
     cached
         .iter()
         .filter(|entry| entry.game == game && pacenotes_shared::valid_name(&entry.name))
         .filter(|entry| !listed.iter().any(|row| row.key == entry.key()))
         .map(|entry| {
-            let leaf = entry.name.rsplit('/').next().unwrap_or(&entry.name);
+            let key = entry.key();
             Row {
                 segments: entry.name.split('/').map(str::to_string).collect(),
                 label: entry
                     .display_name
                     .clone()
-                    .unwrap_or_else(|| leaf.to_string()),
-                key: entry.key(),
+                    .unwrap_or_else(|| leaf_of(&entry.name).to_string()),
+                installed: installed.contains(&key),
+                key,
                 state: super::LeafState::LocalOnly,
             }
         })
         .collect()
+}
+
+/// Installed packages for `game` that neither the server nor the cache knows.
+fn unavailable_rows(game: &str, installed: &[String], known: &[Row]) -> Vec<Row> {
+    installed
+        .iter()
+        .filter(|key| !known.iter().any(|row| &row.key == *key))
+        .filter_map(|key| {
+            let (package_game, _, name) = pacenotes_shared::split_download_path(key)?;
+            (package_game == game).then(|| Row {
+                segments: name.split('/').map(str::to_string).collect(),
+                label: leaf_of(name).to_string(),
+                key: key.clone(),
+                state: super::LeafState::Unavailable,
+                installed: true,
+            })
+        })
+        .collect()
+}
+
+fn leaf_of(name: &str) -> &str {
+    name.rsplit('/').next().unwrap_or(name)
 }
 
 /// The Configuration scene's categories in its order, then `pacenotes`, then

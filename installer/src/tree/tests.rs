@@ -69,7 +69,7 @@ fn labels(tree: &super::Tree, indices: &[usize]) -> Vec<String> {
 
 #[test]
 fn the_storage_path_becomes_the_tree() {
-    let tree = super::Tree::build(RBR, &catalogue(), &[]);
+    let tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
     assert_eq!(
         labels(&tree, tree.roots()),
         vec!["language", "codriver", "style", "pacenotes"]
@@ -89,7 +89,7 @@ fn the_storage_path_becomes_the_tree() {
 fn category_order_is_deterministic_and_matches_the_configuration_scene() {
     let mut shuffled = catalogue();
     shuffled.reverse();
-    let tree = super::Tree::build(RBR, &shuffled, &[]);
+    let tree = super::Tree::build(RBR, &shuffled, &[], &[]);
     assert_eq!(
         labels(&tree, tree.roots()),
         vec!["language", "codriver", "style", "pacenotes"]
@@ -102,7 +102,7 @@ fn category_order_is_deterministic_and_matches_the_configuration_scene() {
 
 #[test]
 fn packages_sharing_a_level_share_its_row() {
-    let tree = super::Tree::build(RBR, &catalogue(), &[]);
+    let tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
     let polish = find(&tree, &["codriver", "polish"]);
     assert_eq!(labels(&tree, tree.children(polish)), vec!["female", "male"]);
     assert_eq!(tree.leaves_under(Some(polish)).len(), 2);
@@ -114,7 +114,7 @@ fn cache_decides_each_leafs_state() {
         cached(RBR, "public", "style/Descriptive", "s1"),
         cached(RBR, "public", "language/english", "OLD"),
     ];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
 
     for (path, state) in [
         (&["style", "Descriptive"][..], super::LeafState::Downloaded),
@@ -128,7 +128,7 @@ fn cache_decides_each_leafs_state() {
 #[test]
 fn a_cached_package_the_server_dropped_still_appears() {
     let cache = vec![cached(RBR, "public", "codriver/polish/male/Retired", "r1")];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
 
     let retired = find(&tree, &["codriver", "polish", "male", "Retired"]);
     assert_eq!(tree.node(retired).state, Some(super::LeafState::LocalOnly));
@@ -143,7 +143,7 @@ fn another_games_packages_are_not_in_this_games_tree() {
     packages.push(package(DR2, "public", "style/Descriptive", "other"));
     let cache = vec![cached(DR2, "public", "codriver/polish/male/Nobody", "n1")];
 
-    let tree = super::Tree::build(RBR, &packages, &cache);
+    let tree = super::Tree::build(RBR, &packages, &cache, &[]);
 
     assert_eq!(tree.leaves_under(Some(find(&tree, &["style"]))).len(), 2);
     assert!(!tree
@@ -159,7 +159,7 @@ fn what_is_already_downloaded_starts_checked() {
         cached(RBR, "public", "style/Descriptive", "s1"),
         cached(RBR, "public", "codriver/polish/male/Retired", "r1"),
     ];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
 
     assert_eq!(
         tree.checked_keys(),
@@ -173,7 +173,7 @@ fn what_is_already_downloaded_starts_checked() {
 
 #[test]
 fn checking_a_parent_takes_its_whole_subtree() {
-    let mut tree = super::Tree::build(RBR, &catalogue(), &[]);
+    let mut tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
     let codriver = find(&tree, &["codriver"]);
     assert_eq!(tree.check_of(codriver), super::Check::Unchecked);
 
@@ -201,7 +201,7 @@ fn checking_a_parent_takes_its_whole_subtree() {
 #[test]
 fn unchecking_a_downloaded_leaf_leaves_it_in_the_cache() {
     let cache = vec![cached(RBR, "public", "style/Descriptive", "s1")];
-    let mut tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let mut tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
     let leaf = find(&tree, &["style", "Descriptive"]);
 
     tree.set_checked(leaf, false);
@@ -211,7 +211,7 @@ fn unchecking_a_downloaded_leaf_leaves_it_in_the_cache() {
 
 #[test]
 fn download_requires_one_pick_per_category_present() {
-    let mut tree = super::Tree::build(RBR, &catalogue(), &[]);
+    let mut tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
     assert_eq!(
         tree.categories_missing_a_pick(),
         vec!["language", "codriver", "style", "pacenotes"]
@@ -229,7 +229,7 @@ fn download_requires_one_pick_per_category_present() {
         .into_iter()
         .filter(|package| package.category() != pacenotes_shared::CATEGORY_PACENOTES)
         .collect();
-    let tree = super::Tree::build(RBR, &without_pacenotes, &[]);
+    let tree = super::Tree::build(RBR, &without_pacenotes, &[], &[]);
     assert_eq!(
         tree.categories_missing_a_pick(),
         vec!["language", "codriver", "style"]
@@ -239,7 +239,7 @@ fn download_requires_one_pick_per_category_present() {
 #[test]
 fn only_checked_leaves_without_a_payload_need_downloading() {
     let cache = vec![cached(RBR, "public", "style/Descriptive", "s1")];
-    let mut tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let mut tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
 
     tree.set_checked(find(&tree, &["language", "english"]), true);
     assert_eq!(
@@ -252,7 +252,7 @@ fn only_checked_leaves_without_a_payload_need_downloading() {
 #[test]
 fn an_update_is_ticked_by_default_and_still_downloaded() {
     let cache = vec![cached(RBR, "public", "language/english", "OLD-SHA")];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
     let stale = find(&tree, &["language", "english"]);
 
     assert_eq!(
@@ -269,7 +269,7 @@ fn an_update_is_ticked_by_default_and_still_downloaded() {
 #[test]
 fn a_leaf_already_at_the_right_sha_is_not_refetched() {
     let cache = vec![cached(RBR, "public", "style/Descriptive", "s1")];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
     let leaf = find(&tree, &["style", "Descriptive"]);
 
     assert_eq!(tree.node(leaf).state, Some(super::LeafState::Downloaded));
@@ -281,7 +281,7 @@ fn a_leaf_already_at_the_right_sha_is_not_refetched() {
 #[test]
 fn a_local_only_leaf_is_never_queued_for_download() {
     let cache = vec![cached(RBR, "public", "style/Withdrawn", "w1")];
-    let tree = super::Tree::build(RBR, &catalogue(), &cache);
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &[]);
     let leaf = find(&tree, &["style", "Withdrawn"]);
 
     assert_eq!(tree.node(leaf).state, Some(super::LeafState::LocalOnly));
@@ -294,7 +294,7 @@ fn a_local_only_leaf_is_never_queued_for_download() {
 fn display_name_renames_only_the_leaf() {
     let mut packages = catalogue();
     packages[4].display_name = Some("Kamil Filipek".into());
-    let tree = super::Tree::build(RBR, &packages, &[]);
+    let tree = super::Tree::build(RBR, &packages, &[], &[]);
 
     let renamed = find(&tree, &["codriver", "polish", "male", "Kamil Filipek"]);
     assert_eq!(
@@ -310,7 +310,7 @@ fn a_malformed_name_never_enters_the_tree() {
         package(RBR, "public", "style/../../escape", "y"),
         package(RBR, "public", "style/Descriptive", "ok"),
     ];
-    let tree = super::Tree::build(RBR, &packages, &[]);
+    let tree = super::Tree::build(RBR, &packages, &[], &[]);
     let leaves = tree.leaves_under(None);
     assert_eq!(leaves.len(), 1);
     assert_eq!(
@@ -322,10 +322,56 @@ fn a_malformed_name_never_enters_the_tree() {
 /// Offline with an empty cache is a normal state.
 #[test]
 fn an_empty_catalogue_is_handled() {
-    let tree = super::Tree::build(RBR, &[], &[]);
+    let tree = super::Tree::build(RBR, &[], &[], &[]);
     assert!(tree.is_empty());
     assert!(tree.roots().is_empty());
     assert!(tree.checked_keys().is_empty());
     assert!(tree.categories_missing_a_pick().is_empty());
+    assert!(tree.checked_needing_download().is_empty());
+}
+
+/// Unticked means uninstalled, so a cleared cache, a second Windows account or
+/// a copied game folder must not untick what the ledger holds.
+#[test]
+fn an_installed_package_is_ticked_even_with_an_empty_cache() {
+    let english = "rbr/public/language/english".to_string();
+    let tree = super::Tree::build(RBR, &catalogue(), &[], std::slice::from_ref(&english));
+
+    let leaf = find(&tree, &["language", "english"]);
+    assert!(tree.node(leaf).installed);
+    assert_eq!(tree.check_of(leaf), super::Check::Checked);
+    assert_eq!(tree.node(leaf).state, Some(super::LeafState::NotCached));
+    assert!(tree.checked_needing_download().contains(&english));
+}
+
+/// A missing row is a missing selection, which would uninstall it.
+#[test]
+fn an_installed_package_no_longer_offered_anywhere_still_appears() {
+    let gone = "rbr/public/codriver/polish/male/Withdrawn".to_string();
+    let tree = super::Tree::build(RBR, &catalogue(), &[], std::slice::from_ref(&gone));
+
+    let leaf = find(&tree, &["codriver", "polish", "male", "Withdrawn"]);
+    assert_eq!(tree.node(leaf).state, Some(super::LeafState::Unavailable));
+    assert!(tree.node(leaf).installed);
+    assert_eq!(tree.check_of(leaf), super::Check::Checked);
+    assert!(!tree.checked_needing_download().contains(&gone));
+}
+
+#[test]
+fn an_installed_package_from_another_game_is_not_shown() {
+    let other = format!("{DR2}/public/language/english");
+    let tree = super::Tree::build(RBR, &[], &[], &[other]);
+    assert!(tree.is_empty());
+}
+
+#[test]
+fn an_installed_and_current_package_needs_nothing() {
+    let cache = vec![cached(RBR, "public", "style/Descriptive", "s1")];
+    let installed = vec!["rbr/public/style/Descriptive".to_string()];
+    let tree = super::Tree::build(RBR, &catalogue(), &cache, &installed);
+
+    let leaf = find(&tree, &["style", "Descriptive"]);
+    assert!(tree.node(leaf).installed);
+    assert_eq!(tree.node(leaf).state, Some(super::LeafState::Downloaded));
     assert!(tree.checked_needing_download().is_empty());
 }

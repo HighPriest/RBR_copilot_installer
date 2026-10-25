@@ -98,7 +98,8 @@ unsafe fn start_catalogue_fetch(dialog: HWND) {
     });
 }
 
-/// Rebuilds the model from the catalogue plus the cache and shows it.
+/// Rebuilds the model from the catalogue, the cache and the game folder's
+/// ledger, and shows it.
 unsafe fn build_tree(
     dialog: HWND,
     state: &mut crate::wizard::state::WizardState,
@@ -110,7 +111,12 @@ unsafe fn build_tree(
         .map(|game| game.id())
         .unwrap_or(pacenotes_shared::GAME_RBR);
     let cached = state.cache.entries();
-    state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached);
+    let installed: Vec<String> = pacenotes_installer::ledger::Ledger::open(&state.folder)
+        .packages()
+        .keys()
+        .cloned()
+        .collect();
+    state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached, &installed);
     state.packages = packages;
 
     super::download_tree_view::populate(dialog, state);

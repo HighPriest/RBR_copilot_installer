@@ -140,6 +140,8 @@ END
 #define IDS_STATE_DOWNLOADED   90
 #define IDS_STATE_UPDATE       91
 #define IDS_STATE_LOCAL        92
+#define IDS_STATE_INSTALLED    93
+#define IDS_STATE_UNAVAILABLE  94
 
 // Scene 3 — Game folder (70-79)
 #define IDS_S3_TITLE           70
@@ -333,6 +335,8 @@ BEGIN
     IDS_STATE_DOWNLOADED "(downloaded)"
     IDS_STATE_UPDATE    "(update)"
     IDS_STATE_LOCAL     "(local only)"
+    IDS_STATE_INSTALLED "(installed)"
+    IDS_STATE_UNAVAILABLE "(installed, no longer available)"
 
     IDS_S5_TITLE        "Configuration"
     IDS_S5_LANGUAGE     "Pacenotes language:"
@@ -416,6 +420,8 @@ BEGIN
     IDS_STATE_DOWNLOADED "(pobrane)"
     IDS_STATE_UPDATE    "(aktualizacja)"
     IDS_STATE_LOCAL     "(tylko lokalnie)"
+    IDS_STATE_INSTALLED "(zainstalowane)"
+    IDS_STATE_UNAVAILABLE "(zainstalowane, już niedostępne)"
 
     IDS_S5_TITLE        "Konfiguracja"
     IDS_S5_LANGUAGE     "Język pacenotes:"

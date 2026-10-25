@@ -81,16 +81,27 @@ unsafe fn insert_node(
     }
 }
 
-/// The model's label plus the localized state suffix the model leaves out.
+/// The model's label plus the localized state suffix the model leaves out,
+/// where being in the game folder outranks being in the cache.
 fn row_label(state: &crate::wizard::state::WizardState, node: usize) -> String {
     let node = state.tree.node(node);
-    let suffix = match node.state {
-        None | Some(pacenotes_installer::tree::LeafState::NotCached) => return node.label.clone(),
-        Some(pacenotes_installer::tree::LeafState::Downloaded) => crate::i18n::IDS_STATE_DOWNLOADED,
-        Some(pacenotes_installer::tree::LeafState::UpdateAvailable) => {
+    let suffix = match (node.installed, node.state) {
+        (_, None) | (false, Some(pacenotes_installer::tree::LeafState::NotCached)) => {
+            return node.label.clone()
+        }
+        (_, Some(pacenotes_installer::tree::LeafState::Unavailable)) => {
+            crate::i18n::IDS_STATE_UNAVAILABLE
+        }
+        (true, Some(_)) => crate::i18n::IDS_STATE_INSTALLED,
+        (false, Some(pacenotes_installer::tree::LeafState::Downloaded)) => {
+            crate::i18n::IDS_STATE_DOWNLOADED
+        }
+        (false, Some(pacenotes_installer::tree::LeafState::UpdateAvailable)) => {
             crate::i18n::IDS_STATE_UPDATE
         }
-        Some(pacenotes_installer::tree::LeafState::LocalOnly) => crate::i18n::IDS_STATE_LOCAL,
+        (false, Some(pacenotes_installer::tree::LeafState::LocalOnly)) => {
+            crate::i18n::IDS_STATE_LOCAL
+        }
     };
     format!("{} {}", node.label, crate::i18n::load_string(suffix))
 }

@@ -52,6 +52,8 @@ pub const IDS_S4_FETCH_FAILED: u16 = 86;
 pub const IDS_STATE_DOWNLOADED: u16 = 90;
 pub const IDS_STATE_UPDATE: u16 = 91;
 pub const IDS_STATE_LOCAL: u16 = 92;
+pub const IDS_STATE_INSTALLED: u16 = 93;
+pub const IDS_STATE_UNAVAILABLE: u16 = 94;
 
 pub const IDS_S5_TITLE: u16 = 100;
 pub const IDS_S5_LANGUAGE: u16 = 101;

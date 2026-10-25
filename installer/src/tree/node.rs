@@ -8,6 +8,9 @@ pub enum LeafState {
     UpdateAvailable,
     /// Cached and no longer listed: withdrawn, or no longer granted. Still installable.
     LocalOnly,
+    /// Installed, and in neither the catalogue nor the cache, so nothing can
+    /// reinstall it; shown so the user can keep it, since Apply removes what is unselected.
+    Unavailable,
 }
 
 impl LeafState {
@@ -42,8 +45,10 @@ pub struct Node {
     pub children: Vec<usize>,
     /// Leaves only: the package's `game/directory/name`.
     pub key: Option<String>,
-    /// Leaves only.
+    /// Leaves only: where the package stands against the cache.
     pub state: Option<LeafState>,
+    /// In this game folder's ledger, which is independent of the per-user cache.
+    pub installed: bool,
     /// Leaves only; see `Tree::check_of` for grouping rows.
     pub(super) checked: bool,
 }

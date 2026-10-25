@@ -22,7 +22,7 @@ fn package(name: &str) -> pacenotes_shared::PackageInfo {
 /// Nothing cached, so nothing starts ticked.
 fn tree_of(names: &[&str]) -> crate::tree::Tree {
     let packages: Vec<_> = names.iter().map(|name| package(name)).collect();
-    crate::tree::Tree::build(RBR, &packages, &[])
+    crate::tree::Tree::build(RBR, &packages, &[], &[])
 }
 
 fn leaf_of(tree: &crate::tree::Tree, key: &str) -> usize {
