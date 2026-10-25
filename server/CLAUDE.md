@@ -175,12 +175,23 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 - Unit: `auth::decide` (pure: token row + directory → decision) — exhaustive
   table test (exists in scaffold; extend, don't delete).
 - Unit: sidecar merge + `requires` validation in `manifest gen`.
-- Integration: spin server on an ephemeral port with a tempdir packages tree
-  (public/ + two protected dirs) + in-memory libsql; assert the
+- Unit, beside each module: install-schema parsing/strictness
+  (`store/game_schema.rs`), and in `reports/` validation, CIDR +
+  `X-Forwarded-For` trust, the rate limiter and `utc_date`. Store tests
+  generate through `fixture_tree`, whose `write_package` adds a zip's
+  category to its game's schema and which skips the bundled-schema
+  comparison; that comparison has its own tests.
+- Integration (`tests/<scenario>.rs`, sharing `tests/common/mod.rs`): a real
+  server on an ephemeral port, served WITH connect info like `main.rs`, a tempdir data root (two games, public +
+  two protected dirs, schemas) and in-memory libsql. Asserts the
   {anon, token-no-grants, token-dirA, token-dirA+dirB} × {public, dirA, dirB}
-  matrix for both /packages filtering and /download status codes, plus 404,
-  expired/revoked, and traversal attempts
-  (`/download/..%2F..%2Fdata/auth.db` must 404).
+  matrix for /packages filtering and /download statuses (401 for no live key
+  whether or not the package exists, 404 for no grant), expired/revoked,
+  `/whoami`, a DB outage (tables dropped mid-run), cache headers/304,
+  schemas in the listing, conflict reports (202/400/413/429, forged and
+  trusted `X-Forwarded-For`), and percent-encoded traversal → 404. HTTP
+  clients collapse literal `../` before sending, so traversal tests must
+  encode it.
 
 ## Conventions
 

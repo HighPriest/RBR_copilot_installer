@@ -25,7 +25,9 @@ O = deployment and CI. U = support and observability.
 
 ## 1. Summary
 
-**Status column added 2026-10-25**, when Period 1 was worked through. "Fixed"
+**Status column added 2026-10-25**, when Period 1 was worked through, and
+updated the same day when the Period-2 SERVER items were done
+(`server/TASKS.md` S12; installer halves are tracked in `installer/TASKS.md`). "Fixed"
 means the code changed and a test covers it; "Specified" means the decision
 is recorded and the work is a line in `installer/TASKS.md` I7; blank means
 untouched, and belongs to a later period. Section 10 has the detail.
@@ -36,19 +38,19 @@ untouched, and belongs to a later period. Section 10 has the detail.
 | P1 | The tree ticks packages based on the per-user **cache**, but Apply compares against the per-folder **ledger**. Anything installed but not cached gets uninstalled silently | Critical | Specified (I7) |
 | P3 | Skipping the backup for byte-identical files makes the installer the owner of files the user already had. Uninstalling then deletes them, and there is no backup to restore | Critical | Specified (I7) |
 | P6 | If an install fails partway, the next run backs up the half-written files as if they were the user's originals | Critical | Specified (I7) |
-| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High | Period 2 |
-| D3 | `/download` reveals which protected packages exist (401 vs 404). **Reproduced** | High | Period 2 |
-| D5 | Metadata removed from a sidecar stays in the manifest. A rebuilt manifest differs from the published one, and replicas drift apart. **Reproduced** | High | Period 2 |
+| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High | **Fixed** server-side (`/whoami`); installer half open |
+| D3 | `/download` reveals which protected packages exist (401 vs 404). **Reproduced** | High | **Fixed** |
+| D5 | Metadata removed from a sidecar stays in the manifest. A rebuilt manifest differs from the published one, and replicas drift apart. **Reproduced** | High | **Fixed** |
 | P2 | Uninstall deletes ledgered files even after Steam, RSF or the user has replaced them | High | Specified (I7) |
 | P5 | Ledger paths are compared byte-for-byte, but NTFS ignores case | High | Specified (I7) |
 | C1 | Redirecting downloads to object storage or a CDN would break the current client: WinHTTP follows redirects, probably with the `Authorization` header | High | Period 2 |
-| S4 | Publishing is not atomic: a download can stream a half-copied zip, and replacing a zip in place makes every client fail its sha check | High | Period 2 |
+| S4 | Publishing is not atomic: a download can stream a half-copied zip, and replacing a zip in place makes every client fail its sha check | High | Minimal fix **done** (size mismatch → 503); blobs still Period 3 |
 | O1 | Every restart, including recovery after a crash, rebuilds the image from the branch tip. Publishing content therefore also deploys code | High | Period 2 |
-| D10 | The server never shuts down gracefully in the container. SIGTERM is ignored (PID 1), and podman force-kills it after its stop timeout | Medium | Period 2 |
+| D10 | The server never shuts down gracefully in the container. SIGTERM is ignored (PID 1), and podman force-kills it after its stop timeout | Medium | **Fixed** |
 | D4 | `manifest gen` reports false cross-game `requires` warnings because `Manifest::get` ignores the game. **Reproduced** | Medium | **Fixed** |
 | D6 | `Cache::save` deletes the old file and then renames. A crash in between empties the cache index, and the planned orphan sweep would then delete every download | Medium (High once I9 lands) | **Fixed** |
-| D8, D9 | The auth row decoder fails open. A DB error returns 500 even for public downloads | Medium | Period 2 |
-| D11 | Production has no access logs at all | Medium | Period 2 |
+| D8, D9 | The auth row decoder fails open. A DB error returns 500 even for public downloads | Medium | **Fixed** |
+| D11 | Production has no access logs at all | Medium | **Fixed** |
 
 ---
 
@@ -922,41 +924,46 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 - [ ] **S1** Add `schema`, `generated_at`, `generation` and `min_installer`
       to `Manifest`. The installer asks for an update when it is too old.
+      *Superseded in part on 2026-10-25: the maintainer chose a per-game
+      install schema checked by raw-file SHA instead of a manifest version
+      (`server/TASKS.md` S11; server side done). `generated_at` /
+      `generation` remain open for Period 3's `/ready`.*
 - [ ] **D2** `GET /whoami` (or a response header) returning
       `{ valid, expires_at }`. Scene 2 uses it, and warns when a key is about
-      to expire.
-- [ ] **C2** `Cache-Control: private, no-store` and `Vary: Authorization` on
+      to expire. *Server half done 2026-10-25 (`/whoami`: 200
+      `{expires_at}` / 401); scene 2 still validates via `/packages`.*
+- [x] **C2** `Cache-Control: private, no-store` and `Vary: Authorization` on
       `/packages`; `Cache-Control: private` on protected downloads;
       `ETag: "<sha256>"` on public ones.
 
 #### Server
 
-- [ ] **D3** Return 404 for a non-public directory to any caller without a
+- [x] **D3** Return 404 for a non-public directory to any caller without a
       grant for it (or 401 whether or not the package exists). Update the
       matrix in `server/tests/api.rs`.
-- [ ] **D8** Fail closed when a token row cannot be decoded.
-- [ ] **D9** Skip the token lookup for public packages, and fall back to the
+- [x] **D8** Fail closed when a token row cannot be decoded.
+- [x] **D9** Skip the token lookup for public packages, and fall back to the
       public listing on a DB error.
-- [ ] **D9** Reject tokens that are not `pcn_` plus 43 characters before
+- [x] **D9** Reject tokens that are not `pcn_` plus 43 characters before
       querying (also **C4**).
-- [ ] **D10** Handle SIGTERM, and bound the drain to about 20 s. Stopgap:
+- [x] **D10** Handle SIGTERM, and bound the drain to about 20 s. Stopgap:
       `StopSignal=SIGINT` in the Quadlet.
-- [ ] **D11** One INFO line per response: method, path, status, bytes,
+- [x] **D11** One INFO line per response: method, path, status, bytes,
       duration, token-hash prefix, user agent.
-- [ ] **D12** `Content-Disposition` names the leaf, with RFC 6266
+- [x] **D12** `Content-Disposition` names the leaf, with RFC 6266
       `filename*`.
-- [ ] **S4** Minimal fix: return 503 and log an error when the file size
+- [x] **S4** Minimal fix: return 503 and log an error when the file size
       differs from the manifest size.
-- [ ] **S7** `journal_mode=WAL` and `busy_timeout`.
+- [x] **S7** `journal_mode=WAL` and `busy_timeout`.
 
 #### Publishing (`manifest gen`)
 
-- [ ] **D5** The manifest becomes a pure function of zips plus sidecars, with
+- [x] **D5** The manifest becomes a pure function of zips plus sidecars, with
       `version` required or derived.
-- [ ] **D5** A one-off `manifest migrate-to-sidecars` command for the values
+- [x] **D5** A one-off `manifest migrate-to-sidecars` command for the values
       that are only in the current manifest.
-- [ ] **S5** Write `manifest.json` atomically (temp file, then rename).
-- [ ] **S5** A broken sidecar skips its package and makes the run exit
+- [x] **S5** Write `manifest.json` atomically (temp file, then rename).
+- [x] **S5** A broken sidecar skips its package and makes the run exit
       non-zero. The entrypoint reports the failure visibly instead of only
       echoing it.
 
@@ -1003,13 +1010,13 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 #### Documentation, with the fixes above
 
-- [ ] [CLAUDE.md:122](CLAUDE.md#L122): the "status never reveals what exists"
-      claim (D3).
+- [x] [CLAUDE.md:122](CLAUDE.md#L122): the "status never reveals what exists"
+      claim (D3) — now true, and the text describes how.
 - [ ] [installer/DESIGN.md:53](installer/DESIGN.md#L53): how the secret is
       validated (D2).
-- [ ] [server/CLAUDE.md:103](server/CLAUDE.md#L103): `Content-Disposition`
+- [x] [server/CLAUDE.md:103](server/CLAUDE.md#L103): `Content-Disposition`
       (D12).
-- [ ] [deploy/README.md:235](deploy/README.md#L235): what is reproducible
+- [x] [deploy/README.md:235](deploy/README.md#L235): what is reproducible
       (D5, S9).
 - [ ] `deploy/README.md`: publish by copying to `*.tmp` and renaming (S4).
 - [ ] `deploy/README.md`: renaming or moving a package folder is a breaking
