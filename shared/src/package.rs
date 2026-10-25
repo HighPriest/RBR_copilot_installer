@@ -73,6 +73,12 @@ impl PackageInfo {
         format!("{}/{}/{}", self.game, self.directory, self.name)
     }
 
+    pub fn requires_ref(&self, reference: &crate::PackageRef) -> bool {
+        self.required_refs()
+            .iter()
+            .any(|required| required == reference)
+    }
+
     /// Drops malformed entries, which `manifest gen` already warned the publisher about.
     pub fn required_refs(&self) -> Vec<crate::PackageRef> {
         self.requires

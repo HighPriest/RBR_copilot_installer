@@ -342,7 +342,7 @@ leaves the repo buildable and tested:
 - **I7a** (done) `zip.rs` hardening: the P5 name rules, duplicate entries,
   and entries carrying their SIZE (the free-space pre-flight needs it).
 - **I7b** (done) `ledger.rs` — pure data + atomic IO + ownership queries.
-- **I7c** `engine.rs plan()` — a pure function over selection + ledger +
+- **I7c** (done) `engine.rs plan()` — a pure function over selection + ledger +
   cache. Table tests, no filesystem.
 - **I7d** `engine.rs execute()`, restore points, backup. Tempdir tests.
 - **I7e** `install.rs` — the RBR configuration step.
