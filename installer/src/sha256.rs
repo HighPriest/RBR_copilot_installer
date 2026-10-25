@@ -156,5 +156,20 @@ pub fn hex_digest(data: &[u8]) -> String {
     hex(&hasher.finalize())
 }
 
+/// The lowercase hex digest of a file, read in chunks rather than whole.
+pub fn hex_digest_of_file(path: &std::path::Path) -> std::io::Result<String> {
+    let mut file = std::fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buffer = vec![0u8; 64 * 1024];
+    loop {
+        let read = std::io::Read::read(&mut file, &mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(hex(&hasher.finalize()))
+}
+
 #[cfg(test)]
 mod tests;

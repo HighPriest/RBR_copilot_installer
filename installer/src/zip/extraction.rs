@@ -27,6 +27,17 @@ pub fn entry_paths(zip_bytes: &[u8]) -> Result<Vec<String>, super::ZipError> {
         .collect())
 }
 
+/// One file's bytes, by a path `entries` reported, matched case-insensitively
+/// because a ledger may hold it folded.
+pub fn read_entry(zip_bytes: &[u8], path: &str) -> Result<Vec<u8>, super::ZipError> {
+    let wanted = path.to_lowercase();
+    let entry = super::central_directory::read(zip_bytes)?
+        .into_iter()
+        .find(|entry| !entry.is_dir && entry.path.to_lowercase() == wanted)
+        .ok_or_else(|| super::ZipError::new(format!("{path} is not in this package")))?;
+    super::entry_data::read(zip_bytes, &entry)
+}
+
 /// Extracts into `dest_dir`, overwriting existing files as the legacy installer
 /// did, and returns the files written in the form `entry_paths` reports them.
 ///

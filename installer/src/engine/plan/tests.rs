@@ -280,7 +280,7 @@ fn a_ledger_entry_with_files_plans_the_same() {
         crate::ledger::LedgerFile {
             path: "Plugins/Pacenote/PaceNote.ini".into(),
             sha256: "written".into(),
-            prior: crate::ledger::Prior::Backup,
+            prior: crate::ledger::Prior::Backup { point: "p".into() },
         },
     );
     assert_eq!(

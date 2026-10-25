@@ -1,11 +1,12 @@
 /// What was at a path before the installer first wrote it, which decides what uninstall does.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Prior {
     /// Nothing: uninstall deletes the file.
     Absent,
-    /// Another file, now in a restore point: uninstall puts that copy back.
-    Backup,
+    /// Another file, copied into this restore point, named per file because a
+    /// path replaced in several runs has a copy in each.
+    Backup { point: String },
     /// Exactly these bytes, so nothing was copied: uninstall puts the same
     /// bytes back from the package's payload, or leaves the file when that is gone.
     Identical,

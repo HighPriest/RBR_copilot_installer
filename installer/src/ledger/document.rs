@@ -79,6 +79,13 @@ impl Ledger {
         self.save()
     }
 
+    /// The packages alone, as `replace_all` takes them back.
+    pub fn save_snapshot(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let json = serde_json::to_vec_pretty(&self.document.packages)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+        std::fs::write(path, json)
+    }
+
     /// After each package, as a temp file renamed over the old one, so a run
     /// that dies leaves a ledger that still describes the disk. Refuses to
     /// replace a ledger it could not read, which may record a newer build's packages.

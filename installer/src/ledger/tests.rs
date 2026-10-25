@@ -109,7 +109,7 @@ fn what_was_there_before_is_recorded_per_file() {
     let mut recorded = entry("a", &[]);
     for (path, prior) in [
         ("Plugins/new.ini", super::Prior::Absent),
-        ("Plugins/replaced.ini", super::Prior::Backup),
+        ("Plugins/replaced.ini", backed_up()),
         ("Plugins/same.ini", super::Prior::Identical),
     ] {
         recorded.files.insert(
@@ -126,8 +126,14 @@ fn what_was_there_before_is_recorded_per_file() {
     let reopened = super::Ledger::open(&game.0);
     let files = &reopened.get(KAMIL).unwrap().files;
     assert_eq!(files["plugins/new.ini"].prior, super::Prior::Absent);
-    assert_eq!(files["plugins/replaced.ini"].prior, super::Prior::Backup);
+    assert_eq!(files["plugins/replaced.ini"].prior, backed_up());
     assert_eq!(files["plugins/same.ini"].prior, super::Prior::Identical);
+}
+
+fn backed_up() -> super::Prior {
+    super::Prior::Backup {
+        point: "2026-10-25T09-00-00Z".into(),
+    }
 }
 
 #[test]
