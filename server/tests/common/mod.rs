@@ -13,6 +13,14 @@ impl Server {
     /// RBR with one package in each of `public`, `alpha` and `beta` plus a
     /// nested one; BeamNG with the same `public/basic`; an English MOTD.
     pub async fn start() -> Server {
+        Server::start_with(pacenotes_server::reports::Limits::default(), Vec::new()).await
+    }
+
+    /// `start`, with conflict-report limits and trusted proxies of the test's choosing.
+    pub async fn start_with(
+        limits: pacenotes_server::reports::Limits,
+        trusted: Vec<pacenotes_server::reports::Cidr>,
+    ) -> Server {
         let data = tempfile::tempdir().unwrap();
         write(
             &package_path(data.path(), "rbr", "public/basic.zip"),
@@ -48,13 +56,18 @@ impl Server {
         let state = std::sync::Arc::new(pacenotes_server::routes::AppState {
             store: pacenotes_server::store::ManifestStore::new(data.path()),
             db: connection.clone(),
+            reports: pacenotes_server::reports::Reports::new(
+                data.path().join(pacenotes_server::store::REPORTS_DIR),
+                trusted,
+                limits,
+            ),
         });
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let base_url = format!("http://{}", listener.local_addr().unwrap());
         tokio::spawn(async move {
-            axum::serve(listener, pacenotes_server::routes::router(state))
-                .await
-                .unwrap();
+            let service = pacenotes_server::routes::router(state)
+                .into_make_service_with_connect_info::<std::net::SocketAddr>();
+            axum::serve(listener, service).await.unwrap();
         });
 
         Server {

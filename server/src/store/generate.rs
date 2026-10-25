@@ -46,6 +46,11 @@ pub fn generate_with(
     for problem in crate::store::requires_check::requires_problems(&generated.manifest) {
         generated.warn(problem);
     }
+    // Advice for the publisher from recent reports, never an input to the manifest.
+    let reports_dir = data_dir.join(crate::store::REPORTS_DIR);
+    for warning in crate::reports::overlap_warnings(&reports_dir, crate::auth::now()) {
+        generated.warn(warning);
+    }
     Ok(generated)
 }
 

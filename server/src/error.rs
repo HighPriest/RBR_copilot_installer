@@ -3,6 +3,8 @@ pub struct AppError {
     pub status: axum::http::StatusCode,
     pub code: &'static str,
     pub message: String,
+    /// Seconds for a `Retry-After` header (429).
+    pub retry_after: Option<u64>,
 }
 
 impl AppError {
@@ -11,6 +13,7 @@ impl AppError {
             status: axum::http::StatusCode::UNAUTHORIZED,
             code: "unauthorized",
             message: "A valid access key is required for this package.".to_string(),
+            retry_after: None,
         }
     }
 
@@ -20,6 +23,7 @@ impl AppError {
             status: axum::http::StatusCode::UNAUTHORIZED,
             code: "unauthorized",
             message: "This access key is not valid, or has expired.".to_string(),
+            retry_after: None,
         }
     }
 
@@ -28,6 +32,7 @@ impl AppError {
             status: axum::http::StatusCode::NOT_FOUND,
             code: "not_found",
             message: "No such package.".to_string(),
+            retry_after: None,
         }
     }
 
@@ -38,6 +43,27 @@ impl AppError {
             status: axum::http::StatusCode::SERVICE_UNAVAILABLE,
             code: "unavailable",
             message: "This package is being updated on the server. Try again shortly.".to_string(),
+            retry_after: None,
+        }
+    }
+
+    /// Too many conflict reports from this client, or overall.
+    pub fn rate_limited(retry_after: u64) -> Self {
+        Self {
+            status: axum::http::StatusCode::TOO_MANY_REQUESTS,
+            code: "rate_limited",
+            message: "Too many reports. Try again later.".to_string(),
+            retry_after: Some(retry_after),
+        }
+    }
+
+    /// A report that failed validation, with a reason that never echoes the request.
+    pub fn invalid_report(reason: &'static str) -> Self {
+        Self {
+            status: axum::http::StatusCode::BAD_REQUEST,
+            code: "invalid_report",
+            message: reason.to_string(),
+            retry_after: None,
         }
     }
 
@@ -48,6 +74,7 @@ impl AppError {
             status: axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             code: "internal",
             message: "Internal server error.".to_string(),
+            retry_after: None,
         }
     }
 }
@@ -59,6 +86,13 @@ impl axum::response::IntoResponse for AppError {
             message: self.message,
         };
         let mut response = (self.status, axum::Json(body)).into_response();
+        if let Some(seconds) = self.retry_after {
+            if let Ok(value) = axum::http::HeaderValue::from_str(&seconds.to_string()) {
+                response
+                    .headers_mut()
+                    .insert(axum::http::header::RETRY_AFTER, value);
+            }
+        }
         // RFC 9110: a 401 names the scheme it wants.
         if self.status == axum::http::StatusCode::UNAUTHORIZED {
             response.headers_mut().insert(

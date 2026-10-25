@@ -251,6 +251,39 @@ Served at `GET /motd?lang=en`, with `en` as the fallback for any language
 that has no file. No file at all is a 404, which the installer treats exactly
 like being offline — so skipping this costs the user nothing.
 
+### Conflict reports
+
+When two packages a user selected write the same file, the installer lets
+the later one win, carries on, and tells the server
+(`POST /report/conflict`). Only you can fix such a catalogue — give the
+packages an `exclusive_group`, or move the shared file into one of them —
+so these reports exist to reach you:
+
+- They land in `~/pacenotes/data/reports/conflicts-YYYY-MM-DD.jsonl`, one
+  JSON line each.
+- `manifest gen` summarises the last 30 days as warnings, one per pair of
+  packages, so you see them at the moment you publish.
+
+**What a report contains**, if a user asks: the game, the installer's
+version, and for each shared file the file's path inside the game folder and
+the packages that wrote it. Nothing else — no access key, no computer name,
+no path on the user's machine, and the server does not store the sender's
+IP address (it keeps it in memory only, to rate-limit).
+
+The endpoint takes no key, so it is limited per client (10 reports an hour)
+and overall (600 an hour). Behind Caddy every request arrives from Caddy's
+address, so the server must be told to believe Caddy's `X-Forwarded-For`
+header — and only Caddy's:
+
+```sh
+podman network inspect internal --format '{{range .Subnets}}{{.Subnet}}{{end}}'
+# -> 10.0.0.0/24 ; then in pacenotes.config.env:
+PACENOTES_TRUSTED_PROXIES=10.0.0.0/24
+```
+
+Leave it empty and nothing breaks: the header is ignored, and all clients
+simply share one bucket.
+
 ---
 
 ## 3. Access keys

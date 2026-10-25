@@ -138,6 +138,14 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
   `{*name}` is a wildcard: a name spans every remaining segment.
 - `GET /motd?lang=xx` → `text/plain` from `data/motd/<lang>.txt`, `en`
   fallback, 404 when there is none, no auth
+- `POST /report/conflict` (`reports.rs`) → `shared::ConflictReport`; 202
+  empty / 400 / 413 / 429. Rate limit checked BEFORE parsing; body capped by
+  `DefaultBodyLimit` on the route; nothing echoed; one JSON line per report
+  in `data/reports/conflicts-YYYY-MM-DD.jsonl` with the server's
+  `received_at`, never the client's address. `--trusted-proxy`
+  (`PACENOTES_TRUSTED_PROXIES`) decides whose `X-Forwarded-For` counts.
+  Requires serving with `into_make_service_with_connect_info::<SocketAddr>()`.
+  `manifest gen` turns the last 30 days of reports into per-pair warnings.
 - (v2, not now) POST /admin/* — credential management is a CLI subcommand
 
 ## CLI (clap)

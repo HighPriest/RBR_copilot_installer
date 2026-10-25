@@ -220,7 +220,7 @@ WHICH packages fought over WHICH file once a run has more than one conflict,
 and the installer already knows every writer in install order. The client's
 own timestamp is dropped: it is untrusted, so the server stamps the time.
 
-- [ ] `POST /report/conflict`, no auth (an anonymous user hits conflicts
+- [x] `POST /report/conflict`, no auth (an anonymous user hits conflicts
       too), `application/json`, body = `shared::ConflictReport`:
 
       { "game": "rbr", "installer": "0.2.0",
@@ -231,27 +231,27 @@ own timestamp is dropped: it is untrusted, so the server stamps the time.
 
       `packages` are "directory/name" refs scoped by `game` (like
       `requires`), in install order — the last one won.
-- [ ] Body capped at 8 KiB, ≤ 32 conflicts, 2..=8 packages each, `file`
+- [x] Body capped at 8 KiB, ≤ 32 conflicts, 2..=8 packages each, `file`
       `valid_name` and ≤ 260 bytes, `installer` `[0-9A-Za-z.+-]{1,32}`. This
       is an unauthenticated write endpoint: treat every field as hostile,
       validate `game` with `valid_id` and the refs with `PackageRef::parse`,
       drop invalid entries (counted), and never echo any of it back.
       202 empty body; 400 when nothing valid remains; 413; 429.
-- [ ] Rate limit per CLIENT: token bucket per IP plus a global ceiling. The
+- [x] Rate limit per CLIENT: token bucket per IP plus a global ceiling. The
       server sits behind Caddy, so the peer address is Caddy's for every
       request: the client IP comes from `X-Forwarded-For`, honoured ONLY
       when the peer matches a configured `--trusted-proxy` (IP or CIDR);
       otherwise the peer address is the key. A header from anyone else is
       ignored, so it cannot be used to dodge the limit.
-- [ ] Store append-only — one JSON line per report under
+- [x] Store append-only — one JSON line per report under
       `data/reports/conflicts-<date>.jsonl`, stamped with the server's
       `received_at`. No DB table: these are diagnostics, not state the
       server reasons about. `reports` is a reserved data-root name, so
       `manifest gen` never mistakes it for a game.
-- [ ] `manifest gen` reads the last 30 days of reports and warns about
+- [x] `manifest gen` reads the last 30 days of reports and warns about
       package pairs reported as overlapping, which turns a user's bad day
       into a publishing-time check.
-- [ ] Nothing in a report identifies a user: package refs and relative
+- [x] Nothing in a report identifies a user: package refs and relative
       paths are catalogue data the server already has. No token, no
       hostname, no local paths — and no IP is stored (the rate limiter keeps
       addresses in memory only). Document it in `deploy/README.md` so the

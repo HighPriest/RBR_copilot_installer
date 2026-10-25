@@ -4,10 +4,13 @@
 pub struct AppState {
     pub store: crate::store::ManifestStore,
     pub db: libsql::Connection,
+    pub reports: crate::reports::Reports,
 }
 
 type SharedState = axum::extract::State<std::sync::Arc<AppState>>;
 
+/// Serve it with `into_make_service_with_connect_info::<SocketAddr>()`, since
+/// the report limiter needs the peer address.
 pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
     axum::Router::new()
         .route("/health", axum::routing::get(health))
@@ -18,6 +21,13 @@ pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
         )
         .route("/motd", axum::routing::get(motd))
         .route("/whoami", axum::routing::get(whoami))
+        // An unauthenticated write, capped before anything parses it.
+        .route(
+            "/report/conflict",
+            axum::routing::post(report_conflict).layer(axum::extract::DefaultBodyLimit::max(
+                crate::reports::MAX_BODY_BYTES,
+            )),
+        )
         .with_state(state)
         .layer(axum::middleware::from_fn(crate::access_log::log_response))
         .layer(tower_http::trace::TraceLayer::new_for_http())
@@ -219,6 +229,49 @@ async fn motd(
         )],
         text,
     )))
+}
+
+/// `POST /report/conflict`: no auth, since users without a key hit conflicts too.
+///
+/// The rate is checked before the body is parsed, so a flood costs a map
+/// lookup; parsing by hand gives a malformed body an `ApiError` like any other
+/// failure, and success is an empty 202 that echoes nothing.
+async fn report_conflict(
+    axum::extract::State(state): SharedState,
+    axum::extract::ConnectInfo(peer): axum::extract::ConnectInfo<std::net::SocketAddr>,
+    headers: axum::http::HeaderMap,
+    body: axum::body::Bytes,
+) -> Result<axum::response::Response, crate::error::AppError> {
+    let client = state.reports.client_ip(peer.ip(), &headers);
+    if let Err(retry_after) = state.reports.check_rate(client) {
+        return Err(crate::error::AppError::rate_limited(retry_after));
+    }
+
+    let report: pacenotes_shared::ConflictReport = serde_json::from_slice(&body)
+        .map_err(|_| crate::error::AppError::invalid_report("the body is not a conflict report"))?;
+    let valid = crate::reports::validate(report).map_err(crate::error::AppError::invalid_report)?;
+    let record = crate::reports::Record {
+        received_at: crate::auth::now(),
+        game: valid.game,
+        installer: valid.installer,
+        conflicts: valid.conflicts,
+        dropped: valid.dropped,
+    };
+    state
+        .reports
+        .append(&record)
+        .await
+        .map_err(|e| crate::error::AppError::internal("storing a conflict report", e))?;
+    tracing::info!(
+        game = %record.game,
+        installer = %record.installer,
+        conflicts = record.conflicts.len(),
+        dropped = record.dropped,
+        "conflict report stored"
+    );
+    Ok(axum::response::IntoResponse::into_response(
+        axum::http::StatusCode::ACCEPTED,
+    ))
 }
 
 /// `GET /whoami`: 200 with `shared::KeyStatus` for a live key, 401 for every

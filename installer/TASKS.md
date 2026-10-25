@@ -464,14 +464,19 @@ Two corrections to what Period 1 recorded, found while planning:
 - [x] Detected and logged, naming every package that writes the shared
       file and in which order
 - [ ] `POST /report/conflict` fire-and-forget after an install that saw an
-      overlap: timestamp, game, the two package keys, the conflicting
-      paths, installer version. Never blocks the install, never fails the
-      run, and times out fast. BLOCKED on the endpoint existing
+      overlap. The endpoint EXISTS now (2026-10-25); the body is
+      `shared::ConflictReport` — `{game, installer, conflicts: [{file,
+      packages}]}` — one entry per shared FILE, with every package that
+      wrote it as a "directory/name" ref (scoped by `game`) in install
+      order, the last being the winner. No timestamp: the server stamps
+      its own. Never blocks the install, never fails the run, times out
+      fast; 202 = stored, 429 = back off (`Retry-After`), anything else =
+      log and move on
 - [ ] It carries no user identity and no local paths — package keys and
       relative paths are catalogue data the server already has. Say so in
       the log, so a user can see what left their machine
 - [ ] `http.rs` has no POST yet; it is a GET-only WinHTTP wrapper
-- [ ] Server side is `server/TASKS.md` S10
+- [x] Server side is `server/TASKS.md` S10 (done 2026-10-25)
 
 ### Per-game configuration step (`install.rs`)
 

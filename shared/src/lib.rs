@@ -13,6 +13,7 @@
 mod access;
 mod api_error;
 mod category;
+mod conflict_report;
 mod download_path;
 mod game;
 mod game_schema;
@@ -31,6 +32,7 @@ pub use category::{
     CATEGORY_CODRIVER, CATEGORY_LANGUAGE, CATEGORY_PACENOTES, CATEGORY_STYLE, CHOICE_CATEGORIES,
     KNOWN_CATEGORIES,
 };
+pub use conflict_report::{Conflict, ConflictReport};
 pub use download_path::{category_of_download_path, split_download_path};
 pub use game::{
     default_game, GAME_ASSETTOCORSA, GAME_BEAMNG, GAME_DIRT_RALLY2, GAME_RBR, KNOWN_GAMES,

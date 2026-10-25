@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026/10/25 — server+shared: conflict reports from installers (S10)
+
+- `POST /report/conflict`, no auth, body `shared::ConflictReport`
+  `{game, installer, conflicts: [{file, packages}]}` — one entry per shared
+  file, its writers in install order (last = winner). Revised from the flat
+  lists first sketched, which lost which packages fought over which file.
+- Treated as hostile input: 8 KiB cap (413), `game`/`installer`/each file
+  and ref validated, bad entries dropped and counted (400 only when none
+  survive), nothing echoed back, empty 202 on success.
+- Rate limited per client (10/h) and globally (600/h) with `Retry-After`,
+  checked before the body is parsed. Behind Caddy the peer is always Caddy,
+  so the client comes from `X-Forwarded-For` — believed ONLY from a
+  `--trusted-proxy` (`PACENOTES_TRUSTED_PROXIES`, IP or CIDR); a forged
+  header from anyone else changes nothing (tested).
+- Stored as JSONL in `data/reports/conflicts-YYYY-MM-DD.jsonl` with the
+  server's `received_at`; no IP, key, hostname or local path is written.
+- `manifest gen` warns per package pair reported in the last 30 days.
+- Found by the suite: tokio's `File::write_all` may return before the bytes
+  reach the OS, so the 202 could precede the write; appends now flush.
+- `deploy/README.md` documents the reports, what they contain, and the
+  trusted-proxy setting (`10.0.0.0/24` on this host).
+
 ## 2026/10/25 — server+shared: per-game install schema (S11)
 
 Replaces the planned "manifest version". Decided in review: what an

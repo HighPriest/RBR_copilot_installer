@@ -19,6 +19,15 @@ enum Command {
         data: String,
         #[arg(long, default_value = "file:./data/auth.db", env = "PACENOTES_DB_URL")]
         db_url: String,
+        /// A proxy, as an IP or a CIDR, whose `X-Forwarded-For` names the client
+        /// when rate-limiting reports; without one the TCP peer is the client.
+        #[arg(
+            long = "trusted-proxy",
+            value_name = "IP|CIDR",
+            env = "PACENOTES_TRUSTED_PROXIES",
+            value_delimiter = ','
+        )]
+        trusted_proxies: Vec<String>,
     },
     /// Credential administration (mint/grant/ungrant/revoke/list).
     Token {
@@ -109,7 +118,8 @@ async fn main() -> anyhow::Result<std::process::ExitCode> {
             listen,
             data,
             db_url,
-        } => serve(listen, data, db_url)
+            trusted_proxies,
+        } => serve(listen, data, db_url, trusted_proxies)
             .await
             .map(|()| std::process::ExitCode::SUCCESS),
         Command::Token { db_url, command } => administer_tokens(&db_url, command)
@@ -162,12 +172,37 @@ async fn shutdown_signal() {
     }
 }
 
-async fn serve(listen: String, data: String, db_url: String) -> anyhow::Result<()> {
+async fn serve(
+    listen: String,
+    data: String,
+    db_url: String,
+    trusted_proxies: Vec<String>,
+) -> anyhow::Result<()> {
     tracing::info!(%listen, %data, %db_url, "starting");
 
+    let trusted = trusted_proxies
+        .iter()
+        .filter(|proxy| !proxy.trim().is_empty())
+        .map(|proxy| {
+            pacenotes_server::reports::Cidr::parse(proxy)
+                .map_err(|e| anyhow::anyhow!("--trusted-proxy {e}"))
+        })
+        .collect::<anyhow::Result<Vec<_>>>()?;
+    if trusted.is_empty() {
+        tracing::info!("no trusted proxy: X-Forwarded-For is ignored, the TCP peer is the client");
+    } else {
+        tracing::info!(proxies = ?trusted_proxies, "trusting X-Forwarded-For from these proxies");
+    }
+
+    let data_dir = std::path::PathBuf::from(&data);
     let state = std::sync::Arc::new(pacenotes_server::routes::AppState {
-        store: pacenotes_server::store::ManifestStore::new(&data),
+        store: pacenotes_server::store::ManifestStore::new(&data_dir),
         db: pacenotes_server::db::open(&db_url).await?,
+        reports: pacenotes_server::reports::Reports::new(
+            data_dir.join(pacenotes_server::store::REPORTS_DIR),
+            trusted,
+            pacenotes_server::reports::Limits::default(),
+        ),
     });
     let package_count = state.store.current().packages.len();
     tracing::info!(packages = package_count, "manifest loaded");
@@ -177,12 +212,16 @@ async fn serve(listen: String, data: String, db_url: String) -> anyhow::Result<(
     // The same signal starts the drain and a clock that cuts off stragglers.
     let (signalled, mut on_signal) = tokio::sync::watch::channel(false);
     let server = std::future::IntoFuture::into_future(
-        axum::serve(listener, pacenotes_server::routes::router(state)).with_graceful_shutdown(
-            async move {
-                shutdown_signal().await;
-                let _ = signalled.send(true);
-            },
-        ),
+        axum::serve(
+            listener,
+            // ConnectInfo: the conflict-report limiter needs the peer address.
+            pacenotes_server::routes::router(state)
+                .into_make_service_with_connect_info::<std::net::SocketAddr>(),
+        )
+        .with_graceful_shutdown(async move {
+            shutdown_signal().await;
+            let _ = signalled.send(true);
+        }),
     );
     tokio::pin!(server);
     tokio::select! {

@@ -139,13 +139,18 @@ directory or category where a game belongs, a game folder with no
   back to `en`, 404 when there is none (treat exactly like being offline).
   No auth. `lang` is restricted to `[a-z]{2,8}` server-side.
 - `GET /health` — 200, no auth.
-- `POST /report/conflict` — no auth, JSON. An installer reports that two
-  selected packages wrote the same file. It does NOT block the user: the
-  later package wins and the operator, who is the only one who can fix
-  such a catalogue, gets told. Carries no user identity and no local
-  paths — package refs and relative paths are catalogue data the server
-  already has. Unauthenticated write, so: capped body, validated fields,
-  rate-limited, append-only storage. See `server/TASKS.md` S10.
+- `POST /report/conflict` — no auth, body `shared::ConflictReport`
+  `{game, installer, conflicts: [{file, packages: ["dir/name", …]}]}`, the
+  packages of each file in INSTALL ORDER (last = winner). An installer
+  reports that selected packages wrote the same file. It does NOT block the
+  user: the later package wins and the operator, who is the only one who
+  can fix such a catalogue, gets told. Carries no user identity and no local
+  paths; the server stamps the time and stores no IP. Unauthenticated
+  write, so: 8 KiB cap (413), validated fields with bad entries dropped
+  (400 if none survive), rate-limited per client + globally (429 with
+  `Retry-After`; the client is taken from `X-Forwarded-For` only when the
+  peer is a `--trusted-proxy`), append-only JSONL, empty 202 on success.
+  See `server/TASKS.md` S10.
 - The manifest carries each game's INSTALL SCHEMA (`Manifest.schemas`,
   `shared::GameSchema`): the game's categories, which ask for one pick, and
   where each installs — plus the SHA-256 of the schema file's RAW BYTES. It
