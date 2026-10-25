@@ -5,9 +5,11 @@
 mod execute_error;
 mod game_files;
 mod install_package;
+mod record_configured;
 mod restore_point;
 mod run;
 mod uninstall_package;
 
 pub use execute_error::ExecuteError;
+pub use record_configured::record_configured;
 pub use run::{execute, Outcome};

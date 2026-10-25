@@ -9,7 +9,7 @@ mod plan;
 mod preflight;
 mod watcher;
 
-pub use execute::{execute, ExecuteError, Outcome};
+pub use execute::{execute, record_configured, ExecuteError, Outcome};
 pub use overlap::{overlaps, Overlap};
 pub use plan::{plan, Action, Plan, PlanError, PlanInput};
 pub use preflight::{preflight, HostFacts, Preflight, PreflightError};

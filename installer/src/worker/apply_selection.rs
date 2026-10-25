@@ -45,7 +45,7 @@ pub fn apply_selection(
     let configured = if plan.is_empty() {
         Vec::new()
     } else {
-        configure(job, reporter)
+        configure(job, &mut ledger, &mut watcher)?
     };
     Ok(super::Applied {
         installed: outcome.installed,
@@ -76,9 +76,15 @@ fn log_overlaps(
     overlaps.len()
 }
 
-/// Returns the files the step wrote; a failure is logged, not fatal, since
-/// the packages are installed and a missing plugin is fixed elsewhere.
-fn configure(job: &super::InstallJob, reporter: &super::Reporter) -> Vec<String> {
+/// Returns the files the step wrote, with their new hashes in the ledger. The
+/// step failing is logged, not fatal, since the packages are installed and a
+/// missing plugin is fixed elsewhere.
+fn configure(
+    job: &super::InstallJob,
+    ledger: &mut pacenotes_installer::ledger::Ledger,
+    watcher: &mut PostingWatcher,
+) -> Result<Vec<String>, String> {
+    let reporter = watcher.reporter;
     reporter.send(super::Progress {
         phase: super::Phase::Configure,
         item: String::new(),
@@ -88,18 +94,25 @@ fn configure(job: &super::InstallJob, reporter: &super::Reporter) -> Vec<String>
         total: 0,
         log: None,
     });
-    match pacenotes_installer::install::configure(job.game, &job.game_dir, &job.picks) {
-        Ok(configured) => {
-            for note in configured.notes {
-                reporter.log(note);
+    let configured =
+        match pacenotes_installer::install::configure(job.game, &job.game_dir, &job.picks) {
+            Ok(configured) => configured,
+            Err(e) => {
+                reporter.log(format!("configuration skipped — {e}"));
+                return Ok(Vec::new());
             }
-            configured.files
-        }
-        Err(e) => {
-            reporter.log(format!("configuration skipped — {e}"));
-            Vec::new()
-        }
+        };
+    for note in configured.notes {
+        reporter.log(note);
     }
+    pacenotes_installer::engine::record_configured(
+        &job.game_dir,
+        &configured.files,
+        ledger,
+        watcher,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(configured.files)
 }
 
 /// Posts the engine's progress to scene 6.

@@ -502,3 +502,45 @@ fn a_running_game_stops_the_run() {
         pacenotes_installer::engine::PreflightError::GameRunning
     );
 }
+
+/// Records what the per-game step would, after editing an installed file.
+fn record_configured(world: &World, path: &str) -> pacenotes_installer::ledger::Ledger {
+    let mut ledger = world.ledger();
+    pacenotes_installer::engine::record_configured(
+        &world.game(),
+        &[path.to_string()],
+        &mut ledger,
+        &mut pacenotes_installer::engine::Silent,
+    )
+    .expect("record");
+    ledger
+}
+
+/// Without the new hash, uninstall would take our own edit for someone else's.
+#[test]
+fn a_file_the_configuration_step_edited_is_still_ours() {
+    let world = World::new("configured");
+    world.publish(KAMIL, &[(INI, b"[SETTINGS]\nlanguage=polish\n")]);
+    world.apply(&[KAMIL]);
+
+    world.write_game_file(INI, b"[SETTINGS]\nlanguage=english\n");
+    record_configured(&world, INI);
+
+    let outcome = world.apply(&[]);
+    assert!(outcome.left_alone.is_empty(), "{:?}", outcome.left_alone);
+    assert!(world.read_game_file(INI).is_none());
+}
+
+/// The step cannot know whether the user had the file first.
+#[test]
+fn a_configured_file_no_package_owns_is_not_adopted() {
+    let world = World::new("orphan-config");
+    world.publish(KAMIL, &[("Audio/Go.wav", b"wav")]);
+    world.apply(&[KAMIL]);
+
+    world.write_game_file(INI, b"written by the configuration step");
+    assert!(!record_configured(&world, INI).owns(INI));
+
+    world.apply(&[]);
+    assert!(world.read_game_file(INI).is_some());
+}

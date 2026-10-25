@@ -32,12 +32,23 @@ fn put_back(
     file: &crate::ledger::LedgerFile,
 ) -> Result<Option<String>, super::ExecuteError> {
     let target = crate::relative_path::join(run.game_dir, &file.path);
-    let shared = run
+    if !target.exists() {
+        return Ok(None);
+    }
+    let others: Vec<&str> = run
         .ledger
         .owners_of(&file.path)
         .into_iter()
-        .any(|owner| owner != key);
-    if !target.exists() || shared {
+        .filter(|owner| *owner != key)
+        .collect();
+    if !others.is_empty() {
+        // It keeps the last writer's bytes, which only this line reveals.
+        let line = format!(
+            "{} is still used by {}; left in place",
+            file.path,
+            others.join(", ")
+        );
+        run.watcher.log(&line);
         return Ok(None);
     }
     // A write-ahead entry never got its per-file hashes, and its files were ours either way.

@@ -381,79 +381,146 @@ Two corrections to what Period 1 recorded, found while planning:
 
 ### Ledger (`ledger.rs`)
 
-- [ ] `.pacenotes\installed.json` read/write, atomic temp+rename, with the
+- [x] `.pacenotes\installed.json` read/write, atomic temp+rename, with the
       entry shape in `installer/CLAUDE.md`
-- [ ] Keys carry the GAME: `"directory/name"` stopped identifying a package
-      when one server began serving every game
-- [ ] Per-file: `path` as written, case-folded map key, `sha256` of what we
-      wrote, and `prior` (`backup` | `identical` | `absent`)
-- [ ] `exclusive_group` recorded AS INSTALLED, so uninstall decisions work
+- [x] Keys carry the GAME: `"directory/name"` stopped identifying a package
+      when one server began serving every game. `ledger.rs` stores whatever
+      key it is handed; every caller hands it `PackageInfo::download_path()`
+- [x] Per-file: `path` as written, case-folded map key, `sha256` of what we
+      wrote, and `prior` (`absent` | `backup { point }` | `identical`).
+      `backup` carries the restore point holding the original — a file
+      replaced in several runs has a copy in several points, and only the
+      one taken when THIS package overwrote it is the right one
+- [x] `exclusive_group` recorded AS INSTALLED, so uninstall decisions work
       offline with no manifest to consult
-- [ ] `owners_of(path)` over case-folded keys. A ledgered file is deleted
+- [x] `owners_of(path)` over case-folded keys. A ledgered file is deleted
       only when no other entry still lists it
-- [ ] `state: "installing"` written BEFORE extracting, and recovery on the
-      next start. Without it, half-written files from a failed run are in
-      no entry, so the next run backs them up AS THE PRISTINE ORIGINALS and
-      a later restore puts the broken ones back
+- [x] `state: "installing"` written BEFORE extracting. Without it,
+      half-written files from a failed run are in no entry, so the next run
+      backs them up AS THE PRISTINE ORIGINALS and a later restore puts the
+      broken ones back
+- [x] Recovery happens in `plan()`, NOT in a separate scan at startup: an
+      `installing` entry is uninstalled and — if still selected — laid
+      again, because its files may be partial and the record cannot be
+      trusted. Every run that reaches planning therefore cleans up after
+      the last one. `Ledger::unfinished()` exists for diagnostics and the
+      restore scene; nothing calls it yet
+- [x] Beyond the plan: an unreadable ledger is never overwritten. It may
+      be a newer build's, and flattening it would strand every package it
+      records as files nothing owns and nothing can remove
 
 ### Engine (`engine.rs`)
 
-- [ ] plan(): picks + `pacenotes` extras + ledger + cache → ordered actions.
+- [x] plan(): picks + `pacenotes` extras + ledger + cache → ordered actions.
       A new pick supersedes the ledgered member of its category or
       `exclusive_group`; sha changed = reinstall; `requires` enforced
-      against ledger-or-selection, resolved within the game
-- [ ] Uninstall before install, always: the three style packages ship
+      within the game
+- [x] `requires` is satisfied by the SELECTION and nothing else. "Already
+      installed" does not count, because anything installed and unselected
+      is uninstalled in the same run — accepting it would approve a plan
+      that removes the dependency and keeps what needs it
+- [x] Uninstall before install, always: the three style packages ship
       identical path lists, so the other order deletes what was just written
-- [ ] Pre-flight BEFORE touching anything: CRC-check every entry of every
-      package to install, free space for installs plus restore-point
-      copies, a writability probe, and the game not running. Everything
-      after this point should be able to assume the disk cooperates
-- [ ] Each file written to a temp name then renamed, so a crash never
+- [x] Pre-flight BEFORE touching anything: free space for installs plus
+      the copies taken of what they replace, and a writability probe
+- [x] Each payload is verified by its SHA256, not by CRC-checking every
+      entry as this list first said. The hash covers every byte of the
+      archive rather than each member separately, so it is the stronger
+      check, and it reads the file instead of decompressing it — perhaps
+      twenty times cheaper. Per-entry CRCs are still checked during
+      extraction, by `zip.rs`
+- [ ] "The game is not running" — the engine refuses when told
+      (`HostFacts::game_running`), but nothing measures it yet:
+      scene 6 (`wizard/scene/installation.rs`) passes `false` with a TODO.
+      Needs the marker process check, which is I9's. Until then a run
+      against an open game fails partway, which is what the write-ahead
+      state is for
+- [x] Each file written to a temp name then renamed, so a crash never
       leaves a truncated file in the game folder
-- [ ] Uninstall by `prior`: `backup` → put the restore-point copy back;
+- [x] Uninstall by `prior`: `backup` → put the restore-point copy back;
       `identical` → re-extract that one file from the cached payload;
       `absent` → delete. And only when the on-disk sha still matches what
       we wrote: Steam's verify, the RSF installer or the user's own editor
       may have replaced it, and someone else's work is not ours to remove
-- [ ] An `identical` entry can only be honoured while its payload is in
+- [x] An `identical` entry can only be honoured while its payload is in
       the cache. Pinning it against the I9 sweep is BEST EFFORT — the cache
       is per-user and the ledger lives in the game folder, so the sweep
       cannot see what references what. The correctness rule is therefore:
       when the original cannot be recovered, leave the file alone and log
       it. Never delete what cannot be put back
-- [ ] Overlaps: detect at plan time, install in order, log which package
-      overwrote which, and report (below). Do not block
-- [ ] Known and accepted: after uninstalling the winner of an overlap the
-      file survives, holding the winner's bytes. Write it in the log
+- [x] Overlaps: `overlaps()` is a separate pure function over the file
+      lists the pre-flight already read, called by `worker::apply` between
+      planning and executing. Install order decides, the later package
+      wins, and the log names them all. Nothing is blocked
+- [x] Known and accepted: after uninstalling the winner of an overlap the
+      file survives, holding the winner's bytes, because another entry
+      still owns it. Logged at the moment it happens — it is the only way
+      anyone finds out
+- [x] Emptied directories are pruned on uninstall, deepest first, so a
+      removed mod does not leave a tree that still looks installed
 
 ### Conflict reporting (needs the server endpoint)
 
+- [x] Detected and logged, naming every package that writes the shared
+      file and in which order
 - [ ] `POST /report/conflict` fire-and-forget after an install that saw an
       overlap: timestamp, game, the two package keys, the conflicting
       paths, installer version. Never blocks the install, never fails the
-      run, and times out fast
+      run, and times out fast. BLOCKED on the endpoint existing
 - [ ] It carries no user identity and no local paths — package keys and
       relative paths are catalogue data the server already has. Say so in
       the log, so a user can see what left their machine
+- [ ] `http.rs` has no POST yet; it is a GET-only WinHTTP wrapper
 - [ ] Server side is `server/TASKS.md` S10
 
 ### Per-game configuration step (`install.rs`)
 
-- [ ] `configure(game, game_dir, &Configuration)` dispatching on `Game`,
-      returning the files written/changed for the ledger
-- [ ] RBR (`install/rbr.rs`): set `language` and `sounds` in
-      `Plugins\Pacenote\PaceNote.ini`, preserving every other line; write
-      from a built-in template only when absent; report "install the
-      Pacenote plugin first" when `Plugins\Pacenote\config\` is missing
-- [ ] NOT a port of `CreateRBRConfiguration` — the style packages now ship
+- [x] `configure(game, game_dir, picks)` dispatching on `Game`, returning
+      the files written/changed for the ledger plus any notes for the log.
+      `picks` is a category → package-key map, NOT the whole
+      `Configuration`: a game takes only the categories it understands,
+      which is what keeps `install.rs` ignorant of any one game's question
+      list
+- [x] RBR's step lives in `install/rbr.rs`, beside the `install/ini.rs`
+      editor it uses and the `install/configure.rs` dispatch every game shares
+- [x] RBR: set `language` and `sounds` in `Plugins\Pacenote\PaceNote.ini`,
+      preserving every other line; write from a built-in template only
+      when absent; report `PluginMissing` when `Plugins\Pacenote\config\`
+      is not there, which the caller localizes
+- [x] The ini editor keeps the author's spacing on BOTH sides of the `=`,
+      keeps an inline comment, never matches a commented-out line, keeps
+      the file's CRLF, and adds a missing key to its own section rather
+      than the end of the file
+- [x] NOT a port of `CreateRBRConfiguration` — the style packages now ship
       the `config\pacenotes\*.ini` files it generated, and the voice
       packages ship a complete `PaceNote.ini`. Verified against the live
       catalogue
-- [ ] `sounds` = the voice's `tree_levels()/leaf()`, checked against
+- [x] `sounds` = the voice's path below its category, checked against
       `Plugins\Pacenote\sounds\<that path>` on disk; if it is not there,
       keep what the package shipped and log it
+- [x] Running twice writes nothing the second time, so a re-run takes no
+      restore point and the ledger does not churn
+- [x] `engine::record_configured` puts the step's edits back into the
+      ledger. Found by auditing this list against the code: the step runs
+      after extraction and edits what the packages wrote, so the recorded
+      hashes went stale and the next uninstall read OUR edit as somebody
+      else's and left the file behind. Two tests now pin both sides of
+      that line
+- [ ] A file the step writes that no package owns is logged, not adopted
+      — the step knows it wrote the file but not what was there before,
+      and claiming it would let a later uninstall delete something the
+      user had all along. Consequence: when a voice package ships no
+      `PaceNote.ini` and the step writes one from the template, that file
+      stays after everything is uninstalled. To fix it properly the step
+      has to report created-versus-edited, which means a shape change to
+      `Configured`
 
 ### Per-game choice categories (`gamedir.rs`)
+
+Not started. Scene 6 still passes `pacenotes_shared::CHOICE_CATEGORIES`
+to the engine, which already takes the list as a parameter — so this is a
+change to `shared`, `gamedir.rs`, `tree/`, `choices/`, `wizard/` and
+both string tables, with nothing to change in `engine.rs`.
 
 - [ ] Move `CHOICE_CATEGORIES` out of `shared` into a per-game list, each
       category with a localized label and one-line explanation from the
@@ -467,37 +534,64 @@ Two corrections to what Period 1 recorded, found while planning:
 
 ### Restore (scene 3's UNINSTALL → the restore scene)
 
-- [ ] A run that replaces anything writes `.pacenotes\restore\<timestamp>\`
-      with the replaced files AND `ledger.json` as it was before the run
+- [x] A run that changes anything — not only one that REPLACES something —
+      writes `.pacenotes\restore\<timestamp>\` holding `ledger.json` as it
+      was before the run, and the files that run replaced. A run that only
+      added files still needs a point, because undoing it means removing
+      them. A run with an empty plan writes nothing
+- [x] Point names are `2026-10-25T18-15-00Z`: sortable, and legal on
+      Windows, which rules out real ISO 8601's colons
+- [x] Points are never pruned automatically: they are small, and the one a
+      user needs is the one a policy would have deleted
 - [ ] The scene lists points newest first with their dates, and PREVIEWS
       the chosen one: files put back, packages removed, what survives
 - [ ] Restore = put files back (oldest version wins across points) AND
       remove what was installed since, then replace the live ledger with
       the snapshot. Copying files back alone leaves a broken package's
-      added files behind, which is the bug the legacy restore had
-- [ ] Points are never pruned automatically: they are small, and the one a
-      user needs is the one a policy would have deleted
+      added files behind, which is the bug the legacy restore had.
+      `Ledger::replace_all` exists for the last step; nothing else of this
+      is written
 
 ### Scene 6
 
-- [ ] Two new phase labels, Uninstall and Configure: `worker::Phase`, the
-      `IDS_S6_*` ids and both STRINGTABLEs. The scene itself needs no other
-      change — it renders whatever phase a progress message names
+- [x] THREE new phase labels, not two: Checking as well as Uninstall and
+      Configure, because the pre-flight can take a visible moment on a
+      large install. `worker::Phase`, the `IDS_S6_*` ids and both
+      STRINGTABLEs; `Phase::of` maps the engine's enum onto the UI's, which
+      are deliberately separate so `engine.rs` knows nothing about the UI
+- [x] The removal confirmation before anything is touched (review P1),
+      naming every installed package the selection no longer holds
+- [x] Free space measured on the UI side with `GetDiskFreeSpaceExW` and
+      handed to the engine as a value
+
+### Scene 7
+
+- [x] Reports what actually changed: installed and removed counts, the
+      files left alone because something else had changed them, and the
+      restore point this run created
+- [x] The headline is `IDS_S7_OK` now that the engine runs.
+      `IDS_S7_PENDING_ENGINE` is unused and should be deleted from both
+      string tables when something else touches them
 
 ### Tests
 
-- [ ] plan() table tests: fresh install, switch style, switch voice,
-      update, local-only package, missing dep, exclusive_group supersede
-- [ ] execute() in a tempdir: unowned-file backup, an identical file NOT
-      backed up but restored on uninstall, a file replaced by Steam left
-      alone, case-variant paths treated as one file, a shared file kept
-      while another owner remains, recovery from `installing`, an overlap
+- [x] plan() table tests, 19: fresh install, no-op re-run, switch style,
+      switch voice, exclusive_group supersede, changed sha, withdrawn
+      package, unfinished install, every `requires` case
+- [x] execute() in a tempdir, 14: unowned-file backup, an identical file
+      NOT copied but still put back on uninstall, a file replaced by Steam
+      left alone, a shared file kept while another owner remains, recovery
+      from `installing`, a corrupt payload caught before anything is
+      touched, free space, restore points
+- [x] RBR step against the REAL shipped `PaceNote.ini`, 15: one line
+      changes and the rest is byte for byte, the author's
+      `muteReplayPacenotes` and comments survive, a missing file gets the
+      template, a missing config dir is reported and nothing is written
+- [x] End to end through the GUI, against a live server: the files are in
+      the game folder, the ledger records them, a restore point exists,
+      and the plugin settings carry the language that was picked
 - [ ] Restore: to a point two runs back, with added files removed and the
-      ledger matching the folder afterwards
-- [ ] RBR step against real fixture content: the shipped PaceNote.ini with
-      a different language pick (one line changes, the rest byte for byte),
-      a missing file (template written), a missing config dir (reported,
-      nothing written)
+      ledger matching the folder afterwards. Waits for the restore code
 
 ## I8 — Auth flow
 - [ ] Secret from scene 2 used as bearer for /packages and /download
