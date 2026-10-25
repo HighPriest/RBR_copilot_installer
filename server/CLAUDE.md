@@ -115,8 +115,9 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 - `GET /packages[?game=<id>]` → shared::Manifest filtered to public +
   granted directories, and to one game when asked (absent = every game)
 - `GET /download/{game}/{directory}/{*name}` → zip stream (tokio fs → axum
-  body), Content-Length from the file handle, `application/zip`,
-  Content-Disposition naming the LEAF; auth per access model above.
+  body), Content-Length from the file handle (503 if it disagrees with the
+  manifest), `application/zip`, Content-Disposition naming the LEAF with an
+  ASCII `filename` and an RFC 6266 `filename*`; auth per access model above.
   `{*name}` is a wildcard: a name spans every remaining segment.
 - `GET /motd?lang=xx` → `text/plain` from `data/motd/<lang>.txt`, `en`
   fallback, 404 when there is none, no auth
@@ -153,7 +154,15 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 
 - All config via flags with env fallbacks (PACENOTES_LISTEN, PACENOTES_DB_URL,
   PACENOTES_DATA_DIR).
-- tracing for logs; never log Authorization headers.
+- tracing for logs; never log Authorization headers. Every response gets
+  one INFO line on target `access` (method, path+query, status, bytes, ms
+  to the response head, 12-char token-HASH prefix or `-`/`malformed`, user
+  agent) — production runs at INFO, where `TraceLayer` is silent.
+- Cache headers: `/packages` `private, no-store` + `Vary: Authorization`;
+  protected downloads `private, no-store`; public downloads `no-cache`.
+  Every download carries `ETag: "<sha256>"` and honours `If-None-Match`
+  with 304 — AFTER authorization, so a protected validator is never
+  confirmed to a stranger.
 - Keep handlers thin; logic in `auth.rs` / `store.rs` modules as they grow.
 - Sidecar parsing needs a TOML crate (e.g. `toml`) — fine, the server has no
   size budget.

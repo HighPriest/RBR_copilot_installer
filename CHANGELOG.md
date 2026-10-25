@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026/10/25 — server: observability and HTTP hygiene (DESIGN-REVIEW D11, D12, C2)
+
+- **D11** One INFO line per response on the `access` target: method,
+  path+query, status, bytes, ms, user agent, and the key as its 12-char
+  HASH prefix (`-` none, `malformed` junk) — matchable against
+  `token list`, never the key. Production runs at INFO, where the old
+  `TraceLayer` logged nothing. Caddy's HTTPS block gains `log`.
+- **D12** `Content-Disposition` names the leaf (`Numeric Standard.zip`, not
+  `style/Numeric Standard.zip`), with an ASCII `filename` that cannot break
+  its quotes and an RFC 6266 `filename*` carrying the exact UTF-8 name.
+- **C2** `/packages` is `private, no-store` + `Vary: Authorization` (it
+  differs per key); protected downloads `private, no-store`; public ones
+  `no-cache`. Every download has `ETag: "<sha256>"` and answers
+  `If-None-Match` with 304 — only after authorization.
+
 ## 2026/10/25 — server: robustness (DESIGN-REVIEW D10, S4, S5, S7)
 
 - **D10** The server handles SIGTERM, not just ctrl-c — as the container's

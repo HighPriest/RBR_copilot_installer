@@ -19,6 +19,7 @@ pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
         .route("/motd", axum::routing::get(motd))
         .route("/whoami", axum::routing::get(whoami))
         .with_state(state)
+        .layer(axum::middleware::from_fn(crate::access_log::log_response))
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
@@ -39,7 +40,7 @@ async fn list_packages(
     axum::extract::State(state): SharedState,
     axum::extract::Query(query): axum::extract::Query<PackagesQuery>,
     headers: axum::http::HeaderMap,
-) -> Result<axum::Json<pacenotes_shared::Manifest>, crate::error::AppError> {
+) -> Result<axum::response::Response, crate::error::AppError> {
     let grants = match caller(&state, &headers).await {
         Ok(Some(token)) if token.is_live(crate::auth::now()) => token.grants,
         Ok(_) => Vec::new(),
@@ -52,7 +53,14 @@ async fn list_packages(
     if let Some(game) = query.game.as_deref() {
         manifest = manifest.for_game(game);
     }
-    Ok(axum::Json(manifest))
+    // The listing differs per key, so no shared cache may hand one to another caller.
+    Ok(axum::response::IntoResponse::into_response((
+        [
+            (axum::http::header::CACHE_CONTROL, "private, no-store"),
+            (axum::http::header::VARY, "Authorization"),
+        ],
+        axum::Json(manifest),
+    )))
 }
 
 /// The status never reveals what a protected directory holds: an impossible
@@ -89,6 +97,25 @@ async fn download(
         return Err(crate::error::AppError::not_found());
     };
 
+    // Checked after authorization, so a protected validator is never confirmed to a stranger.
+    let etag = format!("\"{}\"", package.sha256);
+    let cache_control = if directory == pacenotes_shared::PUBLIC_DIR {
+        // A republish changes a URL's bytes, so caches revalidate rather than trust an age.
+        "no-cache"
+    } else {
+        // The key travels in a header, so a cache keyed on the URL would leak the zip.
+        "private, no-store"
+    };
+    if if_none_match(&headers, &etag) {
+        return Ok(axum::response::IntoResponse::into_response((
+            axum::http::StatusCode::NOT_MODIFIED,
+            [
+                (axum::http::header::ETAG, etag),
+                (axum::http::header::CACHE_CONTROL, cache_control.to_string()),
+            ],
+        )));
+    }
+
     let file = match tokio::fs::File::open(&path).await {
         Ok(file) => file,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
@@ -122,10 +149,52 @@ async fn download(
         (axum::http::header::CONTENT_LENGTH, size.to_string()),
         (
             axum::http::header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}.zip\"", package.name),
+            content_disposition(package.leaf()),
         ),
+        (axum::http::header::ETAG, etag),
+        (axum::http::header::CACHE_CONTROL, cache_control.to_string()),
     ];
     Ok(axum::response::IntoResponse::into_response((headers, body)))
+}
+
+/// Whether `If-None-Match` names this ETag, in a list, as a weak validator
+/// (which matches for a GET) or as `*`.
+fn if_none_match(headers: &axum::http::HeaderMap, etag: &str) -> bool {
+    headers
+        .get_all(axum::http::header::IF_NONE_MATCH)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .map(str::trim)
+        .any(|candidate| {
+            candidate == "*" || candidate.strip_prefix("W/").unwrap_or(candidate) == etag
+        })
+}
+
+/// Names the LEAF, since a whole name contains `/`: an ASCII `filename` that
+/// cannot close its quotes, and the exact name as RFC 6266 `filename*`.
+fn content_disposition(leaf: &str) -> String {
+    let ascii: String = leaf
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | ' ') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    let encoded: String = leaf
+        .bytes()
+        .map(|byte| {
+            if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~') {
+                (byte as char).to_string()
+            } else {
+                format!("%{byte:02X}")
+            }
+        })
+        .collect();
+    format!("attachment; filename=\"{ascii}.zip\"; filename*=UTF-8''{encoded}.zip")
 }
 
 #[derive(serde::Deserialize)]
@@ -187,4 +256,51 @@ async fn caller(
         return Ok(None);
     }
     crate::auth::load_token(&state.db, &crate::auth::hash_token(&raw)).await
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn content_disposition_names_the_leaf_safely() {
+        assert_eq!(
+            super::content_disposition("Kamil"),
+            "attachment; filename=\"Kamil.zip\"; filename*=UTF-8''Kamil.zip"
+        );
+        assert_eq!(
+            super::content_disposition("Numeric Standard"),
+            "attachment; filename=\"Numeric Standard.zip\"; \
+             filename*=UTF-8''Numeric%20Standard.zip"
+        );
+        assert_eq!(
+            super::content_disposition("Wiśniewski"),
+            "attachment; filename=\"Wi_niewski.zip\"; filename*=UTF-8''Wi%C5%9Bniewski.zip"
+        );
+    }
+
+    #[test]
+    fn a_quote_or_backslash_cannot_close_the_filename_early() {
+        let hostile = super::content_disposition("a\"b\\c");
+        assert!(
+            hostile.starts_with("attachment; filename=\"a_b_c.zip\";"),
+            "{hostile}"
+        );
+    }
+
+    #[test]
+    fn if_none_match_handles_lists_weak_tags_and_star() {
+        let etag = "\"abc\"";
+        let with = |value: &str| {
+            let mut headers = axum::http::HeaderMap::new();
+            headers.insert(
+                axum::http::header::IF_NONE_MATCH,
+                axum::http::HeaderValue::from_str(value).unwrap(),
+            );
+            headers
+        };
+        for matching in ["\"abc\"", "\"x\", \"abc\"", "W/\"abc\"", "*"] {
+            assert!(super::if_none_match(&with(matching), etag), "{matching}");
+        }
+        assert!(!super::if_none_match(&with("\"abd\""), etag));
+        assert!(!super::if_none_match(&axum::http::HeaderMap::new(), etag));
+    }
 }

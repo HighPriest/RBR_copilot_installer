@@ -6,6 +6,8 @@ pacenotes.example.com {
 	reverse_proxy pacenotes:8080 {
 		flush_interval -1
 	}
+	# Caddy's own access log, with the client address the server cannot see.
+	log
 }
 
 # Optional: reach it from this host; needs the NetworkAlias in caddy.container (deploy/README.md).

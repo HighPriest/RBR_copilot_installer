@@ -151,3 +151,27 @@ async fn a_package_whose_size_changed_since_publishing_is_503_not_a_short_body()
     let body: pacenotes_shared::ApiError = response.json().await.unwrap();
     assert_eq!(body.code, "unavailable");
 }
+
+#[tokio::test]
+async fn the_download_filename_is_the_leaf_even_with_spaces() {
+    let server = common::Server::start().await;
+    common::write(
+        &common::package_path(
+            server.data.path(),
+            "rbr",
+            "public/style/Numeric Standard.zip",
+        ),
+        b"style-bytes",
+    );
+    common::regenerate(server.data.path());
+
+    let response = server
+        .get("/download/rbr/public/style/Numeric%20Standard", None)
+        .await;
+    assert_eq!(response.status(), 200);
+    assert_eq!(
+        response.headers()["content-disposition"],
+        "attachment; filename=\"Numeric Standard.zip\"; \
+         filename*=UTF-8''Numeric%20Standard.zip"
+    );
+}

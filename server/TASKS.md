@@ -331,11 +331,11 @@ Robustness
       not a short body that fails the client's sha check.
 
 Observability and HTTP hygiene
-- [ ] **D11** One INFO access-log line per response (token-hash prefix,
+- [x] **D11** One INFO access-log line per response (token-hash prefix,
       never the token).
-- [ ] **D12** `Content-Disposition` names the leaf, with RFC 6266
+- [x] **D12** `Content-Disposition` names the leaf, with RFC 6266
       `filename*`.
-- [ ] **C2** Cache headers: `/packages` private/no-store + `Vary:
+- [x] **C2** Cache headers: `/packages` private/no-store + `Vary:
       Authorization`; protected downloads private/no-store; public
       downloads `ETag` + `If-None-Match` → 304.
 
