@@ -340,7 +340,7 @@ Observability and HTTP hygiene
       downloads `ETag` + `If-None-Match` → 304.
 
 Publishing purity
-- [ ] **D5** The manifest is a pure function of zips + sidecars + schemas.
+- [x] **D5** The manifest is a pure function of zips + sidecars + schemas.
       A sidecar without `version` gets `sha-<first 8 hex of sha256>`.
       `manifest gen` refuses to drop metadata the current manifest carries
       unless told to; `manifest migrate-to-sidecars` moves it into sidecars.

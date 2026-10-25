@@ -47,8 +47,14 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
       exclusive_group = "pacenote-config"
       requires = ["public/language/polish"]     # "directory/name" refs
       description = "..."
-      version = "2.0.0"                         # else keep existing/0.0.0
+      version = "2.0.0"                         # else "sha-<8 hex of sha256>"
 
+  The sidecar is the ONLY source of these values (D5): nothing is inherited
+  from a previous manifest, so the manifest is a pure function of zips +
+  sidecars + schemas, and deleting a key removes it. `manifest gen` refuses
+  (exit 1, writes nothing) when a run would DROP a value the current
+  manifest carries, unless `--accept-metadata-loss`;
+  `manifest migrate-to-sidecars` moves manifest-only values into sidecars.
   Unknown keys are an ERROR (`deny_unknown_fields`): an old sidecar carrying
   `category`, `tree_path` or `game` withholds ITS package instead of
   publishing silently-wrong metadata. The rest of the catalogue still
@@ -132,7 +138,10 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 - `pacenotes-server token ungrant <token-or-hash> <directory>`
 - `pacenotes-server token revoke <token-or-hash>`
 - `pacenotes-server token list` (shows label, grants, expiry, revoked)
-- `pacenotes-server manifest gen --data ./data` — scan + sidecar merge +
+- `pacenotes-server manifest migrate-to-sidecars --data ./data` — one-off:
+  copy values that exist only in manifest.json into sidecars (adds missing
+  keys, never overwrites, never pins `0.0.0`/`sha-…`; idempotent).
+- `pacenotes-server manifest gen --data ./data [--accept-metadata-loss]` — scan + sidecar merge +
   validation as described under Data model. Warnings for: sidecar without
   zip, invalid directory name, top-level zips, dangling `requires`,
   cross-directory `requires` pointing into a NON-public directory from a

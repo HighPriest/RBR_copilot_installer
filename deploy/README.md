@@ -157,9 +157,32 @@ requires = ["public/language/polish"]     # "directory/name"
 ```
 
 Nothing about *position* goes in here — the folders decide game, access
-directory, category and tree. An unknown key is a hard error, so a sidecar
-left over from an older layout (`category`, `tree_path`, `game`) fails the
-run instead of publishing something wrong.
+directory, category and tree. An unknown key is an error that withholds the
+package, so a sidecar left over from an older layout (`category`,
+`tree_path`, `game`) never publishes something wrong.
+
+**The sidecar is the only source.** What is not in a sidecar is not in the
+manifest: delete a key and it is gone at the next publish. With no
+`version`, a package gets `sha-` plus the first 8 hex characters of its
+sha256 — it changes exactly when the bytes do. The manifest is therefore
+reproducible from the zips, sidecars and schemas alone.
+
+Because removing metadata is now possible, `manifest gen` will not do it
+silently: if a run would drop a value the current manifest carries, it
+refuses, writes nothing and names each value. Re-run with
+`--accept-metadata-loss` when the removal is intended.
+
+**Upgrading from a server older than 2026-10-25:** older servers carried
+metadata forward from the previous manifest, so yours may hold values that
+exist in no sidecar. Run this once, before the first publish on the new
+version, and review what it wrote:
+
+```sh
+podman exec pacenotes pacenotes-server manifest migrate-to-sidecars --data /data
+```
+
+It only adds keys a sidecar lacks (never overwrites), never pins the old
+`0.0.0` default, and is safe to re-run.
 
 ### Message of the day
 
@@ -239,7 +262,7 @@ percent-encoded (`style/Numeric%20Standard`).
 | Logs | `journalctl --user -u pacenotes -f` |
 | Health | `podman healthcheck run pacenotes` |
 | Publish without rebuilding | `podman exec pacenotes pacenotes-server manifest gen --data /data` |
-| Back up | `~/pacenotes/data` — `auth.db` above all; packages and `manifest.json` are reproducible |
+| Back up | `~/pacenotes/data` — `auth.db` above all, and the packages + sidecars (your content; nothing else has a copy). `manifest.json` is regenerated from them |
 
 `Restart=on-failure` brings a crashed server back, but a failed *build* stops
 the unit rather than looping: the build runs in `ExecStartPre`.

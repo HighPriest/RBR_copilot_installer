@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026/10/25 — server: the manifest is reproducible (DESIGN-REVIEW D5)
+
+- `manifest gen` no longer reads the previous manifest: the catalogue is a
+  pure function of zips + sidecars (+ schemas, next). Deleting a sidecar
+  key now actually removes it, and two replicas built from the same tree
+  publish identical manifests.
+- A package without a sidecar `version` gets `sha-<first 8 hex of its
+  sha256>` instead of the fixed `0.0.0`, so two payloads never share a
+  version.
+- Safety net for the switch: `manifest gen` REFUSES (exit 1, nothing
+  written, old manifest keeps serving) when a run would drop a value the
+  current manifest carries, naming each one; `--accept-metadata-loss`
+  overrides for a deliberate removal.
+- `manifest migrate-to-sidecars`: one-off move of manifest-only values
+  into sidecars (adds missing keys, never overwrites, never pins `0.0.0` or
+  a derived version, idempotent). Run once when upgrading
+  (`deploy/README.md`).
+- `deploy/README.md` no longer calls the packages "reproducible" — they are
+  operator content with no other copy; the manifest now genuinely is.
+
 ## 2026/10/25 — server: observability and HTTP hygiene (DESIGN-REVIEW D11, D12, C2)
 
 - **D11** One INFO line per response on the `access` target: method,

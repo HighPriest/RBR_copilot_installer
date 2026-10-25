@@ -72,6 +72,16 @@ enum ManifestCommand {
     Gen {
         #[arg(long, default_value = "./data", env = "PACENOTES_DATA_DIR")]
         data: String,
+        /// Publish although values the current manifest carries would
+        /// disappear; without it, `gen` refuses and names them.
+        #[arg(long)]
+        accept_metadata_loss: bool,
+    },
+    /// Copy values that live only in manifest.json into sidecars, so a
+    /// regeneration keeps them.
+    MigrateToSidecars {
+        #[arg(long, default_value = "./data", env = "PACENOTES_DATA_DIR")]
+        data: String,
     },
 }
 
@@ -102,8 +112,15 @@ async fn main() -> anyhow::Result<std::process::ExitCode> {
             .await
             .map(|()| std::process::ExitCode::SUCCESS),
         Command::Manifest {
-            command: ManifestCommand::Gen { data },
-        } => generate_manifest(std::path::Path::new(&data)),
+            command:
+                ManifestCommand::Gen {
+                    data,
+                    accept_metadata_loss,
+                },
+        } => generate_manifest(std::path::Path::new(&data), accept_metadata_loss),
+        Command::Manifest {
+            command: ManifestCommand::MigrateToSidecars { data },
+        } => migrate_to_sidecars(std::path::Path::new(&data)),
     }
 }
 
@@ -250,9 +267,30 @@ fn print_credentials(credentials: &[pacenotes_server::admin::Credential]) {
     }
 }
 
-fn generate_manifest(data: &std::path::Path) -> anyhow::Result<std::process::ExitCode> {
+/// Exit 1 without writing anything when values would vanish unannounced and
+/// `accept_metadata_loss` is not set.
+fn generate_manifest(
+    data: &std::path::Path,
+    accept_metadata_loss: bool,
+) -> anyhow::Result<std::process::ExitCode> {
     let generated = pacenotes_server::store::generate(data)?;
     let manifest = &generated.manifest;
+    let losses = metadata_losses(data, manifest);
+    if !losses.is_empty() && !accept_metadata_loss {
+        eprintln!("REFUSING to publish: this would drop metadata the current manifest carries:");
+        for loss in &losses {
+            eprintln!("  {loss}");
+        }
+        eprintln!(
+            "Nothing was written. If these values should stay, run \
+             `manifest migrate-to-sidecars` first. If removing them is \
+             intended, re-run with --accept-metadata-loss."
+        );
+        return Ok(std::process::ExitCode::FAILURE);
+    }
+    for loss in &losses {
+        eprintln!("warning: dropping {loss} (--accept-metadata-loss)");
+    }
     let path = pacenotes_server::store::write_manifest(data, manifest)?;
 
     for package in &manifest.packages {
@@ -283,4 +321,36 @@ fn generate_manifest(data: &std::path::Path) -> anyhow::Result<std::process::Exi
         generated.errors.len()
     );
     Ok(std::process::ExitCode::from(EXIT_PUBLISHED_WITH_ERRORS))
+}
+
+/// What publishing `next` would drop from the manifest on disk; an unreadable
+/// current manifest leaves nothing to compare against.
+fn metadata_losses(data: &std::path::Path, next: &pacenotes_shared::Manifest) -> Vec<String> {
+    let path = data.join(pacenotes_server::store::MANIFEST_FILE);
+    match pacenotes_server::store::read_manifest(&path) {
+        Ok(current) => pacenotes_server::store::metadata_losses(&current, next),
+        Err(e) => {
+            eprintln!("warning: the current manifest does not load ({e}); nothing to compare");
+            Vec::new()
+        }
+    }
+}
+
+/// Exit 2 when some packages could not be migrated.
+fn migrate_to_sidecars(data: &std::path::Path) -> anyhow::Result<std::process::ExitCode> {
+    let migration = pacenotes_server::store::migrate_to_sidecars(data)?;
+    for line in &migration.written {
+        println!("wrote {line}");
+    }
+    for error in &migration.errors {
+        eprintln!("ERROR: {error}");
+    }
+    if migration.written.is_empty() && migration.errors.is_empty() {
+        println!("nothing to migrate: every value is already in a sidecar");
+    }
+    Ok(if migration.errors.is_empty() {
+        std::process::ExitCode::SUCCESS
+    } else {
+        std::process::ExitCode::from(EXIT_PUBLISHED_WITH_ERRORS)
+    })
 }

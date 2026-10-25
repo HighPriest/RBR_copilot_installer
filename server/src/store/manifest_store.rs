@@ -73,24 +73,33 @@ impl ManifestStore {
         let package = self.current().packages.into_iter().find(|package| {
             package.game == game && package.directory == directory && package.name == name
         })?;
-        if !pacenotes_shared::valid_id(&package.game)
-            || !pacenotes_shared::valid_id(&package.directory)
-            || !pacenotes_shared::valid_name(&package.name)
-        {
-            return None;
-        }
-        let path = self
-            .data_dir
-            .join(&package.game)
-            .join(crate::store::PACKAGES_DIR)
-            .join(&package.directory)
-            .join(format!("{}.zip", package.name));
+        let path = zip_file(&self.data_dir, &package)?;
         Some((package, path))
     }
 
     pub fn motd(&self, lang: &str) -> Option<String> {
         crate::store::motd::read_motd(&self.data_dir, lang)
     }
+}
+
+/// Where a listed package's zip lives; `None` unless every key is valid, so a
+/// hand-edited manifest cannot name a path outside the data root.
+pub fn zip_file(
+    data_dir: &std::path::Path,
+    package: &pacenotes_shared::PackageInfo,
+) -> Option<std::path::PathBuf> {
+    if !pacenotes_shared::valid_id(&package.game)
+        || !pacenotes_shared::valid_id(&package.directory)
+        || !pacenotes_shared::valid_name(&package.name)
+    {
+        return None;
+    }
+    let path = data_dir
+        .join(&package.game)
+        .join(crate::store::PACKAGES_DIR)
+        .join(&package.directory)
+        .join(format!("{}.zip", package.name));
+    Some(path)
 }
 
 #[cfg(test)]

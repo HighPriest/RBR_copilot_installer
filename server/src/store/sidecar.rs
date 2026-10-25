@@ -19,5 +19,9 @@ pub fn read_sidecar(path: &std::path::Path) -> anyhow::Result<Sidecar> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Sidecar::default()),
         Err(e) => anyhow::bail!("reading {}: {e}", path.display()),
     };
-    toml::from_str(&text).map_err(|e| anyhow::anyhow!("{e}"))
+    parse_sidecar(&text)
+}
+
+pub fn parse_sidecar(text: &str) -> anyhow::Result<Sidecar> {
+    toml::from_str(text).map_err(|e| anyhow::anyhow!("{e}"))
 }

@@ -1,15 +1,12 @@
 //! `manifest gen`: walk `<data>/<game>/packages/<directory>/**/*.zip`, hash
 //! every zip, merge its sidecar, and collect what the publisher should fix.
-
-/// A package without a sidecar `version` and without a previous manifest entry.
-const DEFAULT_VERSION: &str = "0.0.0";
+//!
+//! The result depends on the zips and sidecars alone, never on the previous
+//! manifest, so deleting a sidecar key removes the value and replicas agree.
 
 /// A zip outside an access directory or with a broken sidecar is withheld as an
 /// error rather than published with silently wrong metadata; the rest publishes.
 pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> {
-    let previous =
-        crate::store::manifest_file::read_manifest(&data_dir.join(crate::store::MANIFEST_FILE))
-            .unwrap_or_default();
     let mut generated = super::Generated {
         manifest: pacenotes_shared::Manifest::default(),
         warnings: Vec::new(),
@@ -31,7 +28,7 @@ pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> 
         }
         let game = entry.file_name().to_string_lossy().into_owned();
         if path.is_dir() && game != crate::store::MOTD_DIR {
-            scan_game(&path, &game, &previous, &mut generated)?;
+            scan_game(&path, &game, &mut generated)?;
         }
     }
 
@@ -44,7 +41,6 @@ pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> 
 fn scan_game(
     game_dir: &std::path::Path,
     game: &str,
-    previous: &pacenotes_shared::Manifest,
     generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let packages_dir = crate::store::PACKAGES_DIR;
@@ -106,7 +102,7 @@ fn scan_game(
                 public = pacenotes_shared::PUBLIC_DIR
             ));
         }
-        scan_access_directory(&path, game, &directory, previous, generated)?;
+        scan_access_directory(&path, game, &directory, generated)?;
     }
     Ok(())
 }
@@ -115,16 +111,12 @@ fn scan_access_directory(
     directory_path: &std::path::Path,
     game: &str,
     directory: &str,
-    previous: &pacenotes_shared::Manifest,
     generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let mut found = FoundFiles::default();
     collect(directory_path, "", &mut found, generated);
 
     for (name, zip_path) in &found.zips {
-        let previous_entry = previous.packages.iter().find(|package| {
-            package.game == game && package.directory == directory && &package.name == name
-        });
         let sidecar = match crate::store::sidecar::read_sidecar(&zip_path.with_extension("toml")) {
             Ok(sidecar) => sidecar,
             Err(e) => {
@@ -134,7 +126,7 @@ fn scan_access_directory(
                 continue;
             }
         };
-        let package = package_entry(game, directory, name, zip_path, sidecar, previous_entry)?;
+        let package = package_entry(game, directory, name, zip_path, sidecar)?;
         generated.manifest.packages.push(package);
     }
 
@@ -149,15 +141,14 @@ fn scan_access_directory(
     Ok(())
 }
 
-/// A sidecar value wins, then the previous manifest's, then the default;
-/// size, hash and mtime always come from the zip.
+/// Metadata from the sidecar alone, with a version derived from the bytes when
+/// it names none; size, hash and mtime always come from the zip.
 fn package_entry(
     game: &str,
     directory: &str,
     name: &str,
     zip_path: &std::path::Path,
     sidecar: crate::store::sidecar::Sidecar,
-    previous: Option<&pacenotes_shared::PackageInfo>,
 ) -> anyhow::Result<pacenotes_shared::PackageInfo> {
     let metadata = std::fs::metadata(zip_path)
         .map_err(|e| anyhow::anyhow!("stat {}: {e}", zip_path.display()))?;
@@ -168,33 +159,24 @@ fn package_entry(
         .map(|since_epoch| since_epoch.as_secs() as i64)
         .unwrap_or(0);
 
-    let mut requires = sidecar
-        .requires
-        .or_else(|| previous.map(|package| package.requires.clone()))
-        .unwrap_or_default();
+    let mut requires = sidecar.requires.unwrap_or_default();
     requires.sort();
     requires.dedup();
 
+    let sha256 = crate::store::sha256_file(zip_path)?;
     Ok(pacenotes_shared::PackageInfo {
         directory: directory.to_string(),
         name: name.to_string(),
         version: sidecar
             .version
-            .or_else(|| previous.map(|package| package.version.clone()))
-            .unwrap_or_else(|| DEFAULT_VERSION.to_string()),
+            .unwrap_or_else(|| crate::store::derived_version(&sha256)),
         size: metadata.len(),
-        sha256: crate::store::sha256_file(zip_path)?,
+        sha256,
         updated_at,
         game: game.to_string(),
-        display_name: sidecar
-            .display_name
-            .or_else(|| previous.and_then(|package| package.display_name.clone())),
-        description: sidecar
-            .description
-            .or_else(|| previous.and_then(|package| package.description.clone())),
-        exclusive_group: sidecar
-            .exclusive_group
-            .or_else(|| previous.and_then(|package| package.exclusive_group.clone())),
+        display_name: sidecar.display_name,
+        description: sidecar.description,
+        exclusive_group: sidecar.exclusive_group,
         requires,
     })
 }

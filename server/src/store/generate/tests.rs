@@ -36,7 +36,7 @@ fn scans_subdirs_and_hashes() {
         basic.sha256,
         "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
     );
-    assert_eq!(basic.version, super::DEFAULT_VERSION);
+    assert_eq!(basic.version, "sha-2cf24dba");
     assert_eq!(basic.game, pacenotes_shared::GAME_RBR);
     assert_eq!(find(&generated, "premium-voices/pro").size, 6);
 }
@@ -77,19 +77,13 @@ fn sidecar_supplies_install_metadata() {
     assert_eq!(eva.requires, vec!["public/english".to_string()]);
 }
 
+/// A previous manifest full of values no sidecar holds is not inherited.
 #[test]
-fn sidecar_wins_over_previous_manifest_but_absent_fields_are_preserved() {
+fn the_manifest_is_a_pure_function_of_what_is_on_disk() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     write_package(dir, "rbr", "public/basic.zip", b"hello");
-    let mut previous = crate::store::fixture_tree::generate(dir).manifest;
-    let entry = &mut previous.packages[0];
-    entry.version = "2.3.4".into();
-    entry.sha256 = "stale".into();
-    entry.display_name = Some("Numeric".into());
-    entry.description = Some("Numeric pacenotes".into());
-    entry.exclusive_group = Some("pacenote-config".into());
-    crate::store::write_manifest(dir, &previous).unwrap();
+    crate::store::write_manifest(dir, &crate::store::fixture_tree::legacy_manifest()).unwrap();
     write_package(
         dir,
         "rbr",
@@ -102,11 +96,21 @@ fn sidecar_wins_over_previous_manifest_but_absent_fields_are_preserved() {
         .packages
         .remove(0);
     assert_eq!(basic.label(), "Numeric v2");
-    assert_eq!(basic.version, "2.3.4");
-    assert_eq!(basic.description.as_deref(), Some("Numeric pacenotes"));
-    assert_eq!(basic.exclusive_group.as_deref(), Some("pacenote-config"));
+    assert_eq!(basic.version, "sha-2cf24dba");
+    assert!(basic.description.is_none());
+    assert!(basic.exclusive_group.is_none());
     assert_eq!(basic.size, 5);
     assert_ne!(basic.sha256, "stale");
+
+    std::fs::remove_file(dir.join(crate::store::MANIFEST_FILE)).unwrap();
+    let again = crate::store::fixture_tree::generate(dir)
+        .manifest
+        .packages
+        .remove(0);
+    assert_eq!(
+        serde_json::to_string(&again).unwrap(),
+        serde_json::to_string(&basic).unwrap()
+    );
 }
 
 fn has_error(generated: &crate::store::Generated, fragment: &str) -> bool {
