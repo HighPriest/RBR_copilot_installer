@@ -49,14 +49,18 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
       description = "..."
       version = "2.0.0"                         # else keep existing/0.0.0
 
-  Unknown keys are a HARD ERROR (`deny_unknown_fields`), so an old sidecar
-  carrying `category`, `tree_path` or `game` fails the run instead of
-  publishing silently-wrong metadata.
+  Unknown keys are an ERROR (`deny_unknown_fields`): an old sidecar carrying
+  `category`, `tree_path` or `game` withholds ITS package instead of
+  publishing silently-wrong metadata. The rest of the catalogue still
+  publishes; the run exits 2.
 - **manifest.json** (`shared::Manifest`) at `./data/manifest.json` is what
   `GET /packages` serves. It is GENERATED: `manifest gen` walks
   `<data>/<game>/packages/<directory>/**/*.zip`, computes
   size/sha256/updated_at, merges each sidecar, validates `requires` refs,
-  and writes the file. Hand-edits get overwritten — edit sidecars instead.
+  and writes the file ATOMICALLY (temp file + rename in the data dir).
+  Hand-edits get overwritten — edit sidecars instead. Exit status: 0 all
+  published; 2 written but something withheld (`ERROR:` lines); 1 could not
+  run (nothing written, the previous manifest stays).
   Publishing = drop zip (+ optional sidecar) → run `manifest gen`. No upload
   API in v1.
 - Manifest is loaded at startup and hot-reloaded on file mtime change

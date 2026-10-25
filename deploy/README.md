@@ -137,6 +137,13 @@ its complaints: mis-filed levels, a sidecar with no zip, a dependency that
 does not exist, a name that needs URL-encoding. It is the only place those
 mistakes are easy to see.
 
+`ERROR:` lines are worse than warnings: that package was **withheld** (a
+sidecar that does not parse, a zip outside an access directory). Everything
+else still publishes, and the command exits **2** so a script cannot mistake
+it for a clean run; on container start the entrypoint prints a banner for
+it. Exit 1 means nothing was written and the previous manifest is still
+being served.
+
 ### Optional metadata (sidecars)
 
 Next to `<name>.zip`, an optional `<name>.toml`:

@@ -102,6 +102,16 @@ async fn download(
         .await
         .map_err(|e| crate::error::AppError::internal("stat package", e))?
         .len();
+    // Bytes of another size cannot match the client's sha, and would only read as corruption.
+    if size != package.size {
+        tracing::error!(
+            path = %path.display(),
+            on_disk = size,
+            manifest = package.size,
+            "package size differs from the manifest; refusing to serve it"
+        );
+        return Err(crate::error::AppError::unavailable());
+    }
 
     let body = axum::body::Body::from_stream(tokio_util::io::ReaderStream::new(file));
     let headers = [

@@ -319,12 +319,15 @@ Auth correctness
       otherwise — the only way an installer can tell a typo from a valid key.
 
 Robustness
-- [ ] **D10** SIGTERM handled, drain bounded to 20 s.
-- [ ] **S5** `manifest.json` written atomically; a broken sidecar or schema
+- [x] **D10** SIGTERM handled, drain bounded to 20 s. Verified live: an
+      idle stop takes 0.01 s; a stop with a 250-second download in flight
+      ends at 20.0 s, exit 0. The Quadlet sets `StopTimeout=30`, because
+      podman's default 10 s would SIGKILL mid-drain.
+- [x] **S5** `manifest.json` written atomically; a broken sidecar or schema
       skips only its package or game and the run exits non-zero; the
       entrypoint says so loudly.
-- [ ] **S7** Local DB: WAL + `busy_timeout`.
-- [ ] **S4** (minimal) A file whose size differs from the manifest is 503,
+- [x] **S7** Local DB: WAL + `busy_timeout`.
+- [x] **S4** (minimal) A file whose size differs from the manifest is 503,
       not a short body that fails the client's sha check.
 
 Observability and HTTP hygiene

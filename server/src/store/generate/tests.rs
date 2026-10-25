@@ -5,7 +5,10 @@ fn write_package(data_dir: &std::path::Path, game: &str, rest: &str, bytes: &[u8
     );
 }
 
-fn find<'a>(generated: &'a super::Generated, reference: &str) -> &'a pacenotes_shared::PackageInfo {
+fn find<'a>(
+    generated: &'a crate::store::Generated,
+    reference: &str,
+) -> &'a pacenotes_shared::PackageInfo {
     generated
         .manifest
         .get(
@@ -86,7 +89,7 @@ fn sidecar_wins_over_previous_manifest_but_absent_fields_are_preserved() {
     entry.display_name = Some("Numeric".into());
     entry.description = Some("Numeric pacenotes".into());
     entry.exclusive_group = Some("pacenote-config".into());
-    crate::store::fixture_tree::write_manifest(dir, &previous);
+    crate::store::write_manifest(dir, &previous).unwrap();
     write_package(
         dir,
         "rbr",
@@ -106,19 +109,39 @@ fn sidecar_wins_over_previous_manifest_but_absent_fields_are_preserved() {
     assert_ne!(basic.sha256, "stale");
 }
 
+fn has_error(generated: &crate::store::Generated, fragment: &str) -> bool {
+    generated
+        .errors
+        .iter()
+        .any(|error| error.contains(fragment))
+}
+
+/// One typo must neither publish its package with default metadata nor take the rest down.
 #[test]
-fn broken_sidecar_fails_the_run() {
+fn a_broken_sidecar_withholds_its_package_and_nothing_else() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     write_package(dir, "rbr", "public/basic.zip", b"hello");
     write_package(dir, "rbr", "public/basic.toml", b"categoy = \"sounds\"\n");
+    write_package(dir, "rbr", "public/other.zip", b"fine");
 
-    let error = super::generate(dir).unwrap_err().to_string();
-    assert!(error.contains("public/basic.toml"), "{error}");
+    let generated = crate::store::fixture_tree::generate(dir);
+    let names: Vec<&str> = generated
+        .manifest
+        .packages
+        .iter()
+        .map(|package| package.name.as_str())
+        .collect();
+    assert_eq!(names, vec!["other"]);
+    assert!(
+        has_error(&generated, "public/basic.toml"),
+        "{:?}",
+        generated.errors
+    );
 }
 
 #[test]
-fn sidecar_keys_that_carried_positional_metadata_are_rejected() {
+fn sidecar_keys_that_carried_positional_metadata_withhold_the_package() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     write_package(dir, "rbr", "public/language/polish.zip", b"lang");
@@ -129,8 +152,13 @@ fn sidecar_keys_that_carried_positional_metadata_are_rejected() {
         b"category = \"language\"\n",
     );
 
-    let error = super::generate(dir).unwrap_err().to_string();
-    assert!(error.contains("polish.toml"), "{error}");
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert!(generated.manifest.packages.is_empty());
+    assert!(
+        has_error(&generated, "polish.toml"),
+        "{:?}",
+        generated.errors
+    );
 }
 
 #[test]
@@ -328,11 +356,16 @@ fn names_needing_url_encoding_warn_but_publish() {
 }
 
 #[test]
-fn rejects_a_top_level_zip() {
+fn a_top_level_zip_is_withheld_as_an_error() {
     let tmp = tempfile::tempdir().unwrap();
     crate::store::fixture_tree::write(&tmp.path().join("loose.zip"), b"x");
-    let error = super::generate(tmp.path()).unwrap_err().to_string();
-    assert!(error.contains("top-level zip"), "{error}");
+    let generated = crate::store::fixture_tree::generate(tmp.path());
+    assert!(generated.manifest.packages.is_empty());
+    assert!(
+        has_error(&generated, "top-level zip"),
+        "{:?}",
+        generated.errors
+    );
 }
 
 #[test]

@@ -31,6 +31,16 @@ impl AppError {
         }
     }
 
+    /// The file on disk differs from what the manifest promises, almost always
+    /// a package being replaced mid-publish, so the client should retry.
+    pub fn unavailable() -> Self {
+        Self {
+            status: axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            code: "unavailable",
+            message: "This package is being updated on the server. Try again shortly.".to_string(),
+        }
+    }
+
     /// Logs the cause and answers 500 without it.
     pub fn internal(context: &str, error: impl std::fmt::Display) -> Self {
         tracing::error!(error = %error, "{context}");

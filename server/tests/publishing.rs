@@ -55,9 +55,16 @@ async fn the_game_comes_from_the_layout_not_a_sidecar() {
         &common::package_path(server.data.path(), "rbr", "public/basic.toml"),
         b"game = \"beamng\"\n",
     );
-    let error = pacenotes_server::store::generate(server.data.path())
-        .unwrap_err()
-        .to_string();
-    assert!(error.contains("basic.toml"), "{error}");
+    let generated = pacenotes_server::store::generate(server.data.path()).unwrap();
+    let error = generated
+        .errors
+        .iter()
+        .find(|error| error.contains("basic.toml"))
+        .expect("the sidecar is reported");
     assert!(error.contains("game"), "{error}");
+    assert!(!generated
+        .manifest
+        .packages
+        .iter()
+        .any(|package| package.game == "rbr" && package.name == "basic"));
 }

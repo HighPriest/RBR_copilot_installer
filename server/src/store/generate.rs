@@ -4,41 +4,28 @@
 /// A package without a sidecar `version` and without a previous manifest entry.
 const DEFAULT_VERSION: &str = "0.0.0";
 
-/// A generated manifest and the warnings for the publisher, collected so the
-/// CLI prints them together and tests can assert on them.
-#[derive(Debug)]
-pub struct Generated {
-    pub manifest: pacenotes_shared::Manifest,
-    pub warnings: Vec<String>,
-}
-
-impl Generated {
-    fn warn(&mut self, message: String) {
-        tracing::warn!("{message}");
-        self.warnings.push(message);
-    }
-}
-
-/// Fails when a zip sits outside an access directory or a sidecar is broken,
-/// since either would publish a package with silently wrong metadata.
-pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<Generated> {
+/// A zip outside an access directory or with a broken sidecar is withheld as an
+/// error rather than published with silently wrong metadata; the rest publishes.
+pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> {
     let previous =
         crate::store::manifest_file::read_manifest(&data_dir.join(crate::store::MANIFEST_FILE))
             .unwrap_or_default();
-    let mut generated = Generated {
+    let mut generated = super::Generated {
         manifest: pacenotes_shared::Manifest::default(),
         warnings: Vec::new(),
+        errors: Vec::new(),
     };
 
     for entry in read_dir_sorted(data_dir)? {
         let path = entry.path();
         if path.is_file() {
             if is_zip(&path) {
-                anyhow::bail!(
-                    "top-level zip {}: a package belongs under <game>/{}/<directory>/",
+                generated.error(format!(
+                    "top-level zip {}: a package belongs under <game>/{}/<directory>/ — \
+                     not published",
                     path.display(),
                     crate::store::PACKAGES_DIR
-                );
+                ));
             }
             continue;
         }
@@ -58,7 +45,7 @@ fn scan_game(
     game_dir: &std::path::Path,
     game: &str,
     previous: &pacenotes_shared::Manifest,
-    generated: &mut Generated,
+    generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let packages_dir = crate::store::PACKAGES_DIR;
     if !pacenotes_shared::valid_id(game) {
@@ -91,12 +78,12 @@ fn scan_game(
         let path = entry.path();
         if path.is_file() {
             if is_zip(&path) {
-                anyhow::bail!(
+                generated.error(format!(
                     "zip outside an access directory: {} — every package must live in one \
-                     (put anonymous packages in {}/)",
+                     (put anonymous packages in {}/); not published",
                     path.display(),
                     pacenotes_shared::PUBLIC_DIR
-                );
+                ));
             }
             continue;
         }
@@ -129,7 +116,7 @@ fn scan_access_directory(
     game: &str,
     directory: &str,
     previous: &pacenotes_shared::Manifest,
-    generated: &mut Generated,
+    generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let mut found = FoundFiles::default();
     collect(directory_path, "", &mut found, generated);
@@ -138,8 +125,15 @@ fn scan_access_directory(
         let previous_entry = previous.packages.iter().find(|package| {
             package.game == game && package.directory == directory && &package.name == name
         });
-        let sidecar = crate::store::sidecar::read_sidecar(&zip_path.with_extension("toml"))
-            .map_err(|e| anyhow::anyhow!("{game}/{directory}/{name}.toml: {e}"))?;
+        let sidecar = match crate::store::sidecar::read_sidecar(&zip_path.with_extension("toml")) {
+            Ok(sidecar) => sidecar,
+            Err(e) => {
+                generated.error(format!(
+                    "{game}/{directory}/{name}.toml: {e} — package not published"
+                ));
+                continue;
+            }
+        };
         let package = package_entry(game, directory, name, zip_path, sidecar, previous_entry)?;
         generated.manifest.packages.push(package);
     }
@@ -213,7 +207,12 @@ struct FoundFiles {
 }
 
 /// Depth-first in name order, which keeps a regenerated manifest byte-stable.
-fn collect(dir: &std::path::Path, prefix: &str, found: &mut FoundFiles, generated: &mut Generated) {
+fn collect(
+    dir: &std::path::Path,
+    prefix: &str,
+    found: &mut FoundFiles,
+    generated: &mut super::Generated,
+) {
     let entries = match read_dir_sorted(dir) {
         Ok(entries) => entries,
         Err(e) => {

@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026/10/25 — server: robustness (DESIGN-REVIEW D10, S4, S5, S7)
+
+- **D10** The server handles SIGTERM, not just ctrl-c — as the container's
+  PID 1 it previously ignored `podman stop` until SIGKILL. In-flight
+  requests drain for at most 20 s. Verified live: idle stop 0.01 s; a stop
+  with a 250 s download in flight ends at 20.0 s. The Quadlet sets
+  `StopTimeout=30` so podman waits for that drain.
+- **S5** `manifest.json` is written atomically (temp + rename). A broken
+  sidecar or a stray zip now withholds only that package: the rest still
+  publishes and `manifest gen` exits **2** with `ERROR:` lines (1 = nothing
+  written). The entrypoint prints a banner instead of a one-line echo.
+- **S7** Local auth DBs run in WAL mode with a 5 s `busy_timeout`, so
+  `token mint` during traffic cannot 500 a user.
+- **S4** (minimal) A package whose size on disk differs from the manifest
+  is answered 503 "being updated", not streamed as a short body that fails
+  the client's sha check as "corrupted".
+
 ## 2026/10/25 — server: auth correctness (DESIGN-REVIEW D2, D3, D8, D9)
 
 - **D3** Download statuses no longer enumerate. On a non-public directory, a

@@ -106,10 +106,8 @@ mod tests {
         let store = super::ManifestStore::new(dir);
         assert!(store.current().packages.is_empty());
 
-        crate::store::fixture_tree::write_manifest(
-            dir,
-            &crate::store::fixture_tree::generate(dir).manifest,
-        );
+        crate::store::write_manifest(dir, &crate::store::fixture_tree::generate(dir).manifest)
+            .unwrap();
 
         assert_eq!(store.current().packages.len(), 1);
         let (package, path) = store.zip_path("rbr", "public", "basic").unwrap();
@@ -132,10 +130,8 @@ mod tests {
             "public/codriver/polish/male/Kamil.zip",
         );
         crate::store::fixture_tree::write(&kamil, b"kamil");
-        crate::store::fixture_tree::write_manifest(
-            dir,
-            &crate::store::fixture_tree::generate(dir).manifest,
-        );
+        crate::store::write_manifest(dir, &crate::store::fixture_tree::generate(dir).manifest)
+            .unwrap();
 
         let store = super::ManifestStore::new(dir);
         let (package, path) = store
@@ -164,10 +160,8 @@ mod tests {
             &crate::store::fixture_tree::package_path(dir, "rbr", "public/basic.zip"),
             b"hello",
         );
-        crate::store::fixture_tree::write_manifest(
-            dir,
-            &crate::store::fixture_tree::generate(dir).manifest,
-        );
+        crate::store::write_manifest(dir, &crate::store::fixture_tree::generate(dir).manifest)
+            .unwrap();
         let store = super::ManifestStore::new(dir);
         assert_eq!(store.current().packages.len(), 1);
 

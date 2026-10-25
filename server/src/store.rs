@@ -10,6 +10,7 @@
 
 mod file_hash;
 mod generate;
+mod generated;
 mod manifest_file;
 mod manifest_store;
 mod motd;
@@ -20,7 +21,9 @@ mod sidecar;
 mod fixture_tree;
 
 pub use file_hash::sha256_file;
-pub use generate::{generate, Generated};
+pub use generate::generate;
+pub use generated::Generated;
+pub use manifest_file::write_manifest;
 pub use manifest_store::ManifestStore;
 pub use motd::{valid_lang, MOTD_DIR, MOTD_FALLBACK_LANG};
 

@@ -33,6 +33,9 @@ HealthInterval=1m
 HealthTimeout=10s
 HealthRetries=3
 
+# Longer than the server's 20 s drain, which podman's default 10 s would cut short.
+StopTimeout=30
+
 # Point EnvironmentFile at this system's copy.
 [Service]
 EnvironmentFile=/home/user/.config/containers/systemd/pacenotes.config.env

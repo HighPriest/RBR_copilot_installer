@@ -131,12 +131,7 @@ pub fn package_path(data: &std::path::Path, game: &str, rest: &str) -> std::path
 /// What a publisher runs after dropping files in.
 pub fn regenerate(data: &std::path::Path) {
     let generated = pacenotes_server::store::generate(data).unwrap();
-    write(
-        &data.join(pacenotes_server::store::MANIFEST_FILE),
-        serde_json::to_string(&generated.manifest)
-            .unwrap()
-            .as_bytes(),
-    );
+    pacenotes_server::store::write_manifest(data, &generated.manifest).unwrap();
 }
 
 pub fn write(path: &std::path::Path, bytes: &[u8]) {

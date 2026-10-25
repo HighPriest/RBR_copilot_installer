@@ -136,3 +136,18 @@ async fn games_share_one_server_without_bleeding_into_each_other() {
         assert_eq!(server.status(path, None).await, 404, "{path}");
     }
 }
+
+/// Replaced in place without regenerating, or still being copied: its bytes
+/// cannot match the sha the client checks.
+#[tokio::test]
+async fn a_package_whose_size_changed_since_publishing_is_503_not_a_short_body() {
+    let server = common::Server::start().await;
+    common::write(
+        &common::package_path(server.data.path(), "rbr", "public/basic.zip"),
+        b"public-bytes plus a second half still arriving",
+    );
+    let response = server.get("/download/rbr/public/basic", None).await;
+    assert_eq!(response.status(), 503);
+    let body: pacenotes_shared::ApiError = response.json().await.unwrap();
+    assert_eq!(body.code, "unavailable");
+}

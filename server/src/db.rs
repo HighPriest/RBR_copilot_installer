@@ -40,11 +40,43 @@ pub async fn open(db_url: &str) -> anyhow::Result<libsql::Connection> {
     let connection = database
         .connect()
         .map_err(|e| anyhow::anyhow!("connecting to {db_url}: {e}"))?;
+    if !is_remote {
+        tune_local(
+            &connection,
+            local_path(db_url) == std::path::Path::new(":memory:"),
+        )
+        .await?;
+    }
     connection
         .execute_batch(MIGRATION_0001)
         .await
         .map_err(|e| anyhow::anyhow!("applying migrations/0001_init.sql: {e}"))?;
     Ok(connection)
+}
+
+/// Waits up to 5 s for a lock and, outside `:memory:`, switches to WAL, since
+/// an admin `token mint` beside live traffic otherwise fails SQLITE_BUSY as a 500.
+/// Remote libSQL manages its own storage and is never tuned.
+async fn tune_local(connection: &libsql::Connection, in_memory: bool) -> anyhow::Result<()> {
+    // Both PRAGMAs answer with a row, so they go through `query`.
+    let pragma = |sql: &'static str| async move {
+        let mut rows = connection
+            .query(sql, ())
+            .await
+            .map_err(|e| anyhow::anyhow!("{sql}: {e}"))?;
+        while rows
+            .next()
+            .await
+            .map_err(|e| anyhow::anyhow!("{sql}: {e}"))?
+            .is_some()
+        {}
+        anyhow::Ok(())
+    };
+    pragma("PRAGMA busy_timeout = 5000").await?;
+    if !in_memory {
+        pragma("PRAGMA journal_mode = WAL").await?;
+    }
+    Ok(())
 }
 
 /// `file:./data/auth.db` → `./data/auth.db`; a query string is left in place, not stripped.
@@ -63,6 +95,30 @@ mod tests {
         ] {
             assert_eq!(super::local_path(url), std::path::Path::new(path));
         }
+    }
+
+    /// Reads a single-value PRAGMA back.
+    async fn pragma(connection: &libsql::Connection, sql: &str) -> libsql::Value {
+        let mut rows = connection.query(sql, ()).await.unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        row.get_value(0).unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_local_file_db_uses_wal_and_waits_for_locks() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("auth.db");
+        let connection = super::open(&format!("file:{}", path.display()))
+            .await
+            .unwrap();
+        assert_eq!(
+            pragma(&connection, "PRAGMA journal_mode").await,
+            libsql::Value::Text("wal".into())
+        );
+        assert_eq!(
+            pragma(&connection, "PRAGMA busy_timeout").await,
+            libsql::Value::Integer(5000)
+        );
     }
 
     #[tokio::test]
