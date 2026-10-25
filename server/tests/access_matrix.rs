@@ -2,6 +2,8 @@
 
 mod common;
 
+/// A directory a key holds no grant for answers 404, like a package that does not
+/// exist, so a key holder cannot learn what other directories hold.
 #[tokio::test]
 async fn listing_and_download_agree_across_the_grant_matrix() {
     let server = common::Server::start().await;
@@ -18,7 +20,7 @@ async fn listing_and_download_agree_across_the_grant_matrix() {
     );
     assert_eq!(
         server.download_statuses(Some(&no_grants)).await,
-        [200, 403, 403]
+        [200, 404, 404]
     );
 
     assert_eq!(
@@ -27,7 +29,7 @@ async fn listing_and_download_agree_across_the_grant_matrix() {
     );
     assert_eq!(
         server.download_statuses(Some(&alpha_only)).await,
-        [200, 200, 403]
+        [200, 200, 404]
     );
 
     assert_eq!(
@@ -104,7 +106,7 @@ async fn ungrant_takes_effect_without_a_restart() {
 
     assert_eq!(
         server.download_statuses(Some(&token)).await,
-        [200, 200, 403]
+        [200, 200, 404]
     );
     assert_eq!(
         server.visible_directories(Some(&token)).await,
@@ -122,14 +124,22 @@ async fn error_bodies_are_api_errors() {
         (
             "/download/rbr/alpha/secret",
             Some(no_grants.as_str()),
-            "forbidden",
+            "not_found",
         ),
-        ("/download/rbr/alpha/nope", None, "not_found"),
+        ("/download/rbr/public/nope", None, "not_found"),
     ] {
         let error: pacenotes_shared::ApiError = server.get(path, token).await.json().await.unwrap();
-        assert_eq!(error.code, code);
+        assert_eq!(error.code, code, "{path}");
         assert!(!error.message.is_empty());
     }
+}
+
+/// RFC 9110: a 401 names the scheme it wants.
+#[tokio::test]
+async fn an_unauthorized_answer_names_the_bearer_scheme() {
+    let server = common::Server::start().await;
+    let response = server.get("/download/rbr/alpha/secret", None).await;
+    assert_eq!(response.headers()["www-authenticate"], "Bearer");
 }
 
 #[tokio::test]

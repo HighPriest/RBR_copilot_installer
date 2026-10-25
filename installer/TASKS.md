@@ -595,8 +595,18 @@ both string tables, with nothing to change in `engine.rs`.
 
 ## I8 — Auth flow
 - [ ] Secret from scene 2 used as bearer for /packages and /download
-- [ ] 401 on ACCEPT → warning modal; 401/403 during download → logged
+- [ ] 401 on ACCEPT → warning modal; 401 during download → logged
       error, failure summary
+- [ ] **Validate the secret with `GET /whoami`, not `/packages`**
+      (server change 2026-10-25, DESIGN-REVIEW.md D2). `/packages` never
+      401s — it falls back to the public listing for any key it does not
+      accept — so `worker::check_secret` can never see `Rejected` today and
+      a mistyped key looks accepted. `/whoami` answers 200
+      `shared::KeyStatus { expires_at }` for a live key and 401 for every
+      bad one. `expires_at` also allows warning before a key runs out.
+- [ ] The server no longer sends 403 (D3): a live key without the grant
+      gets 404, the same as a missing package. Nothing in the installer
+      handles 403 today; keep it that way.
 - [ ] Optional: remember the secret in %APPDATA%\PacenotesInstaller\token
       (plain file, user-scoped; document the tradeoff) and prefill scene 2
 

@@ -85,10 +85,19 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 - `/motd`'s `lang` is the ONE path-ish input that cannot be validated by
   lookup, because it names a file no manifest lists. It is therefore
   restricted to `[a-z]{2,8}` before it touches the filesystem.
-- 401 (missing/bad/expired/revoked token on a protected directory) vs 403
-  (valid token, directory not granted) vs 404 (no such package). Body =
-  `shared::ApiError` JSON. NOTE: /packages never 403s — it silently filters
-  to public + granted directories, so callers can't enumerate directory names.
+- Statuses never enumerate: on a non-public directory, no live key → 401
+  WHETHER OR NOT the package exists; a live key without the grant, or no
+  such package → 404 — the same answer. No 403. A syntactically impossible
+  game/directory/name → 404 (nothing could exist). Body = `shared::ApiError`
+  JSON; a 401 carries `WWW-Authenticate: Bearer`. `/packages` never 4xxs —
+  it silently filters to public + granted directories.
+- Token rows decode FAIL-CLOSED (an undecodable column is an error, never a
+  default). Decode from `row.get_value`: libsql 0.6's typed `row.get::<i64>`
+  PANICS on a type mismatch instead of returning an error.
+- Public packages never touch the auth DB, and `/packages` falls back to the
+  public listing on a DB error: a database blip must not take the free
+  catalogue down. A bearer value not shaped like a minted key (`pcn_` + 43
+  base64url chars) is rejected before any query.
 - No panics in request handlers: anyhow at edges → `impl IntoResponse` error
   type mapping to status + ApiError.
 - TLS is terminated by Caddy in front (deploy/Caddyfile). The binary listens
@@ -97,6 +106,8 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 ## Endpoints
 
 - `GET /health` → 200 "ok"
+- `GET /whoami` → 200 `shared::KeyStatus { expires_at }` for a live key,
+  401 otherwise. How a client validates a key.
 - `GET /packages[?game=<id>]` → shared::Manifest filtered to public +
   granted directories, and to one game when asked (absent = every game)
 - `GET /download/{game}/{directory}/{*name}` → zip stream (tokio fs → axum

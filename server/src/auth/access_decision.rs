@@ -18,13 +18,16 @@ impl TokenRow {
 
 pub enum Decision {
     Allow,
-    /// 401: no live credential where one is needed.
+    /// 401: no live credential where one is needed, whether or not the package
+    /// exists, so an anonymous caller learns nothing about a directory.
     Unauthorized,
-    /// 403: a live credential without a grant for the directory.
-    Forbidden,
+    /// 404, the answer for a package that does not exist, so a key holder cannot
+    /// learn what an ungranted directory holds.
+    Hidden,
 }
 
-/// `public` is always allowed; any other directory needs a live credential granted it.
+/// `public` is always allowed; any other directory needs a live credential
+/// granted it, and a live credential without that grant sees the directory as absent.
 pub fn decide(token: Option<&TokenRow>, directory: &str, now: i64) -> Decision {
     if directory == pacenotes_shared::PUBLIC_DIR {
         return Decision::Allow;
@@ -32,7 +35,7 @@ pub fn decide(token: Option<&TokenRow>, directory: &str, now: i64) -> Decision {
     match token {
         Some(token) if !token.is_live(now) => Decision::Unauthorized,
         Some(token) if token.grants.iter().any(|grant| grant == directory) => Decision::Allow,
-        Some(_) => Decision::Forbidden,
+        Some(_) => Decision::Hidden,
         None => Decision::Unauthorized,
     }
 }
@@ -65,8 +68,8 @@ mod tests {
         matches!(decision, super::Decision::Unauthorized)
     }
 
-    fn is_forbidden(decision: &super::Decision) -> bool {
-        matches!(decision, super::Decision::Forbidden)
+    fn is_hidden(decision: &super::Decision) -> bool {
+        matches!(decision, super::Decision::Hidden)
     }
 
     type Case = (
@@ -90,12 +93,12 @@ mod tests {
                 is_allow,
             ),
             ("anonymous", None, premium, is_unauthorized),
-            ("no grants", token(false, None, &[]), premium, is_forbidden),
+            ("no grants", token(false, None, &[]), premium, is_hidden),
             (
                 "other grant",
                 token(false, None, &["beta"]),
                 premium,
-                is_forbidden,
+                is_hidden,
             ),
             (
                 "matching grant",
@@ -112,6 +115,12 @@ mod tests {
             (
                 "revoked",
                 token(true, None, &[premium]),
+                premium,
+                is_unauthorized,
+            ),
+            (
+                "revoked, other grant",
+                token(true, None, &["beta"]),
                 premium,
                 is_unauthorized,
             ),

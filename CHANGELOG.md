@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026/10/25 — server: auth correctness (DESIGN-REVIEW D2, D3, D8, D9)
+
+- **D3** Download statuses no longer enumerate. On a non-public directory, a
+  caller with no live key gets 401 whether or not the package exists; a
+  live key without the grant gets 404, identical to a missing package.
+  **403 is gone.** The installer's live-server test (anonymous protected
+  download = 401) still holds.
+- **D2** `GET /whoami`: 200 `shared::KeyStatus { expires_at }` for a live
+  key, 401 for none/malformed/unknown/expired/revoked. `/packages` can never
+  answer "is this key valid?" (it falls back to the public listing), so the
+  installer's scene-2 check was dead code; it moves to `/whoami`
+  (`installer/TASKS.md` I8).
+- **D8** Token rows decode fail-closed. Found while writing the test:
+  libsql 0.6's typed `row.get::<i64>` PANICS on a type mismatch rather than
+  erroring, so drift would have killed the request. Decoding now goes
+  through `get_value` with explicit matching.
+- **D9** Public downloads never touch the auth DB; `/packages` serves the
+  public listing when the DB fails; a bearer value not shaped like a minted
+  key is rejected before any query. Proven by a test that drops the auth
+  tables mid-run.
+- 401 responses now carry `WWW-Authenticate: Bearer`.
+
 ## 2026/10/13 — deployable server (deploy/)
 
 Everything needed to put a real server in front of the installer for

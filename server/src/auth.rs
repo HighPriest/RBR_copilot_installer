@@ -9,4 +9,4 @@ mod token_secret;
 pub use access_decision::{decide, now, Decision, TokenRow};
 pub use bearer_header::bearer_from_headers;
 pub use token_lookup::load_token;
-pub use token_secret::{hash_token, mint_token, TOKEN_PREFIX};
+pub use token_secret::{hash_token, mint_token, well_formed, TOKEN_PREFIX};

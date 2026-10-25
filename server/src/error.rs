@@ -14,11 +14,12 @@ impl AppError {
         }
     }
 
-    pub fn forbidden() -> Self {
+    /// `/whoami` without a live key: the code of `unauthorized`, worded for the key itself.
+    pub fn invalid_key() -> Self {
         Self {
-            status: axum::http::StatusCode::FORBIDDEN,
-            code: "forbidden",
-            message: "This access key does not grant that package.".to_string(),
+            status: axum::http::StatusCode::UNAUTHORIZED,
+            code: "unauthorized",
+            message: "This access key is not valid, or has expired.".to_string(),
         }
     }
 
@@ -47,6 +48,14 @@ impl axum::response::IntoResponse for AppError {
             code: self.code.to_string(),
             message: self.message,
         };
-        (self.status, axum::Json(body)).into_response()
+        let mut response = (self.status, axum::Json(body)).into_response();
+        // RFC 9110: a 401 names the scheme it wants.
+        if self.status == axum::http::StatusCode::UNAUTHORIZED {
+            response.headers_mut().insert(
+                axum::http::header::WWW_AUTHENTICATE,
+                axum::http::HeaderValue::from_static("Bearer"),
+            );
+        }
+        response
     }
 }

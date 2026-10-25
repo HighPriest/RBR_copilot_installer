@@ -115,17 +115,23 @@ directory or category where a game belongs, a game folder with no
 
 - `GET /packages[?game=<id>]` — optional `Authorization: Bearer <token>`.
   Returns `shared::Manifest` (JSON) filtered to the `public` directory plus
-  the caller's granted directories (silent filtering; /packages never 403s).
-  Without `game` the document covers EVERY game; with it, just that one. An
-  unknown game is an empty list, not an error.
+  the caller's granted directories (silent filtering; /packages never 4xxs —
+  a bad, expired or revoked key simply gets the public listing, and a DB
+  outage does too). Without `game` the document covers EVERY game; with it,
+  just that one. An unknown game is an empty list, not an error.
 - `GET /download/{game}/{directory}/{*name}` — `name` spans the remaining
   segments, because it is the package's path under its directory
   (`PackageInfo::download_path()` builds the whole tail). Same auth rules;
-  streams `./data/<game>/packages/<directory>/<name>.zip`. 401 bad/expired
-  token on a protected directory, 403 valid token without that grant, 404 no
-  such package — and a miss on ANY of the three keys is a 404, so the status
-  never reveals what exists. A name may contain characters that need
-  percent-encoding (e.g. `style/Numeric Standard`); the client must encode.
+  streams `./data/<game>/packages/<directory>/<name>.zip`. The status never
+  reveals what a protected directory holds: no live key on a non-public
+  directory → 401 WHETHER OR NOT the package exists; a live key without that
+  grant, or no such package → 404. There is no 403 (it said "exists, but not
+  for you"). A name may contain characters that need percent-encoding (e.g.
+  `style/Numeric Standard`); the client must encode.
+- `GET /whoami` — `Authorization: Bearer <token>`. 200
+  `shared::KeyStatus { expires_at }` for a live key, 401 for anything else
+  (none, malformed, unknown, expired, revoked). This — not `/packages` — is
+  how a client validates a key.
 - `GET /motd?lang=xx` — `text/plain` from `data/motd/<lang>.txt`, falling
   back to `en`, 404 when there is none (treat exactly like being offline).
   No auth. `lang` is restricted to `[a-z]{2,8}` server-side.

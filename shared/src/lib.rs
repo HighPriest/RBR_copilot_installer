@@ -15,6 +15,7 @@ mod api_error;
 mod category;
 mod download_path;
 mod game;
+mod key_status;
 mod lookup_key;
 mod manifest;
 mod package;
@@ -33,6 +34,7 @@ pub use download_path::{category_of_download_path, split_download_path};
 pub use game::{
     default_game, GAME_ASSETTOCORSA, GAME_BEAMNG, GAME_DIRT_RALLY2, GAME_RBR, KNOWN_GAMES,
 };
+pub use key_status::KeyStatus;
 pub use lookup_key::{valid_id, valid_name};
 pub use manifest::Manifest;
 pub use package::PackageInfo;

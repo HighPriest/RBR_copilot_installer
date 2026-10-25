@@ -1,6 +1,9 @@
 /// Marks a Pacenotes access key, for users and for secret scanners.
 pub const TOKEN_PREFIX: &str = "pcn_";
 
+/// The random part of a minted key: 32 bytes as unpadded base64url.
+const TOKEN_BODY_LEN: usize = 43;
+
 /// `pcn_` + 32 random bytes as unpadded base64url; the caller shows it once
 /// and stores only `hash_token` of it.
 pub fn mint_token() -> String {
@@ -13,6 +16,17 @@ pub fn mint_token() -> String {
 pub fn hash_token(raw: &str) -> String {
     let digest = <sha2::Sha256 as sha2::Digest>::digest(raw.as_bytes());
     digest.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+/// Whether `mint_token` could have produced this, checked before any database
+/// lookup so a garbage header costs no query, which remote libSQL bills.
+pub fn well_formed(raw: &str) -> bool {
+    raw.strip_prefix(TOKEN_PREFIX).is_some_and(|body| {
+        body.len() == TOKEN_BODY_LEN
+            && body
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+    })
 }
 
 fn base64url(bytes: &[u8]) -> String {
@@ -70,6 +84,30 @@ mod tests {
                 .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_'),
             "{first}"
         );
+    }
+
+    #[test]
+    fn only_minted_shapes_are_well_formed() {
+        let body = "A".repeat(43);
+        for good in [
+            super::mint_token(),
+            format!("pcn_{body}"),
+            format!("pcn_{}abc", "-_9z".repeat(10)),
+        ] {
+            assert!(super::well_formed(&good), "{good}");
+        }
+        for bad in [
+            String::new(),
+            "not-a-token".to_string(),
+            body.clone(),
+            format!("pcn_{}", "A".repeat(42)),
+            format!("pcn_{}", "A".repeat(44)),
+            format!("pcn_{}=", "A".repeat(42)),
+            format!("pcn_{}+", "A".repeat(42)),
+            format!("PCN_{body}"),
+        ] {
+            assert!(!super::well_formed(&bad), "{bad}");
+        }
     }
 
     #[test]

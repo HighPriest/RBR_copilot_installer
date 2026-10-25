@@ -304,15 +304,18 @@ Folded into the S10/S11 work at the maintainer's request. IDs point back to
 `DESIGN-REVIEW.md`, where the reasoning is.
 
 Auth correctness
-- [ ] **D3** No enumeration through status codes. Non-public path with no
+- [x] **D3** No enumeration through status codes. Non-public path with no
       live token → 401 whether or not the package exists; live token without
       the grant, or no such package → 404. 403 is gone. (Keeps the
       installer's "anonymous protected download = 401" test true.)
-- [ ] **D8** Token rows decode fail-CLOSED.
-- [ ] **D9** Public downloads never touch the DB; `/packages` falls back to
+- [x] **D8** Token rows decode fail-CLOSED. Found while testing it: libsql
+      0.6's typed `row.get::<i64>` PANICS on a type mismatch rather than
+      returning an error, so the old code would have killed the request on
+      drift, not failed open. Decoding now goes through `get_value`.
+- [x] **D9** Public downloads never touch the DB; `/packages` falls back to
       the public listing on a DB error; tokens not shaped `pcn_` + 43
       base64url characters are rejected before any query.
-- [ ] **D2** `GET /whoami`: 200 `{expires_at}` for a live key, 401
+- [x] **D2** `GET /whoami`: 200 `{expires_at}` for a live key, 401
       otherwise — the only way an installer can tell a typo from a valid key.
 
 Robustness

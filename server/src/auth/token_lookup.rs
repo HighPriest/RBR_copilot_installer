@@ -1,5 +1,9 @@
 /// The credential with this hash and all its grants, in one query; `None`
 /// when no such credential exists.
+///
+/// Decodes fail-closed, since defaulting `revoked` or `expires_at` after a
+/// schema drift would turn a dead key live; raw values are read because libsql
+/// 0.6's typed `row.get` panics on a type mismatch.
 pub async fn load_token(
     connection: &libsql::Connection,
     token_hash: &str,
@@ -21,18 +25,53 @@ pub async fn load_token(
         .await
         .map_err(|e| anyhow::anyhow!("reading credential row: {e}"))?
     {
-        let token = loaded.get_or_insert_with(|| crate::auth::TokenRow {
-            token_hash: row.get::<String>(0).unwrap_or_default(),
-            label: row.get::<Option<String>>(1).unwrap_or_default(),
-            expires_at: row.get::<Option<i64>>(2).unwrap_or_default(),
-            revoked: row.get::<i64>(3).unwrap_or_default() != 0,
-            grants: Vec::new(),
-        });
-        if let Ok(Some(directory)) = row.get::<Option<String>>(4) {
+        let column = |index: i32| {
+            row.get_value(index)
+                .map_err(|e| anyhow::anyhow!("reading credential column {index}: {e}"))
+        };
+        if loaded.is_none() {
+            loaded = Some(crate::auth::TokenRow {
+                token_hash: text(column(0)?, "token_hash")?,
+                label: optional_text(column(1)?, "label")?,
+                expires_at: optional_integer(column(2)?, "expires_at")?,
+                revoked: integer(column(3)?, "revoked")? != 0,
+                grants: Vec::new(),
+            });
+        }
+        let directory = optional_text(column(4)?, "grant")?;
+        if let (Some(token), Some(directory)) = (loaded.as_mut(), directory) {
             token.grants.push(directory);
         }
     }
     Ok(loaded)
+}
+
+fn integer(value: libsql::Value, column: &str) -> anyhow::Result<i64> {
+    match value {
+        libsql::Value::Integer(integer) => Ok(integer),
+        other => anyhow::bail!("credential {column}: expected an integer, found {other:?}"),
+    }
+}
+
+fn optional_integer(value: libsql::Value, column: &str) -> anyhow::Result<Option<i64>> {
+    match value {
+        libsql::Value::Null => Ok(None),
+        other => integer(other, column).map(Some),
+    }
+}
+
+fn text(value: libsql::Value, column: &str) -> anyhow::Result<String> {
+    match value {
+        libsql::Value::Text(text) => Ok(text),
+        other => anyhow::bail!("credential {column}: expected text, found {other:?}"),
+    }
+}
+
+fn optional_text(value: libsql::Value, column: &str) -> anyhow::Result<Option<String>> {
+    match value {
+        libsql::Value::Null => Ok(None),
+        other => text(other, column).map(Some),
+    }
 }
 
 #[cfg(test)]
@@ -69,5 +108,19 @@ mod tests {
             .await
             .unwrap()
             .is_none());
+    }
+
+    /// SQLite's dynamic typing lets text land in `revoked`, which used to decode as live.
+    #[tokio::test]
+    async fn an_undecodable_row_fails_closed() {
+        let connection = crate::db::open(":memory:").await.unwrap();
+        connection
+            .execute(
+                "INSERT INTO tokens (token_hash, created_at, revoked) VALUES ('h', 1, 'yes')",
+                (),
+            )
+            .await
+            .unwrap();
+        assert!(super::load_token(&connection, "h").await.is_err());
     }
 }

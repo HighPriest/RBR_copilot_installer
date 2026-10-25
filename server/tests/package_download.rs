@@ -35,7 +35,13 @@ async fn unknown_packages_and_traversal_attempts_are_404() {
             .await,
         404
     );
-    assert_eq!(server.status("/download/rbr/nosuchdir/x", None).await, 404);
+    // Anonymous on an absent directory gets the 401 a real protected package gets.
+    assert_eq!(server.status("/download/rbr/nosuchdir/x", None).await, 401);
+    // A directory that could never exist reveals nothing by being 404.
+    assert_eq!(
+        server.status("/download/rbr/Not%20An%20Id/x", None).await,
+        404
+    );
     for path in [
         "/download/rbr/..%2F..%2Fmanifest",
         "/download/rbr/public/..%2F..%2Fmanifest",
@@ -87,14 +93,26 @@ async fn a_nested_name_is_still_only_a_lookup_key() {
         "/download/rbr/public/..%2Fmotd%2Fen",
         "/download/rbr/public/codriver%2F..%2F..%2Falpha%2Fsecret",
         "/download/rbr/public/%2E%2E%2Fmanifest",
-        "/download/rbr/motd/en",
         "/download/rbr/public/%2Fetc%2Fpasswd",
     ] {
         assert_eq!(server.status(path, None).await, 404, "{path}");
     }
 
+    // The MOTD folder is no access directory, so a key holder sees it as ungranted.
+    let key = server.mint(&["alpha"]).await;
+    assert_eq!(
+        server.status("/download/rbr/motd/en", Some(&key)).await,
+        404
+    );
+
+    // `alpha` holds no nested package, and an anonymous caller cannot tell.
     let nested_in_alpha = format!("/download/rbr/alpha/{}", common::NESTED_NAME);
-    assert_eq!(server.status(&nested_in_alpha, None).await, 404);
+    let missing = server.status(&nested_in_alpha, None).await;
+    assert_eq!(missing, 401);
+    assert_eq!(
+        missing,
+        server.status("/download/rbr/alpha/secret", None).await
+    );
 }
 
 #[tokio::test]
