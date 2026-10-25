@@ -1,5 +1,64 @@
 # Changelog
 
+## 2026/10/25 — installer: the client halves of S10, S11 and D2
+
+Three protocol changes landed on the server the same day; these are the
+installer sides of them. One commit, because they interleave in
+`wizard.rs`, `worker.rs` and `api.rs` and splitting them would mean
+commits that do not build.
+
+- **Install schema (S11).** `build.rs` turns every `schemas/<game>.toml`
+  into a static table (`schema.rs`: the file's bytes via `include_bytes!`,
+  plus each category's `id`/`select`/`install_root`). Read with a
+  hand-rolled strict reader, not the `toml` crate — three string keys in
+  one table array need no parser, nothing parses TOML at runtime, and a
+  schema using more than that fails the BUILD with a line number.
+  - The schema now DRIVES behaviour: `schema::choice_categories` (the
+    `select = "one"` categories, in file order) decides what scene 4
+    demands a tick in, what scene 5 asks, and the tree's category order.
+    Labels stay in the `.rc` tables, mapped by category id.
+  - `schema::check` compares the manifest's per-game schema hash with the
+    embedded copy's. A hash this build does not know blocks DOWNLOADING
+    for that game only, with `IDS_S4_NEEDS_NEWER`; reconfiguring,
+    repairing, uninstalling and restore keep working. `ALSO_ACCEPTED`
+    holds hashes of revisions that are compatible anyway, so a rollout
+    need not force an update for a corrected comment.
+  - Only checked against a manifest that came FROM THE SERVER, so an
+    offline run rebuilt from the cache never claims to be out of date.
+  - `src/schema/tests.rs` reads `schemas/rbr.toml` off disk at test time and
+    asserts the compiled-in copy is byte-identical, hashes the same, has
+    no CRLF, and that its single-pick categories are the ones the
+    installer asks a single pick from. The embedded hash and the compiled
+    behaviour cannot drift apart.
+- **Key validation via `/whoami` (D2).** `/packages` never 4xxs — it
+  answers the public listing for a key it does not accept — so the old
+  check could never fail and a mistyped key looked accepted. `api::whoami`
+  maps 401 to `Rejected` and everything else, including a 200 it cannot
+  parse, to `Unreachable`: a protocol change must not lock a paying user
+  out. `KeyStatus.expires_at` is used, not ignored — a key within 14 days
+  of expiry raises an informational modal naming the DATE (a date, not a
+  day count: Polish needs three plural forms and `load_string_arg`
+  substitutes one `%s`).
+- **Conflict reports (S10).** `http.rs` grew `post_json`, sharing one
+  request path with `get_streaming`. `api::report_conflicts` posts
+  `shared::ConflictReport` after the install — so what is reported is what
+  happened — with no token, no identity and no local paths, trimmed to the
+  server's 8 KiB cap by measuring (`fitting_conflicts`) rather than
+  guessing. `Overlap::refs` converts the engine's `game/directory/name`
+  keys to the `directory/name` refs the report carries and DROPS any key
+  it cannot split, since the server discards bad entries silently. A
+  failed report is a log line; the user's install succeeded either way.
+- `--selftest-report <game>` posts a fabricated report through that same
+  code, and `Test-HttpClient.ps1` now asserts on the JSONL line the server
+  stored (refs in install order, no `pcn_`, the server's own timestamp)
+  plus the whole `/whoami` matrix: no key, unknown key, live key, and a
+  key minted `--expires-days 3`. 49/49 against a live server.
+- Fixed by the suite: `Test-WizardDownload.ps1` still demanded a tick in
+  `pacenotes`, which the schema marks `select = "any"`. The test was
+  stale, not the gate — an operator adding a folder must not add a
+  question every user is forced to answer. 54/54.
+- Release build 566 kB against the 600 kB gate.
+
 ## 2026/10/25 — server+shared: conflict reports from installers (S10)
 
 - `POST /report/conflict`, no auth, body `shared::ConflictReport`

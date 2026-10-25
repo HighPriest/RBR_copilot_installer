@@ -3,6 +3,13 @@
 
 const RBR: &str = pacenotes_shared::GAME_RBR;
 
+/// Stated here, so a schema change fails a test instead of silently changing the UI.
+const CHOICES: [&str; 3] = [
+    pacenotes_shared::CATEGORY_LANGUAGE,
+    pacenotes_shared::CATEGORY_CODRIVER,
+    pacenotes_shared::CATEGORY_STYLE,
+];
+
 fn package(name: &str) -> pacenotes_shared::PackageInfo {
     pacenotes_shared::PackageInfo {
         directory: "public".into(),
@@ -60,7 +67,7 @@ fn three_lists_in_order_with_the_codriver_shown_by_its_path() {
         "codriver/polish/male/PiotrSielilo",
         "style/Numeric Standard",
     ]);
-    let configuration = super::Configuration::from_tree(&tree, &[]);
+    let configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
 
     let categories: Vec<&str> = configuration
         .lists
@@ -90,7 +97,7 @@ fn two_voices_with_the_same_name_are_told_apart() {
     ]);
     tick(&mut tree, "codriver/polish/male/Kamil");
     tick(&mut tree, "codriver/czech/male/Kamil");
-    let voices = labels(&super::Configuration::from_tree(&tree, &[]), 1);
+    let voices = labels(&super::Configuration::from_tree(&tree, &[], &CHOICES), 1);
 
     assert_eq!(voices.len(), 2);
     assert!(voices.contains(&"czech / male / Kamil".to_string()));
@@ -104,7 +111,7 @@ fn a_single_option_is_preselected_and_several_are_not() {
         "language/polish",
         "style/Numeric Standard",
     ]);
-    let configuration = super::Configuration::from_tree(&tree, &[]);
+    let configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
 
     assert_eq!(configuration.lists[0].selected, None);
     assert_eq!(
@@ -120,7 +127,7 @@ fn install_waits_for_the_lists_that_have_options() {
         "language/polish",
         "codriver/polish/male/Kamil",
     ]);
-    let mut configuration = super::Configuration::from_tree(&tree, &[]);
+    let mut configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
 
     assert!(!configuration.is_complete());
     assert_eq!(configuration.missing(), vec!["language"]);
@@ -138,7 +145,7 @@ fn pacenotes_packages_are_installed_without_being_chosen() {
         "codriver/polish/male/Kamil",
         "style/Numeric Standard",
     ]);
-    let configuration = super::Configuration::from_tree(&tree, &[]);
+    let configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
 
     assert_eq!(configuration.lists.len(), 3);
     assert!(configuration.is_complete());
@@ -178,13 +185,13 @@ fn a_pick_survives_a_trip_back_to_the_tree() {
     ] {
         tick(&mut tree, name);
     }
-    let mut configuration = super::Configuration::from_tree(&tree, &[]);
+    let mut configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
     configuration.select(0, Some(1));
     let picked = configuration.selected_keys();
     assert_eq!(picked[0], format!("{RBR}/public/language/polish"));
 
     tick(&mut tree, "codriver/polish/female/Ania");
-    let configuration = super::Configuration::from_tree(&tree, &picked);
+    let configuration = super::Configuration::from_tree(&tree, &picked, &CHOICES);
     assert_eq!(
         configuration.selected_key("language"),
         Some(format!("{RBR}/public/language/polish").as_str())
@@ -194,7 +201,7 @@ fn a_pick_survives_a_trip_back_to_the_tree() {
 #[test]
 fn unticking_the_picked_package_reopens_the_question() {
     let mut tree = tree_with_ticked(&["language/czech", "language/polish", "language/english"]);
-    let mut configuration = super::Configuration::from_tree(&tree, &[]);
+    let mut configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
     let polish_in_sorted_order = 2;
     configuration.select(0, Some(polish_in_sorted_order));
     let picked = configuration.selected_keys();
@@ -202,7 +209,7 @@ fn unticking_the_picked_package_reopens_the_question() {
 
     let leaf = leaf_of(&tree, &picked[0]);
     tree.set_checked(leaf, false);
-    let configuration = super::Configuration::from_tree(&tree, &picked);
+    let configuration = super::Configuration::from_tree(&tree, &picked, &CHOICES);
     assert_eq!(configuration.lists[0].options.len(), 2);
     assert_eq!(configuration.lists[0].selected, None);
     assert!(!configuration.is_complete());
@@ -211,7 +218,7 @@ fn unticking_the_picked_package_reopens_the_question() {
 #[test]
 fn an_unknown_category_is_installed_as_is() {
     let tree = tree_with_ticked(&["language/czech", "hud/Overlay"]);
-    let configuration = super::Configuration::from_tree(&tree, &[]);
+    let configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
     assert_eq!(configuration.lists.len(), 3);
     assert_eq!(
         configuration.extras,
@@ -229,7 +236,7 @@ fn unticked_packages_are_not_offered() {
     ]);
     tick(&mut tree, "language/czech");
     tick(&mut tree, "style/Descriptive");
-    let configuration = super::Configuration::from_tree(&tree, &[]);
+    let configuration = super::Configuration::from_tree(&tree, &[], &CHOICES);
 
     assert_eq!(labels(&configuration, 0), vec!["czech".to_string()]);
     assert_eq!(labels(&configuration, 2), vec!["Descriptive".to_string()]);

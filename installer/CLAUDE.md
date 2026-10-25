@@ -175,29 +175,50 @@ again:
   installing the new one. Neither scene 4 nor scene 5 gates it: two members
   ticked in one run both install, the later wins, and the overlap rule
   above reports it.
-- **Choice categories are per game, and they live in `gamedir.rs`** — not in
-  `shared`, where one list drove scene 5 for all four games, and not in the
-  manifest. Each game declares which categories it asks a single pick from,
-  with a localized LABEL and EXPLANATION per category: that text belongs in
-  the `.rc` string tables with every other string, and shipping UI text
-  through the manifest would mean the server deciding what the installer
-  says, in languages it cannot know. These lists change rarely; an
-  installer release for a new game is the right cost.
+- **Choice categories are per game, and they come from the COMPILED-IN
+  schema** — `schema.rs`, built by `build.rs` from `schemas/<game>.toml`.
+  Not from `shared`, where one list drove scene 5 for all four games, and
+  not from the manifest. A category with `select = "one"` is a question
+  scene 5 asks; everything else is optional.
+  - The schema says WHICH categories exist and which ask for one pick.
+    The LABEL and EXPLANATION of each stay in the `.rc` string tables with
+    every other string, mapped by category id in
+    `wizard/scene/configuration.rs` (`category_caption`). Shipping UI text
+    through the manifest would mean the server deciding what the installer
+    says, in languages it cannot know; `install_root` is a token for the
+    same reason — a server must never be able to steer where files go.
   - Only a game's choice categories are MANDATORY on scene 4. An operator
     adding an `extras/` folder must not turn it into a question every user
     has to answer.
   - A game with no choice categories skips scene 5 entirely.
-- **Minimum manifest version.** Because the installer, not the server,
-  knows the categories, a server that grows new ones is ahead of an old
-  installer. So `Manifest` carries a version, every installer declares the
-  highest it understands, and a manifest newer than that means the build is
-  out of date. The rule for what happens then matters as much as the check:
-  - It blocks DOWNLOADING only. An out-of-date installer may still
-    reconfigure, repair and uninstall what is already on the machine — the
-    user did not break anything by not updating, and taking their existing
-    setup away from them would be the worst possible response.
-  - The prompt appears when the user tries to download, not at startup.
-  See S1 in `DESIGN-REVIEW.md`; this is the part of it decided now.
+  - `build/schema_table.rs` reads those files with a hand-rolled strict
+    reader, not the `toml` crate: three string keys in one table array need
+    no parser, and a schema using anything beyond that fails the BUILD with
+    a line number instead of compiling a table that disagrees with the
+    server's reading of the same file. Nothing parses TOML at runtime.
+- **Install-schema check (replaces the earlier "minimum manifest
+  version").** What an installer can fall behind on is the SHAPE of a
+  game's catalogue, not the number of packages in it. So `Manifest.schemas`
+  carries, per game, the SHA-256 of that game's schema file's RAW BYTES,
+  and `schema::check` compares it with the hash of the copy this build
+  embeds. A hash this build does not know means the catalogue may hold
+  categories it cannot place. The rule for what happens then matters as
+  much as the check:
+  - It blocks DOWNLOADING, and only for THAT game. An out-of-date
+    installer may still reconfigure, repair, uninstall and restore what is
+    already on the machine — the user did not break anything by not
+    updating, and taking their existing setup away from them would be the
+    worst possible response. None of those paths consults the server.
+  - The warning appears when the user tries to download, not at startup.
+  - An offline run never shows it: the check runs only on a manifest that
+    actually came from the server, never on one rebuilt from the cache.
+  - The hash is of raw bytes, so `.gitattributes` marks `schemas/*.toml`
+    `-text`. A checkout that rewrote the line endings would make every
+    installer built there reject every server.
+  - A revision that is NOT a real incompatibility (a fixed comment, a
+    reordering) goes in `schema::ALSO_ACCEPTED` with a line saying why it
+    does not matter — otherwise people learn to click through the prompt.
+  See S1 in `DESIGN-REVIEW.md` and S11 in `server/TASKS.md`.
 
 ## Module map
 
@@ -205,7 +226,8 @@ again:
   (`--server`, `--cache`), launches the wizard. `--cache` points a run at a
   throwaway cache, so the UI suite downloads for real.
 - `selftest/` — `--selftest-http`, the WinHTTP check that
-  `tests/Test-HttpClient.ps1` drives, and `--selftest-download`.
+  `tests/Test-HttpClient.ps1` drives, `--selftest-download`, and
+  `--selftest-report`, which posts a fabricated conflict report.
 - `package_download.rs` — fetch a package into the cache, verified by sha256.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
@@ -233,9 +255,20 @@ again:
   the wizard's game dropdown. Pure std, so the folder check is testable
   without a desktop. A game folder is NOT "any directory that exists"; see the
   note under Testing.
-- `http/` — WinHTTP wrapper: `get(url, bearer: Option<&str>) -> Vec<u8>`
-  with a progress callback. Synchronous; always called from the worker thread.
-- `api.rs` — fetch manifest, download into cache (JSON isolated here).
+- `http/` — WinHTTP wrapper: `get`/`get_streaming` with a progress callback,
+  and `post_json` for the one thing the installer sends
+  (`/report/conflict`), over one request path. Synchronous; always called
+  from the worker thread.
+- `api.rs` — the endpoints: `/packages`, `/motd`, `/whoami`, `/health`,
+  `/download/...` into the cache, and `POST /report/conflict`; JSON is
+  isolated here. `/whoami` is the ONLY way to validate an access key, since
+  `/packages` answers the public listing for a key it does not accept. A
+  401 means wrong, unknown, expired or revoked; anything else, a 200 we
+  cannot parse included, is "could not ask", which per `DESIGN.md` carries
+  on with the key unvalidated.
+- `schema.rs` — the install schemas this build embeds (generated by
+  `build.rs`), the per-game choice categories read off them, and
+  `check()`, the one comparison made against the server's schema hash.
 - `cache.rs` — cache dir layout, cache.json read/write, sha verification.
 - `ledger.rs` — installed.json read/write (atomic), file ownership queries.
 - `engine.rs` — plan + execute the install; backup; restore; uses zip.rs.

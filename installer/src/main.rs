@@ -24,6 +24,9 @@ fn main() {
     if let Some(selftest) = selftest::DownloadSelfTest::from_args() {
         std::process::exit(selftest.run());
     }
+    if let Some(selftest) = selftest::ConflictReportSelfTest::from_args() {
+        std::process::exit(selftest.run());
+    }
 
     init_common_controls();
 

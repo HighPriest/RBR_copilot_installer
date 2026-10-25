@@ -35,6 +35,7 @@ pub const IDS_S2_ONLINE: u16 = 63;
 pub const IDS_S2_OFFLINE: u16 = 64;
 pub const IDS_S2_OFFLINE_MOTD: u16 = 65;
 pub const IDS_S2_BADSECRET: u16 = 66;
+pub const IDS_S2_EXPIRING: u16 = 67;
 
 pub const IDS_S3_TITLE: u16 = 70;
 pub const IDS_S3_PATH: u16 = 71;
@@ -49,6 +50,7 @@ pub const IDS_S4_EMPTY: u16 = 83;
 pub const IDS_S4_READY: u16 = 84;
 pub const IDS_S4_MISSING: u16 = 85;
 pub const IDS_S4_FETCH_FAILED: u16 = 86;
+pub const IDS_S4_NEEDS_NEWER: u16 = 87;
 pub const IDS_STATE_DOWNLOADED: u16 = 90;
 pub const IDS_STATE_UPDATE: u16 = 91;
 pub const IDS_STATE_LOCAL: u16 = 92;

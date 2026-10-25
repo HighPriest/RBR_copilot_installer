@@ -130,7 +130,7 @@ unsafe fn start(dialog: HWND) {
         downloads: missing,
         selection: state.config.install_keys(),
         picks: state.config.picks_by_category(),
-        choice_categories: pacenotes_shared::CHOICE_CATEGORIES
+        choice_categories: pacenotes_installer::schema::choice_categories(state.game_id())
             .iter()
             .map(|category| category.to_string())
             .collect(),

@@ -23,6 +23,9 @@ pub struct WizardState {
     /// Set while the model is pushed into the control, whose change notifications would recurse.
     pub tree_syncing: bool,
     pub catalogue_loaded: bool,
+    /// The server publishes a catalogue from a schema this build does not know,
+    /// which blocks downloading for this game and nothing else.
+    pub schema_mismatch: bool,
     /// The keys committed with Download, in tree order.
     pub chosen: Vec<String>,
     /// Rebuilt from the tree each time scene 5 activates.
@@ -57,6 +60,7 @@ impl WizardState {
             tree_items: Vec::new(),
             tree_syncing: false,
             catalogue_loaded: false,
+            schema_mismatch: false,
             chosen: Vec::new(),
             config: pacenotes_installer::choices::Configuration::default(),
             log: pacenotes_installer::runlog::Log::create(
@@ -82,5 +86,12 @@ impl WizardState {
     /// The access key for a request, or `None` for anonymous.
     pub fn token(&self) -> Option<String> {
         Some(self.secret.clone()).filter(|secret| !secret.is_empty())
+    }
+
+    /// Scene 3 settles the game before anything needs it; RBR only spares the lookups a `None`.
+    pub fn game_id(&self) -> &'static str {
+        self.game
+            .map(|game| game.id())
+            .unwrap_or(pacenotes_shared::GAME_RBR)
     }
 }

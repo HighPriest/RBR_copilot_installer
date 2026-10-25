@@ -31,9 +31,12 @@ pub struct OpenRequest {
 }
 
 impl OpenRequest {
+    /// `body`, when given, goes as `application/json`, the only type the installer posts.
     pub fn send(
         target: &super::url_target::UrlTarget,
+        method: &str,
         bearer: Option<&str>,
+        body: Option<&[u8]>,
     ) -> Result<OpenRequest, super::HttpError> {
         let user_agent = crate::i18n::to_wide(super::USER_AGENT);
         let session = Handle::checked(
@@ -71,7 +74,7 @@ impl OpenRequest {
             "WinHttpConnect",
         )?;
 
-        let verb = crate::i18n::to_wide("GET");
+        let verb = crate::i18n::to_wide(method);
         let path = crate::i18n::to_wide(&target.path);
         let flags = if target.secure {
             windows_sys::Win32::Networking::WinHttp::WINHTTP_FLAG_SECURE
@@ -94,16 +97,30 @@ impl OpenRequest {
         )?;
 
         if let Some(token) = bearer {
-            add_bearer_header(&request, token)?;
+            let line = format!(
+                "{}: {}{token}",
+                pacenotes_shared::AUTH_HEADER,
+                pacenotes_shared::BEARER_PREFIX
+            );
+            add_header(&request, &line)?;
         }
+        if body.is_some() {
+            add_header(&request, "Content-Type: application/json")?;
+        }
+        let payload = body.unwrap_or(&[]);
+        let payload_pointer = if body.is_some() {
+            payload.as_ptr() as *const core::ffi::c_void
+        } else {
+            core::ptr::null()
+        };
         let sent = unsafe {
             windows_sys::Win32::Networking::WinHttp::WinHttpSendRequest(
                 request.0,
                 core::ptr::null(),
                 0,
-                core::ptr::null(),
-                0,
-                0,
+                payload_pointer,
+                payload.len() as u32,
+                payload.len() as u32,
                 0,
             )
         };
@@ -165,12 +182,8 @@ impl OpenRequest {
     }
 }
 
-fn add_bearer_header(request: &Handle, token: &str) -> Result<(), super::HttpError> {
-    let header = crate::i18n::to_wide(&format!(
-        "{}: {}{token}",
-        pacenotes_shared::AUTH_HEADER,
-        pacenotes_shared::BEARER_PREFIX
-    ));
+fn add_header(request: &Handle, line: &str) -> Result<(), super::HttpError> {
+    let header = crate::i18n::to_wide(line);
     let added = unsafe {
         windows_sys::Win32::Networking::WinHttp::WinHttpAddRequestHeaders(
             request.0,

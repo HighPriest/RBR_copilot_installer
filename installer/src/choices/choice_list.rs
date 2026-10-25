@@ -9,7 +9,7 @@ pub struct ChoiceOption {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ChoiceList {
-    /// One of `pacenotes_shared::CHOICE_CATEGORIES`.
+    /// The schema's category id, e.g. `pacenotes_shared::CATEGORY_CODRIVER`.
     pub category: &'static str,
     pub options: Vec<ChoiceOption>,
     pub selected: Option<usize>,

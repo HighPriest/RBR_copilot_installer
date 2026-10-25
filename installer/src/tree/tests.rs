@@ -209,31 +209,49 @@ fn unchecking_a_downloaded_leaf_leaves_it_in_the_cache() {
     assert_eq!(tree.node(leaf).state, Some(super::LeafState::Downloaded));
 }
 
+/// `pacenotes` is select = "any", and a choice the server offers nothing under cannot be answered.
 #[test]
-fn download_requires_one_pick_per_category_present() {
+fn download_requires_one_pick_per_choice_category_present() {
+    let choices = crate::schema::choice_categories(RBR);
     let mut tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
     assert_eq!(
-        tree.categories_missing_a_pick(),
-        vec!["language", "codriver", "style", "pacenotes"]
+        tree.categories_missing_a_pick(&choices),
+        vec!["language", "codriver", "style"]
     );
 
     tree.set_checked(find(&tree, &["language", "english"]), true);
     tree.set_checked(find(&tree, &["codriver", "polish", "male", "Kamil"]), true);
-    assert_eq!(tree.categories_missing_a_pick(), vec!["style", "pacenotes"]);
+    assert_eq!(tree.categories_missing_a_pick(&choices), vec!["style"]);
 
     tree.set_checked(find(&tree, &["style", "Descriptive"]), true);
-    tree.set_checked(find(&tree, &["pacenotes", "RBR"]), true);
-    assert!(tree.categories_missing_a_pick().is_empty());
+    assert!(tree.categories_missing_a_pick(&choices).is_empty());
 
-    let without_pacenotes: Vec<_> = catalogue()
+    let without_style: Vec<_> = catalogue()
         .into_iter()
-        .filter(|package| package.category() != pacenotes_shared::CATEGORY_PACENOTES)
+        .filter(|package| package.category() != pacenotes_shared::CATEGORY_STYLE)
         .collect();
-    let tree = super::Tree::build(RBR, &without_pacenotes, &[], &[]);
+    let tree = super::Tree::build(RBR, &without_style, &[], &[]);
     assert_eq!(
-        tree.categories_missing_a_pick(),
-        vec!["language", "codriver", "style"]
+        tree.categories_missing_a_pick(&choices),
+        vec!["language", "codriver"]
     );
+}
+
+/// Shown, since the user may want it, but never a question.
+#[test]
+fn a_category_the_schema_does_not_declare_is_never_demanded() {
+    let mut packages = catalogue();
+    packages.push(package(RBR, "public", "extras/Overlay", "x1"));
+    let tree = super::Tree::build(RBR, &packages, &[], &[]);
+
+    assert!(tree
+        .roots()
+        .iter()
+        .any(|&root| tree.node(root).label == "extras"));
+    let choices = crate::schema::choice_categories(RBR);
+    assert!(!tree
+        .categories_missing_a_pick(&choices)
+        .contains(&"extras".to_string()));
 }
 
 #[test]
@@ -326,7 +344,9 @@ fn an_empty_catalogue_is_handled() {
     assert!(tree.is_empty());
     assert!(tree.roots().is_empty());
     assert!(tree.checked_keys().is_empty());
-    assert!(tree.categories_missing_a_pick().is_empty());
+    assert!(tree
+        .categories_missing_a_pick(&crate::schema::choice_categories(RBR))
+        .is_empty());
     assert!(tree.checked_needing_download().is_empty());
 }
 

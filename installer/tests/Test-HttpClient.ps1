@@ -16,12 +16,18 @@
     really request, and the expected bytes come from the manifest the server
     generated rather than from literals typed into this file.
 
-    Covers the four outcomes the UI has to tell apart (installer/CLAUDE.md
+    Covers the outcomes the UI has to tell apart (installer/CLAUDE.md
     §Error handling, and task I8's access-key UX):
       200 with a body     — the happy path, Content-Length honoured
-      404                 — package genuinely absent
-      401 / 403           — key missing vs key lacking the grant
+      404                 — package absent, OR a live key without the grant:
+                            the server sends no 403, because that would say
+                            "exists, but not for you" (DESIGN-REVIEW.md D3)
+      401                 — no live key on a protected directory
       transport failure   — server unreachable, reported in words not a code
+
+    And the two endpoints that are not downloads: GET /whoami, the only way
+    to validate an access key, and POST /report/conflict, the only thing the
+    installer ever sends.
 
     Needs Windows (the installer is Win32) and a cargo toolchain. Does NOT
     need a desktop session: --selftest-http writes to a file and never opens a
@@ -70,8 +76,23 @@ function Invoke-SelfTest {
     $cliArgs = @('--selftest-http', $Url, '--out', $out)
     if ($Token) { $cliArgs += @('--token', $Token) }
     $proc = Start-Process $exe -ArgumentList $cliArgs -PassThru -Wait
-    $report = @{ ExitCode = $proc.ExitCode }
-    foreach ($line in Get-Content $out) {
+    return ConvertFrom-Report -Path $out -ExitCode $proc.ExitCode
+}
+
+<#  Run one --selftest-report: the installer POSTs a fabricated conflict
+    report through the same code an install uses. Same flat report shape. #>
+function Invoke-SelfReport {
+    param([Parameter(Mandatory)][string]$Base, [Parameter(Mandatory)][string]$Game)
+    $out = Join-Path $script:work ("conflict-" + [guid]::NewGuid() + ".txt")
+    $proc = Start-Process $exe -PassThru -Wait -ArgumentList @(
+        '--selftest-report', $Game, '--server', $Base, '--out', $out)
+    return ConvertFrom-Report -Path $out -ExitCode $proc.ExitCode
+}
+
+function ConvertFrom-Report {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][int]$ExitCode)
+    $report = @{ ExitCode = $ExitCode }
+    foreach ($line in Get-Content $Path) {
         $m = [regex]::Match($line, '^(?<k>[A-Z_]+): ?(?<v>.*)$')
         if ($m.Success) { $report[$m.Groups['k'].Value] = $m.Groups['v'].Value }
     }
@@ -195,6 +216,66 @@ try {
         "body was [$($r.BODY)]"
     Assert-That 'bearer header reached the server (listing grew)' `
     ($r.BODY.Contains($protected.sha256))
+
+    # ---- /whoami: the only way to validate a key ---------------------------
+    # /packages answers a bad key with the public listing, so it cannot tell a typo from a good key.
+    Write-Host "`n-- GET /packages (bad key) --"
+    $r = Invoke-SelfTest -Url "$base/packages?game=rbr" -Token 'pcn_not_a_real_key'
+    Assert-That 'a bad key still gets a 200 from /packages' ($r.RESULT -eq 'OK') `
+        "status $(if ($r.ContainsKey('STATUS')) { $r.STATUS } else { '-' })"
+    Assert-That '...and sees only the public directory' `
+    (-not $r.BODY.Contains('premium-voices')) "body was [$($r.BODY)]"
+
+    Write-Host "`n-- GET /whoami --"
+    $r = Invoke-SelfTest -Url "$base/whoami"
+    Assert-That 'whoami without a key fails' ($r.RESULT -eq 'FAIL')
+    Assert-That 'whoami without a key is 401' ($r.STATUS -eq '401') "status $($r.STATUS)"
+
+    $r = Invoke-SelfTest -Url "$base/whoami" -Token 'pcn_not_a_real_key'
+    Assert-That 'whoami rejects an unknown key with 401' ($r.STATUS -eq '401') `
+        "status $($r.STATUS), message $($r.MESSAGE)"
+
+    $r = Invoke-SelfTest -Url "$base/whoami" -Token $token
+    Assert-That 'whoami accepts the minted key' ($r.RESULT -eq 'OK') `
+        "status $(if ($r.ContainsKey('STATUS')) { $r.STATUS } else { '-' })"
+    # Present even when null, since scene 2 has to tell "never" from "soon".
+    Assert-That 'whoami answers a KeyStatus' ($r.BODY.Contains('expires_at')) `
+        "body was [$($r.BODY)]"
+    Assert-That 'a key minted without a deadline never expires' `
+    ($r.BODY -match '"expires_at"\s*:\s*null') "body was [$($r.BODY)]"
+
+    # Minted after the server started, which also shows auth is read per request.
+    $datedMint = (& $server token --db-url $db mint --label 'expiring' --expires-days 3) -join "`n"
+    $datedMatch = [regex]::Match($datedMint, 'pcn_[A-Za-z0-9_\-]+')
+    Assert-That 'server minted a dated credential' $datedMatch.Success "mint said: $datedMint"
+    if ($datedMatch.Success) {
+        $r = Invoke-SelfTest -Url "$base/whoami" -Token $datedMatch.Value
+        Assert-That 'a dated key is live until then' ($r.RESULT -eq 'OK')
+        Assert-That 'whoami reports the expiry as unix seconds' `
+        ($r.BODY -match '"expires_at"\s*:\s*\d{10}') "body was [$($r.BODY)]"
+    }
+
+    # ---- POST /report/conflict --------------------------------------------
+    # Fabricated, because a real report needs a catalogue where two packages write one file.
+    Write-Host "`n-- POST /report/conflict --"
+    $r = Invoke-SelfReport -Base $base -Game 'rbr'
+    Assert-That 'the conflict report is accepted' ($r.RESULT -eq 'OK') `
+        "status $(if ($r.ContainsKey('STATUS')) { $r.STATUS } else { '-' }), message $(if ($r.ContainsKey('MESSAGE')) { $r.MESSAGE } else { '' })"
+    Assert-That 'reporting exits 0' ($r.ExitCode -eq 0) "exit $($r.ExitCode)"
+    $stored = Get-ChildItem -Path (Join-Path $dataRoot 'reports') -Filter '*.jsonl' `
+        -ErrorAction SilentlyContinue | ForEach-Object { Get-Content -Raw $_.FullName }
+    Assert-That 'the server stored the report' ($null -ne $stored) 'no reports/*.jsonl'
+    if ($stored) {
+        $line = ($stored -join '')
+        Assert-That 'it carries the game and the clashing file' `
+        ($line.Contains('"rbr"') -and $line.Contains('PaceNote.ini')) "stored: $line"
+        # The report names its game once, so writers are directory/name refs.
+        Assert-That 'writers are directory/name refs in install order' `
+        ($line -match '"public/language/selftest"\s*,\s*"public/codriver/selftest"') "stored: $line"
+        Assert-That 'the report carries no access key' (-not $line.Contains('pcn_')) "stored: $line"
+        Assert-That 'the server stamped its own time' ($line -match '"(received_at|at)"\s*:') `
+            "stored: $line"
+    }
 
     Write-Host "`n-- GET /download --"
     $r = Invoke-SelfTest -Url "$base/download/$($public.game)/$($public.directory)/$($public.name)"

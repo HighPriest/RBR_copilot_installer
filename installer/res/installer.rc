@@ -128,6 +128,7 @@ END
 #define IDS_S2_OFFLINE         64
 #define IDS_S2_OFFLINE_MOTD    65
 #define IDS_S2_BADSECRET       66
+#define IDS_S2_EXPIRING        67
 
 // Scene 4 — Download (80-99)
 #define IDS_S4_TITLE           80
@@ -137,6 +138,7 @@ END
 #define IDS_S4_READY           84
 #define IDS_S4_MISSING         85
 #define IDS_S4_FETCH_FAILED    86
+#define IDS_S4_NEEDS_NEWER     87
 #define IDS_STATE_DOWNLOADED   90
 #define IDS_STATE_UPDATE       91
 #define IDS_STATE_LOCAL        92
@@ -325,6 +327,7 @@ BEGIN
     IDS_S2_OFFLINE      "Server status: Offline"
     IDS_S2_OFFLINE_MOTD "The server could not be reached.\r\n\r\nYou can continue: only content already downloaded to this computer will be available."
     IDS_S2_BADSECRET    "The server did not accept that secret.\n\nClear the field to continue without private content, or correct it and try again."
+    IDS_S2_EXPIRING     "This secret expires on %s.\r\n\r\nYou can continue now. Afterwards only public content will be available, so ask for a new secret before that date."
 
     IDS_S3_TITLE        "Game folder"
     IDS_S3_PATH         "Folder the game is installed in:"
@@ -339,6 +342,7 @@ BEGIN
     IDS_S4_READY        "Tick what you want. Items already on this computer are ticked for you."
     IDS_S4_MISSING      "Choose at least one item in each of: %s"
     IDS_S4_FETCH_FAILED "The list of available content could not be read. Showing only content already on this computer."
+    IDS_S4_NEEDS_NEWER  "The server offers content this version of the installer does not understand, so nothing new can be downloaded.\n\nDownload the latest installer to get it. Everything already installed still works: you can change your selection or remove packages without updating."
     IDS_STATE_DOWNLOADED "(downloaded)"
     IDS_STATE_UPDATE    "(update)"
     IDS_STATE_LOCAL     "(local only)"
@@ -417,6 +421,7 @@ BEGIN
     IDS_S2_OFFLINE      "Stan serwera: Offline"
     IDS_S2_OFFLINE_MOTD "Nie udało się połączyć z serwerem.\r\n\r\nMożesz kontynuować: dostępna będzie wyłącznie zawartość wcześniej pobrana na ten komputer."
     IDS_S2_BADSECRET    "Serwer nie zaakceptował tego klucza.\n\nWyczyść pole, aby kontynuować bez zawartości prywatnej, albo popraw klucz i spróbuj ponownie."
+    IDS_S2_EXPIRING     "Ten klucz traci ważność %s.\r\n\r\nMożesz kontynuować. Po tej dacie dostępna będzie wyłącznie zawartość publiczna, więc poproś o nowy klucz przed jej upływem."
 
     IDS_S3_TITLE        "Folder gry"
     IDS_S3_PATH         "Folder, w którym zainstalowana jest gra:"
@@ -431,6 +436,7 @@ BEGIN
     IDS_S4_READY        "Zaznacz, czego potrzebujesz. Pozycje już obecne na tym komputerze są zaznaczone."
     IDS_S4_MISSING      "Wybierz co najmniej jedną pozycję w każdej z kategorii: %s"
     IDS_S4_FETCH_FAILED "Nie udało się odczytać listy dostępnej zawartości. Pokazana jest tylko zawartość z tego komputera."
+    IDS_S4_NEEDS_NEWER  "Serwer udostępnia zawartość, której ta wersja instalatora nie rozumie, więc nie można pobrać niczego nowego.\n\nPobierz najnowszy instalator. Wszystko, co już zainstalowano, działa dalej: bez aktualizacji możesz zmienić wybór lub usunąć pakiety."
     IDS_STATE_DOWNLOADED "(pobrane)"
     IDS_STATE_UPDATE    "(aktualizacja)"
     IDS_STATE_LOCAL     "(tylko lokalnie)"

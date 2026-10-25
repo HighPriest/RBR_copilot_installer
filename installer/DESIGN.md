@@ -50,9 +50,20 @@ that tells two voices apart.
   worker thread when the scene opens ("Checking…" until it answers).
 - **ACCEPT**:
   - empty secret → continue anonymously;
-  - secret + online → validate with `GET /packages`; 401 → warning modal
+  - secret + online → validate with `GET /whoami`; 401 → warning modal
     "invalid secret", stay on the scene;
   - offline → continue (secret kept, unvalidated).
+- `GET /whoami`, not `GET /packages`: `/packages` never answers 4xx — it
+  silently falls back to the public listing for a key it does not accept,
+  so directory names cannot be enumerated, which also made a mistyped key
+  look exactly like a good one. Anything other than a clean 401 (a dead
+  server, a 200 we cannot parse) counts as "could not ask" and continues
+  with the secret unvalidated; locking a user out of content they paid for
+  over a protocol change would be the worse failure.
+- `/whoami` also returns when the key expires, and a key within a fortnight
+  of that says so in an informational modal with the date. A key that
+  lapses between two runs otherwise looks exactly like content being
+  withdrawn.
 
 ## Scene 3 — Game folder
 
@@ -155,11 +166,19 @@ the one an automatic policy would have deleted.
   in `installer/CLAUDE.md` for why that is preferred to blocking the user.
 - The button commits the selection; transfers run in scene 6 so there is a
   single progress screen.
-- **If the server's manifest is newer than this build understands**,
-  Download stops with "a newer installer is needed" and a link, because the
-  catalogue may use categories this build does not know. Everything else
-  stays available: reconfiguring, repairing and uninstalling what is
-  already on the machine never depends on the manifest version.
+- **If the game's install schema is not one this build knows**, Download
+  stops with "a newer installer is needed", because the catalogue may use
+  categories this build does not know how to place. The manifest carries
+  the SHA-256 of each game's schema file (raw bytes) and the installer
+  compares it with the copy it embeds from `schemas/<game>.toml`; see
+  "Install-schema check" in `installer/CLAUDE.md`.
+  - It blocks downloading for THAT GAME only, and only downloading.
+    Reconfiguring, repairing, uninstalling and restoring what is already
+    on the machine stay available — none of them consults the server.
+  - The warning is raised by the Download button, not at startup, and only
+    when something actually needs fetching.
+  - An offline run never raises it: the check runs on a manifest that came
+    from the server, not on a tree rebuilt from the cache.
 
 ## Scene 5 — Configuration
 
@@ -171,9 +190,12 @@ the one an automatic policy would have deleted.
   | CoDriver Voice | `codriver` (shown with its path, e.g. "polish / male / KamilFilipek") |
   | Pacenotes Style | `style` |
 
-The three lists are not a fixed set: each game declares its own choice
-categories in `gamedir.rs`, with a localized label and a one-line
-explanation per category. A game that declares none skips this scene.
+The three lists are not a fixed set: they are the categories this build's
+schema for the game marks `select = "one"`, in schema order
+(`schema::choice_categories`). The localized label and one-line explanation
+of each come from the `.rc` string tables, mapped by category id — never
+from the server. A game whose schema declares no single-pick category skips
+this scene.
 
 - A list with exactly one option is preselected.
 - Checked `pacenotes`-category packages are installed as-is (no choice), and
@@ -209,6 +231,14 @@ explanation per category. A game that declares none skips this scene.
 - Phase 1 downloads everything TICKED on scene 4 that is not already in the
   cache — not just the scene 5 picks. The user ticked what they want to have;
   they chose separately what to install.
+- Files that more than one selected package writes do NOT stop the run: the
+  later package wins, the log says which files and which packages, and the
+  installer tells the server (`POST /report/conflict`, after the install, so
+  what is reported is what happened). The operator is the only party who can
+  fix a catalogue like that, and a user must never be blocked by a mistake
+  they cannot fix. The report carries the game, this installer's version and
+  the clashing `directory/name` refs in install order — no identity, no local
+  paths, no token — and failing to send it is a log line, nothing more.
 - The scene has no buttons of its own: no Back (DESIGN.md allows no going
   back once it starts) and no Next, because it walks on to the summary by
   itself when the run ends.

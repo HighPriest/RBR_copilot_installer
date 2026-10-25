@@ -61,9 +61,14 @@ worth a screenshot.
 
 `Test-HttpClient.ps1` builds and runs a real `pacenotes-server`: WinHTTP
 cannot be unit tested, so the only honest test is against the server the
-installer actually talks to. It drives the binary's `--selftest-http` flag,
-which writes a report to a file rather than opening a window — which is why
-it runs in CI while the GUI suite does not.
+installer actually talks to. It drives the binary's `--selftest-http` and
+`--selftest-report` flags, which write a report to a file rather than opening
+a window — which is why it runs in CI while the GUI suite does not. Besides
+the download matrix it covers the two endpoints that are not downloads:
+`GET /whoami`, the only way to validate an access key (and the `/packages`
+behaviour that is the reason — a bad key gets a 200 and the public listing,
+never a 401), and `POST /report/conflict`, asserting on the JSONL line the
+server stored rather than on the installer's own report.
 
 `cargo test` ignores `ui/` and the
 `.ps1` files, so the two suites coexist in one directory without interfering.

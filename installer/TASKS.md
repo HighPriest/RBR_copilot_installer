@@ -331,9 +331,11 @@ Reasoning lives in `installer/CLAUDE.md` and `installer/DESIGN.md`.
    (P7). No gate — a user is never blocked by a catalogue mistake they
    cannot fix.
 6. `exclusive_group` is enforced in the engine only (P8).
-7. Choice categories are per game, in `gamedir.rs`, with localized labels
-   and explanations; only they are mandatory on scene 4 (P9). This is why
-   the installer needs a minimum manifest version.
+7. Choice categories are per game, from the COMPILED-IN schema
+   (`schemas/<game>.toml` → `schema.rs`), with localized labels and
+   explanations in the `.rc` tables; only they are mandatory on scene 4
+   (P9). This is why the installer checks the server's schema hash (S11) —
+   the "minimum manifest version" this list first called for.
 8. Restore works on dated restore points, and REMOVES what was installed
    after the chosen one (P14).
 
@@ -358,14 +360,15 @@ NOT in I7, though Period 1 decided them:
   review already places the scene in period 2. I7 WRITES restore points
   from the first install — early runs must not be the ones with no way
   back — and the UI to use them follows.
-- **Per-game choice categories (P9) and the manifest version (S11)** are a
-  separate task. They touch `shared`, `tree.rs`, `choices.rs`, `wizard.rs`
-  and both string tables, and the engine does not care which categories
-  are "choice" ones: it is handed a selection. Mixing that refactor into
-  the engine would make both impossible to review.
-- **The conflict REPORT** (`POST /report/conflict`) waits for the server
-  endpoint, `server/TASKS.md` S10. I7 detects overlaps and logs them;
-  posting them is a few lines once there is something to post to.
+- **Per-game choice categories (P9) and the install-schema check (S11)**
+  were a separate task, done 2026-10-25. They touch `shared`, `tree.rs`,
+  `choices.rs`, `wizard.rs` and both string tables, and the engine does not
+  care which categories are "choice" ones: it is handed a selection. Mixing
+  that refactor into the engine would have made both impossible to review.
+- **The conflict REPORT** (`POST /report/conflict`) waited for the server
+  endpoint, `server/TASKS.md` S10, and landed with it on 2026-10-25. I7
+  detected overlaps and logged them; posting them was a few lines once
+  there was something to post to.
 
 Two corrections to what Period 1 recorded, found while planning:
 
@@ -463,7 +466,7 @@ Two corrections to what Period 1 recorded, found while planning:
 
 - [x] Detected and logged, naming every package that writes the shared
       file and in which order
-- [ ] `POST /report/conflict` fire-and-forget after an install that saw an
+- [x] `POST /report/conflict` fire-and-forget after an install that saw an
       overlap. The endpoint EXISTS now (2026-10-25); the body is
       `shared::ConflictReport` — `{game, installer, conflicts: [{file,
       packages}]}` — one entry per shared FILE, with every package that
@@ -471,11 +474,22 @@ Two corrections to what Period 1 recorded, found while planning:
       order, the last being the winner. No timestamp: the server stamps
       its own. Never blocks the install, never fails the run, times out
       fast; 202 = stored, 429 = back off (`Retry-After`), anything else =
-      log and move on
-- [ ] It carries no user identity and no local paths — package keys and
-      relative paths are catalogue data the server already has. Say so in
-      the log, so a user can see what left their machine
-- [ ] `http.rs` has no POST yet; it is a GET-only WinHTTP wrapper
+      log and move on. `api::report_conflicts`, called by `worker::apply`
+      AFTER `execute()` so what is reported is what actually happened
+- [x] Trimmed to fit the server's 8 KiB cap, measured rather than guessed
+      (`api::fitting_conflicts`): it is an unauthenticated endpoint, so a
+      report over the cap is answered 413 and the operator learns nothing
+- [x] `Overlap::refs()` turns the engine's `game/directory/name` keys into
+      the "directory/name" refs the report carries — the report names its
+      game once. A key that will not split is DROPPED, not guessed at: the
+      server discards bad entries silently, so one malformed ref would
+      cost the whole report its meaning
+- [x] It carries no user identity and no local paths — package keys and
+      relative paths are catalogue data the server already has. Posted
+      with NO bearer token even when the run has one, and the log says the
+      report was sent, so a user can see what left their machine
+- [x] `http.rs` grew `post_json`; `get_streaming` and it now share one
+      request path, which is a verb and an optional body apart
 - [x] Server side is `server/TASKS.md` S10 (done 2026-10-25)
 
 ### Per-game configuration step (`install.rs`)
@@ -603,41 +617,63 @@ both string tables, with nothing to change in `engine.rs`.
 The server side is done; these are the installer halves. See root
 `CLAUDE.md` "Protocol" and `server/TASKS.md` S10/S11/S12.
 
-- [ ] **Install schema check (S11, replaces "minimum manifest version").**
+- [x] **Install schema check (S11, replaces "minimum manifest version").**
       `Manifest.schemas[<game>].sha256` is the SHA-256 of the server's
-      `schema.toml` bytes. Embed `schemas/<game>.toml` from the repository
-      with `include_bytes!` and hash it with `sha256.rs` (no TOML parsing:
-      only the hash is compared). Accept a LIST of known hashes per game, so
-      a release can understand both the old and the new schema during a
-      rollout. Unknown or missing hash for the chosen game → block
-      DOWNLOADING only, with "a newer installer is needed"; reconfiguring,
-      repairing, uninstalling and restore keep working. Behaviour stays
-      compiled in (`gamedir.rs`); never act on the server's `categories` or
-      `install_root` — they are for the explanation, not instructions.
-- [ ] A test that `gamedir.rs`'s per-game categories (and single-pick
-      flags) agree with `schemas/<game>.toml`, so the embedded hash and the
-      compiled behaviour cannot drift apart. A dev-dependency on `toml` is
-      fine for that test; the binary must stay TOML-free.
-- [ ] Rewrite installer/CLAUDE.md "Minimum manifest version" and
+      `schema.toml` bytes. `build.rs` turns every `schemas/<game>.toml` into
+      a static table (`schema.rs`, `include_bytes!` of the canonical file),
+      hashed with `sha256.rs` — only the hash is compared, and nothing
+      parses TOML at runtime. `schema::ALSO_ACCEPTED` holds the LIST of
+      older hashes a build still takes, so a release can understand both
+      schemas during a rollout. Unknown or missing hash for the chosen game
+      → block DOWNLOADING for that game only, with "a newer installer is
+      needed" (`IDS_S4_NEEDS_NEWER`); reconfiguring, repairing,
+      uninstalling and restore keep working. The server's `categories` and
+      `install_root` are never acted on — they are for the explanation in
+      the log, not instructions.
+- [x] The check runs only on a manifest that came FROM THE SERVER
+      (`build_tree(.., from_server)`), so an offline run rebuilt from the
+      cache never claims the installer is out of date.
+- [x] Behaviour comes from the installer's OWN copy of the schema, which is
+      also what makes the hashes meaningful: `schema::choice_categories`
+      drives scene 4's gate and scene 5's lists, and the labels stay in the
+      `.rc` tables. That replaced the per-game lists this file used to put
+      in `gamedir.rs`.
+- [x] A test that the compiled-in schema is byte-identical to
+      `schemas/<game>.toml` on disk and hashes the same (`src/schema/tests.rs`,
+      which reads the file at test time), plus one that its `select = "one"`
+      categories are the ones the installer asks a single pick from, so the
+      embedded hash and the compiled behaviour cannot drift apart. No `toml`
+      dependency was needed, not even a dev one.
+- [x] A CRLF test, because the hash is of RAW BYTES: `.gitattributes` marks
+      `schemas/*.toml` `-text`, and a checkout that rewrote the line endings
+      would make every installer built there reject every server.
+- [x] Rewrite installer/CLAUDE.md "Minimum manifest version" and
       DESIGN.md scene 4's "If the server's manifest is newer…" to the
       schema model.
 - [ ] Versions may now read `sha-xxxxxxxx` (derived from the payload's
       sha256 when the operator sets none, D5). Display them as-is.
-- [ ] Test fixtures: `Test-HttpClient.ps1` and `Test-WizardDownload.ps1`
+- [x] Test fixtures: `Test-HttpClient.ps1` and `Test-WizardDownload.ps1`
       were given `schema.toml` files by the server change (a game without
-      one now publishes nothing). Run both on Windows to confirm.
+      one now publishes nothing).
 
 ## I8 — Auth flow
 - [ ] Secret from scene 2 used as bearer for /packages and /download
 - [ ] 401 on ACCEPT → warning modal; 401 during download → logged
       error, failure summary
-- [ ] **Validate the secret with `GET /whoami`, not `/packages`**
+- [x] **Validate the secret with `GET /whoami`, not `/packages`**
       (server change 2026-10-25, DESIGN-REVIEW.md D2). `/packages` never
       401s — it falls back to the public listing for any key it does not
-      accept — so `worker::check_secret` can never see `Rejected` today and
-      a mistyped key looks accepted. `/whoami` answers 200
+      accept — so `worker::check_secret` could never see `Rejected` and a
+      mistyped key looked accepted. `/whoami` answers 200
       `shared::KeyStatus { expires_at }` for a live key and 401 for every
-      bad one. `expires_at` also allows warning before a key runs out.
+      bad one. `api::whoami` maps a 401 to `Rejected` and EVERYTHING else,
+      including a 200 it cannot parse, to `Unreachable`: a protocol change
+      must not lock a paying user out of their content.
+- [x] `expires_at` is shown: a key within `EXPIRY_NOTICE_DAYS` (14) of
+      expiry raises an informational modal naming the DATE, not a day count
+      — Polish needs three plural forms for "days" and `load_string_arg`
+      substitutes one `%s`. A key that lapses between two runs otherwise
+      looks exactly like content being withdrawn.
 - [ ] The server no longer sends 403 (D3): a live key without the grant
       gets 404, the same as a missing package. Nothing in the installer
       handles 403 today; keep it that way.
@@ -654,7 +690,9 @@ The server side is done; these are the installer halves. See root
 - [ ] Keyboard/tab order, default buttons, Esc = Cancel behavior per scene
 
 ## I10 — Release gate
-- [ ] tests/Test-BinarySize.ps1 < 500 kB on release build; record final size here: ____
+- [ ] tests/Test-BinarySize.ps1 < 600 kB on release build (the gate moved
+      once, deliberately, when the install engine landed on 2026-10-25);
+      record final size here: ____
 - [ ] Bump `[package] version` in Cargo.toml AND the four VERSIONINFO fields in
       res/installer.rc together; `tests/Test-VersionSync.ps1` enforces it, and
       the CD workflows tag the release from Cargo.toml

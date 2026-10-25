@@ -43,10 +43,12 @@ impl super::Tree {
             .collect()
     }
 
-    /// The categories present in the tree with nothing checked under them.
-    pub fn categories_missing_a_pick(&self) -> Vec<String> {
+    /// The choice categories present in the tree with nothing checked under
+    /// them; an operator's new folder must not become a question.
+    pub fn categories_missing_a_pick(&self, choice_categories: &[&str]) -> Vec<String> {
         self.roots
             .iter()
+            .filter(|&&root| choice_categories.contains(&self.nodes[root].label.as_str()))
             .filter(|&&root| self.check_of(root) == super::Check::Unchecked)
             .map(|&root| self.nodes[root].label.clone())
             .collect()

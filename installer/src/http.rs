@@ -52,8 +52,39 @@ pub fn get_streaming(
     progress: ProgressFn,
     cancel: &std::sync::atomic::AtomicBool,
 ) -> Result<(), HttpError> {
+    send("GET", url, bearer, None, sink, progress, cancel)
+}
+
+/// Posts JSON without a token, since what the installer sends carries no
+/// identity, and discards the response body.
+pub fn post_json(
+    url: &str,
+    body: &[u8],
+    cancel: &std::sync::atomic::AtomicBool,
+) -> Result<(), HttpError> {
+    let mut ignore_progress = |_: u64, _: Option<u64>| {};
+    send(
+        "POST",
+        url,
+        None,
+        Some(body),
+        &mut |_| true,
+        &mut ignore_progress,
+        cancel,
+    )
+}
+
+fn send(
+    method: &str,
+    url: &str,
+    bearer: Option<&str>,
+    body: Option<&[u8]>,
+    sink: &mut dyn FnMut(&[u8]) -> bool,
+    progress: ProgressFn,
+    cancel: &std::sync::atomic::AtomicBool,
+) -> Result<(), HttpError> {
     let target = url_target::UrlTarget::parse(url)?;
-    let open = request_handle::OpenRequest::send(&target, bearer)?;
+    let open = request_handle::OpenRequest::send(&target, method, bearer, body)?;
 
     let status = open
         .query_number(windows_sys::Win32::Networking::WinHttp::WINHTTP_QUERY_STATUS_CODE)?

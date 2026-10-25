@@ -1,6 +1,6 @@
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Configuration {
-    /// In `CHOICE_CATEGORIES` order, which is the page's order.
+    /// In the game schema's order, which is the order the page asks them in.
     pub lists: Vec<super::ChoiceList>,
     /// Checked packages that take no choice: `pacenotes` and any other category.
     pub extras: Vec<String>,
@@ -9,10 +9,15 @@ pub struct Configuration {
 impl Configuration {
     /// The lists for the checked leaves of `tree`. A key in `keep` that is
     /// still offered stays picked across a trip back to scene 4, and a list
-    /// with a single option comes preselected.
-    pub fn from_tree(tree: &crate::tree::Tree, keep: &[String]) -> Configuration {
+    /// with a single option comes preselected. `choice_categories` comes from the
+    /// game's compiled-in schema, since which questions a game asks is its own.
+    pub fn from_tree(
+        tree: &crate::tree::Tree,
+        keep: &[String],
+        choice_categories: &[&'static str],
+    ) -> Configuration {
         let checked = tree.checked_leaves();
-        let lists = pacenotes_shared::CHOICE_CATEGORIES
+        let lists = choice_categories
             .iter()
             .map(|&category| {
                 let options: Vec<super::ChoiceOption> = checked
@@ -42,7 +47,7 @@ impl Configuration {
         let extras = checked
             .iter()
             .copied()
-            .filter(|&leaf| !pacenotes_shared::CHOICE_CATEGORIES.contains(&tree.category_of(leaf)))
+            .filter(|&leaf| !choice_categories.contains(&tree.category_of(leaf)))
             .filter_map(|leaf| tree.node(leaf).key.clone())
             .collect();
 
@@ -68,7 +73,7 @@ impl Configuration {
         }
     }
 
-    /// The pick for one `CATEGORY_*`, by name, so a reordered `CHOICE_CATEGORIES` cannot misdirect it.
+    /// The pick for one category, by name, so a reordered schema cannot misdirect it.
     pub fn selected_key(&self, category: &str) -> Option<&str> {
         self.lists
             .iter()

@@ -41,6 +41,7 @@ pub fn apply_selection(
         &mut watcher,
     )
     .map_err(|e| e.to_string())?;
+    report_overlaps(job, &overlaps, reporter);
 
     let configured = if plan.is_empty() {
         Vec::new()
@@ -52,18 +53,17 @@ pub fn apply_selection(
         uninstalled: outcome.uninstalled,
         left_alone: outcome.left_alone,
         configured,
-        overlaps,
+        overlaps: overlaps.len(),
         restore_point: outcome.restore_point,
     })
 }
 
-/// The later package wins an overlap, so it is logged rather than refused;
-/// returns how many there were.
+/// The later package wins an overlap, so it is logged rather than refused.
 fn log_overlaps(
     plan: &pacenotes_installer::engine::Plan,
     prepared: &pacenotes_installer::engine::Preflight,
     reporter: &super::Reporter,
-) -> usize {
+) -> Vec<pacenotes_installer::engine::Overlap> {
     let install_order: Vec<String> = plan.installs().iter().map(|key| key.to_string()).collect();
     let overlaps = pacenotes_installer::engine::overlaps(&install_order, &prepared.paths());
     for overlap in &overlaps {
@@ -73,7 +73,27 @@ fn log_overlaps(
             overlap.packages.join(", ")
         ));
     }
-    overlaps.len()
+    overlaps
+}
+
+/// Sent after the install, so what is reported is what happened; a failure is
+/// only logged, since the user's install succeeded either way.
+fn report_overlaps(
+    job: &super::InstallJob,
+    overlaps: &[pacenotes_installer::engine::Overlap],
+    reporter: &super::Reporter,
+) {
+    if overlaps.is_empty() {
+        return;
+    }
+    let api = crate::api::Api::new(&job.base_url, None);
+    match api.report_conflicts(job.game.id(), overlaps, &job.cancel) {
+        Ok(()) => reporter.log("the overlapping files were reported to the server".into()),
+        Err(e) => reporter.log(format!(
+            "could not report the overlapping files — {}",
+            e.message
+        )),
+    }
 }
 
 /// Returns the files the step wrote, with their new hashes in the ledger. The

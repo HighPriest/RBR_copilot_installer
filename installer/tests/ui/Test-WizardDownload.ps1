@@ -175,6 +175,7 @@ try {
     Assert-That 'the whole catalogue reached the tree control' ($rows -eq $EXPECTED_ROWS) `
         "control holds $rows rows, expected $EXPECTED_ROWS"
 
+    # Only the choice categories schemas/rbr.toml marks select = "one" are demanded.
     Write-Host "`n-- download gate --"
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
     $modal = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 4000
@@ -183,10 +184,12 @@ try {
         # The warning must NAME the categories, or the user cannot act on it.
         $said = (Get-ControlInventory -Dialog $modal.Handle |
             Where-Object { $_.Class -eq 'Static' } | ForEach-Object { $_.Text }) -join ' '
-        foreach ($category in 'language', 'codriver', 'style', 'pacenotes') {
+        foreach ($category in 'language', 'codriver', 'style') {
             Assert-That "warning names the missing category '$category'" `
             ($said -clike "*$category*") "warning said [$said]"
         }
+        Assert-That "warning leaves the optional 'pacenotes' category out" `
+        (-not ($said -clike '*pacenotes*')) "warning said [$said]"
         Dismiss-Modal -Modal $modal.Handle
     }
     $still = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE -TimeoutMs 3000

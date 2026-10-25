@@ -205,8 +205,9 @@ $exe = "target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe"
 | `--cache <dir>` | A throwaway download cache. Use it for anything test-shaped, or you read back whatever a previous run left in your own profile. |
 | `--selftest-http <url> [--token T] [--out FILE]` | One real GET through `http.rs`, reported to a file or a message box. |
 | `--selftest-download <game> [--largest] [--server U] [--token T] [--out F]` | Fetch a catalogue and download its smallest (or largest) package: stream, hash, verify, promote, index. |
+| `--selftest-report <game> [--server U] [--out F]` | POST a fabricated conflict report through `api::report_conflicts`. The only thing the installer ever sends, and a real one needs a catalogue where two packages write the same file. |
 
-The two `--selftest-*` flags exist because the paths they cover are the ones
+The three `--selftest-*` flags exist because the paths they cover are the ones
 most likely to be wrong against a real server, and walking the GUI to reach
 them makes every attempt slow and flaky. Plain HTTP is fine for development;
 WinHTTP only negotiates TLS when the URL says `https`.

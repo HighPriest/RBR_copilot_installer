@@ -39,7 +39,7 @@ fn unix_now() -> i64 {
 /// Windows forbids in a directory name.
 ///
 /// Howard Hinnant's civil-from-days arithmetic, hand-rolled to spare a date crate.
-fn utc_stamp(unix_seconds: i64) -> String {
+pub fn utc_stamp(unix_seconds: i64) -> String {
     let days = unix_seconds.div_euclid(86_400);
     let seconds = unix_seconds.rem_euclid(86_400);
 

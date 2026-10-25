@@ -12,8 +12,8 @@ impl super::Tree {
         rows.extend(local_only_rows(game, cached, installed, &rows));
         rows.extend(unavailable_rows(game, installed, &rows));
         rows.sort_by(|a, b| {
-            category_rank(&a.segments[0])
-                .cmp(&category_rank(&b.segments[0]))
+            category_rank(game, &a.segments[0])
+                .cmp(&category_rank(game, &b.segments[0]))
                 .then_with(|| a.segments.cmp(&b.segments))
         });
 
@@ -156,13 +156,12 @@ fn leaf_of(name: &str) -> &str {
     name.rsplit('/').next().unwrap_or(name)
 }
 
-/// The Configuration scene's categories in its order, then `pacenotes`, then
-/// any other category alphabetically, so a refetch never reorders the tree.
-fn category_rank(category: &str) -> usize {
-    let choices = &pacenotes_shared::CHOICE_CATEGORIES;
-    match choices.iter().position(|choice| *choice == category) {
-        Some(rank) => rank,
-        None if category == pacenotes_shared::CATEGORY_PACENOTES => choices.len(),
-        None => choices.len() + 1,
-    }
+/// The game schema's order, then any undeclared category alphabetically, so the
+/// tree, scene 5 and the server's folders agree and a refetch never reorders.
+fn category_rank(game: &str, category: &str) -> usize {
+    let declared = crate::schema::categories(game);
+    declared
+        .iter()
+        .position(|declared| declared.id == category)
+        .unwrap_or(declared.len())
 }

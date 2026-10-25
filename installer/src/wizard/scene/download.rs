@@ -57,11 +57,71 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
         return;
     }
     if let crate::worker::Message::Packages(result) = message {
-        let (packages, status) = match result {
-            Ok(packages) => (packages, None),
-            Err(_) => (Vec::new(), Some(crate::i18n::IDS_S4_FETCH_FAILED)),
-        };
-        build_tree(dialog, state, packages, status);
+        match result {
+            Ok(manifest) => {
+                state.schema_mismatch = schema_mismatch(state, &manifest);
+                build_tree(dialog, state, manifest.packages, None);
+            }
+            Err(reason) => {
+                // The only diagnostic a user can send back, though the scene recovers.
+                state
+                    .log
+                    .line(format!("the catalogue could not be read: {reason}"));
+                let status = Some(crate::i18n::IDS_S4_FETCH_FAILED);
+                build_tree(dialog, state, Vec::new(), status);
+            }
+        }
+    }
+}
+
+/// Checked only on a manifest the server sent, so an offline run is never
+/// told it is out of date; the reason goes to the run log.
+fn schema_mismatch(
+    state: &mut crate::wizard::state::WizardState,
+    manifest: &pacenotes_shared::Manifest,
+) -> bool {
+    let game = state.game_id();
+    match pacenotes_installer::schema::check(game, manifest.schemas.get(game)) {
+        Ok(()) => false,
+        Err(reason) => {
+            state.log.line(describe_schema_mismatch(game, &reason));
+            true
+        }
+    }
+}
+
+/// The modal is short; this is what the user can send back.
+fn describe_schema_mismatch(
+    game: &str,
+    reason: &pacenotes_installer::schema::Incompatible,
+) -> String {
+    match reason {
+        pacenotes_installer::schema::Incompatible::NoSchemaPublished => format!(
+            "the server published no install schema for {game}, so this installer cannot \
+             tell whether it understands the catalogue"
+        ),
+        pacenotes_installer::schema::Incompatible::GameUnknown => {
+            format!("this installer has no install schema for {game}")
+        }
+        pacenotes_installer::schema::Incompatible::Different {
+            ours,
+            theirs,
+            unknown_categories,
+        } => {
+            let detail = if unknown_categories.is_empty() {
+                "no category is new, so this is probably only an edit to the schema file"
+                    .to_string()
+            } else {
+                format!(
+                    "it has categories this installer does not know: {}",
+                    unknown_categories.join(", ")
+                )
+            };
+            format!(
+                "the {game} catalogue uses a different install schema ({detail}). \
+                 Server {theirs}, this installer {ours}"
+            )
+        }
     }
 }
 
@@ -106,10 +166,7 @@ unsafe fn build_tree(
     packages: Vec<pacenotes_shared::PackageInfo>,
     status: Option<u16>,
 ) {
-    let game = state
-        .game
-        .map(|game| game.id())
-        .unwrap_or(pacenotes_shared::GAME_RBR);
+    let game = state.game_id();
     let cached = state.cache.entries();
     let installed: Vec<String> = pacenotes_installer::ledger::Ledger::open(&state.folder)
         .packages()
@@ -129,15 +186,25 @@ unsafe fn build_tree(
     crate::ui::set_text(dialog, crate::wizard::control_ids::IDC_S4_STATUS, status);
 }
 
-/// Every category in the tree needs a pick; the transfer itself happens on the progress scene.
+/// Every choice category in the tree needs a pick, and a build too old for the
+/// catalogue stops only when something must come down the wire, so it can still
+/// reconfigure and remove; the transfer itself happens on the progress scene.
 unsafe fn on_download(dialog: HWND) -> isize {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return crate::wizard::page::reply(dialog, 0);
     };
-    let missing = state.tree.categories_missing_a_pick();
+    let choices = pacenotes_installer::schema::choice_categories(state.game_id());
+    let missing = state.tree.categories_missing_a_pick(&choices);
     if !missing.is_empty() {
         let text = crate::i18n::load_string_arg(crate::i18n::IDS_S4_MISSING, &missing.join(", "));
         crate::ui::message_box_warning(dialog, &text);
+        return crate::wizard::page::stay(dialog);
+    }
+    if state.schema_mismatch && !state.tree.checked_needing_download().is_empty() {
+        crate::ui::message_box_warning(
+            dialog,
+            &crate::i18n::load_string(crate::i18n::IDS_S4_NEEDS_NEWER),
+        );
         return crate::wizard::page::stay(dialog);
     }
     state.chosen = state.tree.checked_keys();

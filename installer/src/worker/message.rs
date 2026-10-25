@@ -13,14 +13,15 @@ pub enum Message {
     Motd(Option<String>),
     SecretChecked(SecretOutcome),
     /// A failure is not fatal: the Download scene falls back to the cache.
-    Packages(Result<Vec<pacenotes_shared::PackageInfo>, String>),
+    Packages(Result<pacenotes_shared::Manifest, String>),
     Installed(Outcome),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SecretOutcome {
-    Accepted,
-    /// 401: wrong or expired.
+    /// Unix seconds, or `None` for a key that never expires, so scene 2 can warn first.
+    Accepted { expires_at: Option<i64> },
+    /// 401: wrong, unknown, expired or revoked, which the server does not tell apart.
     Rejected,
     /// Could not ask, which DESIGN.md treats as permission to continue unvalidated.
     Unreachable,

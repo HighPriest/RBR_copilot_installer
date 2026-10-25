@@ -64,7 +64,9 @@ unsafe fn populate_lists(dialog: HWND) {
         return;
     };
     let keep = state.config.selected_keys();
-    state.config = pacenotes_installer::choices::Configuration::from_tree(&state.tree, &keep);
+    let categories = pacenotes_installer::schema::choice_categories(state.game_id());
+    state.config =
+        pacenotes_installer::choices::Configuration::from_tree(&state.tree, &keep, &categories);
 
     let nothing_ticked = crate::i18n::load_string(crate::i18n::IDS_S5_NONE);
     for (&(list_control, _), list) in LISTS.iter().zip(&state.config.lists) {

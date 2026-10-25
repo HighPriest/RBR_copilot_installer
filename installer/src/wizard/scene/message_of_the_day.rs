@@ -129,15 +129,32 @@ unsafe fn on_accept(dialog: HWND) -> isize {
     crate::wizard::page::stay(dialog)
 }
 
-/// A rejected key keeps the user here; otherwise Next is pressed on their behalf.
+/// Short enough that most runs say nothing, long enough to ask for a new key
+/// between two rally weekends.
+const EXPIRY_NOTICE_DAYS: i64 = 14;
+
+/// A rejected key keeps the user here; otherwise Next is pressed on their
+/// behalf, after warning of a key about to lapse, which would otherwise look
+/// like content being withdrawn. An unreachable server lets the key through unchecked.
 unsafe fn on_secret_checked(dialog: HWND, outcome: crate::worker::SecretOutcome) {
     crate::wizard::page::set_buttons(dialog, ctl::PSWIZB_NEXT);
-    if outcome == crate::worker::SecretOutcome::Rejected {
-        crate::ui::message_box_warning(
-            dialog,
-            &crate::i18n::load_string(crate::i18n::IDS_S2_BADSECRET),
-        );
-        return;
+    match outcome {
+        crate::worker::SecretOutcome::Rejected => {
+            crate::ui::message_box_warning(
+                dialog,
+                &crate::i18n::load_string(crate::i18n::IDS_S2_BADSECRET),
+            );
+            return;
+        }
+        crate::worker::SecretOutcome::Accepted { expires_at } => {
+            if let Some(date) = expiry_notice(expires_at, unix_now()) {
+                crate::ui::message_box_info(
+                    dialog,
+                    &crate::i18n::load_string_arg(crate::i18n::IDS_S2_EXPIRING, &date),
+                );
+            }
+        }
+        crate::worker::SecretOutcome::Unreachable => {}
     }
     if let Some(state) = crate::wizard::page::state(dialog) {
         state.secret_checked = true;
@@ -148,4 +165,22 @@ unsafe fn on_secret_checked(dialog: HWND, outcome: crate::worker::SecretOutcome)
         ctl::PSBTN_NEXT as WPARAM,
         0,
     );
+}
+
+/// The date a key lapses, or `None` while it is too far off to mention; a date
+/// rather than a day count, which Polish would need three plural forms for.
+fn expiry_notice(expires_at: Option<i64>, now: i64) -> Option<String> {
+    let at = expires_at?;
+    if at - now > EXPIRY_NOTICE_DAYS * 86_400 {
+        return None;
+    }
+    let stamp = pacenotes_installer::engine::utc_stamp(at);
+    Some(stamp.split('T').next().unwrap_or("").to_string())
+}
+
+fn unix_now() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_secs() as i64)
+        .unwrap_or(0)
 }

@@ -34,6 +34,7 @@ windows-sys = { version = "=0.59.0", features = [
 
 [build-dependencies]
 embed-resource = "=2.5.2"     # compiles res/installer.rc (dialogs, manifest, icon)
+# No toml crate even here: build/schema_table.rs reads schemas/*.toml strictly itself.
 
 [profile.release]
 opt-level = "z"

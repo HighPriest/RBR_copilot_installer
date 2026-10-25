@@ -8,6 +8,21 @@ pub struct Overlap {
     pub packages: Vec<String>,
 }
 
+impl Overlap {
+    /// The writers as `directory/name` refs, the shape a conflict report carries
+    /// under its one game; a key that does not split is dropped, since the
+    /// server discards a malformed entry.
+    pub fn refs(&self) -> Vec<String> {
+        self.packages
+            .iter()
+            .filter_map(|key| {
+                let (_, directory, name) = pacenotes_shared::split_download_path(key)?;
+                Some(format!("{directory}/{name}"))
+            })
+            .collect()
+    }
+}
+
 /// Compared folded, as the filesystem compares names; the file lists come from
 /// the caller, who reads each zip once.
 pub fn overlaps(
@@ -89,5 +104,38 @@ mod tests {
     fn packages_that_share_nothing_report_nothing() {
         let files = files_of(&[(POLISH, &["Plugins/a.ini"]), (KAMIL, &["Plugins/b.ini"])]);
         assert!(super::overlaps(&install_order(), &files).is_empty());
+    }
+
+    fn overlap_of(packages: &[&str]) -> super::Overlap {
+        super::Overlap {
+            path: "Plugins/Pacenote/PaceNote.ini".into(),
+            packages: packages.iter().map(|key| key.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn an_overlap_names_its_writers_the_way_a_report_does() {
+        let refs = overlap_of(&[POLISH, KAMIL]).refs();
+        assert_eq!(
+            refs,
+            vec![
+                "public/language/polish",
+                "public/codriver/polish/male/Kamil"
+            ]
+        );
+        for reference in refs {
+            assert!(
+                pacenotes_shared::PackageRef::parse(&reference).is_some(),
+                "{reference}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unsplittable_key_is_left_out_of_the_refs() {
+        assert_eq!(
+            overlap_of(&["nonsense", KAMIL]).refs(),
+            vec!["public/codriver/polish/male/Kamil"]
+        );
     }
 }
