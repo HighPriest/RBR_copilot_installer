@@ -2,6 +2,10 @@
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default)]
 pub struct Manifest {
     pub packages: Vec<crate::PackageInfo>,
+    /// By game id, one for every game published, since a game without a
+    /// schema publishes nothing; absent from manifests written before 2026-10-25.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub schemas: std::collections::BTreeMap<String, crate::GameSchema>,
 }
 
 impl Manifest {
@@ -14,6 +18,7 @@ impl Manifest {
 
     pub fn for_game(mut self, game: &str) -> Self {
         self.packages.retain(|package| package.game == game);
+        self.schemas.retain(|id, _| id == game);
         self
     }
 
@@ -40,7 +45,46 @@ mod tests {
                 crate::fixtures::package("premium-voices", "FilipekMod_premium_pack"),
                 crate::fixtures::package("beta", "FilipekMod_beta_pack"),
             ],
+            schemas: std::collections::BTreeMap::new(),
         }
+    }
+
+    fn schema(sha256: &str) -> crate::GameSchema {
+        crate::GameSchema {
+            sha256: sha256.into(),
+            categories: vec![crate::SchemaCategory {
+                id: crate::CATEGORY_CODRIVER.into(),
+                select: crate::SELECT_ONE.into(),
+                install_root: crate::INSTALL_ROOT_GAME.into(),
+            }],
+        }
+    }
+
+    #[test]
+    fn schemas_round_trip_and_follow_the_game_filter() {
+        let mut manifest = sample();
+        manifest
+            .schemas
+            .insert(crate::GAME_RBR.into(), schema("aa"));
+        manifest
+            .schemas
+            .insert(crate::GAME_BEAMNG.into(), schema("bb"));
+
+        let back: super::Manifest =
+            serde_json::from_str(&serde_json::to_string(&manifest).unwrap()).unwrap();
+        assert_eq!(back.schemas, manifest.schemas);
+
+        let rbr = back.for_game(crate::GAME_RBR);
+        assert_eq!(rbr.schemas.len(), 1);
+        assert_eq!(rbr.schemas[crate::GAME_RBR].sha256, "aa");
+    }
+
+    #[test]
+    fn a_manifest_without_schemas_still_parses_and_stays_lean() {
+        let old = r#"{"packages":[]}"#;
+        let manifest: super::Manifest = serde_json::from_str(old).unwrap();
+        assert!(manifest.schemas.is_empty());
+        assert_eq!(serde_json::to_string(&manifest).unwrap(), old);
     }
 
     #[test]
@@ -81,6 +125,7 @@ mod tests {
         rbr.version = "rbr-version".into();
         let manifest = super::Manifest {
             packages: vec![beamng, rbr],
+            schemas: std::collections::BTreeMap::new(),
         };
 
         let reference = crate::PackageRef::parse("public/language/polish").unwrap();

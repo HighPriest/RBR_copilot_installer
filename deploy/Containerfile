@@ -22,6 +22,8 @@ WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY shared ./shared
 COPY server ./server
+# The server embeds these with include_bytes! to flag a data root's differing copy.
+COPY schemas ./schemas
 
 # A parallel release build OOM-kills rustc on a 3 GB host, which podman reports as a vanishing layer.
 ARG CARGO_BUILD_JOBS=1

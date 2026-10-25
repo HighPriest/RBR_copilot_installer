@@ -266,7 +266,7 @@ which categories exist, which ask for a single pick, and where each
 installs. That is a per-game schema, and only a change to it should stop an
 installer.
 
-- [ ] `data/<game>/schema.toml`, hand-editable:
+- [x] `data/<game>/schema.toml`, hand-editable:
 
       [[category]]
       id = "codriver"        # a top-level folder under the access directory
@@ -276,25 +276,28 @@ installer.
       The canonical copy lives in the repository at `schemas/<game>.toml`
       (byte-exact: `.gitattributes` marks it `-text`), which is also what
       the installer embeds.
-- [ ] `manifest gen` embeds each game's schema in manifest.json —
+- [x] `manifest gen` embeds each game's schema in manifest.json —
       `schemas: { "<game>": { sha256, categories } }` — where `sha256` is
       the hash of the file's RAW BYTES. The installer compares it with the
       hash of the schema it was built with. Any byte change, a comment
       included, therefore counts as a change: that is accepted, and is why
       the repository copy is the one to edit.
-- [ ] The installer uses the schema as a COMPATIBILITY CHECK ONLY. Its
+- [ ] (installer side — `installer/TASKS.md`) The installer uses the
+      schema as a COMPATIBILITY CHECK ONLY. Its
       behaviour — categories, single pick, install root, the localized
       labels — stays compiled in. A server can therefore not redirect where
       files are written, which keeps the root rule that a compromised server
       gains no installer behaviour.
-- [ ] A mismatch blocks DOWNLOADING only, for that game only.
+- [ ] (installer side — `installer/TASKS.md`) A mismatch blocks
+      DOWNLOADING only, for that game only.
       Reconfiguring, repairing, uninstalling and restore keep working.
-- [ ] Strict publishing: a game with no `schema.toml` publishes NOTHING; a
+- [x] Strict publishing: a game with no `schema.toml` publishes NOTHING; a
       schema that does not parse skips its game with an error; a package
       whose category the schema does not declare is skipped with a warning.
       Otherwise a category the installer cannot place slips through without
       the schema changing — the exact case this exists to catch.
-- [ ] Rollout order for a schema change: release an installer that accepts
+- [x] Rollout order for a schema change (documented in
+      `deploy/README.md` §1.1a): release an installer that accepts
       BOTH the old and the new hash first, then switch the server's file.
       Switching the server first blocks every installer in the wild.
 

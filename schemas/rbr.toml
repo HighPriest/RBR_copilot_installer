@@ -1,0 +1,37 @@
+# Install schema for Richard Burns Rally (server/TASKS.md S11).
+#
+# Copy this file, BYTE FOR BYTE, to <data>/rbr/schema.toml on the server.
+# Installers compare the SHA-256 of these exact bytes with the schema they
+# were built with, so ANY edit here - a comment included - is a change that
+# makes older installers stop downloading RBR packages. Edit it only together
+# with an installer release; see deploy/README.md for the rollout order.
+#
+# Each category is a top-level folder under an access directory:
+#   rbr/packages/<directory>/<category>/.../<package>.zip
+#
+#   id            the folder name
+#   select        "one" = the user must pick exactly one (a choice category)
+#                 "any" = optional, installed as ticked
+#   install_root  where the package's files land, as a token the installer
+#                 knows ("game" = the folder holding the game's executable).
+#                 Never a path: the server cannot choose where files go.
+
+[[category]]
+id = "language"
+select = "one"
+install_root = "game"
+
+[[category]]
+id = "codriver"
+select = "one"
+install_root = "game"
+
+[[category]]
+id = "style"
+select = "one"
+install_root = "game"
+
+[[category]]
+id = "pacenotes"
+select = "any"
+install_root = "game"

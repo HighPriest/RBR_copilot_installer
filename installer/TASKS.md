@@ -593,6 +593,35 @@ both string tables, with nothing to change in `engine.rs`.
 - [ ] Restore: to a point two runs back, with added files removed and the
       ledger matching the folder afterwards. Waits for the restore code
 
+## Server protocol changes waiting on the installer (2026-10-25)
+
+The server side is done; these are the installer halves. See root
+`CLAUDE.md` "Protocol" and `server/TASKS.md` S10/S11/S12.
+
+- [ ] **Install schema check (S11, replaces "minimum manifest version").**
+      `Manifest.schemas[<game>].sha256` is the SHA-256 of the server's
+      `schema.toml` bytes. Embed `schemas/<game>.toml` from the repository
+      with `include_bytes!` and hash it with `sha256.rs` (no TOML parsing:
+      only the hash is compared). Accept a LIST of known hashes per game, so
+      a release can understand both the old and the new schema during a
+      rollout. Unknown or missing hash for the chosen game → block
+      DOWNLOADING only, with "a newer installer is needed"; reconfiguring,
+      repairing, uninstalling and restore keep working. Behaviour stays
+      compiled in (`gamedir.rs`); never act on the server's `categories` or
+      `install_root` — they are for the explanation, not instructions.
+- [ ] A test that `gamedir.rs`'s per-game categories (and single-pick
+      flags) agree with `schemas/<game>.toml`, so the embedded hash and the
+      compiled behaviour cannot drift apart. A dev-dependency on `toml` is
+      fine for that test; the binary must stay TOML-free.
+- [ ] Rewrite installer/CLAUDE.md "Minimum manifest version" and
+      DESIGN.md scene 4's "If the server's manifest is newer…" to the
+      schema model.
+- [ ] Versions may now read `sha-xxxxxxxx` (derived from the payload's
+      sha256 when the operator sets none, D5). Display them as-is.
+- [ ] Test fixtures: `Test-HttpClient.ps1` and `Test-WizardDownload.ps1`
+      were given `schema.toml` files by the server change (a game without
+      one now publishes nothing). Run both on Windows to confirm.
+
 ## I8 — Auth flow
 - [ ] Secret from scene 2 used as bearer for /packages and /download
 - [ ] 401 on ACCEPT → warning modal; 401 during download → logged

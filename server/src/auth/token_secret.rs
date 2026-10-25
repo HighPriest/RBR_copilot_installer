@@ -14,8 +14,7 @@ pub fn mint_token() -> String {
 
 /// Lowercase hex sha256: the only form of a credential the server keeps.
 pub fn hash_token(raw: &str) -> String {
-    let digest = <sha2::Sha256 as sha2::Digest>::digest(raw.as_bytes());
-    digest.iter().map(|byte| format!("{byte:02x}")).collect()
+    crate::store::sha256_bytes(raw.as_bytes())
 }
 
 /// Whether `mint_token` could have produced this, checked before any database

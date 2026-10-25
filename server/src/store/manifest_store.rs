@@ -108,10 +108,7 @@ mod tests {
     fn reloads_on_mtime_change_and_resolves_paths() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        crate::store::fixture_tree::write(
-            &crate::store::fixture_tree::package_path(dir, "rbr", "public/basic.zip"),
-            b"hello",
-        );
+        crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
         let store = super::ManifestStore::new(dir);
         assert!(store.current().packages.is_empty());
 
@@ -138,7 +135,12 @@ mod tests {
             "rbr",
             "public/codriver/polish/male/Kamil.zip",
         );
-        crate::store::fixture_tree::write(&kamil, b"kamil");
+        crate::store::fixture_tree::write_package(
+            dir,
+            "rbr",
+            "public/codriver/polish/male/Kamil.zip",
+            b"kamil",
+        );
         crate::store::write_manifest(dir, &crate::store::fixture_tree::generate(dir).manifest)
             .unwrap();
 
@@ -165,10 +167,7 @@ mod tests {
     fn a_bad_manifest_keeps_the_last_good_copy_serving() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path();
-        crate::store::fixture_tree::write(
-            &crate::store::fixture_tree::package_path(dir, "rbr", "public/basic.zip"),
-            b"hello",
-        );
+        crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
         crate::store::write_manifest(dir, &crate::store::fixture_tree::generate(dir).manifest)
             .unwrap();
         let store = super::ManifestStore::new(dir);

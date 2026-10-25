@@ -1,3 +1,26 @@
+//! What publishing a new manifest would take away from the live one without
+//! anyone deciding it, which `manifest gen` refuses unless told otherwise.
+
+/// Games the current manifest serves that `next` would take off the server
+/// entirely because their schema is missing or broken, typically after an
+/// upgrade that did not copy `schema.toml` in; a game whose packages all left
+/// on purpose keeps its schema and is not listed.
+pub fn unpublished_games(
+    current: &pacenotes_shared::Manifest,
+    next: &pacenotes_shared::Manifest,
+) -> Vec<String> {
+    let mut games: Vec<String> = current
+        .packages
+        .iter()
+        .map(|package| package.game.clone())
+        .filter(|game| !next.schemas.contains_key(game))
+        .filter(|game| !next.packages.iter().any(|package| &package.game == game))
+        .collect();
+    games.sort();
+    games.dedup();
+    games
+}
+
 /// Values the current manifest carries that publishing `next` would drop, one
 /// line per package and field.
 ///
@@ -48,9 +71,36 @@ pub fn metadata_losses(
 
 #[cfg(test)]
 mod tests {
+    /// What a server upgraded without copying `schema.toml` in would publish.
+    #[test]
+    fn a_live_game_losing_its_schema_is_detected() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        crate::store::fixture_tree::write(
+            &crate::store::fixture_tree::package_path(dir, "rbr", "public/language/polish.zip"),
+            b"x",
+        );
+        let next = crate::store::fixture_tree::generate(dir).manifest;
+        assert!(next.packages.is_empty());
+        let live = crate::store::fixture_tree::legacy_manifest();
+        assert_eq!(super::unpublished_games(&live, &next), vec!["rbr"]);
+    }
+
+    /// A game whose packages all left on purpose still has its schema.
+    #[test]
+    fn a_game_emptied_on_purpose_is_not_unpublished() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        crate::store::fixture_tree::declare(dir, "rbr", &["language"]);
+        std::fs::create_dir_all(dir.join("rbr").join(crate::store::PACKAGES_DIR)).unwrap();
+        let next = crate::store::fixture_tree::generate(dir).manifest;
+        let live = crate::store::fixture_tree::legacy_manifest();
+        assert!(super::unpublished_games(&live, &next).is_empty());
+    }
+
     fn basic_on_disk(dir: &std::path::Path, sidecar: Option<&[u8]>) -> pacenotes_shared::Manifest {
         let zip = crate::store::fixture_tree::package_path(dir, "rbr", "public/basic.zip");
-        crate::store::fixture_tree::write(&zip, b"hello");
+        crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
         let _ = std::fs::remove_file(zip.with_extension("toml"));
         if let Some(sidecar) = sidecar {
             crate::store::fixture_tree::write(&zip.with_extension("toml"), sidecar);

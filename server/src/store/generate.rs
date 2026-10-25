@@ -6,7 +6,18 @@
 
 /// A zip outside an access directory or with a broken sidecar is withheld as an
 /// error rather than published with silently wrong metadata; the rest publishes.
+/// A game publishes nothing without a valid `schema.toml`, and a package in a
+/// category its schema does not declare is skipped.
 pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> {
+    generate_with(data_dir, crate::store::BUNDLED_SCHEMAS)
+}
+
+/// `generate`, comparing each game's schema with `bundled` instead of this
+/// release's own, so tests' fixture schemas need not match the repository's.
+pub fn generate_with(
+    data_dir: &std::path::Path,
+    bundled: &[(&str, &[u8])],
+) -> anyhow::Result<super::Generated> {
     let mut generated = super::Generated {
         manifest: pacenotes_shared::Manifest::default(),
         warnings: Vec::new(),
@@ -27,8 +38,8 @@ pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> 
             continue;
         }
         let game = entry.file_name().to_string_lossy().into_owned();
-        if path.is_dir() && game != crate::store::MOTD_DIR {
-            scan_game(&path, &game, &mut generated)?;
+        if path.is_dir() && !crate::store::RESERVED_TOP_LEVEL.contains(&game.as_str()) {
+            scan_game(&path, &game, bundled, &mut generated)?;
         }
     }
 
@@ -41,6 +52,7 @@ pub fn generate(data_dir: &std::path::Path) -> anyhow::Result<super::Generated> 
 fn scan_game(
     game_dir: &std::path::Path,
     game: &str,
+    bundled: &[(&str, &[u8])],
     generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let packages_dir = crate::store::PACKAGES_DIR;
@@ -68,6 +80,17 @@ fn scan_game(
             "{game}/ has no {packages_dir}/ folder — nothing published for it"
         ));
         return Ok(());
+    }
+    let schema = match crate::store::game_schema::load_schema(game_dir, game) {
+        Ok(schema) => schema,
+        Err(error) => {
+            generated.error(error);
+            return Ok(());
+        }
+    };
+    if let Some(warning) = crate::store::game_schema::bundled_schema_warning(game, &schema, bundled)
+    {
+        generated.warn(warning);
     }
 
     for entry in read_dir_sorted(&packages_root)? {
@@ -102,8 +125,9 @@ fn scan_game(
                 public = pacenotes_shared::PUBLIC_DIR
             ));
         }
-        scan_access_directory(&path, game, &directory, generated)?;
+        scan_access_directory(&path, game, &directory, &schema, generated)?;
     }
+    generated.manifest.schemas.insert(game.to_string(), schema);
     Ok(())
 }
 
@@ -111,12 +135,26 @@ fn scan_access_directory(
     directory_path: &std::path::Path,
     game: &str,
     directory: &str,
+    schema: &pacenotes_shared::GameSchema,
     generated: &mut super::Generated,
 ) -> anyhow::Result<()> {
     let mut found = FoundFiles::default();
     collect(directory_path, "", &mut found, generated);
 
     for (name, zip_path) in &found.zips {
+        let category = name.split('/').next().unwrap_or(name);
+        if !schema
+            .categories
+            .iter()
+            .any(|declared| declared.id == category)
+        {
+            generated.warn(format!(
+                "{game}/{directory}/{name}.zip is in category {category:?}, which \
+                 {game}/{} does not declare — not published",
+                pacenotes_shared::SCHEMA_FILE
+            ));
+            continue;
+        }
         let sidecar = match crate::store::sidecar::read_sidecar(&zip_path.with_extension("toml")) {
             Ok(sidecar) => sidecar,
             Err(e) => {

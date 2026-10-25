@@ -26,6 +26,8 @@ thing to back up:
 ```sh
 mkdir -p ~/pacenotes/data/rbr/packages/public
 mkdir -p ~/pacenotes/data/motd
+# Every game needs its install schema, or NOTHING is published for it:
+cp schemas/rbr.toml ~/pacenotes/data/rbr/schema.toml
 ```
 
 Layout (see root `CLAUDE.md` for the reasoning — the folder tree IS the
@@ -38,7 +40,9 @@ installer's UI tree):
 ├── motd/
 │   ├── en.txt                     message of the day, per language
 │   └── pl.txt
+├── reports/                       conflict reports from installers (S10)
 └── <game>/                        rbr | dirtrally2 | assettocorsa | beamng
+    ├── schema.toml                the game's install schema (see below)
     └── packages/
         ├── public/                visible to everyone
         │   ├── language/polish.zip
@@ -55,6 +59,44 @@ Rules that will bite you if ignored:
 - Game ids and directory names are `[a-z0-9_-]+` — lowercase, no spaces.
 - Package names may contain spaces (`style/Numeric Standard.zip` does), but a
   client has to percent-encode them. `manifest gen` warns so you can rename.
+- `motd` and `reports` are reserved names at the top level: never games.
+
+### 1.1a The install schema (one per game)
+
+`<game>/schema.toml` lists the game's categories — the folders directly
+under an access directory — whether each asks the user for exactly one pick
+(`select = "one"`) or is optional (`"any"`), and where it installs
+(`install_root`, a token such as `"game"`, never a path):
+
+```toml
+[[category]]
+id = "codriver"
+select = "one"
+install_root = "game"
+```
+
+`manifest gen` is strict about it, because this is what tells an installer
+whether it understands your catalogue:
+
+- no `schema.toml` → **nothing** is published for that game (an `ERROR`);
+- a schema that does not parse → nothing for that game (an `ERROR`);
+- a package in a category the schema does not declare → that package is
+  skipped (a warning). Adding a folder like `extras/` is a schema change.
+
+The manifest carries each schema with the SHA-256 of the file's **exact
+bytes**. An installer compares that with the schema it was built with and,
+if they differ, refuses to DOWNLOAD for that game (reconfiguring and
+uninstalling keep working). So:
+
+- Copy schemas from the repository's `schemas/<game>.toml` with `cp` —
+  never retype or reformat them. Even a changed comment or a CRLF line
+  ending is a different schema to every installer.
+- `manifest gen` warns when your copy differs from the one this server
+  release was built with: that is the "installers will refuse" moment.
+- **Changing a schema is a release, not an edit.** Ship an installer that
+  accepts both the old and the new schema first; only then copy the new
+  file onto the server. In the other order every installer in the wild
+  stops downloading for that game until its users update.
 
 ### 1.2 Install the unit
 
@@ -172,17 +214,32 @@ silently: if a run would drop a value the current manifest carries, it
 refuses, writes nothing and names each value. Re-run with
 `--accept-metadata-loss` when the removal is intended.
 
-**Upgrading from a server older than 2026-10-25:** older servers carried
-metadata forward from the previous manifest, so yours may hold values that
-exist in no sidecar. Run this once, before the first publish on the new
-version, and review what it wrote:
+**Upgrading from a server older than 2026-10-25** — do both, in this
+order, BEFORE restarting the unit onto the new version:
 
-```sh
-podman exec pacenotes pacenotes-server manifest migrate-to-sidecars --data /data
-```
+1. Give every game its install schema. Without it the new server publishes
+   nothing for that game:
 
-It only adds keys a sidecar lacks (never overwrites), never pins the old
-`0.0.0` default, and is safe to re-run.
+   ```sh
+   cp schemas/rbr.toml ~/pacenotes/data/rbr/schema.toml
+   ```
+
+2. Older servers carried metadata forward from the previous manifest, so
+   yours may hold values that exist in no sidecar. Move them into sidecars
+   and review what it wrote:
+
+   ```sh
+   podman exec pacenotes pacenotes-server manifest migrate-to-sidecars --data /data
+   ```
+
+   It only adds keys a sidecar lacks (never overwrites), never pins the old
+   `0.0.0` default, and is safe to re-run.
+
+Forgetting either is not an outage: `manifest gen` refuses to write a
+manifest that would take a live game off the server (missing schema) or
+drop metadata, so the old catalogue keeps being served and the container log
+says why. `--accept-unpublish` / `--accept-metadata-loss` override when that
+is really what you want.
 
 ### Message of the day
 

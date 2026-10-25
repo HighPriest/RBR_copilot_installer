@@ -100,8 +100,11 @@ game, and each game owns its own packages tree:
 
     data/rbr/packages/public/codriver/polish/male/Kamil.zip
          ^game         ^dir   ^------------ name -----^
+    data/rbr/schema.toml      the game's install schema (no schema = the
+                              game publishes nothing)
     data/motd/<lang>.txt      message of the day (no game: shown before one
                               is chosen)
+    data/reports/             conflict reports from installers
     data/manifest.json        every game in one document
 
 `game` therefore comes from the LAYOUT, never from a sidecar — the same rule
@@ -143,12 +146,18 @@ directory or category where a game belongs, a game folder with no
   paths — package refs and relative paths are catalogue data the server
   already has. Unauthenticated write, so: capped body, validated fields,
   rate-limited, append-only storage. See `server/TASKS.md` S10.
-- The manifest carries a VERSION. Choice categories live in the installer
-  (their labels and explanations are localized UI text, which cannot come
-  from the server), so a catalogue can outgrow an old build. An installer
-  that sees a newer manifest blocks DOWNLOADING only — reconfiguring and
-  uninstalling what the user already has keeps working. See `server/TASKS.md`
-  S11.
+- The manifest carries each game's INSTALL SCHEMA (`Manifest.schemas`,
+  `shared::GameSchema`): the game's categories, which ask for one pick, and
+  where each installs — plus the SHA-256 of the schema file's RAW BYTES. It
+  replaces the earlier "manifest version": what an installer can fall behind
+  on is the shape of a game's catalogue, not the package list. The installer
+  uses it as a COMPATIBILITY CHECK ONLY (its behaviour and localized labels
+  stay compiled in; `install_root` is a token, never a path, so a server can
+  never steer where files go). A hash the installer does not know blocks
+  DOWNLOADING for that game only — reconfiguring and uninstalling keep
+  working. The canonical files are `schemas/<game>.toml` (byte-exact,
+  `.gitattributes` `-text`); installers embed them. See `server/TASKS.md`
+  S11 and `deploy/README.md` for the rollout order.
 
 Any protocol change = change `shared/` first, then both sides in the same PR.
 

@@ -108,6 +108,9 @@ try {
         Compress-Archive -Path (Join-Path $work 'stage\Plugins') `
             -DestinationPath (Join-Path $into ((Split-Path $rel -Leaf) + '.zip')) -Force
     }
+    # A game without a schema publishes nothing, and this catalogue uses exactly RBR's.
+    Copy-Item -LiteralPath (Join-Path $repoRoot 'schemas\rbr.toml') `
+        -Destination (Join-Path $data 'rbr\schema.toml')
     & $server manifest gen --data $data 2>&1 | Out-Null
 
     $port = Get-FreePort

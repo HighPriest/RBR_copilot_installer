@@ -1,10 +1,3 @@
-fn write_package(data_dir: &std::path::Path, game: &str, rest: &str, bytes: &[u8]) {
-    crate::store::fixture_tree::write(
-        &crate::store::fixture_tree::package_path(data_dir, game, rest),
-        bytes,
-    );
-}
-
 fn find<'a>(
     generated: &'a crate::store::Generated,
     reference: &str,
@@ -22,9 +15,9 @@ fn find<'a>(
 fn scans_subdirs_and_hashes() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/basic.zip", b"hello");
-    write_package(dir, "rbr", "premium-voices/pro.zip", b"world!");
-    write_package(dir, "rbr", "public/notes.txt", b"ignored");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
+    crate::store::fixture_tree::write_package(dir, "rbr", "premium-voices/pro.zip", b"world!");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/notes.txt", b"ignored");
 
     let generated = crate::store::fixture_tree::generate(dir);
     assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -45,9 +38,9 @@ fn scans_subdirs_and_hashes() {
 fn sidecar_supplies_install_metadata() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/english.zip", b"lang");
-    write_package(dir, "rbr", "public/eva.zip", b"voice");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/english.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/eva.zip", b"voice");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/eva.toml",
@@ -59,7 +52,7 @@ fn sidecar_supplies_install_metadata() {
             requires = ["public/english"]
         "#,
     );
-    write_package(
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/english.toml",
@@ -82,9 +75,9 @@ fn sidecar_supplies_install_metadata() {
 fn the_manifest_is_a_pure_function_of_what_is_on_disk() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/basic.zip", b"hello");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
     crate::store::write_manifest(dir, &crate::store::fixture_tree::legacy_manifest()).unwrap();
-    write_package(
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/basic.toml",
@@ -125,9 +118,14 @@ fn has_error(generated: &crate::store::Generated, fragment: &str) -> bool {
 fn a_broken_sidecar_withholds_its_package_and_nothing_else() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/basic.zip", b"hello");
-    write_package(dir, "rbr", "public/basic.toml", b"categoy = \"sounds\"\n");
-    write_package(dir, "rbr", "public/other.zip", b"fine");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
+    crate::store::fixture_tree::write_package(
+        dir,
+        "rbr",
+        "public/basic.toml",
+        b"categoy = \"sounds\"\n",
+    );
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/other.zip", b"fine");
 
     let generated = crate::store::fixture_tree::generate(dir);
     let names: Vec<&str> = generated
@@ -148,8 +146,8 @@ fn a_broken_sidecar_withholds_its_package_and_nothing_else() {
 fn sidecar_keys_that_carried_positional_metadata_withhold_the_package() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/language/polish.zip", b"lang");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/language/polish.zip", b"lang");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/language/polish.toml",
@@ -169,8 +167,13 @@ fn sidecar_keys_that_carried_positional_metadata_withhold_the_package() {
 fn sidecar_without_zip_warns() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/basic.zip", b"hello");
-    write_package(dir, "rbr", "public/ghost.toml", b"version = \"1.0.0\"\n");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
+    crate::store::fixture_tree::write_package(
+        dir,
+        "rbr",
+        "public/ghost.toml",
+        b"version = \"1.0.0\"\n",
+    );
 
     let generated = crate::store::fixture_tree::generate(dir);
     assert_eq!(generated.manifest.packages.len(), 1);
@@ -188,14 +191,14 @@ fn sidecar_without_zip_warns() {
 fn dangling_and_cross_boundary_requires_warn() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/voice.zip", b"voice");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/voice.zip", b"voice");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/voice.toml",
         b"requires = [\"public/missing\", \"not-a-ref\", \"premium/lang\"]\n",
     );
-    write_package(dir, "rbr", "premium/lang.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "rbr", "premium/lang.zip", b"lang");
 
     let warnings = crate::store::fixture_tree::generate(dir)
         .warnings
@@ -210,14 +213,14 @@ fn dangling_and_cross_boundary_requires_warn() {
 fn requires_resolve_within_one_game_only() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/voice.zip", b"voice");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/voice.zip", b"voice");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/voice.toml",
         b"requires = [\"public/lang\"]\n",
     );
-    write_package(dir, "beamng", "public/lang.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "beamng", "public/lang.zip", b"lang");
 
     let warnings = crate::store::fixture_tree::generate(dir)
         .warnings
@@ -233,15 +236,15 @@ fn requires_resolve_within_one_game_only() {
 fn a_same_named_package_in_another_game_does_not_shadow_the_real_one() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/voice.zip", b"voice");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/voice.zip", b"voice");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/voice.toml",
         b"requires = [\"public/lang\"]\n",
     );
-    write_package(dir, "rbr", "public/lang.zip", b"lang");
-    write_package(dir, "beamng", "public/lang.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/lang.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "beamng", "public/lang.zip", b"lang");
 
     let generated = crate::store::fixture_tree::generate(dir);
     assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -251,20 +254,25 @@ fn a_same_named_package_in_another_game_does_not_shadow_the_real_one() {
 fn recurses_and_names_packages_by_their_path() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/codriver/polish/male/Kamil.zip",
         b"kamil",
     );
-    write_package(
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/codriver/polish/female/Magda.zip",
         b"magda",
     );
-    write_package(dir, "rbr", "public/language/polish.zip", b"polish");
-    write_package(dir, "rbr", "private/style/Descriptive.zip", b"descriptive");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/language/polish.zip", b"polish");
+    crate::store::fixture_tree::write_package(
+        dir,
+        "rbr",
+        "private/style/Descriptive.zip",
+        b"descriptive",
+    );
 
     let generated = crate::store::fixture_tree::generate(dir);
     assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -295,14 +303,14 @@ fn recurses_and_names_packages_by_their_path() {
 fn sidecars_are_read_next_to_a_nested_zip() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    write_package(dir, "rbr", "public/language/polish.zip", b"lang");
-    write_package(
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/language/polish.zip", b"lang");
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/codriver/polish/male/Kamil.zip",
         b"kamil",
     );
-    write_package(
+    crate::store::fixture_tree::write_package(
         dir,
         "rbr",
         "public/codriver/polish/male/Kamil.toml",
@@ -327,7 +335,7 @@ fn motd_directory_is_not_a_game() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     crate::store::fixture_tree::write(&dir.join("motd/en.txt"), b"news");
-    write_package(dir, "rbr", "public/language/polish.zip", b"lang");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/language/polish.zip", b"lang");
 
     let generated = crate::store::fixture_tree::generate(dir);
     assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
@@ -337,7 +345,7 @@ fn motd_directory_is_not_a_game() {
 #[test]
 fn names_needing_url_encoding_warn_but_publish() {
     let tmp = tempfile::tempdir().unwrap();
-    write_package(
+    crate::store::fixture_tree::write_package(
         tmp.path(),
         "rbr",
         "public/style/Numeric Standard.zip",
@@ -375,8 +383,8 @@ fn a_top_level_zip_is_withheld_as_an_error() {
 #[test]
 fn skips_invalid_directory_names() {
     let tmp = tempfile::tempdir().unwrap();
-    write_package(tmp.path(), "rbr", "Bad Dir/x.zip", b"x");
-    write_package(tmp.path(), "rbr", "public/ok.zip", b"x");
+    crate::store::fixture_tree::write_package(tmp.path(), "rbr", "Bad Dir/x.zip", b"x");
+    crate::store::fixture_tree::write_package(tmp.path(), "rbr", "public/ok.zip", b"x");
 
     let generated = crate::store::fixture_tree::generate(tmp.path());
     assert_eq!(generated.manifest.packages.len(), 1);
@@ -385,4 +393,110 @@ fn skips_invalid_directory_names() {
         .warnings
         .iter()
         .any(|warning| warning.contains("Bad Dir")));
+}
+
+fn polish_language_for_rbr(dir: &std::path::Path) {
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/language/polish.zip", b"rbr");
+}
+
+/// An error, not a warning: packages exist and were withheld.
+#[test]
+fn a_game_without_a_schema_publishes_nothing() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    polish_language_for_rbr(dir);
+    crate::store::fixture_tree::write(
+        &crate::store::fixture_tree::package_path(dir, "beamng", "public/language/polish.zip"),
+        b"bng",
+    );
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert_eq!(generated.manifest.packages.len(), 1);
+    assert_eq!(generated.manifest.packages[0].game, "rbr");
+    assert!(!generated.manifest.schemas.contains_key("beamng"));
+    assert!(
+        has_error(&generated, "beamng/schema.toml is missing"),
+        "{:?}",
+        generated.errors
+    );
+}
+
+#[test]
+fn each_game_publishes_its_schema() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    polish_language_for_rbr(dir);
+    let schema_bytes = std::fs::read(dir.join("rbr").join(pacenotes_shared::SCHEMA_FILE)).unwrap();
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert!(generated.errors.is_empty(), "{:?}", generated.errors);
+    assert_eq!(
+        generated.manifest.schemas["rbr"].sha256,
+        crate::store::sha256_bytes(&schema_bytes)
+    );
+}
+
+#[test]
+fn an_undeclared_category_is_skipped_with_a_warning() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    polish_language_for_rbr(dir);
+    crate::store::fixture_tree::write(
+        &crate::store::fixture_tree::package_path(dir, "rbr", "public/extras/Bonus.zip"),
+        b"y",
+    );
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    let names: Vec<&str> = generated
+        .manifest
+        .packages
+        .iter()
+        .map(|package| package.name.as_str())
+        .collect();
+    assert_eq!(names, vec!["language/polish"]);
+    assert!(
+        generated
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("\"extras\"") && warning.contains("does not declare")),
+        "{:?}",
+        generated.warnings
+    );
+}
+
+#[test]
+fn an_invalid_schema_withholds_only_its_own_game() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    polish_language_for_rbr(dir);
+    crate::store::fixture_tree::write_package(dir, "beamng", "public/a/x.zip", b"x");
+    crate::store::fixture_tree::write(
+        &dir.join("beamng").join(pacenotes_shared::SCHEMA_FILE),
+        b"[[category]]\nid=\"a\"\nselect=\"two\"\ninstall_root=\"game\"\n",
+    );
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert_eq!(generated.manifest.packages.len(), 1);
+    assert_eq!(generated.manifest.packages[0].game, "rbr");
+    assert!(
+        has_error(&generated, "beamng/schema.toml"),
+        "{:?}",
+        generated.errors
+    );
+}
+
+#[test]
+fn the_reports_folder_is_not_a_game() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    crate::store::fixture_tree::write(
+        &dir.join(crate::store::REPORTS_DIR)
+            .join("conflicts-2026-10-25.jsonl"),
+        b"{}\n",
+    );
+    polish_language_for_rbr(dir);
+
+    let generated = crate::store::fixture_tree::generate(dir);
+    assert!(generated.warnings.is_empty(), "{:?}", generated.warnings);
+    assert!(generated.errors.is_empty(), "{:?}", generated.errors);
 }

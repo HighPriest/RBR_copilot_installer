@@ -35,6 +35,13 @@ impl Server {
             b"beamng-bytes",
         );
         write(&data.path().join("motd/en.txt"), b"English news");
+        // Includes the categories tests add later, since a game publishes only what its schema declares.
+        declare(
+            data.path(),
+            "rbr",
+            &["basic", "secret", "other", "codriver", "style", "extra"],
+        );
+        declare(data.path(), "beamng", &["basic"]);
         regenerate(data.path());
 
         let connection = pacenotes_server::db::open(":memory:").await.unwrap();
@@ -137,4 +144,18 @@ pub fn regenerate(data: &std::path::Path) {
 pub fn write(path: &std::path::Path, bytes: &[u8]) {
     std::fs::create_dir_all(path.parent().unwrap()).unwrap();
     std::fs::write(path, bytes).unwrap();
+}
+
+/// Writes `<data>/<game>/schema.toml` declaring `categories` as optional extras.
+pub fn declare(data: &std::path::Path, game: &str, categories: &[&str]) {
+    let text: String = categories
+        .iter()
+        .map(|id| {
+            format!("[[category]]\nid = \"{id}\"\nselect = \"any\"\ninstall_root = \"game\"\n")
+        })
+        .collect();
+    write(
+        &data.join(game).join(pacenotes_shared::SCHEMA_FILE),
+        text.as_bytes(),
+    );
 }

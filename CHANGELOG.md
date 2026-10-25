@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026/10/25 — server+shared: per-game install schema (S11)
+
+Replaces the planned "manifest version". Decided in review: what an
+installer can fall behind on is the SHAPE of a game's catalogue — its
+categories, which ask for one pick, where each installs — not the package
+list.
+
+- `schemas/rbr.toml` (repository, canonical, byte-exact via
+  `.gitattributes -text`, ASCII-only) declares RBR's four categories.
+  Deployed as `<data>/<game>/schema.toml`.
+- `shared`: `Manifest.schemas: { game: GameSchema { sha256, categories } }`.
+  `sha256` is the hash of the file's RAW bytes — what installers compare.
+  All fields are plain strings so a newer server can only fail an old
+  installer's comparison, never its parse. `for_game` filters schemas too.
+- `manifest gen` is strict: no schema → nothing published for that game;
+  unparsable → same; a package in an undeclared category → skipped. The
+  server bundles the repository schemas and warns when a data root's copy
+  differs ("installers from this release will refuse"). `motd` and
+  `reports` are reserved data-root names.
+- Upgrade guard: `manifest gen` REFUSES (exit 1, nothing written) when a
+  game the current manifest serves would vanish because its schema is
+  missing — otherwise the first restart after upgrading would empty the
+  live catalogue. Rehearsed against a copy of the live data root: refused
+  without the schema; with it, all 24 packages published under hash
+  `b9c5d124…`.
+- Installer test fixtures (`Test-HttpClient.ps1`, `Test-WizardDownload.ps1`)
+  now ship schema files; not run here (Windows-only).
+- Installer side recorded in `installer/TASKS.md`: embed the schema and
+  compare hashes (a list per game, for rollouts), block downloading only.
+
+**Before redeploying the live server:** `cp schemas/rbr.toml
+/home/user/pacenotes/data/rbr/schema.toml`, then run `manifest migrate-to-sidecars`
+(`deploy/README.md`, "Upgrading").
+
 ## 2026/10/25 — server: the manifest is reproducible (DESIGN-REVIEW D5)
 
 - `manifest gen` no longer reads the previous manifest: the catalogue is a

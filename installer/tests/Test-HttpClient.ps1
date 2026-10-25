@@ -131,6 +131,12 @@ try {
                 -DestinationPath (Join-Path $into 'Kamil.zip') -Force
         }
     }
+    # A game without a schema publishes nothing; dirtrally2 has no canonical one, so it declares its category.
+    # WriteAllText writes no BOM, which the server's TOML parser would reject.
+    Copy-Item -LiteralPath (Join-Path $repoRoot 'schemas\rbr.toml') `
+        -Destination (Join-Path $dataRoot 'rbr\schema.toml')
+    [System.IO.File]::WriteAllText((Join-Path $dataRoot 'dirtrally2\schema.toml'),
+        "[[category]]`nid = `"codriver`"`nselect = `"one`"`ninstall_root = `"game`"`n")
 
     & $server manifest gen --data $dataRoot | Out-Null
     $manifest = Get-Content -Raw (Join-Path $dataRoot 'manifest.json') | ConvertFrom-Json

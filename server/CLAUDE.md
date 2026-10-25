@@ -29,6 +29,7 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
   migrations/0001_init.sql.
 - **Data root** (`--data`, default `./data`): ONE server serves every game.
 
+      data/<game>/schema.toml                       install schema (S11)
       data/<game>/packages/<directory>/<name>.zip   packages
       data/motd/<lang>.txt                          message of the day
       data/manifest.json                            every game, one document
@@ -38,6 +39,16 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
   then the access directory, then the package's `name` — its path below the
   access directory, nested as deep as the operator likes. Nothing positional
   comes from a sidecar, which is why `game` is NOT a sidecar key.
+- **Install schema** (`<game>/schema.toml`, S11): `[[category]]` entries
+  with `id` (a category folder), `select` (`one`|`any`) and `install_root`
+  (a token like `game`, never a path); `deny_unknown_fields`, ids unique and
+  `valid_id`. Publishing is STRICT: no schema → the game publishes nothing
+  (error); unparsable → same; a package in an undeclared category → skipped
+  (warning). The manifest embeds each schema with the SHA-256 of its RAW
+  bytes — the value installers compare. The server bundles the repository's
+  `schemas/<game>.toml` (`store::BUNDLED_SCHEMAS`) and warns when a data
+  root's copy differs: installers of that release would refuse it.
+  `motd` and `reports` are reserved data-root names, never games.
 - **Packages**: game-root overlay zips, dumb payloads, never introspected by
   the server.
 - **Sidecar metadata** (optional): `<name>.toml` next to its zip at whatever
@@ -141,7 +152,11 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
 - `pacenotes-server manifest migrate-to-sidecars --data ./data` — one-off:
   copy values that exist only in manifest.json into sidecars (adds missing
   keys, never overwrites, never pins `0.0.0`/`sha-…`; idempotent).
-- `pacenotes-server manifest gen --data ./data [--accept-metadata-loss]` — scan + sidecar merge +
+- `pacenotes-server manifest gen --data ./data [--accept-metadata-loss] [--accept-unpublish]`
+  — refuses (exit 1, writes nothing) when a game the current manifest serves
+  would vanish because its schema is missing/broken, unless
+  `--accept-unpublish`: an upgrade that forgot `schema.toml` must not empty
+  the live catalogue. Scan + sidecar merge +
   validation as described under Data model. Warnings for: sidecar without
   zip, invalid directory name, top-level zips, dangling `requires`,
   cross-directory `requires` pointing into a NON-public directory from a

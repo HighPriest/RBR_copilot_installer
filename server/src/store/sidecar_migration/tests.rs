@@ -6,7 +6,7 @@ fn basic_zip(dir: &std::path::Path) -> std::path::PathBuf {
 fn migration_moves_manifest_only_values_into_sidecars_once() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    crate::store::fixture_tree::write(&basic_zip(dir), b"hello");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
     crate::store::fixture_tree::write(
         &basic_zip(dir).with_extension("toml"),
         b"# hand-written\ndisplay_name = \"Kept\"",
@@ -47,7 +47,7 @@ fn migration_moves_manifest_only_values_into_sidecars_once() {
 fn migration_never_pins_a_default_or_derived_version() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    crate::store::fixture_tree::write(&basic_zip(dir), b"hello");
+    crate::store::fixture_tree::write_package(dir, "rbr", "public/basic.zip", b"hello");
     for version in ["0.0.0", "sha-2cf24dba"] {
         let mut manifest = crate::store::fixture_tree::legacy_manifest();
         manifest.packages[0].version = version.into();

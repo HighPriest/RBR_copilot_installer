@@ -76,6 +76,10 @@ enum ManifestCommand {
         /// disappear; without it, `gen` refuses and names them.
         #[arg(long)]
         accept_metadata_loss: bool,
+        /// Publish although a game being served would vanish because its
+        /// schema.toml is missing or broken; without it, `gen` refuses.
+        #[arg(long)]
+        accept_unpublish: bool,
     },
     /// Copy values that live only in manifest.json into sidecars, so a
     /// regeneration keeps them.
@@ -116,8 +120,13 @@ async fn main() -> anyhow::Result<std::process::ExitCode> {
                 ManifestCommand::Gen {
                     data,
                     accept_metadata_loss,
+                    accept_unpublish,
                 },
-        } => generate_manifest(std::path::Path::new(&data), accept_metadata_loss),
+        } => generate_manifest(
+            std::path::Path::new(&data),
+            accept_metadata_loss,
+            accept_unpublish,
+        ),
         Command::Manifest {
             command: ManifestCommand::MigrateToSidecars { data },
         } => migrate_to_sidecars(std::path::Path::new(&data)),
@@ -267,15 +276,39 @@ fn print_credentials(credentials: &[pacenotes_server::admin::Credential]) {
     }
 }
 
-/// Exit 1 without writing anything when values would vanish unannounced and
-/// `accept_metadata_loss` is not set.
+/// Exit 1 without writing anything when a live game or metadata would vanish
+/// unannounced and the matching `accept_*` flag is not set.
 fn generate_manifest(
     data: &std::path::Path,
     accept_metadata_loss: bool,
+    accept_unpublish: bool,
 ) -> anyhow::Result<std::process::ExitCode> {
     let generated = pacenotes_server::store::generate(data)?;
     let manifest = &generated.manifest;
-    let losses = metadata_losses(data, manifest);
+    let current = current_manifest(data);
+    let vanishing = pacenotes_server::store::unpublished_games(&current, manifest);
+    if !vanishing.is_empty() && !accept_unpublish {
+        for error in &generated.errors {
+            eprintln!("ERROR: {error}");
+        }
+        eprintln!(
+            "REFUSING to publish: these games are live now and would be taken off the \
+             server entirely, because their schema.toml is missing or broken:"
+        );
+        for game in &vanishing {
+            eprintln!(
+                "  {game}  (fix: cp schemas/{game}.toml <data>/{game}/{})",
+                pacenotes_shared::SCHEMA_FILE
+            );
+        }
+        eprintln!(
+            "Nothing was written; the current manifest keeps being served. Re-run with \
+             --accept-unpublish if removing the game is intended."
+        );
+        return Ok(std::process::ExitCode::FAILURE);
+    }
+
+    let losses = pacenotes_server::store::metadata_losses(&current, manifest);
     if !losses.is_empty() && !accept_metadata_loss {
         eprintln!("REFUSING to publish: this would drop metadata the current manifest carries:");
         for loss in &losses {
@@ -323,17 +356,14 @@ fn generate_manifest(
     Ok(std::process::ExitCode::from(EXIT_PUBLISHED_WITH_ERRORS))
 }
 
-/// What publishing `next` would drop from the manifest on disk; an unreadable
-/// current manifest leaves nothing to compare against.
-fn metadata_losses(data: &std::path::Path, next: &pacenotes_shared::Manifest) -> Vec<String> {
+/// The manifest being served, which a publish is checked against; an
+/// unreadable one leaves nothing to compare.
+fn current_manifest(data: &std::path::Path) -> pacenotes_shared::Manifest {
     let path = data.join(pacenotes_server::store::MANIFEST_FILE);
-    match pacenotes_server::store::read_manifest(&path) {
-        Ok(current) => pacenotes_server::store::metadata_losses(&current, next),
-        Err(e) => {
-            eprintln!("warning: the current manifest does not load ({e}); nothing to compare");
-            Vec::new()
-        }
-    }
+    pacenotes_server::store::read_manifest(&path).unwrap_or_else(|e| {
+        eprintln!("warning: the current manifest does not load ({e}); nothing to compare");
+        pacenotes_shared::Manifest::default()
+    })
 }
 
 /// Exit 2 when some packages could not be migrated.
