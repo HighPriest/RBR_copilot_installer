@@ -1,4 +1,4 @@
-# Server tasks (S1..S8)
+# Server tasks (S1..S11)
 
 ## S1 — Compile + pin
 - [x] `cargo build -p pacenotes-server`; fix any version breakage from the
@@ -89,7 +89,11 @@
       access-directory level is missing — which is exactly how the real
       `server/data` tree was filed.
 
-## S10 — One server, every game
+## S9b — One server, every game
+
+(Numbered S9b on 2026-10-25: it was a second "S10". Root `CLAUDE.md` and
+`installer/TASKS.md` already cite S10 = conflict reports and S11 = install
+schema, so the completed section moved rather than the open ones.)
 - [x] Data root replaces the packages root: `--data` /`PACENOTES_DATA_DIR`
       (default `./data`), layout `<data>/<game>/packages/<directory>/<name>.zip`,
       `<data>/motd/<lang>.txt`, `<data>/manifest.json`.
@@ -157,7 +161,7 @@
 - base64url is 20 hand-written lines with known-vector tests rather than a
   dependency.
 
-## S10 implementation notes
+## S9b implementation notes
 
 - `game` could have been a sidecar key, a URL query or a folder level. The
   folder won for the same reason the tree did: one source of truth, and the
@@ -211,41 +215,126 @@ here. The reasoning is in `installer/CLAUDE.md` under "Overlapping files" —
 only the operator can fix a catalogue that ships two packages fighting over
 one path, and they cannot fix what they never hear about.
 
+Payload revised in review (2026-10-25): flat `packages`/`files` lists lose
+WHICH packages fought over WHICH file once a run has more than one conflict,
+and the installer already knows every writer in install order. The client's
+own timestamp is dropped: it is untrusted, so the server stamps the time.
+
 - [ ] `POST /report/conflict`, no auth (an anonymous user hits conflicts
-      too), `application/json`:
+      too), `application/json`, body = `shared::ConflictReport`:
 
-      { "at": "2026-10-25T18:15:00Z", "game": "rbr",
-        "installer": "0.2.0",
-        "packages": ["public/language/polish",
-                     "public/codriver/polish/male/Kamil"],
-        "files": ["Plugins/Pacenote/PaceNote.ini"] }
+      { "game": "rbr", "installer": "0.2.0",
+        "conflicts": [
+          { "file": "Plugins/Pacenote/PaceNote.ini",
+            "packages": ["public/language/polish",
+                         "public/codriver/polish/male/Kamil"] } ] }
 
-- [ ] Body capped hard (a few kB) and the file list truncated server-side.
-      This is an unauthenticated write endpoint: treat every field as
-      hostile, validate `game` with `valid_id` and the refs with
-      `PackageRef::parse`, and never echo any of it back.
-- [ ] Rate-limit per IP. A broken client could otherwise report on every
-      run, and this endpoint exists to be noticed, not to be a megaphone.
+      `packages` are "directory/name" refs scoped by `game` (like
+      `requires`), in install order — the last one won.
+- [ ] Body capped at 8 KiB, ≤ 32 conflicts, 2..=8 packages each, `file`
+      `valid_name` and ≤ 260 bytes, `installer` `[0-9A-Za-z.+-]{1,32}`. This
+      is an unauthenticated write endpoint: treat every field as hostile,
+      validate `game` with `valid_id` and the refs with `PackageRef::parse`,
+      drop invalid entries (counted), and never echo any of it back.
+      202 empty body; 400 when nothing valid remains; 413; 429.
+- [ ] Rate limit per CLIENT: token bucket per IP plus a global ceiling. The
+      server sits behind Caddy, so the peer address is Caddy's for every
+      request: the client IP comes from `X-Forwarded-For`, honoured ONLY
+      when the peer matches a configured `--trusted-proxy` (IP or CIDR);
+      otherwise the peer address is the key. A header from anyone else is
+      ignored, so it cannot be used to dodge the limit.
 - [ ] Store append-only — one JSON line per report under
-      `data/reports/conflicts-<date>.jsonl` is enough, and needs no schema
-      or migration. No DB table: these are diagnostics, not state the
-      server reasons about.
-- [ ] `manifest gen` should eventually read them and warn about pairs that
-      overlap, which turns a user's bad day into a publishing-time check.
+      `data/reports/conflicts-<date>.jsonl`, stamped with the server's
+      `received_at`. No DB table: these are diagnostics, not state the
+      server reasons about. `reports` is a reserved data-root name, so
+      `manifest gen` never mistakes it for a game.
+- [ ] `manifest gen` reads the last 30 days of reports and warns about
+      package pairs reported as overlapping, which turns a user's bad day
+      into a publishing-time check.
 - [ ] Nothing in a report identifies a user: package refs and relative
-      paths are catalogue data the server already has. Keep it that way —
-      no token, no hostname, no local paths. Document it in
-      `deploy/README.md` so the operator can answer the question honestly.
+      paths are catalogue data the server already has. No token, no
+      hostname, no local paths — and no IP is stored (the rate limiter keeps
+      addresses in memory only). Document it in `deploy/README.md` so the
+      operator can answer the question honestly.
 
-## S11 — Manifest version (decided 2026-10-25, see also S1 in DESIGN-REVIEW.md)
+## S11 — Per-game install schema (decided 2026-10-25; replaces "manifest version")
 
-Choice categories live in the installer, not the manifest (localized UI
-text cannot come from the server). So a server that grows new categories is
-ahead of an old installer, and the installer has to be able to tell.
+Originally "the manifest carries a version". Redefined in review: what an
+installer can fall behind on is not the package LIST — new packages in known
+categories are just more of the same — but the shape of a game's catalogue:
+which categories exist, which ask for a single pick, and where each
+installs. That is a per-game schema, and only a change to it should stop an
+installer.
 
-- [ ] `Manifest` carries a version. `shared/` changes first, then both
-      sides in the same PR.
-- [ ] `manifest gen` writes the current version.
-- [ ] The installer compares it with the highest it understands and, when
-      the manifest is newer, blocks DOWNLOADING only — reconfiguring and
-      uninstalling what the user already has must keep working.
+- [ ] `data/<game>/schema.toml`, hand-editable:
+
+      [[category]]
+      id = "codriver"        # a top-level folder under the access directory
+      select = "one"         # one = a choice the user must make; any = optional
+      install_root = "game"  # a SYMBOLIC token the installer knows; never a path
+
+      The canonical copy lives in the repository at `schemas/<game>.toml`
+      (byte-exact: `.gitattributes` marks it `-text`), which is also what
+      the installer embeds.
+- [ ] `manifest gen` embeds each game's schema in manifest.json —
+      `schemas: { "<game>": { sha256, categories } }` — where `sha256` is
+      the hash of the file's RAW BYTES. The installer compares it with the
+      hash of the schema it was built with. Any byte change, a comment
+      included, therefore counts as a change: that is accepted, and is why
+      the repository copy is the one to edit.
+- [ ] The installer uses the schema as a COMPATIBILITY CHECK ONLY. Its
+      behaviour — categories, single pick, install root, the localized
+      labels — stays compiled in. A server can therefore not redirect where
+      files are written, which keeps the root rule that a compromised server
+      gains no installer behaviour.
+- [ ] A mismatch blocks DOWNLOADING only, for that game only.
+      Reconfiguring, repairing, uninstalling and restore keep working.
+- [ ] Strict publishing: a game with no `schema.toml` publishes NOTHING; a
+      schema that does not parse skips its game with an error; a package
+      whose category the schema does not declare is skipped with a warning.
+      Otherwise a category the installer cannot place slips through without
+      the schema changing — the exact case this exists to catch.
+- [ ] Rollout order for a schema change: release an installer that accepts
+      BOTH the old and the new hash first, then switch the server's file.
+      Switching the server first blocks every installer in the wild.
+
+## S12 — Period-2 hardening from DESIGN-REVIEW.md (scheduled 2026-10-25)
+
+Folded into the S10/S11 work at the maintainer's request. IDs point back to
+`DESIGN-REVIEW.md`, where the reasoning is.
+
+Auth correctness
+- [ ] **D3** No enumeration through status codes. Non-public path with no
+      live token → 401 whether or not the package exists; live token without
+      the grant, or no such package → 404. 403 is gone. (Keeps the
+      installer's "anonymous protected download = 401" test true.)
+- [ ] **D8** Token rows decode fail-CLOSED.
+- [ ] **D9** Public downloads never touch the DB; `/packages` falls back to
+      the public listing on a DB error; tokens not shaped `pcn_` + 43
+      base64url characters are rejected before any query.
+- [ ] **D2** `GET /whoami`: 200 `{expires_at}` for a live key, 401
+      otherwise — the only way an installer can tell a typo from a valid key.
+
+Robustness
+- [ ] **D10** SIGTERM handled, drain bounded to 20 s.
+- [ ] **S5** `manifest.json` written atomically; a broken sidecar or schema
+      skips only its package or game and the run exits non-zero; the
+      entrypoint says so loudly.
+- [ ] **S7** Local DB: WAL + `busy_timeout`.
+- [ ] **S4** (minimal) A file whose size differs from the manifest is 503,
+      not a short body that fails the client's sha check.
+
+Observability and HTTP hygiene
+- [ ] **D11** One INFO access-log line per response (token-hash prefix,
+      never the token).
+- [ ] **D12** `Content-Disposition` names the leaf, with RFC 6266
+      `filename*`.
+- [ ] **C2** Cache headers: `/packages` private/no-store + `Vary:
+      Authorization`; protected downloads private/no-store; public
+      downloads `ETag` + `If-None-Match` → 304.
+
+Publishing purity
+- [ ] **D5** The manifest is a pure function of zips + sidecars + schemas.
+      A sidecar without `version` gets `sha-<first 8 hex of sha256>`.
+      `manifest gen` refuses to drop metadata the current manifest carries
+      unless told to; `manifest migrate-to-sidecars` moves it into sidecars.
