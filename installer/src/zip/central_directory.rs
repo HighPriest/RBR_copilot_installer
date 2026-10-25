@@ -51,7 +51,20 @@ pub fn read(zip: &[u8]) -> Result<Vec<Entry>, super::ZipError> {
             entries.len()
         )));
     }
-    Ok(entries)
+    Ok(keep_last_of_each_path(entries))
+}
+
+/// A zip may list one path twice, or in two cases that NTFS treats as one;
+/// extraction leaves the last on disk, so the listing keeps the last too.
+fn keep_last_of_each_path(entries: Vec<Entry>) -> Vec<Entry> {
+    let mut seen = std::collections::BTreeSet::new();
+    let mut kept: Vec<Entry> = entries
+        .into_iter()
+        .rev()
+        .filter(|entry| seen.insert(entry.path.to_lowercase()))
+        .collect();
+    kept.reverse();
+    kept
 }
 
 /// The entry at `at`, and where the next one starts.

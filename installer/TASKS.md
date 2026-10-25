@@ -334,6 +334,48 @@ Reasoning lives in `installer/CLAUDE.md` and `installer/DESIGN.md`.
 8. Restore works on dated restore points, and REMOVES what was installed
    after the chosen one (P14).
 
+### Sequencing (decided when I7 started)
+
+I7 is too big for one commit, and the pieces have a natural order — each
+leaves the repo buildable and tested:
+
+- **I7a** (done) `zip.rs` hardening: the P5 name rules, duplicate entries,
+  and entries carrying their SIZE (the free-space pre-flight needs it).
+- **I7b** `ledger.rs` — pure data + atomic IO + ownership queries.
+- **I7c** `engine.rs plan()` — a pure function over selection + ledger +
+  cache. Table tests, no filesystem.
+- **I7d** `engine.rs execute()`, restore points, backup. Tempdir tests.
+- **I7e** `install.rs` — the RBR configuration step.
+- **I7f** Wiring: scene 6's two new phases, the ledger merged into the
+  tree (P1), the removal confirmation, conflict detection and logging.
+
+NOT in I7, though Period 1 decided them:
+
+- **The restore SCENE** (P14) needs the points to exist first, and the
+  review already places the scene in period 2. I7 WRITES restore points
+  from the first install — early runs must not be the ones with no way
+  back — and the UI to use them follows.
+- **Per-game choice categories (P9) and the manifest version (S11)** are a
+  separate task. They touch `shared`, `tree.rs`, `choices.rs`, `wizard.rs`
+  and both string tables, and the engine does not care which categories
+  are "choice" ones: it is handed a selection. Mixing that refactor into
+  the engine would make both impossible to review.
+- **The conflict REPORT** (`POST /report/conflict`) waits for the server
+  endpoint, `server/TASKS.md` S10. I7 detects overlaps and logs them;
+  posting them is a few lines once there is something to post to.
+
+Two corrections to what Period 1 recorded, found while planning:
+
+- **`prior: "identical"` cannot rely on pinning.** The cache is per-user,
+  the ledger lives in the game folder, and the sweep cannot know which
+  folders reference which payloads without a registry of game folders.
+  So pinning is best-effort, and the CORRECTNESS rule is: if the original
+  cannot be recovered (payload gone, entry missing), leave the file alone
+  and log it. Never delete what cannot be put back.
+- **Pre-flight facts that need Win32 are injected**, not called:
+  `engine.rs` has to stay testable off Windows, so free disk space and
+  "is the game running" arrive as values the caller measured.
+
 ### Ledger (`ledger.rs`)
 
 - [ ] `.pacenotes\installed.json` read/write, atomic temp+rename, with the
@@ -370,8 +412,12 @@ Reasoning lives in `installer/CLAUDE.md` and `installer/DESIGN.md`.
       `absent` → delete. And only when the on-disk sha still matches what
       we wrote: Steam's verify, the RSF installer or the user's own editor
       may have replaced it, and someone else's work is not ours to remove
-- [ ] Payloads referenced by an `identical` entry are PINNED against the
-      I9 orphan sweep — they are the only copy of what the user had
+- [ ] An `identical` entry can only be honoured while its payload is in
+      the cache. Pinning it against the I9 sweep is BEST EFFORT — the cache
+      is per-user and the ledger lives in the game folder, so the sweep
+      cannot see what references what. The correctness rule is therefore:
+      when the original cannot be recovered, leave the file alone and log
+      it. Never delete what cannot be put back
 - [ ] Overlaps: detect at plan time, install in order, log which package
       overwrote which, and report (below). Do not block
 - [ ] Known and accepted: after uninstalling the winner of an overlap the

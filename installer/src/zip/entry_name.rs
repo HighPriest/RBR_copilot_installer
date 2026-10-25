@@ -1,6 +1,8 @@
 /// An entry name as a relative `/`-separated path that cannot leave the target,
 /// or `None` for a name that tries: any `..` segment, a leading separator, a
-/// `:` (a drive or an alternate data stream), a NUL, or nothing at all.
+/// `:` (a drive or an alternate data stream), a NUL, or nothing at all. Names
+/// Windows would quietly rewrite go too: a trailing dot or space, and a
+/// reserved device name such as `aux.ini`.
 ///
 /// `\` is a separator too: Windows archivers write it, and treating it as a
 /// character would both mis-name files and let `..\..\x` through.
@@ -14,6 +16,8 @@ pub fn safe_relative(name: &str) -> Option<String> {
             "" | "." => continue,
             ".." => return None,
             _ if segment.contains(':') || segment.contains('\0') => return None,
+            _ if segment.ends_with('.') || segment.ends_with(' ') => return None,
+            _ if is_reserved_device(segment) => return None,
             _ => segments.push(segment),
         }
     }
@@ -21,6 +25,18 @@ pub fn safe_relative(name: &str) -> Option<String> {
         return None;
     }
     Some(segments.join("/"))
+}
+
+/// Decided on the stem, since Windows opens `NUL.txt` as the device just as it does `NUL`.
+fn is_reserved_device(segment: &str) -> bool {
+    const RESERVED: [&str; 22] = [
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    ];
+    let stem = segment.split('.').next().unwrap_or(segment);
+    RESERVED
+        .iter()
+        .any(|reserved| stem.eq_ignore_ascii_case(reserved))
 }
 
 /// UTF-8 when general-purpose flag bit 11 says so, else CP437 as the spec and

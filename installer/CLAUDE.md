@@ -83,6 +83,13 @@ noticeable code. If size regresses, fix it before continuing.
     `absent`: there was no file, so uninstall deletes it. Without this, the
     byte-identical skip quietly turns files the user already had into files
     the installer owns and later deletes.
+
+    An `identical` original is only recoverable while that payload is in
+    the cache, and nothing can guarantee it: the cache is per-user, the
+    ledger lives in the game folder, and the orphan sweep cannot see which
+    folders reference what. Pinning is best effort. The rule that holds
+    regardless: **if the original cannot be put back, the file is left
+    alone and logged — never deleted.**
   - **`state: "installing"`**, written BEFORE extracting. A run that dies
     mid-extract leaves half-written files that are in no ledger entry — so
     the next run would treat them as the user's own and back them up as the

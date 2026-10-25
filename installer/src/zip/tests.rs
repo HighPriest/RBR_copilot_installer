@@ -18,7 +18,7 @@ fn under(dir: &crate::scratch_dir::ScratchDir, relative: &str) -> std::path::Pat
 
 #[test]
 fn entries_lists_the_files_a_package_owns_and_no_directories() {
-    let listed = super::entries(DEFLATED).expect("read the fixture");
+    let listed = super::entry_paths(DEFLATED).expect("read the fixture");
     assert_eq!(
         listed,
         vec![
@@ -32,7 +32,7 @@ fn entries_lists_the_files_a_package_owns_and_no_directories() {
 /// The paths are ledger keys, so they read the same on every machine.
 #[test]
 fn paths_are_slash_separated_on_every_host() {
-    for path in super::entries(DEFLATED).expect("read the fixture") {
+    for path in super::entry_paths(DEFLATED).expect("read the fixture") {
         assert!(!path.contains('\\'), "{path}");
         assert!(!path.starts_with('/'), "{path}");
     }
@@ -42,7 +42,7 @@ fn paths_are_slash_separated_on_every_host() {
 fn extracting_puts_every_file_where_the_package_says() {
     let dir = crate::scratch_dir::ScratchDir::new("zip-extract");
     let written = super::extract(DEFLATED, &dir.0).expect("extract");
-    assert_eq!(written, super::entries(DEFLATED).expect("list"));
+    assert_eq!(written, super::entry_paths(DEFLATED).expect("list"));
     assert_eq!(
         std::fs::read(under(&dir, RBR_INI)).expect("the ini"),
         b"[PACENOTE]\r\nname=Kamil\r\n"
@@ -202,7 +202,7 @@ fn every_real_package_in_a_corpus_reads() {
         }
         let bytes = std::fs::read(&path).expect("read a package");
         let listed =
-            super::entries(&bytes).unwrap_or_else(|e| panic!("{}: {}", path.display(), e.0));
+            super::entry_paths(&bytes).unwrap_or_else(|e| panic!("{}: {}", path.display(), e.0));
         let into = dir.0.join(format!("p{packages}"));
         let written =
             super::extract(&bytes, &into).unwrap_or_else(|e| panic!("{}: {}", path.display(), e.0));
@@ -240,4 +240,121 @@ fn rename_entry(zip: &[u8], from: &str, to: &str) -> Vec<u8> {
         "expected the local header and the central directory"
     );
     renamed
+}
+
+#[test]
+fn entries_carry_the_size_each_file_will_take() {
+    let listed = super::entries(DEFLATED).expect("read the fixture");
+    let size_of = |path: &str| {
+        listed
+            .iter()
+            .find(|entry| entry.path == path)
+            .map(|entry| entry.size)
+    };
+    assert_eq!(size_of(RBR_INI), Some(24), "the uncompressed size");
+    assert_eq!(size_of(SOUND), Some(75));
+
+    let stored_total: u64 = super::entries(STORED)
+        .expect("read the stored fixture")
+        .iter()
+        .map(|entry| entry.size)
+        .sum();
+    assert_eq!(
+        listed.iter().map(|entry| entry.size).sum::<u64>(),
+        stored_total
+    );
+}
+
+#[test]
+fn the_guard_rejects_names_windows_would_silently_rewrite() {
+    for name in [
+        "Plugins/evil.txt.",
+        "Plugins/evil.txt ",
+        "Plugins./x.ini",
+        "Plugins /x.ini",
+    ] {
+        assert_eq!(super::safe_relative(name), None, "{name:?}");
+    }
+}
+
+#[test]
+fn the_guard_rejects_reserved_device_names() {
+    for name in [
+        "NUL",
+        "Plugins/nul",
+        "Plugins/aux.ini",
+        "Plugins/COM1.cfg",
+        "Plugins/lpt9",
+        "con.txt",
+    ] {
+        assert_eq!(super::safe_relative(name), None, "{name:?}");
+    }
+    for ordinary in [
+        "Plugins/console.ini",
+        "Plugins/nulls.dat",
+        "Plugins/auxiliary/x.ini",
+    ] {
+        assert!(super::safe_relative(ordinary).is_some(), "{ordinary:?}");
+    }
+}
+
+#[test]
+fn a_path_listed_twice_appears_once() {
+    let doubled = duplicate_entry(DEFLATED, "aa/evil.txt", "aa/evil.txt");
+    let listed = super::entry_paths(&doubled).expect("read it");
+    assert_eq!(
+        listed.iter().filter(|path| *path == "aa/evil.txt").count(),
+        1,
+        "{listed:?}"
+    );
+    assert_eq!(listed.len(), 3);
+
+    let other_case = duplicate_entry(DEFLATED, "aa/evil.txt", "AA/EVIL.TXT");
+    let listed = super::entry_paths(&other_case).expect("read it");
+    assert_eq!(listed.len(), 3, "{listed:?}");
+    assert!(listed.contains(&"AA/EVIL.TXT".to_string()), "{listed:?}");
+}
+
+/// A second central-directory record for an existing file, pointing at the
+/// same local header, so the archive stays valid while listing it twice.
+fn duplicate_entry(zip: &[u8], name: &str, as_name: &str) -> Vec<u8> {
+    assert_eq!(name.len(), as_name.len());
+    let u16_at = |bytes: &[u8], at: usize| u16::from_le_bytes([bytes[at], bytes[at + 1]]) as usize;
+    let u32_at = |bytes: &[u8], at: usize| {
+        u32::from_le_bytes([bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]]) as usize
+    };
+
+    let end_record = zip
+        .windows(4)
+        .rposition(|window| window == [0x50, 0x4b, 0x05, 0x06])
+        .expect("end of central directory");
+    let directory_at = u32_at(zip, end_record + 16);
+    let directory_size = u32_at(zip, end_record + 12);
+
+    let mut at = directory_at;
+    let (start, length) = loop {
+        assert!(at < directory_at + directory_size, "no record for {name}");
+        let name_length = u16_at(zip, at + 28);
+        let record = 46 + name_length + u16_at(zip, at + 30) + u16_at(zip, at + 32);
+        if &zip[at + 46..at + 46 + name_length] == name.as_bytes() {
+            break (at, record);
+        }
+        at += record;
+    };
+
+    let mut copy = zip[start..start + length].to_vec();
+    copy[46..46 + name.len()].copy_from_slice(as_name.as_bytes());
+    let mut doubled = Vec::with_capacity(zip.len() + length);
+    doubled.extend_from_slice(&zip[..start + length]);
+    doubled.extend_from_slice(&copy);
+    doubled.extend_from_slice(&zip[start + length..]);
+
+    let end_record = end_record + length;
+    for count_field in [end_record + 8, end_record + 10] {
+        let count = u16::from_le_bytes([doubled[count_field], doubled[count_field + 1]]) + 1;
+        doubled[count_field..count_field + 2].copy_from_slice(&count.to_le_bytes());
+    }
+    let size = (directory_size + length) as u32;
+    doubled[end_record + 12..end_record + 16].copy_from_slice(&size.to_le_bytes());
+    doubled
 }

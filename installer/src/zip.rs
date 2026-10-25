@@ -13,7 +13,7 @@ mod extraction;
 mod zip_error;
 
 pub use entry_name::safe_relative;
-pub use extraction::{entries, extract};
+pub use extraction::{entries, entry_paths, extract, FileEntry};
 pub use zip_error::ZipError;
 
 #[cfg(test)]

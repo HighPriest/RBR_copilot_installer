@@ -1,15 +1,34 @@
+/// One file a package will install.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FileEntry {
+    /// Relative, `/`-separated, validated.
+    pub path: String,
+    /// Uncompressed, so the pre-flight can tell whether an install fits without extracting it.
+    pub size: u64,
+}
+
 /// The files a package will own, in zip order; directory entries are left out,
 /// since an empty directory is nothing to back up, record or delete.
-pub fn entries(zip_bytes: &[u8]) -> Result<Vec<String>, super::ZipError> {
+pub fn entries(zip_bytes: &[u8]) -> Result<Vec<FileEntry>, super::ZipError> {
     Ok(super::central_directory::read(zip_bytes)?
         .into_iter()
         .filter(|entry| !entry.is_dir)
+        .map(|entry| FileEntry {
+            path: entry.path,
+            size: entry.uncompressed as u64,
+        })
+        .collect())
+}
+
+pub fn entry_paths(zip_bytes: &[u8]) -> Result<Vec<String>, super::ZipError> {
+    Ok(entries(zip_bytes)?
+        .into_iter()
         .map(|entry| entry.path)
         .collect())
 }
 
 /// Extracts into `dest_dir`, overwriting existing files as the legacy installer
-/// did, and returns the files written in the form `entries` reports them.
+/// did, and returns the files written in the form `entry_paths` reports them.
 ///
 /// Every name is validated before anything is written, so a hostile entry
 /// leaves the target untouched.
