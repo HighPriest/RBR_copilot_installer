@@ -64,17 +64,25 @@ pub const IDS_S5_NONE: u16 = 105;
 
 pub const IDS_S6_TITLE: u16 = 110;
 pub const IDS_S6_DOWNLOADING: u16 = 111;
+pub const IDS_S6_BACKUP: u16 = 112;
 pub const IDS_S6_INSTALLING: u16 = 113;
 pub const IDS_S6_FINISHED: u16 = 114;
 pub const IDS_S6_NOTHING: u16 = 115;
 pub const IDS_S6_CANCELLING: u16 = 116;
+pub const IDS_S6_CHECKING: u16 = 118;
+pub const IDS_S6_UNINSTALLING: u16 = 119;
+pub const IDS_S6_CONFIGURING: u16 = 120;
+pub const IDS_S6_CONFIRM_REMOVE: u16 = 121;
 
 pub const IDS_S7_TITLE: u16 = 130;
+pub const IDS_S7_OK: u16 = 131;
 pub const IDS_S7_FAILED: u16 = 132;
 pub const IDS_S7_CANCELLED: u16 = 133;
-pub const IDS_S7_PENDING_ENGINE: u16 = 134;
 pub const IDS_S7_GAME: u16 = 135;
 pub const IDS_S7_DOWNLOADS: u16 = 136;
 pub const IDS_S7_EXTRAS: u16 = 137;
 pub const IDS_S7_LOGFILE: u16 = 138;
 pub const IDS_S7_NOTHING_TODO: u16 = 139;
+pub const IDS_S7_CHANGED: u16 = 140;
+pub const IDS_S7_LEFT_ALONE: u16 = 141;
+pub const IDS_S7_RESTORE_POINT: u16 = 142;

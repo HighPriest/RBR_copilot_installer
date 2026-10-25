@@ -85,14 +85,15 @@ impl DownloadSelfTest {
             &mut progress,
             &cancel,
         );
-        let seconds = started.elapsed().as_secs_f64();
+        // Whole milliseconds, since formatting a float links ~16 kB.
+        let millis = started.elapsed().as_millis();
 
         let result = match outcome {
             Ok(()) => (
                 0,
                 format!(
                     "RESULT: OK\nPACKAGE: {}\nSIZE: {}\nREAD: {bytes_read}\nSHA256: {}\nVERIFIED: yes\n\
-                     PAYLOAD_ON_DISK: {}\nINDEXED: {}\nSECONDS: {seconds:.1}\n",
+                     PAYLOAD_ON_DISK: {}\nINDEXED: {}\nMILLIS: {millis}\n",
                     package.download_path(),
                     package.size,
                     package.sha256,

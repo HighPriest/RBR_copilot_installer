@@ -63,11 +63,10 @@ unsafe fn show_summary(dialog: HWND, state: &crate::wizard::state::WizardState) 
     }
 }
 
-/// Never claims an install, since backup and install wait for task I7.
 fn result_line(outcome: Option<&crate::worker::Outcome>) -> String {
     match outcome {
         Some(crate::worker::Outcome::Done { .. }) => {
-            crate::i18n::load_string(crate::i18n::IDS_S7_PENDING_ENGINE)
+            crate::i18n::load_string(crate::i18n::IDS_S7_OK)
         }
         Some(crate::worker::Outcome::Failed(message)) => {
             crate::i18n::load_string_arg(crate::i18n::IDS_S7_FAILED, message)
@@ -106,21 +105,50 @@ fn detail_lines(state: &crate::wizard::state::WizardState) -> Vec<String> {
         ));
     }
     lines.push(match &state.outcome {
-        Some(crate::worker::Outcome::Done { downloaded, bytes }) if *downloaded > 0 => {
-            crate::i18n::load_string_arg(
-                crate::i18n::IDS_S7_DOWNLOADS,
-                &format!(
-                    "{downloaded} ({})",
-                    pacenotes_installer::size::human(*bytes)
-                ),
-            )
-        }
+        Some(crate::worker::Outcome::Done {
+            downloaded, bytes, ..
+        }) if *downloaded > 0 => crate::i18n::load_string_arg(
+            crate::i18n::IDS_S7_DOWNLOADS,
+            &format!(
+                "{downloaded} ({})",
+                pacenotes_installer::size::human(*bytes)
+            ),
+        ),
         _ => crate::i18n::load_string(crate::i18n::IDS_S7_NOTHING_TODO),
     });
+    if let Some(crate::worker::Outcome::Done { applied, .. }) = &state.outcome {
+        lines.extend(applied_lines(applied));
+    }
     if let Some(path) = state.log.path() {
         lines.push(crate::i18n::load_string_arg(
             crate::i18n::IDS_S7_LOGFILE,
             &path.display().to_string(),
+        ));
+    }
+    lines
+}
+
+/// What changed in the game folder, including the files left alone, so a
+/// user's own edits surviving does not read as the install failing.
+fn applied_lines(applied: &crate::worker::Applied) -> Vec<String> {
+    let mut lines = vec![crate::i18n::load_string_arg(
+        crate::i18n::IDS_S7_CHANGED,
+        &format!(
+            "{} / {}",
+            applied.installed.len(),
+            applied.uninstalled.len()
+        ),
+    )];
+    if !applied.left_alone.is_empty() {
+        lines.push(crate::i18n::load_string_arg(
+            crate::i18n::IDS_S7_LEFT_ALONE,
+            &applied.left_alone.join(", "),
+        ));
+    }
+    if let Some(point) = &applied.restore_point {
+        lines.push(crate::i18n::load_string_arg(
+            crate::i18n::IDS_S7_RESTORE_POINT,
+            point,
         ));
     }
     lines

@@ -187,7 +187,8 @@ installer/CLAUDE.md §5 are now worth remembering rather than theoretical: the
 83 kB icon (see I1) and swapping serde_json for a hand-rolled parser over the
 three documents the installer actually reads.
 
-Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
+Recorded sizes (release, x86_64-pc-windows-msvc). The gate was 500 kB
+through I5 and I2b, and 600 kB from I7 on — see below.
 
 | After | Bytes | |
 | --- | --- | --- |
@@ -199,6 +200,8 @@ Recorded sizes (release, x86_64-pc-windows-msvc), against the 500 kB gate:
 | I5 — sha256 + cache + verified download | 402432 | 393 kB |
 | I2b — scene 5 + the bigger page | 412160 | 402.5 kB |
 | I2b — scenes 6 and 7 + the run log | 427520 | 417.5 kB |
+| I7b — the ledger reachable from main | 452608 | 442 kB |
+| I7f — the engine wired in (GATE RAISED to 600 kB) | 553984 | 541 kB |
 
 ## Protocol as it stands
 
@@ -346,7 +349,7 @@ leaves the repo buildable and tested:
   cache. Table tests, no filesystem.
 - **I7d** (done) `engine.rs execute()`, restore points, backup. Tempdir tests.
 - **I7e** (done) `install.rs` — the RBR configuration step.
-- **I7f** Wiring: scene 6's two new phases, the ledger merged into the
+- **I7f** (done) Wiring: scene 6's new phases, the ledger merged into the
   tree (P1), the removal confirmation, conflict detection and logging.
 
 NOT in I7, though Period 1 decided them:

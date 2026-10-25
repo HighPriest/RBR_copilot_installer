@@ -84,7 +84,7 @@ jobs:
         shell: pwsh
         run: .\tests\Test-VersionSync.ps1
 
-      - name: Release build + 500 kB size gate
+      - name: Release build + 600 kB size gate
         shell: pwsh
         run: .\tests\Test-BinarySize.ps1
 

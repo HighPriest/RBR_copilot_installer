@@ -5,7 +5,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 /// Progress bar steps; bytes would overflow `PBM_SETRANGE32`'s i32 past 2 GB.
 const PROGRESS_SCALE: u32 = 1000;
 
-/// Scene 6: download what is missing, then (from I7) back up and install.
+/// Scene 6: download what is missing, then apply the selection to the game folder.
 /// It has no Back or Next: it presses Next itself when the run ends.
 pub unsafe extern "system" fn installation_page(
     dialog: HWND,
@@ -95,42 +95,89 @@ unsafe fn start(dialog: HWND) {
         })
         .collect();
     if missing.is_empty() {
-        crate::ui::set_text(
-            dialog,
-            crate::wizard::control_ids::IDC_S6_PHASE,
-            crate::i18n::IDS_S6_NOTHING,
-        );
         log_line(
             dialog,
             state,
             &crate::i18n::load_string(crate::i18n::IDS_S6_NOTHING),
         );
-        let nothing = crate::worker::Outcome::Done {
-            downloaded: 0,
-            bytes: 0,
-        };
-        finish(dialog, state, nothing);
+    }
+    // Asked before anything moves, because the tree ticks rows on the user's behalf.
+    if !confirm_removals(dialog, state) {
+        finish(dialog, state, crate::worker::Outcome::Cancelled);
         return;
     }
 
-    crate::ui::set_text(
-        dialog,
-        crate::wizard::control_ids::IDC_S6_PHASE,
-        crate::i18n::IDS_S6_DOWNLOADING,
-    );
+    let phase = if missing.is_empty() {
+        crate::i18n::IDS_S6_CHECKING
+    } else {
+        crate::i18n::IDS_S6_DOWNLOADING
+    };
+    crate::ui::set_text(dialog, crate::wizard::control_ids::IDC_S6_PHASE, phase);
     crate::ui::enable(
         crate::wizard::page::sheet(dialog),
         crate::ui::IDCANCEL,
         true,
     );
     let request = state.next_request();
-    let base_url = state.base_url.clone();
-    let token = state.token();
-    let cache_root = state.cache.root().to_path_buf();
-    let cancel = std::sync::Arc::clone(&state.cancel);
+    let job = crate::worker::InstallJob {
+        base_url: state.base_url.clone(),
+        token: state.token(),
+        cache_root: state.cache.root().to_path_buf(),
+        game_dir: std::path::PathBuf::from(&state.folder),
+        game: state
+            .game
+            .unwrap_or(pacenotes_installer::gamedir::Game::Rbr),
+        downloads: missing,
+        selection: state.config.install_keys(),
+        picks: state.config.picks_by_category(),
+        choice_categories: pacenotes_shared::CHOICE_CATEGORIES
+            .iter()
+            .map(|category| category.to_string())
+            .collect(),
+        facts: pacenotes_installer::engine::HostFacts {
+            free_bytes: free_space(&state.folder),
+            game_running: false, // TODO(I9): look for the game's marker process
+        },
+        cancel: std::sync::Arc::clone(&state.cancel),
+    };
     crate::worker::spawn_reporting(dialog, request, move |reporter| {
-        crate::worker::run_install(base_url, token, cache_root, missing, cancel, reporter)
+        crate::worker::run_install(job, reporter)
     });
+}
+
+/// Names every installed package the selection no longer holds and asks
+/// before removing them; false when the user declines.
+unsafe fn confirm_removals(dialog: HWND, state: &mut crate::wizard::state::WizardState) -> bool {
+    let selected = state.config.install_keys();
+    let going: Vec<String> = pacenotes_installer::ledger::Ledger::open(&state.folder)
+        .packages()
+        .keys()
+        .filter(|key| !selected.contains(key))
+        .cloned()
+        .collect();
+    if going.is_empty() {
+        return true;
+    }
+    let question =
+        crate::i18n::load_string_arg(crate::i18n::IDS_S6_CONFIRM_REMOVE, &going.join("\n"));
+    if crate::ui::confirm(dialog, &question) {
+        return true;
+    }
+    log_line(dialog, state, "the user declined to remove anything");
+    false
+}
+
+/// `None` when it cannot be measured, which makes the engine skip its space check.
+unsafe fn free_space(folder: &str) -> Option<u64> {
+    let wide = crate::i18n::to_wide(folder);
+    let mut free: u64 = 0;
+    let measured = windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW(
+        wide.as_ptr(),
+        &mut free,
+        core::ptr::null_mut(),
+        core::ptr::null_mut(),
+    );
+    (measured != 0).then_some(free)
 }
 
 unsafe fn show_progress(
@@ -140,7 +187,11 @@ unsafe fn show_progress(
 ) {
     let phase = match progress.phase {
         crate::worker::Phase::Download => crate::i18n::IDS_S6_DOWNLOADING,
+        crate::worker::Phase::Checking => crate::i18n::IDS_S6_CHECKING,
+        crate::worker::Phase::Uninstall => crate::i18n::IDS_S6_UNINSTALLING,
+        crate::worker::Phase::Backup => crate::i18n::IDS_S6_BACKUP,
         crate::worker::Phase::Install => crate::i18n::IDS_S6_INSTALLING,
+        crate::worker::Phase::Configure => crate::i18n::IDS_S6_CONFIGURING,
     };
     crate::ui::set_text(dialog, crate::wizard::control_ids::IDC_S6_PHASE, phase);
 
@@ -174,14 +225,25 @@ unsafe fn finish(
     outcome: crate::worker::Outcome,
 ) {
     let line = match &outcome {
-        crate::worker::Outcome::Done { downloaded, bytes } => format!(
-            "finished: {downloaded} package(s) downloaded, {}",
-            pacenotes_installer::size::human(*bytes)
+        crate::worker::Outcome::Done {
+            downloaded,
+            bytes,
+            applied,
+        } => format!(
+            "finished: {downloaded} downloaded ({}), {} installed, {} removed",
+            pacenotes_installer::size::human(*bytes),
+            applied.installed.len(),
+            applied.uninstalled.len()
         ),
         crate::worker::Outcome::Failed(message) => format!("failed: {message}"),
         crate::worker::Outcome::Cancelled => "cancelled by the user".to_string(),
     };
     log_line(dialog, state, &line);
+    if let crate::worker::Outcome::Done { applied, .. } = &outcome {
+        if let Some(point) = &applied.restore_point {
+            log_line(dialog, state, &format!("restore point: {point}"));
+        }
+    }
     state.outcome = Some(outcome);
     state.cache = pacenotes_installer::cache::Cache::open(state.cache.root().to_path_buf());
 

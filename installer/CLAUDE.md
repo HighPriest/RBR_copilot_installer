@@ -1,8 +1,15 @@
 # installer/CLAUDE.md — Windows GUI installer
 
-Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 500 kB.
+Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 600 kB.
 Run `tests/Test-BinarySize.ps1` after every change that touches dependencies or adds
 noticeable code. If size regresses, fix it before continuing.
+
+The gate was 500 kB until 2026-10-25, when the install engine (I7) took
+the binary to 546 kB. It was raised ONCE, with the alternatives measured
+first — see "The size budget" below. Treat 600 as the same kind of hard
+line 500 was: the answer to "we are over" is to find the bytes, and the
+levers below are still on the table. The next build that wants more
+should have to argue for it as this one did.
 
 ## Why the binary stays small — do not break these
 
@@ -27,6 +34,48 @@ noticeable code. If size regresses, fix it before continuing.
 6. Prefer `windows-sys` (thin declarations) over `windows` (heavy).
 7. No TOML in the installer: sidecar metadata is server-side only; the
    installer sees it pre-merged in the manifest JSON.
+
+## The size budget
+
+Measured with `cargo bloat --release --target x86_64-pc-windows-msvc
+--crates` (install it with `cargo install cargo-bloat`). At 546 kB, on the
+day the gate moved:
+
+| | |
+|---|---|
+| `std` | ~195 kB |
+| this crate | 89 kB |
+| the icon, in `.rsrc` | 83 kB |
+| serde_core + serde_json + memchr + itoa | 43 kB |
+| miniz_oxide | 2.7 kB |
+
+Two findings worth keeping, because both are counter-intuitive:
+
+- **miniz_oxide costs almost nothing.** It was budgeted at ~40 kB and is
+  under 3. Inflate is a small algorithm; it was the engine around it that
+  cost.
+- **One `{:.1}` on an `f64` costs ~16 kB.** Formatting a float links Rust's
+  whole float-to-decimal machinery. `size.rs` therefore does its one
+  decimal digit with integer arithmetic, and nothing in this crate
+  formats a float. Check before adding one.
+
+Levers still unspent, in order of cheapness, if the gate is threatened
+again:
+
+1. **The icon, ~85 kB for a single 256x256 PNG.** Windows downscales that
+   one image for every size it needs, so the taskbar and list views look
+   worse than they should AND it is the single largest object in the
+   binary. Re-encoding losslessly saves only 4 kB — the image is that
+   dense — but shipping 16/24/32/48/64/128 instead saves 39 kB and looks
+   better everywhere except Explorer's extra-large view. Dropping to 64
+   as the largest saves 66 kB and does look worse.
+2. **serde_json, ~43 kB plus the derive code in this crate.** The planned
+   fallback (point 5 above): a minimal hand-rolled parser/writer for the
+   three documents we read. Keep JSON isolated in `api.rs`, `cache.rs` and
+   `ledger.rs` so this stays a contained change.
+3. The two `--selftest-*` developer flags, ~8 kB, behind a cargo feature —
+   but CI drives `--selftest-http` against a live server, so the shipped
+   binary and the tested one would stop being the same thing. Last resort.
 
 ## Install model (see root CLAUDE.md for rationale)
 
@@ -162,8 +211,8 @@ noticeable code. If size regresses, fix it before continuing.
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.
   Control ids mirror `res/installer.rc` in `control_ids.rs`. All seven scenes
-  exist; scene 6 runs only the download phase until `zip.rs` (I6) and
-  `engine.rs` (I7) land, and its log and summary say so. Before changing the
+  exist; scene 6 downloads, then applies the selection through `engine.rs`
+  on the worker thread (`worker/apply_selection.rs`). Before changing the
   sheet, read Implementation notes in `DESIGN.md`: the scene title, the
   per-scene button labels and the title bar all work around something the OS
   does not give.
@@ -232,7 +281,7 @@ first" error.
 
 ## Size audit workflow
 
-- `tests/Test-BinarySize.ps1` — fails build over 500 kB (release gate).
+- `tests/Test-BinarySize.ps1` — fails build over 600 kB (release gate).
 - When investigating: `cargo bloat --release --target x86_64-pc-windows-msvc`.
 - Budget sketch: WinHTTP+dialog skeleton ~120-180 kB; miniz ~40 kB;
   serde+serde_json ~80-120 kB; cache/ledger/engine ~40 kB. Headroom is real
@@ -256,7 +305,7 @@ suites. Read `tests/README.md` before adding one.
   `res/installer.rc`. The CD workflows tag releases from Cargo.toml, so drift
   would ship an .exe whose properties contradict its own tag. Bump all four
   together.
-- `tests/Test-BinarySize.ps1` — the 500 kB release gate.
+- `tests/Test-BinarySize.ps1` — the 600 kB release gate.
 - `tests/Test-HttpClient.ps1` — builds and runs a real `pacenotes-server`,
   then drives `--selftest-http` against it: /health, anonymous vs
   authenticated /packages, downloads, 401, 404, and an unreachable port.

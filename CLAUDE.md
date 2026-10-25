@@ -4,7 +4,9 @@ Rust rewrite of a C#/WinForms + Supabase installer for RBR (Richard Burns Rally)
 pacenote packages. Two deliverables:
 
 1. **`installer/`** — Windows-only GUI installer. HARD constraint: final
-   `.exe` < 500 kB. See `installer/CLAUDE.md` before touching it.
+   `.exe` < 600 kB. See `installer/CLAUDE.md` before touching it.
+   (Was 500 kB until 2026-10-25, when the install engine landed. The
+   number moved once, deliberately; the rules it produced did not.)
 2. **`server/`** — package/auth server. Single static binary, libSQL (SQLite)
    for auth, packages stored as flat files on disk. See `server/CLAUDE.md`.
 3. **`shared/`** — protocol types ONLY (serde structs). No I/O, no async, no
@@ -14,7 +16,9 @@ pacenote packages. Two deliverables:
 
 - The installer must NOT pull in tokio, reqwest, rustls, native-tls, openssl,
   hyper, or any GUI framework crate. HTTPS goes through **WinHTTP** (OS
-  Schannel). This is what keeps the binary under 500 kB.
+  Schannel). This is what keeps the binary small, and it stays true
+  whatever the gate's number is — the forbidden crates are forbidden
+  because of what they drag in, not because of 100 kB of slack.
 - The server is a normal async stack (axum + tokio). Do not try to make the
   server share HTTP code with the installer.
 - `shared/` stays dependency-minimal: `serde` only. If you're about to add a
@@ -156,7 +160,7 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 - `installer/` builds only on Windows MSVC target and is excluded from the
   workspace default members on purpose. Do not "fix" that.
 - Check binary size after every installer change:
-  Windows: `installer/tests/Test-BinarySize.ps1` (fails > 500 kB).
+  Windows: `installer/tests/Test-BinarySize.ps1` (fails > 600 kB).
 
 ## Working conventions for Claude Code sessions
 

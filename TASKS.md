@@ -122,7 +122,7 @@ than claiming an install. I6 and I7 close it.
 - [ ] installer/TASKS.md → I8..I10
 - [ ] Access-key entry UI → granted directories appear; localization;
       restore-from-backup
-- [ ] Final size audit < 500 kB, `cargo bloat` report saved to docs/
+- [ ] Final size audit < 600 kB, `cargo bloat` report saved to docs/
 
 ## M7 — Ship
 - [ ] Server: Dockerfile or systemd unit + Caddyfile (auto-HTTPS)

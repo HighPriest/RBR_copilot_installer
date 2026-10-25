@@ -32,6 +32,7 @@ pub enum Outcome {
     Done {
         downloaded: usize,
         bytes: u64,
+        applied: Applied,
     },
     /// Already readable, and already in the log.
     Failed(String),
@@ -39,10 +40,27 @@ pub enum Outcome {
     Cancelled,
 }
 
+/// What the run did to the game folder, for scene 7.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Applied {
+    pub installed: Vec<String>,
+    pub uninstalled: Vec<String>,
+    /// Kept because something else had changed them since they were written.
+    pub left_alone: Vec<String>,
+    /// Written by the game's own configuration step.
+    pub configured: Vec<String>,
+    pub overlaps: usize,
+    pub restore_point: Option<String>,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Phase {
     Download,
+    Checking,
+    Uninstall,
+    Backup,
     Install,
+    Configure,
 }
 
 /// Everything scene 6 shows, so the scene keeps no state beyond the last post.

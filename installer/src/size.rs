@@ -5,13 +5,15 @@ const KB: u64 = 1024;
 const MB: u64 = 1024 * KB;
 const GB: u64 = 1024 * MB;
 
-/// `0 B`, `997 B`, `12.1 kB`, `41.6 MB`, `1.4 GB`: one decimal from kB up.
+/// `0 B`, `997 B`, `12.1 kB`, `41.6 MB`, `1.4 GB`: one decimal from kB up, in
+/// integers, since one `{:.1}` on an `f64` links ~16 kB of float formatting.
 pub fn human(bytes: u64) -> String {
     let (divisor, unit) = unit_for(bytes);
     if divisor == 1 {
         return format!("{bytes} {unit}");
     }
-    format!("{:.1} {unit}", bytes as f64 / divisor as f64)
+    let (whole, tenth) = tenths(bytes, divisor);
+    format!("{whole}.{tenth} {unit}")
 }
 
 /// `12.4 / 41.6 MB`, both in the total's unit so they compare at a glance;
@@ -24,11 +26,15 @@ pub fn human_progress(done: u64, total: u64) -> String {
     if divisor == 1 {
         return format!("{done} / {total} {unit}");
     }
-    format!(
-        "{:.1} / {:.1} {unit}",
-        done as f64 / divisor as f64,
-        total as f64 / divisor as f64
-    )
+    let (done_whole, done_tenth) = tenths(done, divisor);
+    let (total_whole, total_tenth) = tenths(total, divisor);
+    format!("{done_whole}.{done_tenth} / {total_whole}.{total_tenth} {unit}")
+}
+
+/// `bytes / divisor` as a whole part and one decimal digit, rounded half up as `{:.1}` did.
+fn tenths(bytes: u64, divisor: u64) -> (u64, u64) {
+    let scaled = (bytes * 10 + divisor / 2) / divisor;
+    (scaled / 10, scaled % 10)
 }
 
 fn unit_for(bytes: u64) -> (u64, &'static str) {

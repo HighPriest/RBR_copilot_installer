@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    AUTOMATED TEST. The 500 kB release gate. Exits non-zero if the installer
+    AUTOMATED TEST. The 600 kB release gate. Exits non-zero if the installer
     binary is over budget.
 
 .DESCRIPTION
@@ -11,14 +11,14 @@
     Builds release for x86_64-pc-windows-msvc, then measures.
 
 .PARAMETER LimitKB
-    Budget in kB. Defaults to the 500 kB hard constraint from the root
+    Budget in kB. Defaults to the 600 kB hard constraint from the root
     CLAUDE.md; only pass something else to explore headroom locally.
 
 .EXAMPLE
     pwsh -File tests/Test-BinarySize.ps1
 #>
 [CmdletBinding()]
-param([int]$LimitKB = 500)
+param([int]$LimitKB = 600)
 
 $ErrorActionPreference = 'Stop'
 

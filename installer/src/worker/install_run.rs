@@ -2,25 +2,36 @@
 /// would keep the UI thread redrawing instead of responding.
 const REPORT_EVERY: std::time::Duration = std::time::Duration::from_millis(100);
 
-/// Scene 6's run: download every package in `missing` (what scene 4 ticked
-/// and the cache lacks), then stop and say so, since backup and install wait
-/// for tasks I6 and I7.
-///
-/// The worker opens its own handle on the cache; the UI reopens its own afterwards.
-pub fn run_install(
-    base_url: String,
-    token: Option<String>,
-    cache_root: std::path::PathBuf,
-    missing: Vec<pacenotes_shared::PackageInfo>,
-    cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
-    reporter: &super::Reporter,
-) -> super::Message {
-    let api = crate::api::Api::new(&base_url, token);
-    let mut cache = pacenotes_installer::cache::Cache::open(&cache_root);
+/// Everything scene 6's run needs, owned, because it crosses a thread.
+pub struct InstallJob {
+    pub base_url: String,
+    pub token: Option<String>,
+    pub cache_root: std::path::PathBuf,
+    pub game_dir: std::path::PathBuf,
+    pub game: pacenotes_installer::gamedir::Game,
+    /// Checked in scene 4 and not on this computer yet.
+    pub downloads: Vec<pacenotes_shared::PackageInfo>,
+    /// What the folder holds afterwards, in install order.
+    pub selection: Vec<String>,
+    /// Category to picked key, for the configuration step.
+    pub picks: std::collections::BTreeMap<String, String>,
+    pub choice_categories: Vec<String>,
+    /// Measured by the UI thread, the side that may call Win32.
+    pub facts: pacenotes_installer::engine::HostFacts,
+    pub cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
+}
+
+/// Scene 6's run: download what is missing, then apply the selection to the
+/// game folder. The worker opens its own handle on the cache; the UI reopens
+/// its own afterwards.
+pub fn run_install(job: InstallJob, reporter: &super::Reporter) -> super::Message {
+    let api = crate::api::Api::new(&job.base_url, job.token.clone());
+    let mut cache = pacenotes_installer::cache::Cache::open(&job.cache_root);
+    let missing = &job.downloads;
     let total: u64 = missing.iter().map(|package| package.size).sum();
     let mut done: u64 = 0;
 
-    for package in &missing {
+    for package in missing {
         let report = |item_done: u64, log: Option<String>| {
             reporter.send(super::Progress {
                 phase: super::Phase::Download,
@@ -53,7 +64,7 @@ pub fn run_install(
             package,
             &mut cache,
             &mut progress,
-            &cancel,
+            &job.cancel,
         ) {
             Ok(()) => done += package.size,
             Err(e) if e.is_cancelled() => {
@@ -63,21 +74,12 @@ pub fn run_install(
         }
     }
 
-    reporter.send(super::Progress {
-        phase: super::Phase::Install,
-        item: String::new(),
-        item_done: 0,
-        item_size: 0,
-        done: total,
-        total,
-        log: Some(
-            "backup and install are not implemented yet (tasks I6 and I7); \
-             nothing in the game folder was touched"
-                .to_string(),
-        ),
-    });
-    super::Message::Installed(super::Outcome::Done {
-        downloaded: missing.len(),
-        bytes: total,
-    })
+    match super::apply_selection::apply_selection(&job, &cache, reporter) {
+        Ok(applied) => super::Message::Installed(super::Outcome::Done {
+            downloaded: missing.len(),
+            bytes: total,
+            applied,
+        }),
+        Err(message) => super::Message::Installed(super::Outcome::Failed(message)),
+    }
 }

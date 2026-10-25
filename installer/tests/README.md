@@ -20,7 +20,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `cargo test` | AUTOMATED TEST — the unit tests in `src/`, and `applying_a_selection.rs`: plan, pre-flight and execute over a scratch game folder | no | yes |
 | `cargo test -- --ignored` | MANUAL CHECK — the zip reader against a corpus of real packages (`src/zip/fixtures/README.md`) | no | no |
 | `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
-| `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
+| `Test-BinarySize.ps1` | AUTOMATED TEST — the 600 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `ui/Test-UiLayout.ps1` | AUTOMATED TEST — walks the wizard, scenes 1-3 | yes | no |
 | `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs of scenes 1-7 | yes | no |

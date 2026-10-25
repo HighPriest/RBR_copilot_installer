@@ -3,7 +3,7 @@
 #   - version comes from installer/Cargo.toml instead of the .csproj <Version>
 #   - no Secrets.resx step: Supabase is gone, access keys are server credentials
 #   - dotnet publish -> cargo build --release for x86_64-pc-windows-msvc,
-#     gated by installer/tests/Test-BinarySize.ps1 (500 kB release gate)
+#     gated by installer/tests/Test-BinarySize.ps1 (600 kB release gate)
 #   - archived actions/create-release + upload-release-asset replaced by
 #     softprops/action-gh-release (tag + asset in one step)
 

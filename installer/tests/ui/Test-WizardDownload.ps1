@@ -260,9 +260,8 @@ try {
     Assert-Equal 'scene 7 title' (Get-CtrlText $page7 $IDC_SCENE_TITLE) $S['IDS_S7_TITLE']
     Assert-Equal 'primary button reads Finish' `
     (Get-WizardButtonText -Sheet $h -ButtonId 0x3024) $S['IDS_BTN_FINISH']
-    # Until the engine lands, a download and no install is what really happened.
-    Assert-Equal 'the result line reports what really happened' `
-    (Get-CtrlText $page7 $IDC_S7_RESULT) $S['IDS_S7_PENDING_ENGINE']
+    Assert-Equal 'the result line reports success' `
+    (Get-CtrlText $page7 $IDC_S7_RESULT) $S['IDS_S7_OK']
 
     $detail = Get-CtrlText $page7 $IDC_S7_DETAIL
     Assert-That 'the summary names the game folder' ($detail.Contains($gameFolder)) `
@@ -281,8 +280,30 @@ try {
     $logText = Get-CtrlText $page7 $IDC_S7_LOG
     Assert-That 'the log recorded the download phase' `
     ($logText.Contains('downloading rbr/public/')) "log said [$logText]"
-    Assert-That 'the log says the install phase did not run' `
-    ($logText.Contains('not implemented yet')) "log said [$logText]"
+    Assert-That 'the log recorded the install phase' `
+    ($logText.Contains('installed rbr/public/')) "log said [$logText]"
+    Assert-That 'the log names the restore point' `
+    ($logText.Contains('restore point')) "log said [$logText]"
+
+    # The files are in the game folder, and the ledger records them.
+    Write-Host "`n-- the game folder --"
+    $ledgerPath = Join-Path $gameFolder '.pacenotes\installed.json'
+    Assert-That 'the ledger was written' (Test-Path $ledgerPath)
+    $ledger = Get-Content $ledgerPath -Raw | ConvertFrom-Json
+    $recorded = @($ledger.packages.PSObject.Properties.Name)
+    Assert-That 'every configured package is in the ledger' ($recorded.Count -eq 4) `
+        "ledger holds $($recorded.Count): $($recorded -join ', ')"
+    Assert-That 'the overlay really landed in the game folder' `
+    (Test-Path (Join-Path $gameFolder 'Plugins\Pacenote\config\x.ini'))
+    Assert-That 'a restore point was taken' `
+    (@(Get-ChildItem (Join-Path $gameFolder '.pacenotes\restore') -ErrorAction SilentlyContinue).Count -ge 1)
+
+    # The per-game step: RBR writes the plugin's settings file.
+    $settings = Join-Path $gameFolder 'Plugins\Pacenote\PaceNote.ini'
+    Assert-That 'the RBR configuration step wrote the settings file' (Test-Path $settings)
+    Assert-That 'and set the language the user picked' `
+    ((Get-Content $settings -Raw).Contains('language=polish')) `
+        "settings said [$(Get-Content $settings -Raw)]"
 
     $payloads = @(Get-ChildItem -Path $cacheDir -Filter '*.zip' -ErrorAction SilentlyContinue)
     Assert-That 'the verified payloads are in the cache' ($payloads.Count -ge 1) `

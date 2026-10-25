@@ -167,6 +167,10 @@ END
 #define IDS_S6_NOTHING        115
 #define IDS_S6_CANCELLING     116
 #define IDS_S6_STARTED        117
+#define IDS_S6_CHECKING       118
+#define IDS_S6_UNINSTALLING   119
+#define IDS_S6_CONFIGURING    120
+#define IDS_S6_CONFIRM_REMOVE 121
 
 // Scene 7 — Summary (130-149)
 #define IDS_S7_TITLE          130
@@ -179,6 +183,9 @@ END
 #define IDS_S7_EXTRAS         137
 #define IDS_S7_LOGFILE        138
 #define IDS_S7_NOTHING_TODO   139
+#define IDS_S7_CHANGED        140
+#define IDS_S7_LEFT_ALONE     141
+#define IDS_S7_RESTORE_POINT  142
 
 // Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
 // A PropertySheet takes its largest page's size, so every page shares one: 330x215 DLU, for scene 5's three lists.
@@ -353,6 +360,10 @@ BEGIN
     IDS_S6_NOTHING      "Everything you selected is already on this computer."
     IDS_S6_CANCELLING   "Stopping..."
     IDS_S6_STARTED      "Starting."
+    IDS_S6_CHECKING     "Checking the packages and the game folder"
+    IDS_S6_UNINSTALLING "Removing what is being replaced"
+    IDS_S6_CONFIGURING  "Writing the game's configuration"
+    IDS_S6_CONFIRM_REMOVE "These are installed and are no longer selected, so they will be removed from the game folder:\n\n%s\n\nContinue?"
 
     IDS_S7_TITLE        "Summary"
     IDS_S7_OK           "Installation complete."
@@ -364,6 +375,9 @@ BEGIN
     IDS_S7_EXTRAS       "Pacenotes packages: %s"
     IDS_S7_LOGFILE      "Log file: %s"
     IDS_S7_NOTHING_TODO "Nothing needed downloading."
+    IDS_S7_CHANGED      "Packages installed / removed: %s"
+    IDS_S7_LEFT_ALONE   "Left untouched because something else had changed them: %s"
+    IDS_S7_RESTORE_POINT "You can undo this run from the restore point %s"
 END
 
 // Polish reuses the legacy InstallationForm.pl.resx terms, so returning users see familiar words.
@@ -438,6 +452,10 @@ BEGIN
     IDS_S6_NOTHING      "Wszystko, co wybrano, jest już na tym komputerze."
     IDS_S6_CANCELLING   "Zatrzymywanie..."
     IDS_S6_STARTED      "Rozpoczynam."
+    IDS_S6_CHECKING     "Sprawdzanie pakietów i folderu gry"
+    IDS_S6_UNINSTALLING "Usuwanie tego, co jest zastępowane"
+    IDS_S6_CONFIGURING  "Zapisywanie konfiguracji gry"
+    IDS_S6_CONFIRM_REMOVE "Te pozycje są zainstalowane i nie są już zaznaczone, więc zostaną usunięte z folderu gry:\n\n%s\n\nKontynuować?"
 
     IDS_S7_TITLE        "Podsumowanie"
     IDS_S7_OK           "Instalacja zakończona."
@@ -449,4 +467,7 @@ BEGIN
     IDS_S7_EXTRAS       "Pakiety pacenotes: %s"
     IDS_S7_LOGFILE      "Plik dziennika: %s"
     IDS_S7_NOTHING_TODO "Nie trzeba było nic pobierać."
+    IDS_S7_CHANGED      "Pakiety zainstalowane / usunięte: %s"
+    IDS_S7_LEFT_ALONE   "Pozostawione bez zmian, bo zmienił je ktoś inny: %s"
+    IDS_S7_RESTORE_POINT "Ten przebieg można cofnąć z punktu przywracania %s"
 END

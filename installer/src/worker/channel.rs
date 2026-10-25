@@ -29,6 +29,19 @@ pub struct Reporter {
 }
 
 impl Reporter {
+    /// A line for the log pane and nothing else.
+    pub fn log(&self, line: String) {
+        self.send(super::Progress {
+            phase: super::Phase::Install,
+            item: String::new(),
+            item_done: 0,
+            item_size: 0,
+            done: 0,
+            total: 0,
+            log: Some(line),
+        });
+    }
+
     pub fn send(&self, progress: super::Progress) {
         post(
             self.target,

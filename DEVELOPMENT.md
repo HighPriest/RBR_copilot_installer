@@ -10,7 +10,7 @@ the rules a change has to respect see the `CLAUDE.md` files.
 |---|---|---|
 | `shared/` | any OS | Protocol types only (serde). No I/O. |
 | `server/` | any OS (deployed on Linux) | axum + tokio + libSQL. Normal async stack. |
-| `installer/` | **Windows, MSVC target only** | Win32 GUI + WinHTTP, under a hard 500 kB gate. |
+| `installer/` | **Windows, MSVC target only** | Win32 GUI + WinHTTP, under a hard 600 kB gate. |
 
 `installer/` is **deliberately excluded** from the Cargo workspace, so a
 plain `cargo build` at the root builds `shared` + `server` and nothing else.
@@ -82,7 +82,7 @@ cargo build --target x86_64-pc-windows-msvc            # debug
 ```
 
 `Test-BinarySize.ps1` is the normal way to make a release build: it builds
-and then fails if the `.exe` is over 500 kB. **Check the size after every
+and then fails if the `.exe` is over 600 kB. **Check the size after every
 installer change** — the budget is the reason the installer has no HTTP
 crate, no TLS crate and no GUI framework.
 
@@ -104,7 +104,7 @@ Eight steps, in order, and what each one is actually for:
 | 2 | `cargo clippy` | Same, under `-D warnings` exactly as CI does. |
 | 3 | `cargo test` | The pure modules: game detection, the two scene models, sha256, the cache, the run log, size formatting. No Windows needed; CI runs these. |
 | 4 | `Test-VersionSync.ps1` | `Cargo.toml` version vs the four VERSIONINFO fields in `res/installer.rc`. The CD workflows tag releases from `Cargo.toml`, so drift ships an `.exe` whose properties contradict its tag. |
-| 5 | `Test-BinarySize.ps1` | The 500 kB release gate. Also produces the `.exe` the next three steps run. |
+| 5 | `Test-BinarySize.ps1` | The 600 kB release gate. Also produces the `.exe` the next three steps run. |
 | 6 | `Test-HttpClient.ps1` | Builds and starts a real `pacenotes-server`, then drives the installer's `--selftest-http` against it: health, anonymous vs bearer, 401/403/404, unreachable. WinHTTP cannot be unit tested, so this is the only honest check of it. Needs no desktop, so **CI runs it**. |
 | 7 | `ui\Test-UiLayout.ps1` | Walks scenes 1-3 against a deliberately dead server (`--server http://127.0.0.1:1`), once per shipped language, asserting every caption against what `res/installer.rc` defines. |
 | 8 | `ui\Test-WizardDownload.ps1` | Walks the **whole wizard**, scenes 1-7, against a live server holding a nested catalogue, with real downloads into a throwaway cache. Asserts both gates, the lists, the summary and the cache on disk. |
