@@ -3,6 +3,25 @@
 Each task ends with: builds on Windows MSVC, `tests/Test-BinarySize.ps1` passes,
 cross-platform `cargo test` green for logic modules.
 
+## Where this stands (2026-10-26)
+
+I1-I8 are done. The wizard runs end to end on both of scene 3's routes: it
+downloads and verifies into the cache, installs into the game folder, backs
+up what it replaces, records what it wrote, runs RBR's configuration step,
+takes a restore point and reports conflicts to the server.
+
+**The one functional gap is the restore SCENE.** Points have been written
+on every run since I7 and nothing can read them back, so users accumulate
+a safety net they cannot use, and scene 3's Restore/Uninstall button
+answers "not implemented yet". See "Restore" below.
+
+After that it is I9 (polish), I10 (release gate) and the small pre-release
+cluster the review lists under Period 2.
+
+**Size:** 584.5 kB against the 600 kB gate. 15.5 kB of headroom, and
+`rbr.ico` is 83 kB of the binary — the first place to look if the restore
+scene does not fit.
+
 ## I1 — Toolchain + window  (done)
 
 - [x] `rustup target add x86_64-pc-windows-msvc`
@@ -174,11 +193,12 @@ Scenes:
       log pane is hidden on success with the detail block stretched over it,
       and shown on failure. Finish closes; Cancel is disabled, since there is
       nothing left to stop
-- [x] The result headline currently reports a download with no install,
-      because that is what happens. When I7 lands it becomes `IDS_S7_OK` —
-      that one `match` arm in `show_summary` is the whole change
-- [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
-      writes, so it follows I7
+- [x] The result headline reported a download with no install while that
+      was the truth; since I7 it is `IDS_S7_OK` and reports what changed
+- [ ] Restore scene (scene 3's Restore/Uninstall) — UNBLOCKED since I7, and
+      now the last functional gap: the button exists and answers "not
+      implemented yet", while every run writes a restore point that nothing
+      can read back. Specified under "Restore" below
 - [x] Log sink (`src/runlog.rs`): in-memory + a line-by-line flush to
       `<game dir>\.pacenotes\logs\install-<stamp>.log`, one file per run,
       newest five kept. Flushed per line because the run worth reading
@@ -578,24 +598,42 @@ Two corrections to what Period 1 recorded, found while planning:
       has to report created-versus-edited, which means a shape change to
       `Configured`
 
-### Per-game choice categories (`gamedir.rs`)
+### Per-game choice categories
 
-Not started. Scene 6 still passes `pacenotes_shared::CHOICE_CATEGORIES`
-to the engine, which already takes the list as a parameter — so this is a
-change to `shared`, `gamedir.rs`, `tree/`, `choices/`, `wizard/` and
-both string tables, with nothing to change in `engine.rs`.
+DONE 2026-10-25, but NOT where this section first proposed. The list lives
+in the compiled-in install SCHEMA (`schemas/<game>.toml` → `schema.rs`),
+not in `gamedir.rs`: the same file the server publishes is what the
+installer embeds, so the hash comparison that gates downloading and the
+behaviour it protects come from one source instead of two that can drift.
+`gamedir.rs` stayed what it is — which games exist and how to recognise
+their folders.
 
-- [ ] Move `CHOICE_CATEGORIES` out of `shared` into a per-game list, each
-      category with a localized label and one-line explanation from the
-      `.rc` string tables
-- [ ] Scene 4 demands a pick only in those; everything else is optional
-- [ ] Scene 5 is skipped for a game that declares none
-- [ ] Install root is a per-game property too. RBR = the game folder; the
-      others are undecided until that game has packages, and deciding is
-      part of adding the game (review P10 — BeamNG mods normally live under
+- [x] `CHOICE_CATEGORIES` is no longer what the installer asks from:
+      `schema::choice_categories(game)` returns the `select = "one"`
+      categories in schema order. The localized label and explanation stay
+      in the `.rc` string tables, mapped by category id in `wizard/scene/configuration.rs`,
+      because UI text must not come from a server
+      (`pacenotes_shared::CHOICE_CATEGORIES` survives for `shared`'s own
+      tests and as the vocabulary constant)
+- [x] Scene 4 demands a pick only in those; everything else is optional
+- [x] Scene 5 asks one question per entry, in schema order, and a game
+      whose schema declares none skips the scene
+- [x] `install_root` is a per-game property, carried by the schema as a
+      TOKEN (never a path, so a server cannot steer where files go), and
+      `schema::install_roots_known` refuses a token this build cannot
+      place
+- [ ] What each game's token MEANS is still only decided for RBR (= the
+      game folder). The other three are decided when that game gets
+      packages (review P10 — BeamNG mods normally live under
       `%LOCALAPPDATA%`, not beside the exe)
 
-### Restore (scene 3's UNINSTALL → the restore scene)
+### Restore (scene 3's Restore/Uninstall → the restore scene)
+
+THE NEXT PIECE OF WORK. The writing half has been done since I7 and runs
+on every install; the reading half does not exist, so the button says "not
+implemented yet". What is already there to build on: `restore_dir` in `engine/execute/restore_point.rs`
+(where a point lives), the `ledger.json` snapshot inside each point, the
+replaced files beside it, and `Ledger::replace_all`.
 
 - [x] A run that changes anything — not only one that REPLACES something —
       writes `.pacenotes\restore\<timestamp>\` holding `ledger.json` as it
@@ -614,6 +652,18 @@ both string tables, with nothing to change in `engine.rs`.
       added files behind, which is the bug the legacy restore had.
       `Ledger::replace_all` exists for the last step; nothing else of this
       is written
+- [ ] Planning it is pure and belongs in `engine.rs` beside `plan()`: a
+      point plus the live ledger in, a list of put-backs and removals out,
+      table-tested off Windows. The scene then shows that list as the
+      preview and hands the same value to the executor, so what the user
+      was shown and what runs cannot diverge
+- [ ] It runs on the progress screen like any other phase, with the same
+      log — a restore that half-finishes has to leave the same ledger
+      guarantees an install does
+- [ ] Reached from scene 3, so the Route enum grows a third arm and the
+      page order grows a page. Back from it goes to scene 3; Cancel
+      behaves as on scene 4b (before anything is written) and is disabled
+      once writing starts
 
 ### Scene 6
 
@@ -754,16 +804,24 @@ The server side is done; these are the installer halves. See root
 - [x] Rewrite installer/CLAUDE.md "Minimum manifest version" and
       DESIGN.md scene 4's "If the server's manifest is newer…" to the
       schema model.
-- [ ] Versions may now read `sha-xxxxxxxx` (derived from the payload's
-      sha256 when the operator sets none, D5). Display them as-is.
+- [x] Versions may now read `sha-xxxxxxxx` (derived from the payload's
+      sha256 when the operator sets none, D5). Nothing to do: no scene
+      shows a version. The cache stores it (`CachedPackage.version`) and
+      the engine compares shas, not version strings, so a derived version
+      is already handled as-is. Revisit only if a scene starts showing
+      one
 - [x] Test fixtures: `Test-HttpClient.ps1` and `Test-WizardDownload.ps1`
       were given `schema.toml` files by the server change (a game without
       one now publishes nothing).
 
 ## I8 — Auth flow
-- [ ] Secret from scene 2 used as bearer for /packages and /download
-- [ ] 401 on ACCEPT → warning modal; 401 during download → logged
-      error, failure summary
+
+- [x] Secret from scene 2 used as bearer for /packages (scene 4's fetch)
+      and /download (scene 4b's `DownloadJob`). `/report/conflict` is the
+      one request that deliberately carries no token
+- [x] 401 on ACCEPT → warning modal (via `/whoami`, see below); a failed
+      download → the message in the run log, the run ends at scene 7 in
+      failure state rather than walking on to the questions
 - [x] **Validate the secret with `GET /whoami`, not `/packages`**
       (server change 2026-10-25, DESIGN-REVIEW.md D2). `/packages` never
       401s — it falls back to the public listing for any key it does not
@@ -778,16 +836,29 @@ The server side is done; these are the installer halves. See root
       — Polish needs three plural forms for "days" and `load_string_arg`
       substitutes one `%s`. A key that lapses between two runs otherwise
       looks exactly like content being withdrawn.
-- [ ] The server no longer sends 403 (D3): a live key without the grant
+- [x] The server no longer sends 403 (D3): a live key without the grant
       gets 404, the same as a missing package. Nothing in the installer
-      handles 403 today; keep it that way.
-- [ ] Optional: remember the secret in %APPDATA%\PacenotesInstaller\token
-      (plain file, user-scoped; document the tradeoff) and prefill scene 2
+      handles 403, which is the correct amount — confirmed against the
+      code and pinned by `Test-HttpClient.ps1`'s auth matrix.
+- [ ] Optional: remember the secret and prefill scene 2. NOT a plain file
+      as first sketched — the review (§7) asks for DPAPI
+      (`CryptProtectData`, crypt32, no crate), so another user or a script
+      reading the profile does not get the key. Keep it out of
+      `%APPDATA%` too if it can live in the same per-user place as the
+      cache, since the installer now writes everything else either there
+      or in the game folder
 
 ## I9 — Polish
-- [ ] All unwraps in UI paths replaced with modal/log + graceful handling
-- [ ] Free-disk-space check before scene 6 (sizes of missing downloads +
-      installs)
+
+- [ ] All unwraps in UI paths replaced with modal/log + graceful handling.
+      Less urgent than it was — since 2026-10-26 a panic names its file and
+      line in the run log and tells the user — but a reported crash is
+      still a crash
+- [x] Free-disk-space check: measured on the UI side with
+      `GetDiskFreeSpaceExW`, handed to the engine as `HostFacts.free_bytes`
+      and enforced in `preflight` (`PreflightError::NotEnoughSpace`), which
+      is a better place than "before scene 6" — the engine is what knows
+      how much the plan actually needs
 - [ ] Cache housekeeping: orphaned <sha>.zip sweep on startup; decide where
       "remove from cache" lives now that there is no library view
 - [ ] Remember last game folder per game; prefill scene 3
@@ -800,7 +871,12 @@ The server side is done; these are the installer halves. See root
 - [ ] Bump `[package] version` in Cargo.toml AND the four VERSIONINFO fields in
       res/installer.rc together; `tests/Test-VersionSync.ps1` enforces it, and
       the CD workflows tag the release from Cargo.toml
-- [ ] cargo bloat report saved to docs/bloat.txt
+- [x] cargo bloat report saved to `docs/bloat.txt` (2026-10-26, at
+      584.5 kB). Where the space is: `.text` 387 kB, of which std 202 kB,
+      our own code 100 kB, serde_core 34 kB and serde_json 14 kB. The
+      other ~197 kB of the file is resources, and `rbr.ico` alone is 83 kB
+      — more than serde and our engine put together, which makes it the
+      cheapest room to buy
 - [ ] If over budget: replace serde_json with minimal JSON parse/write for
       Manifest + cache.json + installed.json (planned fallback, CLAUDE.md §5);
       revisit the 83 kB icon (see I1 size flag)

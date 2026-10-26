@@ -182,8 +182,9 @@ literal on-disk level: `./data/<game>/packages/<directory>/<name>.zip`.
   category to its game's schema and which skips the bundled-schema
   comparison; that comparison has its own tests.
 - Integration (`tests/<scenario>.rs`, sharing `tests/common/mod.rs`): a real
-  server on an ephemeral port, served WITH connect info like `main.rs`, a tempdir data root (two games, public +
-  two protected dirs, schemas) and in-memory libsql. Asserts the
+  server on an ephemeral port, served WITH connect info like `main.rs`, a
+  tempdir data root (two games, public + two protected dirs, schemas) and
+  in-memory libsql. Asserts the
   {anon, token-no-grants, token-dirA, token-dirA+dirB} × {public, dirA, dirB}
   matrix for /packages filtering and /download statuses (401 for no live key
   whether or not the package exists, 404 for no grant), expired/revoked,

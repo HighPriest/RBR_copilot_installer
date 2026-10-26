@@ -101,31 +101,52 @@ See `installer/TASKS.md` I2a/I2b. All installer checks live in
       (not cached / downloaded / update / local only)
 - [x] Scenes 5-7: the three configuration picks, a progress scene that
       really downloads, and a summary
-- [ ] installer/TASKS.md → I6 (zip reader)
-- [ ] Install engine (I7): ledger (installed.json per game dir), overlay
+- [x] installer/TASKS.md → I6 (zip reader)
+- [x] Install engine (I7): ledger (installed.json per game dir), overlay
       extract, one-time backup of non-ledger files, uninstall from ledger
-- [ ] Apply = diff selected-vs-ledger; exclusive groups honored;
+- [x] Apply = diff selected-vs-ledger; exclusive groups honored;
       `requires` enforced
-- [ ] Per-game configuration step, each game owning its own (no shared
+- [x] Per-game configuration step, each game owning its own (no shared
       abstraction — the games share no file layout and some have no plugin
       system). RBR's edits the pacenotes language and voice into the
       Pacenote plugin's config, preserving the rest; it is NOT a port of
       `write_rbr_config`, whose output the packages have outgrown. See
       `installer/TASKS.md` I7 and `installer/DESIGN.md`.
+- [x] NOT in the original plan, decided on 2026-10-26: downloading and
+      installing are two SCREENS with the configuration step between them,
+      and scene 3 offers the two routes that implies (Download/Update and
+      Configure/Install). A download fills a cache; an install writes to
+      the game folder; a user should be able to do either without the
+      other. See `installer/DESIGN.md` "Flow".
 
-M5 IS HALF DONE. The wizard runs end to end and everything selected is
-downloaded and verified into the cache — but nothing is written to the game
-folder yet, and scene 6's log and scene 7's headline say exactly that rather
-than claiming an install. I6 and I7 close it.
+M5 IS DONE. The wizard runs end to end, writes to the game folder, records
+what it wrote, backs up what it replaced and takes a restore point. What
+the engine CANNOT yet do is use those restore points — that is the restore
+scene, which M6 carries.
 
 ## M6 — Installer auth + polish
-- [ ] installer/TASKS.md → I8..I10
-- [ ] Access-key entry UI → granted directories appear; localization;
-      restore-from-backup
-- [ ] Final size audit < 600 kB, `cargo bloat` report saved to docs/
+
+- [x] installer/TASKS.md → I8: the access key is the bearer for every
+      request, and it is validated with `GET /whoami` (the only endpoint
+      that can: `/packages` answers the public listing for a key it does
+      not accept). A key near expiry says so, with the date
+- [ ] installer/TASKS.md → I9 (polish) and I10 (release gate)
+- [ ] **Restore scene** — the last functional gap. Points have been written
+      on every run since I7 and nothing can read them back, so users
+      accumulate a safety net they cannot use. See `installer/TASKS.md`
+      "Restore" and `installer/DESIGN.md` "Restore scene"
+- [ ] Final size audit < 600 kB, `cargo bloat` report saved to docs/.
+      Currently 584.5 kB: 15.5 kB of headroom, and `rbr.ico` alone is
+      83 kB of it, which is where to look first if the restore scene does
+      not fit
 
 ## M7 — Ship
-- [ ] Server: Dockerfile or systemd unit + Caddyfile (auto-HTTPS)
+
+- [x] Server: Containerfile + Podman Quadlet + Caddy site block, and
+      `deploy/README.md` covering configuration, publishing, access keys,
+      MOTD and troubleshooting (server/TASKS.md S8)
+- [ ] CI builds the image, tags it with the git sha and pushes it, so the
+      Quadlet pins a tag and a restart never builds (DESIGN-REVIEW O1)
   - [ ] Build both server and installer executables in CI.
   - [ ] Store artifacts of the build in CI
   - [ ] Server: During deployment from Quadlet, source the executable from CI

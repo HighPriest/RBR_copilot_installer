@@ -1,0 +1,73 @@
+pacenotes-installer size report
+generated 2026-10-26, release profile (opt-level=z, lto=fat, panic=abort, strip=symbols)
+file size: 598528 bytes (584.5 kB) against a 600 kB gate
+
+Read this with tests/Test-BinarySize.ps1. The .text total below is only part
+of the file: the rest is resources, and res/installer.rc embeds ../../rbr.ico,
+which is 85294 bytes on its own - the largest single item in the binary and
+the first place to look for room.
+
+
+ File  .text     Size               Crate Name
+ 3.9%   6.0%  23.0KiB                 std std::sys::backtrace::__rust_begin_short_backtrace<pacenotes_installer::worker::spawn_reporting::closure_env$0<pacenotes_installer::wizard::start_install::closure_env$1>,tuple$<> >
+ 2.0%   3.0%  11.8KiB pacenotes_installer pacenotes_installer::engine::execute
+ 1.4%   2.1%   8.3KiB pacenotes_installer pacenotes_installer::zip::read_entry
+ 1.1%   1.6%   6.2KiB pacenotes_installer pacenotes_installer::wizard::s6_proc
+ 1.0%   1.6%   6.1KiB          serde_core serde_core::de::impl$5::deserialize<alloc::vec::Vec<pacenotes_shared::PackageInfo,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 1.0%   1.5%   5.8KiB          serde_core serde_core::de::impl$5::deserialize<alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::tree::CachedPackage,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 0.9%   1.4%   5.3KiB pacenotes_installer pacenotes_installer::main
+ 0.8%   1.2%   4.7KiB pacenotes_installer pacenotes_installer::SelfDownload::run
+ 0.8%   1.2%   4.6KiB pacenotes_installer pacenotes_installer::wizard::load_tree
+ 0.8%   1.2%   4.5KiB          serde_core serde_core::de::impl$5::deserialize<alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_shared::GameSchema,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 0.7%   1.1%   4.3KiB                 std alloc::str::impl$5::to_lowercase
+ 0.7%   1.1%   4.3KiB                 std std::sys::backtrace::impl$0::print::impl$0::fmt
+ 0.7%   1.0%   4.0KiB pacenotes_installer pacenotes_installer::api::download_to_cache
+ 0.6%   1.0%   3.8KiB pacenotes_installer pacenotes_installer::zip::central_directory
+ 0.6%   0.9%   3.6KiB          serde_core serde_core::de::impl$5::deserialize<alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::ledger::LedgerEntry,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 0.6%   0.9%   3.3KiB                 std std::path::PathBuf::_push
+ 0.5%   0.8%   3.2KiB pacenotes_installer pacenotes_installer::wizard::s5_proc
+ 0.4%   0.7%   2.6KiB          serde_core serde_core::de::impl$5::deserialize<alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::ledger::LedgerFile,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 0.4%   0.7%   2.6KiB pacenotes_installer pacenotes_installer::wizard::s2_proc
+ 0.4%   0.6%   2.5KiB pacenotes_installer pacenotes_installer::wizard::s4_proc
+ 0.4%   0.6%   2.5KiB          serde_core serde_core::de::impl$5::deserialize<alloc::vec::Vec<pacenotes_shared::SchemaCategory,alloc::alloc::Global>,ref_mut$<serde_json::de::Deserializer<serde_json::read::SliceRead> > >
+ 0.4%   0.6%   2.5KiB pacenotes_installer pacenotes_installer::install::set_ini_key
+ 0.4%   0.6%   2.4KiB pacenotes_installer pacenotes_installer::http::send
+ 0.4%   0.6%   2.4KiB pacenotes_installer pacenotes_installer::api::Api::fetch_manifest
+ 0.4%   0.6%   2.2KiB pacenotes_installer pacenotes_installer::wizard::redetect
+ 0.4%   0.5%   2.1KiB pacenotes_installer pacenotes_installer::wizard::s7_proc
+ 0.3%   0.5%   2.0KiB                 std alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::ledger::LedgerEntry,alloc::alloc::Global>::insert<alloc::string::String,pacenotes_installer::ledger::LedgerEntry,alloc::alloc::Global>
+ 0.3%   0.5%   2.0KiB                 std core::str::pattern::impl$31::is_contained_in
+ 0.3%   0.5%   1.9KiB pacenotes_installer pacenotes_installer::install_panic_hook::closure$0
+ 0.3%   0.5%   1.9KiB                 std std::env::args
+ 0.3%   0.5%   1.8KiB                 std alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::tree::CachedPackage,alloc::alloc::Global>::insert<alloc::string::String,pacenotes_installer::tree::CachedPackage,alloc::alloc::Global>
+ 0.3%   0.5%   1.8KiB                 std core::slice::sort::stable::quicksort::quicksort<ref$<str$>,bool (*)(ref$<ref$<str$> >,ref$<ref$<str$> >)>
+ 0.3%   0.5%   1.8KiB                 std core::slice::sort::stable::quicksort::quicksort<pacenotes_installer::tree::Row,alloc::slice::impl$0::sort_by::closure_env$0<pacenotes_installer::tree::Row,pacenotes_installer::tree::impl$4::build::closure_env$4> >
+ 0.3%   0.5%   1.8KiB                 std alloc::collections::btree::map::BTreeMap<alloc::string::String,pacenotes_installer::ledger::LedgerFile,alloc::alloc::Global>::insert<alloc::string::String,pacenotes_installer::ledger::LedgerFile,alloc::alloc::Global>
+ 0.3%   0.4%   1.7KiB                 std core::slice::sort::stable::quicksort::quicksort<tuple$<alloc::string::String,alloc::string::String>,alloc::slice::impl$0::sort_by::closure_env$0<tuple$<alloc::string::String,alloc::string::String>,alloc::collections::btree::map::impl$88::from_iter::closure_env$0<alloc::string::String,alloc::string::String,core::iter::adapters::filter_map::FilterMap<core::slice::iter::Iter<pacenotes_installer::choices::ChoiceList>,pacenotes_installer::choices::impl$1::picks_by_category::closure_env$0> > > >
+ 0.3%   0.4%   1.7KiB                 std core::slice::sort::stable::quicksort::quicksort<tuple$<alloc::string::String,pacenotes_installer::tree::CachedPackage>,alloc::slice::impl$0::sort_by::closure_env$0<tuple$<alloc::string::String,pacenotes_installer::tree::CachedPackage>,alloc::collections::btree::map::impl$88::from_iter::closure_env$0<alloc::string::String,pacenotes_installer::tree::CachedPackage,core::iter::adapters::map::Map<alloc::vec::into_iter::IntoIter<pacenotes_installer::tree::CachedPackage,alloc::alloc::Global>,pacenotes_installer::worker::apply::closure_env$0> > > >
+ 0.3%   0.4%   1.6KiB                 std std::sys::backtrace::output_filename
+ 0.3%   0.4%   1.6KiB pacenotes_installer pacenotes_installer::wizard::s4b_proc
+ 0.3%   0.4%   1.6KiB pacenotes_installer pacenotes_installer::api::Api::report_conflicts
+ 0.3%   0.4%   1.6KiB                 std std::sys::path::windows::get_long_path
+35.5%  53.6% 207.5KiB                     And 1087 smaller methods. Use -n N to show more.
+66.2% 100.0% 387.0KiB                     .text section size, the file size is 584.5KiB
+
+ File  .text     Size Crate
+34.6%  52.2% 202.1KiB std
+17.2%  26.0% 100.6KiB pacenotes_installer
+ 5.8%   8.7%  33.7KiB serde_core
+ 2.4%   3.7%  14.2KiB serde_json
+ 0.5%   0.7%   2.7KiB [Unknown]
+ 0.5%   0.7%   2.7KiB miniz_oxide
+ 0.4%   0.6%   2.3KiB memchr
+ 0.2%   0.3%   1.3KiB pacenotes_shared
+ 0.1%   0.1%     565B zmij
+ 0.1%   0.1%     347B enum2$<core
+ 0.1%   0.1%     340B itoa
+ 0.0%   0.1%     247B 
+ 0.0%   0.0%      82B enum2$<serde_json
+ 0.0%   0.0%      30B `__scrt_common_main_seh'
+ 0.0%   0.0%       8B vswhom_sys
+66.2% 100.0% 387.0KiB .text section size, the file size is 584.5KiB
+
+Note: numbers above are a result of guesswork. They are not 100% correct and never will be.

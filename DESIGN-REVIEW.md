@@ -920,6 +920,19 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 ### Period 2: before the first public release
 
+**Status on 2026-10-26.** The server side of this period is finished, and
+so is the protocol except for `generated_at`/`generation` (which Period 3's
+`/ready` wants anyway). What is left is almost all INSTALLER and DEPLOY:
+
+- the **restore scene** (P14) — the one functional gap, and the reason
+  every run's restore point is currently unusable;
+- a cluster of small installer items — redirect policy (C1), a versioned
+  user agent (S1, one line), `/packages` without `/health` (D12), a body
+  cap (D12), the writability probe (P11), log timestamps and header (§7),
+  retrying a transient download (§7);
+- **deploy and CI** (O1, O2), which nobody has started: images built and
+  pinned by CI, a signed `.exe`, a pinned toolchain, backups.
+
 #### Protocol
 
 - [ ] **S1** Add `schema`, `generated_at`, `generation` and `min_installer`
@@ -928,10 +941,11 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
       install schema checked by raw-file SHA instead of a manifest version
       (`server/TASKS.md` S11; server side done). `generated_at` /
       `generation` remain open for Period 3's `/ready`.*
-- [ ] **D2** `GET /whoami` (or a response header) returning
+- [x] **D2** `GET /whoami` (or a response header) returning
       `{ valid, expires_at }`. Scene 2 uses it, and warns when a key is about
-      to expire. *Server half done 2026-10-25 (`/whoami`: 200
-      `{expires_at}` / 401); scene 2 still validates via `/packages`.*
+      to expire. *Both halves done: server 2026-10-25 (`/whoami`: 200
+      `{expires_at}` / 401), installer 2026-10-25 — scene 2 validates there
+      now, and a key within 14 days of expiry says so with the date.*
 - [x] **C2** `Cache-Control: private, no-store` and `Vary: Authorization` on
       `/packages`; `Cache-Control: private` on protected downloads;
       `ETag: "<sha256>"` on public ones.
@@ -974,15 +988,25 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 - [ ] **C1** Follow redirects by hand: automatic redirects off, at most N
       hops, `https` only, `Authorization` dropped when the host changes.
 - [ ] **S1** User agent from `CARGO_PKG_VERSION`.
-- [ ] **D12** Write the catalogue error into the run log.
+- [x] **D12** Write the catalogue error into the run log. *Done: the reason
+      a fetch failed is logged even though scene 4 recovers from the cache.*
 - [ ] **D12** Try `/packages` even when `/health` failed.
 - [ ] **D12** Cap the size of `http::get` bodies.
 - [ ] **P11** Writability probe on scene 3, offering to restart elevated or
       stopping with a clear message.
 - [ ] **P14** Restore scene, following the design settled in period 1.
-- [ ] **§7** Run log: timestamps, a header (installer version, server URL,
-      manifest `generation`, Windows version, game folder), and the last
-      three runs kept.
+      *The only functional gap left in the installer: points are written on
+      every run and nothing reads them back.*
+- [ ] **§7** Run log: timestamps and a header (installer version, server
+      URL, manifest `generation`, Windows version, game folder).
+      *Partly done 2026-10-26: the log moved into
+      `<game dir>\.pacenotes\logs\`, one file per run with the newest five
+      kept, which closes the "a re-run erases the failed run" half. The
+      game folder is in it; timestamps and the rest of the header are not.*
+- [x] **§7** A panic leaves a report. *Not in the original review, added
+      2026-10-26 after a crash left nothing at all: a GUI binary with
+      `panic = "abort"` has nowhere to print, so the hook writes file, line
+      and message into the run log and offers to open it.*
 - [ ] **§7** Send `X-Request-Id` (or at least the versioned user agent) and
       log it on both sides.
 - [ ] **§7** Store the remembered secret with DPAPI (I8).
@@ -1012,8 +1036,9 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 - [x] [CLAUDE.md:122](CLAUDE.md#L122): the "status never reveals what exists"
       claim (D3) — now true, and the text describes how.
-- [ ] [installer/DESIGN.md:53](installer/DESIGN.md#L53): how the secret is
-      validated (D2).
+- [x] [installer/DESIGN.md:53](installer/DESIGN.md#L53): how the secret is
+      validated (D2) — scene 2 now documents `/whoami`, why it is not
+      `/packages`, and what "could not ask" does.
 - [x] [server/CLAUDE.md:103](server/CLAUDE.md#L103): `Content-Disposition`
       (D12).
 - [x] [deploy/README.md:235](deploy/README.md#L235): what is reproducible

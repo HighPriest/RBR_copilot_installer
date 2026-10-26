@@ -282,15 +282,19 @@ installer.
       hash of the schema it was built with. Any byte change, a comment
       included, therefore counts as a change: that is accepted, and is why
       the repository copy is the one to edit.
-- [ ] (installer side — `installer/TASKS.md`) The installer uses the
+- [x] (installer side, done 2026-10-25) The installer uses the
       schema as a COMPATIBILITY CHECK ONLY. Its
       behaviour — categories, single pick, install root, the localized
-      labels — stays compiled in. A server can therefore not redirect where
+      labels — stays compiled in, from its own copy of the same file
+      (`build.rs` → `schema.rs`). A server can therefore not redirect where
       files are written, which keeps the root rule that a compromised server
       gains no installer behaviour.
-- [ ] (installer side — `installer/TASKS.md`) A mismatch blocks
-      DOWNLOADING only, for that game only.
+- [x] (installer side, done 2026-10-25) A mismatch blocks
+      DOWNLOADING only, for that game only, and only when something
+      actually has to come down the wire.
       Reconfiguring, repairing, uninstalling and restore keep working.
+      An offline run never raises it: the check runs on a manifest that
+      came from a server, not on a tree rebuilt from the cache.
 - [x] Strict publishing: a game with no `schema.toml` publishes NOTHING; a
       schema that does not parse skips its game with an error; a package
       whose category the schema does not declare is skipped with a warning.
