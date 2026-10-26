@@ -107,6 +107,8 @@ END
 #define IDS_READY               9
 #define IDS_NOT_IMPL           10
 #define IDS_ALREADY_RUNNING    11
+#define IDS_CRASH              12
+#define IDS_CRASH_NOFILE       13
 #define IDS_APP_TITLE          20
 
 // Per-scene primary button labels + shared chrome (30-49)
@@ -336,6 +338,8 @@ BEGIN
     IDS_READY           "Ready."
     IDS_NOT_IMPL        "Not implemented yet."
     IDS_ALREADY_RUNNING "The Pacenotes Installer is already running.\n\nClose the other window and try again. Two copies would overwrite each other's downloads and installation records."
+    IDS_CRASH           "Something went wrong and the installer has to close.\r\n\r\nWhat happened was written to:\r\n%s\r\n\r\nYour game folder has not been left half-installed: anything already written is recorded there too.\r\n\r\nShow that file?"
+    IDS_CRASH_NOFILE    "Something went wrong and the installer has to close. It could not write a log, so this is the only copy of what happened:"
     IDS_APP_TITLE       "Pacenotes Installer"
 
     IDS_BTN_CONTINUE    "Continue"
@@ -436,6 +440,8 @@ BEGIN
     IDS_READY           "Gotowy."
     IDS_NOT_IMPL        "Jeszcze niezaimplementowane."
     IDS_ALREADY_RUNNING "Instalator Pacenotes jest już uruchomiony.\n\nZamknij drugie okno i spróbuj ponownie. Dwie kopie nadpisywałyby sobie nawzajem pobrane pliki i zapis instalacji."
+    IDS_CRASH           "Coś poszło nie tak i instalator musi się zamknąć.\r\n\r\nSzczegóły zapisano w pliku:\r\n%s\r\n\r\nFolder gry nie został w połowie zainstalowany: to, co już zapisano, też jest tam odnotowane.\r\n\r\nPokazać ten plik?"
+    IDS_CRASH_NOFILE    "Coś poszło nie tak i instalator musi się zamknąć. Nie udało się zapisać dziennika, więc to jedyna kopia informacji o błędzie:"
     IDS_APP_TITLE       "Instalator Pacenotes"
 
     IDS_BTN_CONTINUE    "Kontynuuj"

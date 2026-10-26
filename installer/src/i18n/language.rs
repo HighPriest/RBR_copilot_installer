@@ -69,7 +69,20 @@ pub fn os_language() -> Option<Language> {
         .find(|language| language.primary() == primary)
 }
 
-/// Per thread: workers get already-loaded strings from the UI thread instead.
+/// The language scene 1 chose, or 0 before it has.
+static CHOSEN: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(0);
+
+/// Per thread, so workers get already-loaded strings from the UI thread; it is
+/// also remembered for the panic hook, which can run on any thread.
 pub fn set_language(language: Language) {
+    CHOSEN.store(language.langid(), std::sync::atomic::Ordering::Relaxed);
     unsafe { windows_sys::Win32::Globalization::SetThreadUILanguage(language.langid()) };
+}
+
+/// Applies the chosen language to this thread; before scene 1 answers the OS default stands.
+pub fn use_chosen_language() {
+    let langid = CHOSEN.load(std::sync::atomic::Ordering::Relaxed);
+    if langid != 0 {
+        unsafe { windows_sys::Win32::Globalization::SetThreadUILanguage(langid) };
+    }
 }

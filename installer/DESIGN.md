@@ -373,7 +373,14 @@ scenes 4b and 6 and again on 7; any error shows it.
   nobody anything. A panic hook (`main.rs`) catches it first and writes
   `panicked at <file>:<line>: <message>` into the run log — or, before a
   game folder is known, into `pacenotes-installer-crash.log` beside the
-  exe — and shows it in an error box so a user can read it back.
+  exe.
+  - What the USER sees is localized and plain: something went wrong, where
+    it was written, that the game folder is not half-installed, and
+    **"Show that file?"** — which opens Explorer with the log selected. A
+    report the user cannot find is one they cannot send. The Rust text
+    stays in the file, for whoever reads the report.
+  - The message is loaded after re-applying the chosen language, because
+    the hook can run on the worker thread, which never had it set.
   - Only the FIRST panic gets a window. The modal pumps the message queue,
     which can deliver the very message that panicked, and one real fault
     was observed turning into a cascade of boxes.

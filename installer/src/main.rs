@@ -30,6 +30,7 @@ fn main() {
     if let Some(selftest) = selftest::ConflictReportSelfTest::from_args() {
         std::process::exit(selftest.run());
     }
+    selftest::panic_if_requested();
 
     init_common_controls();
 

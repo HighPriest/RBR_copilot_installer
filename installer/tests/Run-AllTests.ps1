@@ -15,6 +15,9 @@
                                the next two steps run)
       6. Test-HttpClient.ps1 — the WinHTTP client against a live
                                pacenotes-server, including the auth matrix
+      6b. Test-CrashReport   — a deliberate panic leaves a report naming the
+                               source file and line. No desktop needed: the
+                               window is suppressed
       7. Test-UiLayout.ps1   — scenes 1-3 against a dead server (the
                                offline path), once per shipped language
       8. Test-WizardDownload — the whole wizard, scenes 1-7, against a LIVE
@@ -62,6 +65,7 @@ try {
     Invoke-Step 'version sync' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-VersionSync.ps1') }
     Invoke-Step 'binary size gate' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-BinarySize.ps1') }
     Invoke-Step 'http client vs live server' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-HttpClient.ps1') }
+    Invoke-Step 'crash report' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-CrashReport.ps1') }
 
     if ($SkipUi) {
         Write-Host "`nSkipping GUI tests (-SkipUi)." -ForegroundColor Yellow

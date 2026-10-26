@@ -6,12 +6,14 @@ mod language;
 mod string_table;
 mod wide_string;
 
-pub use language::{os_language, set_language, Language};
+pub use language::{os_language, set_language, use_chosen_language, Language};
 pub use string_table::{instance, load_string, load_string_arg};
 pub use wide_string::to_wide;
 
 pub const IDS_NOT_IMPL: u16 = 10;
 pub const IDS_ALREADY_RUNNING: u16 = 11;
+pub const IDS_CRASH: u16 = 12;
+pub const IDS_CRASH_NOFILE: u16 = 13;
 pub const IDS_APP_TITLE: u16 = 20;
 
 pub const IDS_BTN_CONTINUE: u16 = 30;

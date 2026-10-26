@@ -662,9 +662,24 @@ both string tables, with nothing to change in `engine.rs`.
         queue, which can deliver the very message that panicked, and one
         fault was seen becoming a cascade of boxes
       - It found the route-switch abort below on its first run
-- [ ] Decide whether to go further: a `SetUnhandledExceptionFilter` for
-      access violations and other faults that never reach a Rust panic
-      hook, and/or an "open the log" button on the crash box
+- [x] What the USER sees is localized and plain (decided 2026-10-26): what
+      happened, where it was written, that the game folder is not
+      half-installed, and "Show that file?" — which opens Explorer with the
+      log selected. A report a user cannot find is one they cannot send.
+      The Rust text stays in the file for whoever reads the report
+      - Loaded after re-applying the chosen language
+        (`i18n::use_chosen_language`), because the hook can run on the
+        worker thread, which never had it set
+- [x] `--selftest-panic [--out FILE]` and `tests/Test-CrashReport.ps1`: the
+      crash path is the one piece of error handling that using the
+      installer correctly never exercises, and an untested crash handler is
+      one that fails the day it is needed. Asserts the exit code Windows
+      reports, that the report names a source file and LINE, and that a
+      panic with no run log still lands beside the exe
+- [ ] NOT done, decided against for now (2026-10-26): a
+      `SetUnhandledExceptionFilter` for access violations and other faults
+      that never reach a Rust panic hook. Revisit if a crash ever appears
+      that leaves no panic line — that is exactly the signature of one
 
 ### Tests
 

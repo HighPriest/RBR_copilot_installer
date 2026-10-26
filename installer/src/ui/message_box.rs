@@ -39,6 +39,17 @@ pub fn confirm(owner: windows_sys::Win32::Foundation::HWND, text: &str) -> bool 
     ) == IDYES
 }
 
+/// Yes/No over an error icon, offering a way to act on something that has
+/// already gone wrong; true on Yes.
+pub fn ask_error(owner: windows_sys::Win32::Foundation::HWND, text: &str) -> bool {
+    show(
+        owner,
+        text,
+        windows_sys::Win32::UI::WindowsAndMessaging::MB_YESNO
+            | windows_sys::Win32::UI::WindowsAndMessaging::MB_ICONERROR,
+    ) == IDYES
+}
+
 /// Every box carries the localized application title.
 fn show(owner: windows_sys::Win32::Foundation::HWND, text: &str, style: u32) -> i32 {
     let body = crate::i18n::to_wide(text);

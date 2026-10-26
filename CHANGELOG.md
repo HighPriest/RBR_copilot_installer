@@ -35,10 +35,24 @@
   the modal pumps the message queue, which can deliver the very message that
   panicked, and one fault was observed becoming a cascade of boxes. It found
   the bug above on its first run.
+  - What the USER sees is localized and plain: what happened, where it was
+    written, that the game folder is not half-installed, and "Show that
+    file?", which opens Explorer with the log selected. A report the user
+    cannot find is one they cannot send. The Rust text stays in the file.
+  - Loaded after re-applying the chosen language: the hook can run on the
+    worker thread, which never had it set.
+  - `--selftest-panic` and `tests/Test-CrashReport.ps1` exercise the crash
+    path, which using the installer correctly never does. They assert the
+    exit code Windows reports, that the report names a source file and
+    line, and that a panic before any game folder is settled still leaves a
+    report beside the exe.
+  - NOT done, and deliberately: a `SetUnhandledExceptionFilter` for access
+    violations and other faults that never reach a Rust panic hook. Worth
+    revisiting if a crash ever appears that leaves no panic line.
 - Taking a second route in one session no longer starts a second log file.
   One file per run, not per button press.
-- Release build 577.5 kB against the 600 kB gate. 48/48 layout checks per
-  language, 76/76 flow checks.
+- Release build 580 kB against the 600 kB gate.
+  48/48 layout checks per language, 76/76 flow checks, 7/7 crash checks.
 
 ## 2026/10/26 — installer: two routes, and the log moves into the game folder
 

@@ -236,11 +236,14 @@ written to the user's profile.
 - `crash.rs` — the PANIC HOOK. A GUI binary with `panic = "abort"` has
   nowhere to print, so without it a panic is a vanished window; it writes
   `panicked at <file>:<line>` into the run log (or beside the exe before a
-  folder is known) and shows it once. It found the Configure→Back→Download
-  abort in one run.
+  folder is known) and shows it once, localized, offering to open the file.
+  It found the Configure→Back→Download abort in one run.
+  `--selftest-panic` and `tests/Test-CrashReport.ps1` keep it honest: a
+  crash handler nothing exercises is one that fails when it is needed.
 - `selftest/` — `--selftest-http`, the WinHTTP check that
-  `tests/Test-HttpClient.ps1` drives, `--selftest-download`, and
-  `--selftest-report`, which posts a fabricated conflict report.
+  `tests/Test-HttpClient.ps1` drives, `--selftest-download`,
+  `--selftest-report`, which posts a fabricated conflict report, and
+  `--selftest-panic`.
 - `package_download.rs` — fetch a package into the cache, verified by sha256.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
