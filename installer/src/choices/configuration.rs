@@ -8,9 +8,10 @@ pub struct Configuration {
 
 impl Configuration {
     /// The lists for the checked leaves of `tree`. A key in `keep` that is
-    /// still offered stays picked across a trip back to scene 4, and a list
-    /// with a single option comes preselected. `choice_categories` comes from the
-    /// game's compiled-in schema, since which questions a game asks is its own.
+    /// still offered stays picked across a trip back to scene 4, failing that
+    /// what is installed, and a list with a single option comes preselected.
+    /// `choice_categories` comes from the game's compiled-in schema, since
+    /// which questions a game asks is its own.
     pub fn from_tree(
         tree: &crate::tree::Tree,
         keep: &[String],
@@ -32,9 +33,20 @@ impl Configuration {
                         })
                     })
                     .collect();
+                // Keeping what is installed is the safe default, since a
+                // selection that omitted it would uninstall it.
+                let installed = checked
+                    .iter()
+                    .copied()
+                    .filter(|&leaf| tree.category_of(leaf) == category)
+                    .find(|&leaf| tree.node(leaf).installed)
+                    .and_then(|leaf| tree.node(leaf).key.clone());
+                let position_of =
+                    |key: &String| options.iter().position(|option| &option.key == key);
                 let selected = keep
                     .iter()
-                    .find_map(|kept| options.iter().position(|option| &option.key == kept))
+                    .find_map(position_of)
+                    .or_else(|| installed.as_ref().and_then(position_of))
                     .or(if options.len() == 1 { Some(0) } else { None });
                 super::ChoiceList {
                     category,

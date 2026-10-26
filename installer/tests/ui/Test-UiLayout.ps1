@@ -50,6 +50,7 @@ $IDC_S1_PROMPT = 301; $IDC_S1_COMBO = 302; $IDC_S1_NOTE = 303
 $IDC_S2_MOTD = 311; $IDC_S2_SECRET_LABEL = 312; $IDC_S2_SECRET = 313; $IDC_S2_STATUS = 314
 $IDC_S3_PATH_LABEL = 321; $IDC_S3_PATH = 322; $IDC_S3_BROWSE = 323
 $IDC_S3_GAME_LABEL = 324; $IDC_S3_GAME = 325
+$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_ROUTES = 328
 
 $ID_WIZBACK = 0x3023; $ID_WIZNEXT = 0x3024
 $PSBTN_NEXT = 1; $PSBTN_BACK = 0
@@ -203,36 +204,46 @@ try {
     Assert-Equal 'folder label' (Get-CtrlText $page $IDC_S3_PATH_LABEL) $S['IDS_S3_PATH']
     Assert-Equal 'game label' (Get-CtrlText $page $IDC_S3_GAME_LABEL) $S['IDS_S3_GAME']
     Assert-Equal 'browse button' (Get-CtrlText $page $IDC_S3_BROWSE) $S['IDS_BTN_BROWSE']
-    Assert-Equal 'primary button reads Next' `
-    (Get-WizardButtonText -Sheet $sheetH -ButtonId $ID_WIZNEXT) $S['IDS_BTN_NEXT']
     Assert-Equal 'Back button is localized' `
     (Get-WizardButtonText -Sheet $sheetH -ButtonId $ID_WIZBACK) $S['IDS_BTN_BACK']
     Assert-That 'Back becomes available on scene 3 (DESIGN.md)' `
     (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZBACK)
 
+    # The two routes are in-page buttons, and the sheet's Next is NOT the way
+    # forward here: the routes are alternatives, so neither is the primary.
+    Assert-Equal 'the Download/Update button is labelled' `
+    (Get-CtrlText $page $IDC_S3_DOWNLOAD) $S['IDS_S3_DOWNLOAD']
+    Assert-Equal 'the Configure/Install button is labelled' `
+    (Get-CtrlText $page $IDC_S3_CONFIGURE) $S['IDS_S3_CONFIGURE']
+    Assert-AnyShipped 'the routes are explained' (Get-CtrlText $page $IDC_S3_ROUTES) 'IDS_S3_ROUTES'
+
     # Nothing entered yet: placeholder, disabled dropdown, no way forward.
     $gameCombo = [NativeUi]::GetDlgItem($page, $IDC_S3_GAME)
+    $routeDown = [NativeUi]::GetDlgItem($page, $IDC_S3_DOWNLOAD)
+    $routeConf = [NativeUi]::GetDlgItem($page, $IDC_S3_CONFIGURE)
     Assert-Equal 'dropdown starts on the detecting placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
     Assert-That 'dropdown is disabled while nothing is detected' `
     (-not [NativeUi]::IsWindowEnabled($gameCombo))
-    Assert-That 'Next is blocked until a game is detected' `
+    Assert-That 'both routes are blocked until a game is detected' `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That 'the sheet Next is not a way out of scene 3' `
     (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT))
 
     # A real folder that is not a game must not unlock anything.
     Set-FolderAndSettle -Page $page -Path $plainFolder
     Assert-Equal 'an ordinary folder leaves the placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
-    Assert-That 'an ordinary folder leaves Next blocked' `
-    (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT))
+    Assert-That 'an ordinary folder leaves both routes blocked' `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
 
-    # One marker: that game, shown but not selectable, and Next opens up.
+    # One marker: that game, shown but not selectable, and both routes open.
     Set-FolderAndSettle -Page $page -Path $rbrFolder
     Assert-Equal 'a single game is named in the dropdown' (Get-CtrlText $page $IDC_S3_GAME) $RBR_TITLE
     Assert-That 'dropdown stays disabled when there is nothing to choose' `
     (-not [NativeUi]::IsWindowEnabled($gameCombo))
-    Assert-That 'Next unlocks once a game is detected' `
-    (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT)
+    Assert-That 'both routes unlock once a game is detected' `
+    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf))
 
     # Two markers: the dropdown becomes a real choice listing only the matches.
     Set-FolderAndSettle -Page $page -Path $twoGames
@@ -241,14 +252,15 @@ try {
     Assert-That 'dropdown is selectable when the folder holds several games' `
     ([NativeUi]::IsWindowEnabled($gameCombo))
     Assert-Equal 'the first match is preselected' (Get-CtrlText $page $IDC_S3_GAME) $RBR_TITLE
-    Assert-That 'Next stays available' (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT)
+    Assert-That 'the routes stay available' `
+    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf))
 
     # Going back to nothing detected must re-lock the scene.
     Set-FolderAndSettle -Page $page -Path $plainFolder
     Assert-Equal 'clearing the detection restores the placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
-    Assert-That 'and blocks Next again' `
-    (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT))
+    Assert-That 'and blocks both routes again' `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
 
     Write-Host "`n-- back navigation --"
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_BACK

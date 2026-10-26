@@ -12,15 +12,38 @@ run. Supported games, detected by their marker executable:
 
 ## Flow
 
-A linear wizard of seven scenes:
+Eight pages, and TWO ROUTES through them. Scene 3 is where they part:
 
-    1 Language → 2 Message of the day → 3 Game folder → 4 Download
-      → 5 Configuration → 6 Installation → 7 Summary
+    1 Language → 2 Message of the day → 3 Game folder
+                                          │
+            Download/Update ──────────────┤
+                                          │
+      4 Download → 4b Downloading → 5 Configuration → 6 Installation → 7 Summary
+                                          ▲
+            Configure/Install ────────────┘
 
-Common chrome on every scene: a title, the content area, and a footer with
-**Back** (scenes 3–5 only), the scene's **primary button** (its label differs
-per scene) and **Cancel** (asks for confirmation; disabled during the backup
-and install phases of scene 6). No going back once scene 6 starts.
+- **Download/Update**: choose content, fetch it into the cache, THEN answer
+  the configuration questions, THEN install.
+- **Configure/Install**: skip both download pages. The questions are answered
+  against what this computer already holds (the cache) and what this folder
+  already has (the ledger).
+
+Downloading and installing are deliberately two screens with the
+configuration step BETWEEN them, rather than one progress screen that did
+everything:
+
+- The download only fills a cache; the install writes to the game folder.
+  Someone can fetch a voice pack at home and install it on a train.
+- A user who only wants to change which co-driver is active should never
+  wait for, or depend on, the server. That is the whole Configure/Install
+  route, and it is the common case after the first run.
+- The questions are easier to answer once the content is actually here: a
+  list built from the cache cannot offer something that failed to download.
+
+Common chrome on every page: a title, the content area, and a footer with
+**Back** (scenes 3–5 only), the page's **primary button** (its label differs
+per page) and **Cancel** (asks for confirmation; disabled on scene 6, where
+every phase writes to the game folder). No going back once scene 4b starts.
 
 The window is ONE size for every scene — a property sheet sizes itself to its
 largest page — so a scene with little content, such as scene 1, simply has
@@ -75,8 +98,18 @@ that tells two voices apart.
   - several matches → dropdown enabled, listing only the matched games;
   - no match → dropdown back to (Detecting).
 - **Warning modal** when no marker is found — after Browse returns and when
-  Next is pressed, never per keystroke.
-- **Next** enabled only when a game is detected/selected.
+  a route button is pressed, never per keystroke.
+- **Two route buttons**, both enabled only when a game is detected/selected,
+  with a line above them saying what each one does:
+  - **Download/Update** → scene 4;
+  - **Configure/Install** → scene 5, skipping both download pages.
+- RECORDED DEVIATION: these are buttons IN THE PAGE, and the sheet's own
+  Next is left disabled on this scene. The two routes are alternatives, not
+  a primary and an afterthought, which is what a primary Next plus a
+  secondary button would make them — and each route is then one click
+  rather than select-then-Next. Back and Cancel are unaffected.
+- The run log moves into this folder here (`.pacenotes\logs\`), replaying
+  the lines from before a folder was known. See "Logging".
 - **UNINSTALL** enabled only when a game is detected/selected; leads to the
   restore scene below.
 
@@ -164,8 +197,8 @@ the one an automatic policy would have deleted.
 - Nothing here gates `exclusive_group`. Two members of one group can be
   ticked and both will install, the later winning; see "Overlapping files"
   in `installer/CLAUDE.md` for why that is preferred to blocking the user.
-- The button commits the selection; transfers run in scene 6 so there is a
-  single progress screen.
+- The button commits the selection; the transfers themselves run on scene
+  4b, which this page walks straight on to.
 - **If the game's install schema is not one this build knows**, Download
   stops with "a newer installer is needed", because the catalogue may use
   categories this build does not know how to place. The manifest carries
@@ -179,6 +212,29 @@ the one an automatic policy would have deleted.
     when something actually needs fetching.
   - An offline run never raises it: the check runs on a manifest that came
     from the server, not on a tree rebuilt from the cache.
+
+## Scene 4b — Downloading
+
+The same screen as scene 6 — progress bar, phase label, current item with
+size, log pane — at an earlier moment, and a page of its own because what
+happens between the two is the user answering the configuration questions.
+
+- Starts itself on activation and needs no button: it fetches everything
+  TICKED on scene 4 that is not already in the cache, verifies each payload
+  against the manifest's sha256, and walks on to scene 5 when done.
+- Nothing to fetch (a re-run, or everything already cached) is the normal
+  case, not an edge: the page says so in the log and moves on.
+- **Nothing is written to the game folder here.** That is what makes the
+  split worth having, and what the test asserts by checking there is no
+  ledger when scene 5 appears.
+- **Cancel** is allowed, and this is the only phase where it is: a
+  half-finished download costs nothing and is discarded.
+- A failed or cancelled download ends the run at scene 7 rather than
+  continuing to the questions. There is nothing to configure that could
+  then be honestly installed.
+- Back is not offered; the configuration scene's Back returns to scene 4,
+  skipping this page, because there is no going back into a finished
+  transfer.
 
 ## Scene 5 — Configuration
 
@@ -197,7 +253,16 @@ of each come from the `.rc` string tables, mapped by category id — never
 from the server. A game whose schema declares no single-pick category skips
 this scene.
 
+- **What this folder already has installed is the default answer**, which is
+  what makes the Configure/Install route usable: that route exists to CHANGE
+  an install, so arriving with every question blank would make the user
+  re-answer what they answered last time — and a run whose selection omitted
+  an installed package would UNINSTALL it. A pick the user makes themselves
+  wins over it.
 - A list with exactly one option is preselected.
+- On the Configure/Install route the options come from the cache and the
+  ledger alone; the page is otherwise identical, because it reads the same
+  tree either way.
 - Checked `pacenotes`-category packages are installed as-is (no choice), and
   so is anything under a category the installer does not know.
 - **Install** requires a pick in every list that HAS options; a warning modal
@@ -205,16 +270,19 @@ this scene.
   under leaves an empty, disabled list that says so — scene 4 does not demand
   a tick there either, and dead-ending the wizard on a catalogue the operator
   is entitled to publish would be worse than installing without it.
-- Going Back to scene 4 and changing the ticks rebuilds the lists. A pick
-  still on offer is kept; one whose package was unticked is dropped and the
-  question is asked again.
+- Going Back rebuilds the lists. A pick still on offer is kept; one whose
+  package was unticked is dropped and the question is asked again. Back
+  leads to scene 4 on the Download route and to scene 3 on the
+  Configure/Install route — where the user came from, which on neither
+  route is the previous page.
 
 ## Scene 6 — Installation
 
 - Overall progress bar, phase label, current file with size
-  ("Numeric 1to7.zip — 1.2 / 4.8 MB"), live log pane.
+  ("Numeric 1to7.zip — 1.2 / 4.8 MB"), live log pane. Same layout as scene
+  4b; the download phase is no longer part of this page.
 - Phases, in order:
-  1. **Download** checked packages missing from the cache (sha256 verified);
+  1. **Check** the plan against the folder (free space, CRCs);
   2. **Uninstall** what a new pick supersedes — before anything is written,
      because the style packages all own the SAME 49 paths and uninstalling
      after installing would delete the new one's files;
@@ -226,11 +294,15 @@ this scene.
   5. **Configure** — the chosen game's own step, if it has one. RBR's sets
      the pacenotes language in the Pacenote plugin's config. Other games get
      their own step or none; see "Per-game configuration" below.
-- Backup runs AFTER download because it needs each package's file list, and
-  that list comes from reading the package's own zip.
-- Phase 1 downloads everything TICKED on scene 4 that is not already in the
-  cache — not just the scene 5 picks. The user ticked what they want to have;
-  they chose separately what to install.
+- Everything this page installs from is already in the cache: scene 4b saw
+  to that, or the user took the Configure/Install route because it was
+  already there. The page therefore works with the server unreachable.
+- Backup needs each package's file list, which comes from reading the
+  package's own zip — another reason the download has to have finished
+  before this page starts.
+- Scene 4b downloaded everything TICKED on scene 4, not just the scene 5
+  picks. The user ticked what they want to have; they chose separately what
+  to install.
 - Files that more than one selected package writes do NOT stop the run: the
   later package wins, the log says which files and which packages, and the
   installer tells the server (`POST /report/conflict`, after the install, so
@@ -239,13 +311,13 @@ this scene.
   they cannot fix. The report carries the game, this installer's version and
   the clashing `directory/name` refs in install order — no identity, no local
   paths, no token — and failing to send it is a log line, nothing more.
-- The scene has no buttons of its own: no Back (DESIGN.md allows no going
-  back once it starts) and no Next, because it walks on to the summary by
-  itself when the run ends.
-- Cancel allowed during phase 1 only; partial downloads are discarded.
-  Pressing it VETOES the window close: the flag is raised, the worker stops
-  between chunks and reports it, and the wizard reaches scene 7 — rather
-  than the window vanishing while a thread still holds its handle.
+- The scene has no buttons of its own: no Back (no going back once it
+  starts) and no Next, because it walks on to the summary by itself when the
+  run ends.
+- **Cancel is disabled here.** Every phase on this page writes to the game
+  folder and the engine has no way to stop between files; a button that
+  silently did nothing would be worse than none. Cancel belongs to scene 4b,
+  where the only thing in flight is a download.
 - On error: stop, keep the log visible, go to scene 7 in failure state.
 
 ## Scene 7 — Summary
@@ -265,8 +337,23 @@ this scene.
 ## Logging
 
 Every scene appends to an in-memory log, also written to
-`%LOCALAPPDATA%\PacenotesInstaller\install.log` (overwritten per run). The
-log is visible on scenes 6 and 7; any error shows it.
+`<game dir>\.pacenotes\logs\install-<utc stamp>.log`. The log is visible on
+scenes 4b and 6 and again on 7; any error shows it.
+
+- **In the game folder, not the user's profile.** The installer leaves state
+  in exactly two places, and this is the one that belongs to a game: it sits
+  with the ledger, the backups and the restore points it describes, so a
+  user asking for help about a game folder has everything in one place and
+  nothing is scattered through their profile. (The download cache stays in
+  `%LOCALAPPDATA%`, because it is shared by every game folder.)
+- **One file per run**, dated in the name. A single overwritten file meant
+  that re-opening the installer to see what went wrong ERASED the run being
+  looked at (DESIGN-REVIEW §7). The newest five are kept; a log is a few kB.
+- The file is attached when scene 3 settles the folder, and the lines from
+  before that — the language, the server, the catalogue — are replayed into
+  it, so the file is the whole run and not just its second half.
+- Every line is flushed as it is written: a run that dies still leaves the
+  line saying what it was doing.
 
 ## Implementation notes
 

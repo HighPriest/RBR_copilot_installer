@@ -14,7 +14,21 @@ pub enum Message {
     SecretChecked(SecretOutcome),
     /// A failure is not fatal: the Download scene falls back to the cache.
     Packages(Result<pacenotes_shared::Manifest, String>),
+    /// Scene 4b's transfers ended; the game folder is still untouched.
+    Downloaded(Fetched),
     Installed(Outcome),
+}
+
+/// How scene 4b's download phase ended, apart from `Outcome` because a finished
+/// download is not a finished run: the questions and the install come after it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Fetched {
+    /// Everything ticked is on this computer and verified.
+    Done { downloaded: usize, bytes: u64 },
+    /// Nothing was installed, so the run ends here.
+    Failed(String),
+    /// The partial download was discarded.
+    Cancelled,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -27,17 +41,16 @@ pub enum SecretOutcome {
     Unreachable,
 }
 
-/// How scene 6's run ended, which scene 7 reports.
+/// How the run ended, which scene 7 reports; what the transfers cost is kept
+/// by the wizard, since they happened on an earlier screen.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Outcome {
     Done {
-        downloaded: usize,
-        bytes: u64,
         applied: Applied,
     },
     /// Already readable, and already in the log.
     Failed(String),
-    /// Nothing installed, and the partial download discarded.
+    /// Backed out of the removal confirmation or of a running download.
     Cancelled,
 }
 

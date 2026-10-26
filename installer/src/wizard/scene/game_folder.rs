@@ -36,6 +36,22 @@ pub unsafe extern "system" fn game_folder_page(
                 crate::wizard::control_ids::IDC_S3_BROWSE,
                 crate::i18n::IDS_BTN_BROWSE,
             );
+            for (control, text) in [
+                (
+                    crate::wizard::control_ids::IDC_S3_ROUTES,
+                    crate::i18n::IDS_S3_ROUTES,
+                ),
+                (
+                    crate::wizard::control_ids::IDC_S3_DOWNLOAD,
+                    crate::i18n::IDS_S3_DOWNLOAD,
+                ),
+                (
+                    crate::wizard::control_ids::IDC_S3_CONFIGURE,
+                    crate::i18n::IDS_S3_CONFIGURE,
+                ),
+            ] {
+                crate::ui::set_text(dialog, control, text);
+            }
             show_detection(dialog);
             1
         }
@@ -52,18 +68,10 @@ pub unsafe extern "system" fn game_folder_page(
             Some(ctl::PSN_SETACTIVE) => {
                 crate::wizard::page::set_sheet_caption(dialog);
                 crate::wizard::page::set_header(dialog, crate::i18n::IDS_S3_TITLE);
-                crate::wizard::page::set_buttons(dialog, wizard_buttons(dialog));
+                // The way on is one of the two route buttons, so the sheet's Next stays disabled.
+                crate::wizard::page::set_buttons(dialog, ctl::PSWIZB_BACK);
                 crate::wizard::page::set_next_text(dialog, crate::i18n::IDS_BTN_NEXT);
-                crate::wizard::page::reply(dialog, 0)
-            }
-            Some(ctl::PSN_WIZNEXT) => {
-                if crate::wizard::page::state(dialog)
-                    .and_then(|state| state.game)
-                    .is_none()
-                {
-                    warn_no_game(dialog);
-                    return crate::wizard::page::stay(dialog);
-                }
+                super::game_folder_routes::show_route_buttons(dialog);
                 crate::wizard::page::reply(dialog, 0)
             }
             Some(ctl::PSN_QUERYCANCEL) => crate::wizard::page::query_cancel(dialog),
@@ -82,19 +90,13 @@ unsafe fn on_command(dialog: HWND, wparam: WPARAM) {
         }
         (crate::wizard::control_ids::IDC_S3_BROWSE, BN_CLICKED) => on_browse(dialog),
         (crate::wizard::control_ids::IDC_S3_GAME, CBN_SELCHANGE) => on_game_picked(dialog),
+        (crate::wizard::control_ids::IDC_S3_DOWNLOAD, BN_CLICKED) => {
+            super::game_folder_routes::take_route(dialog, crate::wizard::state::Route::Download)
+        }
+        (crate::wizard::control_ids::IDC_S3_CONFIGURE, BN_CLICKED) => {
+            super::game_folder_routes::take_route(dialog, crate::wizard::state::Route::Configure)
+        }
         _ => {}
-    }
-}
-
-/// Back always; Next only once a game is settled.
-unsafe fn wizard_buttons(dialog: HWND) -> u32 {
-    let has_game = crate::wizard::page::state(dialog)
-        .and_then(|state| state.game)
-        .is_some();
-    if has_game {
-        ctl::PSWIZB_BACK | ctl::PSWIZB_NEXT
-    } else {
-        ctl::PSWIZB_BACK
     }
 }
 
@@ -124,7 +126,7 @@ unsafe fn redetect(dialog: HWND, complain_if_none: bool) {
     let none_found = state.detected.is_empty();
 
     show_detection(dialog);
-    crate::wizard::page::set_buttons(dialog, wizard_buttons(dialog));
+    super::game_folder_routes::show_route_buttons(dialog);
     if complain_if_none && none_found {
         warn_no_game(dialog);
     }
@@ -165,10 +167,10 @@ unsafe fn on_game_picked(dialog: HWND) {
     if let (Some(index), Some(state)) = (selection, crate::wizard::page::state(dialog)) {
         state.game = state.detected.get(index).copied();
     }
-    crate::wizard::page::set_buttons(dialog, wizard_buttons(dialog));
+    super::game_folder_routes::show_route_buttons(dialog);
 }
 
-unsafe fn warn_no_game(dialog: HWND) {
+pub(super) unsafe fn warn_no_game(dialog: HWND) {
     crate::ui::message_box_warning(
         dialog,
         &crate::i18n::load_string(crate::i18n::IDS_S3_NOGAME),

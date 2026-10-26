@@ -104,7 +104,16 @@ Scenes:
 - [x] S3 Game folder: path edit + Browse + dropdown with "(Detecting)";
       scan debounced 400 ms on EN_CHANGE, immediate after Browse; 1 match →
       set + disabled, >1 → enabled with matches only, 0 → placeholder +
-      warning modal (after Browse and on Next only)
+      warning modal (after Browse and on a route button only)
+- [x] S3's **two route buttons** (2026-10-26): Download/Update → scene 4,
+      Configure/Install → straight to scene 5. In-page buttons with the
+      sheet's Next left disabled, because the two are alternatives rather
+      than a primary and an afterthought, and each route is then one click.
+      `Route` in `wizard/state.rs` decides only what is SKIPPED — both routes end
+      in the same questions and the same install, reading the same tree, so
+      there is no separate "offline" path to keep in step. The jumps use
+      `PSM_SETCURSELID`, and scene 5's Back returns to whichever page the
+      user actually came from
 - [x] `gamedir.rs`: `detect(folder) -> Vec<Game>`, all four games
 - [x] English + Polish strings for every caption, label and modal in S1-S3
 - [x] S4 Download: SysTreeView32 + TVS_CHECKBOXES + partial checkboxes, built
@@ -116,12 +125,25 @@ Scenes:
       with states, check propagation, per-category validation. Cross-platform
       tests with fixtures shaped like the real layout (`style/Descriptive`,
       `codriver/polish/male/Kamil`)
+- [x] S4b Downloading (2026-10-26) — the download phase on a page of its
+      own, between the tree and the questions. Same template and the same
+      handlers as scene 6 (`init_progress`, `on_run_progress`,
+      `on_run_cancel`, shared control ids), because it is the same screen at
+      an earlier moment. Starts itself, verifies each payload, walks on to
+      scene 5; a failure or a cancel ends the run at the summary instead,
+      since there is nothing to configure that could honestly be installed
 - [x] S5 Configuration — three single-select lists built from the leaves
       scene 4 committed, each option labelled with its path inside its
       category (`polish / male / Kamil`), a sole option preselected, Install
       refusing until every list that HAS options has a pick. Pure model in
       `src/choices.rs`; the picks survive a trip Back to scene 4 and forward
       again, as long as the package is still ticked
+- [x] S5 defaults to WHAT IS ALREADY INSTALLED (2026-10-26). Found by the
+      UI suite the moment the Configure/Install route existed: that route is
+      for changing an install, so blank questions would make the user
+      re-answer last time's choices — and a selection that omitted an
+      installed package would uninstall it. A pick of the user's own still
+      wins over the default
 - [x] One page size for every scene is now 330x215 DLU, forced by scene 5:
       three lists have to be visible at once, and full width because a
       co-driver is identified by its whole path — a third of the width clips
@@ -147,9 +169,20 @@ Scenes:
 - [ ] Restore scene (scene 3's UNINSTALL) — needs the backup tree the engine
       writes, so it follows I7
 - [x] Log sink (`src/runlog.rs`): in-memory + a line-by-line flush to
-      `%LOCALAPPDATA%\PacenotesInstaller\install.log`, truncated per run.
-      Flushed per line because the run worth reading about is the one that
-      died; buffering would drop exactly the interesting part
+      `<game dir>\.pacenotes\logs\install-<stamp>.log`, one file per run,
+      newest five kept. Flushed per line because the run worth reading
+      about is the one that died; buffering would drop exactly the
+      interesting part
+      - Moved out of `%LOCALAPPDATA%` on 2026-10-26: the log belongs with
+        the install it describes, beside the ledger, the backups and the
+        restore points, and the installer should not scatter state through
+        a user's profile. The cache stays there because it is shared by
+        every game folder
+      - Dated rather than truncated, because re-opening the installer to
+        read what went wrong used to erase the run being read
+        (DESIGN-REVIEW §7 asked for at least three)
+      - Attached when scene 3 settles a folder, replaying the lines from
+        before that, so the file is the whole run
 
 How the wizard host actually behaves, and the three OS behaviours worked
 around to get there, are in `DESIGN.md` under Implementation notes. Read that
@@ -582,6 +615,22 @@ both string tables, with nothing to change in `engine.rs`.
       naming every installed package the selection no longer holds
 - [x] Free space measured on the UI side with `GetDiskFreeSpaceExW` and
       handed to the engine as a value
+- [x] **The download phase moved OUT of this scene (2026-10-26).** It is
+      scene 4b now, and the configuration questions happen between the two.
+      Why: a download fills a cache and a install writes to the game
+      folder, and the user should be able to do the first without the
+      second (fetch at home, install later) and the second without the
+      first (change which co-driver is active, with the server down). It
+      also makes the questions easier to answer honestly, since a list
+      built from the cache cannot offer something that failed to download
+      - `worker::DownloadJob`/`run_download` and `worker::InstallJob`/
+        `run_install` are now two jobs; `Fetched` is the download's own
+        outcome, because a finished download is not a finished run
+      - Cancel belongs to 4b and is DISABLED here: every phase on this
+        page writes to the game folder and the engine cannot stop between
+        files, so the button could only lie
+      - `Outcome::Done` no longer carries the download counts; the wizard
+        keeps them, since on the Configure/Install route there were none
 
 ### Scene 7
 

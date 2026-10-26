@@ -166,16 +166,7 @@ unsafe fn build_tree(
     packages: Vec<pacenotes_shared::PackageInfo>,
     status: Option<u16>,
 ) {
-    let game = state.game_id();
-    let cached = state.cache.entries();
-    let installed: Vec<String> = pacenotes_installer::ledger::Ledger::open(&state.folder)
-        .packages()
-        .keys()
-        .cloned()
-        .collect();
-    state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached, &installed);
-    state.packages = packages;
-
+    load_tree(state, packages);
     super::download_tree_view::populate(dialog, state);
 
     let status = status.unwrap_or(if state.tree.is_empty() {
@@ -186,9 +177,26 @@ unsafe fn build_tree(
     crate::ui::set_text(dialog, crate::wizard::control_ids::IDC_S4_STATUS, status);
 }
 
+/// The model alone, which the Configure route needs for scene 5 though it never
+/// shows scene 4's tree control.
+pub(super) fn load_tree(
+    state: &mut crate::wizard::state::WizardState,
+    packages: Vec<pacenotes_shared::PackageInfo>,
+) {
+    let game = state.game_id();
+    let cached = state.cache.entries();
+    let installed: Vec<String> = pacenotes_installer::ledger::Ledger::open(&state.folder)
+        .packages()
+        .keys()
+        .cloned()
+        .collect();
+    state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached, &installed);
+    state.packages = packages;
+}
+
 /// Every choice category in the tree needs a pick, and a build too old for the
 /// catalogue stops only when something must come down the wire, so it can still
-/// reconfigure and remove; the transfer itself happens on the progress scene.
+/// reconfigure and remove; scene 4b does the transfers.
 unsafe fn on_download(dialog: HWND) -> isize {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return crate::wizard::page::reply(dialog, 0);

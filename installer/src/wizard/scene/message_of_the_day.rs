@@ -77,6 +77,7 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
         crate::worker::Message::SecretChecked(outcome) => on_secret_checked(dialog, outcome),
         crate::worker::Message::Motd(None)
         | crate::worker::Message::Packages(_)
+        | crate::worker::Message::Downloaded(_)
         | crate::worker::Message::Installed(_) => {}
     }
 }
@@ -147,7 +148,7 @@ unsafe fn on_secret_checked(dialog: HWND, outcome: crate::worker::SecretOutcome)
             return;
         }
         crate::worker::SecretOutcome::Accepted { expires_at } => {
-            if let Some(date) = expiry_notice(expires_at, unix_now()) {
+            if let Some(date) = expiry_notice(expires_at, pacenotes_installer::engine::unix_now()) {
                 crate::ui::message_box_info(
                     dialog,
                     &crate::i18n::load_string_arg(crate::i18n::IDS_S2_EXPIRING, &date),
@@ -176,11 +177,4 @@ fn expiry_notice(expires_at: Option<i64>, now: i64) -> Option<String> {
     }
     let stamp = pacenotes_installer::engine::utc_stamp(at);
     Some(stamp.split('T').next().unwrap_or("").to_string())
-}
-
-fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|elapsed| elapsed.as_secs() as i64)
-        .unwrap_or(0)
 }

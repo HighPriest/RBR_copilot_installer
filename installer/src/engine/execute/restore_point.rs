@@ -28,7 +28,7 @@ pub fn saved_copy(game_dir: &std::path::Path, point: &str, relative: &str) -> st
     crate::relative_path::join(&restore_dir(game_dir, point).join("files"), relative)
 }
 
-fn unix_now() -> i64 {
+pub fn unix_now() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|elapsed| elapsed.as_secs() as i64)

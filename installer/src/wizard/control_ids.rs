@@ -20,10 +20,16 @@ pub const IDC_S3_PATH: u16 = 322;
 pub const IDC_S3_BROWSE: u16 = 323;
 pub const IDC_S3_GAME_LABEL: u16 = 324;
 pub const IDC_S3_GAME: u16 = 325;
+pub const IDC_S3_DOWNLOAD: u16 = 326;
+pub const IDC_S3_CONFIGURE: u16 = 327;
+pub const IDC_S3_ROUTES: u16 = 328;
 
 pub const IDD_S4_DOWNLOAD: u16 = 330;
 pub const IDC_S4_TREE: u16 = 331;
 pub const IDC_S4_STATUS: u16 = 332;
+
+/// Scene 4b reuses scene 6's control ids, since one set of handlers drives both pages.
+pub const IDD_S4B_FETCH: u16 = 335;
 
 pub const IDD_S5_CONFIG: u16 = 340;
 pub const IDC_S5_LANG_LABEL: u16 = 341;

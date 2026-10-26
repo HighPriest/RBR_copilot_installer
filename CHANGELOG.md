@@ -1,5 +1,54 @@
 # Changelog
 
+## 2026/10/26 — installer: two routes, and the log moves into the game folder
+
+- **The run log lives in the game folder**: `<game dir>\.pacenotes\logs\
+  install-<utc stamp>.log`, beside the ledger, the backups and the restore
+  points it describes. Nothing of ours is written to the user's profile any
+  more except the download cache, which is shared by every game folder.
+  - One file per run, newest five kept. A single overwritten file meant that
+    re-opening the installer to see what went wrong erased the run being
+    looked at (DESIGN-REVIEW §7 asked for at least three).
+  - The file is attached when scene 3 settles a folder, and the lines from
+    before that — language, server, catalogue — are replayed into it, so the
+    file is the whole run rather than its second half.
+- **Downloading and installing are now two screens with the configuration
+  step between them.** Scene 3 offers two routes:
+  - **Download/Update** → 4 (pick) → 4b (fetch) → 5 (configure) → 6
+    (install) → 7.
+  - **Configure/Install** → straight to 5, then 6. No server, no transfers:
+    the questions are answered from the cache and the ledger.
+  - Why: a download fills a cache, an install writes to the game folder.
+    Someone can fetch a voice pack at home and install it on a train, and a
+    user who only wants to change which co-driver is active never has to
+    wait for — or depend on — the server. That is the common case after the
+    first run.
+  - The two routes are in-page buttons with the sheet's Next disabled on
+    that scene: they are alternatives, not a primary and an afterthought,
+    and each is one click rather than select-then-Next.
+  - `Route` decides only what is SKIPPED. Both routes end in the same
+    questions and the same install, reading the same tree, so there is no
+    second "offline" code path to keep in step.
+- Scene 4b is scene 6's template and handlers at an earlier moment. Cancel
+  belongs to it — a half-finished download costs nothing — and is now
+  DISABLED on scene 6, where every phase writes to the game folder and the
+  engine cannot stop between files; the button could only have lied.
+- `worker`: `DownloadJob`/`run_download` and `InstallJob`/`run_install` are
+  two jobs, with `Fetched` as the download's own outcome, because a finished
+  download is not a finished run. `InstallJob` carries no token and no
+  package list: it installs from the cache and reaches the network only to
+  report a conflict.
+- Found by the UI suite as soon as the second route existed: **scene 5 now
+  defaults to what is already installed.** A route whose purpose is changing
+  an install must not ask every question blank — and a selection that
+  omitted an installed package would have uninstalled it. The user's own
+  pick still wins over the default.
+- Tests: the flow suite walks both routes end to end in one run (68/68),
+  asserting the ordering that the split exists for — when the questions are
+  asked the payloads are cached and the game folder has no ledger yet — and
+  that the second run keeps the first run's log. 44/44 layout checks per
+  language. Release build 573 kB against the 600 kB gate.
+
 ## 2026/10/25 — installer: the client halves of S10, S11 and D2
 
 Three protocol changes landed on the server the same day; these are the

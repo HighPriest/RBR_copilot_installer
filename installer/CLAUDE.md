@@ -89,6 +89,12 @@ again:
   one game's package silently shadows another's. `PackageInfo::download_path()`
   produces exactly that triple, `game/directory/name`, and is also the tail of
   the download URL; prefer it over assembling keys by hand.
+State lives in exactly two places, and the split is deliberate: the cache is
+shared by every game folder and belongs to the Windows user, while
+everything that describes ONE install — ledger, backups, restore points and
+the run logs — sits in that folder's `.pacenotes\`. Nothing else of ours is
+written to the user's profile.
+
 - **Cache** (`cache.rs`): `%LOCALAPPDATA%\PacenotesInstaller\cache\`
   - `<sha256>.zip` — the payloads, keyed by manifest sha (integrity+dedupe)
   - `cache.json` — index: (game, directory, name) → {sha256, version, size,
@@ -159,7 +165,9 @@ again:
   Plan = uninstall (ledgered but no longer chosen, including a ledgered
   member of a category or `exclusive_group` that a new pick supersedes) then
   install (chosen but not ledgered, or sha changed = update). Enforce
-  `requires`. Scene 6 runs the plan and is the only progress screen.
+  `requires`. Scene 6 runs the plan, from the CACHE: the download phase is
+  a screen of its own (4b) that happens BEFORE the configuration questions,
+  so the install page never reaches the network except to report a conflict.
 - **Overlapping files** (two selected packages writing the same path):
   install order decides, the later one wins, and the run log says so. No
   gate and no refusal — a user must never be blocked by a catalogue mistake
@@ -232,20 +240,26 @@ again:
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.
-  Control ids mirror `res/installer.rc` in `control_ids.rs`. All seven scenes
-  exist; scene 6 downloads, then applies the selection through `engine.rs`
-  on the worker thread (`worker/apply_selection.rs`). Before changing the
-  sheet, read Implementation notes in `DESIGN.md`: the scene title, the
-  per-scene button labels and the title bar all work around something the OS
-  does not give.
+  Control ids mirror `res/installer.rc` in `control_ids.rs`. Eight pages and
+  TWO ROUTES, which part on scene 3 (`scene/game_folder_routes.rs`):
+  Download/Update (4 → 4b fetches → 5 asks → 6 installs) and
+  Configure/Install (straight to 5, then 6, with no server and no
+  transfers). Scenes 4b and 6 are the same screen at two moments, so they
+  share their control ids and `scene/progress_page.rs`; only `Route` decides
+  what is skipped. Before changing the sheet, read Implementation notes in
+  `DESIGN.md`: the scene title, the per-scene button labels and the title
+  bar all work around something the OS does not give.
 - `ui/` — the small Win32 vocabulary the pages are written in: control
   text, combo boxes, list boxes, the three modal shapes, the folder picker.
 - `choices.rs` — scene 5's model: the three single-select lists and the
   no-choice extras, derived from what scene 4 committed. Pure.
 - `tree/` — scene 4's model: manifest + cache → rows, states, checks. Pure.
 - `runlog.rs` — the run log: in memory for the pane, flushed line by line to
-  `%LOCALAPPDATA%\PacenotesInstaller\install.log`. The UI thread owns it, as
-  it owns the controls.
+  `<game dir>\.pacenotes\logs\install-<stamp>.log`, newest five kept. The UI
+  thread owns it, as it owns the controls. It is attached once scene 3
+  settles a folder, replaying what was said before, because the log belongs
+  with the install it describes; the download cache, shared by every game
+  folder, is the only thing left in `%LOCALAPPDATA%`.
 - `size.rs` — byte counts as a person reads them ("41.6 MB"), in binary units
   so they match Explorer.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;

@@ -1,3 +1,13 @@
+/// Which of scene 3's two buttons started the run. It decides only what is
+/// skipped: both routes end in the same questions and install.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Route {
+    /// Download/Update: scene 4 picks from the catalogue, scene 4b fetches.
+    Download,
+    /// Configure/Install: straight to the questions, against the cache and the ledger.
+    Configure,
+}
+
 /// What the run accumulates, owned by the sheet and shared by every page.
 pub struct WizardState {
     pub language: crate::i18n::Language,
@@ -12,6 +22,7 @@ pub struct WizardState {
     pub detected: Vec<pacenotes_installer::gamedir::Game>,
     /// The single detection, or the user's pick when the folder holds several games.
     pub game: Option<pacenotes_installer::gamedir::Game>,
+    pub route: Route,
     pub base_url: String,
     pub cache: pacenotes_installer::cache::Cache,
 
@@ -26,6 +37,11 @@ pub struct WizardState {
     /// The server publishes a catalogue from a schema this build does not know,
     /// which blocks downloading for this game and nothing else.
     pub schema_mismatch: bool,
+    /// Set when scene 4b starts its run, since the sheet activates the page again afterwards.
+    pub download_started: bool,
+    /// What scene 4b fetched, for the summary, since the install outcome comes later.
+    pub downloaded: usize,
+    pub downloaded_bytes: u64,
     /// The keys committed with Download, in tree order.
     pub chosen: Vec<String>,
     /// Rebuilt from the tree each time scene 5 activates.
@@ -53,6 +69,7 @@ impl WizardState {
             folder: String::new(),
             detected: Vec::new(),
             game: None,
+            route: Route::Download,
             base_url,
             cache: pacenotes_installer::cache::Cache::open(cache_root),
             packages: Vec::new(),
@@ -61,11 +78,13 @@ impl WizardState {
             tree_syncing: false,
             catalogue_loaded: false,
             schema_mismatch: false,
+            download_started: false,
+            downloaded: 0,
+            downloaded_bytes: 0,
             chosen: Vec::new(),
             config: pacenotes_installer::choices::Configuration::default(),
-            log: pacenotes_installer::runlog::Log::create(
-                pacenotes_installer::runlog::default_path(),
-            ),
+            // Attached to the game folder once scene 3 settles it.
+            log: pacenotes_installer::runlog::Log::create(None),
             cancel: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
             install_started: false,
             outcome: None,

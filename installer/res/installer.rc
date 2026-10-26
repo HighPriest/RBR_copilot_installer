@@ -63,6 +63,8 @@ END
 #define IDD_S4_DOWNLOAD     330
 #define IDC_S4_TREE         331
 #define IDC_S4_STATUS       332
+// Scene 4b reuses scene 6's control ids, since one set of handlers drives both pages.
+#define IDD_S4B_FETCH       335
 
 #define IDD_S3_FOLDER       320
 #define IDC_S3_PATH_LABEL   321
@@ -70,6 +72,9 @@ END
 #define IDC_S3_BROWSE       323
 #define IDC_S3_GAME_LABEL   324
 #define IDC_S3_GAME         325
+#define IDC_S3_DOWNLOAD     326
+#define IDC_S3_CONFIGURE    327
+#define IDC_S3_ROUTES       328
 
 #define IDD_S6_INSTALL      350
 #define IDC_S6_PHASE        351
@@ -139,6 +144,8 @@ END
 #define IDS_S4_MISSING         85
 #define IDS_S4_FETCH_FAILED    86
 #define IDS_S4_NEEDS_NEWER     87
+#define IDS_S4B_TITLE          88
+#define IDS_S4B_DONE           89
 #define IDS_STATE_DOWNLOADED   90
 #define IDS_STATE_UPDATE       91
 #define IDS_STATE_LOCAL        92
@@ -151,6 +158,9 @@ END
 #define IDS_S3_GAME            72
 #define IDS_S3_DETECTING       73
 #define IDS_S3_NOGAME          74
+#define IDS_S3_DOWNLOAD        75
+#define IDS_S3_CONFIGURE       76
+#define IDS_S3_ROUTES          77
 
 // Scene 5 — Configuration (100-109)
 #define IDS_S5_TITLE          100
@@ -229,6 +239,10 @@ BEGIN
     LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 302, 9
     COMBOBOX        IDC_S3_GAME, 14, 78, 244, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
+    // The two routes are buttons rather than Next, since neither is the other's afterthought.
+    LTEXT           "", IDC_S3_ROUTES, 14, 106, 302, 30
+    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 14, 142, 140, 22
+    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 164, 142, 140, 22
 END
 
 IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215
@@ -261,6 +275,22 @@ BEGIN
 END
 
 IDD_S6_INSTALL DIALOGEX 0, 0, 330, 215
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_S6_PHASE, 14, 28, 302, 10
+    CONTROL         "", IDC_S6_PROGRESS, "msctls_progress32",
+                    WS_BORDER, 14, 42, 302, 12
+    LTEXT           "", IDC_S6_ITEM, 14, 60, 302, 10
+    EDITTEXT        IDC_S6_LOG, 14, 76, 302, 130,
+                    ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
+                    | WS_VSCROLL | NOT WS_TABSTOP
+END
+
+// Scene 4b, the same screen as scene 6 at an earlier moment, as its own template
+// so each page has its own controls and an id for PSM_SETCURSELID.
+IDD_S4B_FETCH DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
@@ -334,6 +364,9 @@ BEGIN
     IDS_S3_GAME         "Detected game:"
     IDS_S3_DETECTING    "(Detecting)"
     IDS_S3_NOGAME       "No supported game was found in that folder.\n\nChoose the folder that contains the game's own executable."
+    IDS_S3_DOWNLOAD     "Download/Update"
+    IDS_S3_CONFIGURE    "Configure/Install"
+    IDS_S3_ROUTES       "Download/Update: choose content, fetch it, then configure and install it.\r\nConfigure/Install: skip the download and work with what is already on this computer."
 
     IDS_S4_TITLE        "Download"
     IDS_S4_LOADING      "Loading the list of available content..."
@@ -343,6 +376,8 @@ BEGIN
     IDS_S4_MISSING      "Choose at least one item in each of: %s"
     IDS_S4_FETCH_FAILED "The list of available content could not be read. Showing only content already on this computer."
     IDS_S4_NEEDS_NEWER  "The server offers content this version of the installer does not understand, so nothing new can be downloaded.\n\nDownload the latest installer to get it. Everything already installed still works: you can change your selection or remove packages without updating."
+    IDS_S4B_TITLE       "Downloading"
+    IDS_S4B_DONE        "Everything selected is on this computer. Nothing has been installed yet."
     IDS_STATE_DOWNLOADED "(downloaded)"
     IDS_STATE_UPDATE    "(update)"
     IDS_STATE_LOCAL     "(local only)"
@@ -428,6 +463,9 @@ BEGIN
     IDS_S3_GAME         "Wykryta gra:"
     IDS_S3_DETECTING    "(Wykrywanie)"
     IDS_S3_NOGAME       "W tym folderze nie znaleziono obsługiwanej gry.\n\nWskaż folder zawierający plik wykonywalny gry."
+    IDS_S3_DOWNLOAD     "Pobierz/Aktualizuj"
+    IDS_S3_CONFIGURE    "Konfiguruj/Instaluj"
+    IDS_S3_ROUTES       "Pobierz/Aktualizuj: wybierz zawartość, pobierz ją, a potem skonfiguruj i zainstaluj.\r\nKonfiguruj/Instaluj: pomiń pobieranie i użyj tego, co już jest na tym komputerze."
 
     IDS_S4_TITLE        "Pobieranie"
     IDS_S4_LOADING      "Wczytywanie listy dostępnej zawartości..."
@@ -437,6 +475,8 @@ BEGIN
     IDS_S4_MISSING      "Wybierz co najmniej jedną pozycję w każdej z kategorii: %s"
     IDS_S4_FETCH_FAILED "Nie udało się odczytać listy dostępnej zawartości. Pokazana jest tylko zawartość z tego komputera."
     IDS_S4_NEEDS_NEWER  "Serwer udostępnia zawartość, której ta wersja instalatora nie rozumie, więc nie można pobrać niczego nowego.\n\nPobierz najnowszy instalator. Wszystko, co już zainstalowano, działa dalej: bez aktualizacji możesz zmienić wybór lub usunąć pakiety."
+    IDS_S4B_TITLE       "Pobieranie"
+    IDS_S4B_DONE        "Wszystko, co wybrano, jest na tym komputerze. Nic nie zostało jeszcze zainstalowane."
     IDS_STATE_DOWNLOADED "(pobrane)"
     IDS_STATE_UPDATE    "(aktualizacja)"
     IDS_STATE_LOCAL     "(tylko lokalnie)"

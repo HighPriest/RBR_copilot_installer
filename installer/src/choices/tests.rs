@@ -242,3 +242,38 @@ fn unticked_packages_are_not_offered() {
     assert_eq!(labels(&configuration, 2), vec!["Descriptive".to_string()]);
     assert!(configuration.is_complete());
 }
+
+fn czech_and_installed_polish() -> crate::tree::Tree {
+    let packages: Vec<_> = ["language/czech", "language/polish"]
+        .iter()
+        .map(|name| package(name))
+        .collect();
+    let installed = [format!("{RBR}/public/language/polish")];
+    let mut tree = crate::tree::Tree::build(RBR, &packages, &[], &installed);
+    let czech = leaf_of(&tree, &format!("{RBR}/public/language/czech"));
+    tree.set_checked(czech, true);
+    tree
+}
+
+/// The Configure/Install route changes an install, and an omitted package would be uninstalled.
+#[test]
+fn what_is_already_installed_is_preselected() {
+    let configuration =
+        super::Configuration::from_tree(&czech_and_installed_polish(), &[], &CHOICES);
+    assert_eq!(
+        configuration.lists[0].selected_key(),
+        Some(format!("{RBR}/public/language/polish").as_str())
+    );
+}
+
+/// They may have come back from the download scene precisely to change it.
+#[test]
+fn a_users_own_pick_beats_what_is_installed() {
+    let czech = format!("{RBR}/public/language/czech");
+    let configuration = super::Configuration::from_tree(
+        &czech_and_installed_polish(),
+        std::slice::from_ref(&czech),
+        &CHOICES,
+    );
+    assert_eq!(configuration.lists[0].selected_key(), Some(czech.as_str()));
+}

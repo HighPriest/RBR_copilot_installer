@@ -217,8 +217,14 @@ Where a run leaves things, when `--cache` is not given:
 ```text
 %LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip   verified payloads
 %LOCALAPPDATA%\PacenotesInstaller\cache\cache.json     what each one is
-%LOCALAPPDATA%\PacenotesInstaller\install.log          the last run's log
+<game dir>\.pacenotes\logs\install-<stamp>.log         one log per run
+<game dir>\.pacenotes\installed.json                   the ledger
+<game dir>\.pacenotes\backup\, restore\<stamp>\        what was replaced
 ```
+
+The cache is the only thing in the user's profile, because it is shared by
+every game folder. Everything describing one install — including the run
+log — lives in that folder's `.pacenotes\`.
 
 ## 6. Releasing
 

@@ -38,12 +38,14 @@ $IDC_SCENE_TITLE = 299
 $IDC_S1_COMBO = 302
 $IDC_S2_MOTD = 311; $IDC_S2_STATUS = 314
 $IDC_S3_PATH = 322
+$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327
 $IDC_S4_TREE = 331; $IDC_S4_STATUS = 332
+$IDC_S6_PHASE = 351
 $IDC_S5_LANG_LABEL = 341; $IDC_S5_LANG = 342
 $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
-$PSBTN_NEXT = 1
+$PSBTN_NEXT = 1; $PSBTN_FINISH = 2
 $TVM_GETCOUNT = 0x1105
 
 $crateRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
@@ -151,7 +153,9 @@ try {
     Set-CtrlText -Dialog $page -CtrlId $IDC_S3_PATH -Value $gameFolder
     Invoke-EditChanged -Dialog $page -CtrlId $IDC_S3_PATH
     Start-Sleep -Milliseconds 900
-    Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
+    # The Download/Update route, which is one of scene 3's two buttons — not
+    # the sheet's Next, which that scene leaves disabled.
+    Invoke-Button -Dialog $page -CtrlId $IDC_S3_DOWNLOAD
 
     Write-Host "`n-- scene 4: download --"
     $page = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE
@@ -200,10 +204,26 @@ try {
     Assert-That 'every category can be ticked' ($ticked -eq 4) "ticked $ticked roots, expected 4"
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
 
+    # Scene 4b runs itself, and catching it on screen would race, so what we wait for is scene 5.
     Write-Host "`n-- scene 5: configuration --"
-    $page5 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S5_LANG
+    $page5 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S5_LANG -TimeoutMs 40000
     Assert-That 'a tick in every category gets past the gate' ($page5 -ne [IntPtr]::Zero)
     if ($page5 -eq [IntPtr]::Zero) { throw 'scene 5 never appeared' }
+
+    # THE ordering the two screens exist for: by the time the questions are
+    # asked the payloads are downloaded, and the game folder has not been
+    # touched. A ledger here would mean the install ran first.
+    # Counted from the cache INDEX, not the payload files: the cache is
+    # sha-keyed, and every zip in this fixture is built from the same staged
+    # folder, so all four packages legitimately share one payload.
+    $indexPath = Join-Path $cacheDir 'cache.json'
+    $indexed = if (Test-Path $indexPath) {
+        @((Get-Content $indexPath -Raw | ConvertFrom-Json).packages.PSObject.Properties.Name)
+    } else { @() }
+    Assert-That 'the payloads are downloaded before the questions are asked' `
+    ($indexed.Count -eq $CATALOGUE.Count) "cache index holds $($indexed.Count) packages"
+    Assert-That 'nothing is installed before the questions are answered' `
+    (-not (Test-Path (Join-Path $gameFolder '.pacenotes\installed.json')))
 
     Assert-Equal 'scene 5 title' (Get-CtrlText $page5 $IDC_SCENE_TITLE) $S['IDS_S5_TITLE']
     Assert-Equal 'primary button reads Install' `
@@ -315,6 +335,84 @@ try {
     Assert-That 'the verified payloads are in the cache' ($payloads.Count -ge 1) `
         "cache holds $($payloads.Count) payloads"
     Assert-That 'the cache index was written' (Test-Path (Join-Path $cacheDir 'cache.json'))
+
+    # The log lives WITH the game, not in the user's profile.
+    $runLogs = @(Get-ChildItem -Path (Join-Path $gameFolder '.pacenotes\logs') `
+            -Filter 'install-*.log' -ErrorAction SilentlyContinue)
+    Assert-That 'the run log was written into the game folder' ($runLogs.Count -eq 1) `
+        "found $($runLogs.Count) logs"
+    if ($runLogs.Count -eq 1) {
+        $onDisk = Get-Content $runLogs[0].FullName -Raw
+        # It is the WHOLE run, including the lines from before the folder was
+        # known — the log attaches mid-run and replays what it has.
+        Assert-That 'the file holds the whole run, from before the folder was known' `
+        ($onDisk.Contains('game: ') -and $onDisk.Contains('installed rbr/public/')) `
+            "log file said [$onDisk]"
+        Assert-That 'the summary points at that file' `
+        ($detail.Contains($runLogs[0].FullName)) "summary said [$detail]"
+    }
+
+    # ---------------------------------------------------------------
+    # Second pass — the Configure/Install route
+    # ---------------------------------------------------------------
+    # The same folder and the same cache, so there is nothing to download:
+    # this is the route for "change what is installed", and it must skip
+    # both download screens and still reach a working install.
+    Write-Host "`n-- second pass: Configure/Install --"
+    # Finish, not Next: scene 7 shows the Finish button, and PSM_PRESSBUTTON
+    # addresses whichever of the two is live by its own PSBTN_* code.
+    Press-WizardButton -Sheet $h -Button $PSBTN_FINISH
+    Assert-That 'Finish closes the first run' ($proc.WaitForExit(10000))
+
+    $launch2 = Start-Installer -ExePath $ExePath -ExtraArgs @(
+        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+    $proc = $launch2.Process
+    $sheet2 = Wait-ForDialog -OwnerPid $proc.Id
+    Assert-That 'the second run opens' ($null -ne $sheet2)
+    if (-not $sheet2) { throw 'no wizard on the second pass' }
+    $h2 = $sheet2.Handle
+
+    $p = Wait-ForPageControl -Sheet $h2 -CtrlId $IDC_S1_COMBO
+    $combo2 = [NativeUi]::GetDlgItem($p, $IDC_S1_COMBO)
+    [void][NativeUi]::SendMessageW($combo2, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+    Press-WizardButton -Sheet $h2 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h2 -CtrlId $IDC_S2_MOTD
+    Press-WizardButton -Sheet $h2 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h2 -CtrlId $IDC_S3_PATH
+    Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder
+    Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+    Start-Sleep -Milliseconds 900
+    Invoke-Button -Dialog $p -CtrlId $IDC_S3_CONFIGURE
+
+    # Straight to the questions: no tree, no progress bar in between.
+    $conf = Wait-ForPageControl -Sheet $h2 -CtrlId $IDC_S5_LANG -TimeoutMs 15000
+    Assert-That 'Configure/Install goes straight to the questions' ($conf -ne [IntPtr]::Zero)
+    if ($conf -ne [IntPtr]::Zero) {
+        # Every cached package is on offer, because this route ticks what is
+        # already here.
+        $offered = Get-ListCount -Dialog $conf -CtrlId $IDC_S5_LANG
+        Assert-That 'the lists are filled from the cache and the ledger' ($offered -ge 1) `
+            "language list holds $offered"
+        # What was installed last time is preselected: a run that omitted it
+        # would UNINSTALL it, so "keep what you have" has to be the default.
+        Assert-That 'last run''s pick is preselected' `
+        ((Get-ListSelection -Dialog $conf -CtrlId $IDC_S5_LANG) -ge 0)
+
+        Press-WizardButton -Sheet $h2 -Button $PSBTN_NEXT
+        $done = Wait-ForPageControl -Sheet $h2 -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+        Assert-That 'the Configure/Install route reaches the summary' ($done -ne [IntPtr]::Zero)
+        if ($done -ne [IntPtr]::Zero) {
+            Assert-Equal 'and reports success' (Get-CtrlText $done $IDC_S7_RESULT) $S['IDS_S7_OK']
+            $detail2 = Get-CtrlText $done $IDC_S7_DETAIL
+            Assert-That 'with nothing downloaded' `
+            ($detail2.Contains($S['IDS_S7_NOTHING_TODO'])) "summary said [$detail2]"
+        }
+        # A second run, a second log file — the first one is still readable.
+        $logs2 = @(Get-ChildItem -Path (Join-Path $gameFolder '.pacenotes\logs') `
+                -Filter 'install-*.log' -ErrorAction SilentlyContinue)
+        Assert-That 'the second run kept the first run''s log' ($logs2.Count -eq 2) `
+            "found $($logs2.Count) logs"
+    }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

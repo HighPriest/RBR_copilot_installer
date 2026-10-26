@@ -12,5 +12,5 @@ mod uninstall_package;
 
 pub use execute_error::ExecuteError;
 pub use record_configured::record_configured;
-pub use restore_point::utc_stamp;
+pub use restore_point::{unix_now, utc_stamp};
 pub use run::{execute, Outcome};

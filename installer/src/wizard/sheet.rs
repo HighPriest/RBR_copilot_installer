@@ -28,6 +28,11 @@ pub fn run(base_url: &str, cache_root: std::path::PathBuf) {
             state_pointer,
         ),
         page(
+            crate::wizard::control_ids::IDD_S4B_FETCH,
+            Some(crate::wizard::scene::fetching_page),
+            state_pointer,
+        ),
+        page(
             crate::wizard::control_ids::IDD_S5_CONFIG,
             Some(crate::wizard::scene::configuration_page),
             state_pointer,

@@ -51,6 +51,7 @@ pub unsafe extern "system" fn configuration_page(
                 crate::wizard::page::reply(dialog, 0)
             }
             Some(ctl::PSN_WIZNEXT) => on_install(dialog),
+            Some(ctl::PSN_WIZBACK) => on_back(dialog),
             Some(ctl::PSN_QUERYCANCEL) => crate::wizard::page::query_cancel(dialog),
             _ => 0,
         },
@@ -93,6 +94,19 @@ unsafe fn on_choice_picked(dialog: HWND, control: u16) {
     if let Some(state) = crate::wizard::page::state(dialog) {
         state.config.select(index, selection);
     }
+}
+
+/// Back to where the route came from, which is neither route's previous page:
+/// a finished transfer cannot be re-entered, and Configure came from scene 3.
+unsafe fn on_back(dialog: HWND) -> isize {
+    let route = crate::wizard::page::state(dialog)
+        .map(|state| state.route)
+        .unwrap_or(crate::wizard::state::Route::Download);
+    let target = match route {
+        crate::wizard::state::Route::Download => crate::wizard::control_ids::IDD_S4_DOWNLOAD,
+        crate::wizard::state::Route::Configure => crate::wizard::control_ids::IDD_S3_FOLDER,
+    };
+    crate::wizard::page::reply(dialog, target as isize)
 }
 
 /// Every list that offers anything needs a pick; the warning names them by their captions.

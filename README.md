@@ -36,7 +36,7 @@ It does need the **Microsoft Visual C++ 2015-2022 Redistributable (x64)**,
 which almost every PC that runs games already has. If Windows complains
 about `vcruntime140.dll`, that is the thing to install.
 
-The wizard is seven screens:
+The wizard:
 
 1. **Language** — English or Polish; it starts in your Windows language.
 2. **Message of the day** — what the server has to say, plus a field for an
@@ -44,18 +44,26 @@ The wizard is seven screens:
    server cannot be reached you can carry on with whatever you already
    downloaded.
 3. **Game folder** — point it at the folder holding the game's own
-   executable. It identifies the game from that and will not let you
-   continue until it recognises one.
+   executable. It identifies the game from that, and then offers two
+   buttons:
+   - **Download/Update** — get new content, then set it up and install it.
+   - **Configure/Install** — change what is active using what is already on
+     this computer. No server needed, so this is the quick way to swap
+     co-driver or style later.
 4. **Download** — a tree of everything available, built from how the
    packages are filed on the server. Tick what you want on this computer.
    Anything you already have is ticked for you and marked.
-5. **Configuration** — choose the one pacenotes language, one co-driver
+5. **Downloading** — progress, the package currently being fetched, and a
+   live log. Cancel is available here; an unfinished download is discarded.
+   Nothing has been written to the game folder at this point.
+6. **Configuration** — choose the one pacenotes language, one co-driver
    voice and one style to actually use. Voices are listed with their full
-   path, so two voices with the same name stay distinguishable.
-6. **Installation** — progress, the package currently being fetched, and a
-   live log. Cancel is available while downloading; an unfinished download
-   is discarded.
-7. **Summary** — what was done, how much was downloaded, and where the log
+   path, so two voices with the same name stay distinguishable. What you
+   already have installed is pre-selected, so changing one thing does not
+   mean answering everything again.
+7. **Installation** — the backup and install, with the same progress screen
+   and log. This part needs no server.
+8. **Summary** — what was done, how much was downloaded, and where the log
    is. The log is hidden when everything went well and shown when it did
    not.
 
@@ -63,12 +71,17 @@ What a run leaves on your machine:
 
 ```text
 %LOCALAPPDATA%\PacenotesInstaller\cache\     downloaded packages, verified
-%LOCALAPPDATA%\PacenotesInstaller\install.log   the last run's log
+<game folder>\.pacenotes\                    everything about that install:
+                                             what was installed, what was
+                                             replaced, restore points, and
+                                             one log per run
 ```
 
 The cache is keyed by content hash, so re-running the installer re-uses what
-you have, works offline, and can serve more than one game folder. Nothing is
-written to the game folder yet — see the note in the Introduction.
+you have, works offline, and can serve more than one game folder. It is the
+only thing kept in your user profile; everything that describes a particular
+game folder is kept inside that folder, so deleting the game takes its
+installer state with it.
 
 ---
 
@@ -113,7 +126,7 @@ pwsh -File tests\Run-AllTests.ps1   # lint, tests, size gate, GUI suite
 |---|---|
 | `shared/` | Protocol types shared by both sides. serde only — no I/O, no HTTP. |
 | `installer/` | The Windows GUI. Win32 + WinHTTP, no GUI framework, hard 600 kB gate. |
-| `installer/src/` | `wizard.rs` (the seven scenes), `tree.rs` / `choices.rs` (their models), `http.rs` (WinHTTP), `api.rs`, `cache.rs`, `sha256.rs`, `runlog.rs`. |
+| `installer/src/` | `wizard/` (the wizard pages and its two routes), `tree/` / `choices/` (their models), `http/` (WinHTTP), `api/`, `cache/`, `sha256.rs`, `runlog/`. |
 | `installer/tests/` | Every installer check: Rust tests, the size gate, and the PowerShell suite that drives the real UI. |
 | `installer/res/installer.rc` | Dialog templates, all user-visible strings per language, icon, version info. |
 | `server/` | axum + libSQL package and auth server. |

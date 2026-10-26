@@ -104,17 +104,18 @@ fn detail_lines(state: &crate::wizard::state::WizardState) -> Vec<String> {
             &leaves.join(", "),
         ));
     }
-    lines.push(match &state.outcome {
-        Some(crate::worker::Outcome::Done {
-            downloaded, bytes, ..
-        }) if *downloaded > 0 => crate::i18n::load_string_arg(
+    // From the state, since the transfers happened screens ago, or not at all on the Configure route.
+    lines.push(if state.downloaded > 0 {
+        crate::i18n::load_string_arg(
             crate::i18n::IDS_S7_DOWNLOADS,
             &format!(
-                "{downloaded} ({})",
-                pacenotes_installer::size::human(*bytes)
+                "{} ({})",
+                state.downloaded,
+                pacenotes_installer::size::human(state.downloaded_bytes)
             ),
-        ),
-        _ => crate::i18n::load_string(crate::i18n::IDS_S7_NOTHING_TODO),
+        )
+    } else {
+        crate::i18n::load_string(crate::i18n::IDS_S7_NOTHING_TODO)
     });
     if let Some(crate::worker::Outcome::Done { applied, .. }) = &state.outcome {
         lines.extend(applied_lines(applied));
