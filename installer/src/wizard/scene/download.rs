@@ -192,6 +192,8 @@ pub(super) fn load_tree(
         .collect();
     state.tree = pacenotes_installer::tree::Tree::build(game, &packages, &cached, &installed);
     state.packages = packages;
+    // Sized with the model, all zero: a stray notification indexing an empty table aborted the Configure route.
+    state.tree_items = vec![0; state.tree.len()];
 }
 
 /// Every choice category in the tree needs a pick, and a build too old for the

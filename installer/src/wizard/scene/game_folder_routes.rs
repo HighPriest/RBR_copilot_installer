@@ -5,13 +5,14 @@ use windows_sys::Win32::Foundation::{HWND, LPARAM};
 use windows_sys::Win32::UI::Controls as ctl;
 use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 
-/// Neither route means anything until a game is settled.
+// No route means anything until a game is settled.
 pub unsafe fn show_route_buttons(dialog: HWND) {
     let ready = crate::wizard::page::state(dialog)
         .and_then(|state| state.game)
         .is_some();
     crate::ui::enable(dialog, crate::wizard::control_ids::IDC_S3_DOWNLOAD, ready);
     crate::ui::enable(dialog, crate::wizard::control_ids::IDC_S3_CONFIGURE, ready);
+    crate::ui::enable(dialog, crate::wizard::control_ids::IDC_S3_RESTORE, ready);
 }
 
 /// Starts the log in the game folder and jumps to the route's first page, by
@@ -53,10 +54,18 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
 /// folder now, replaying what was said before.
 unsafe fn attach_log(dialog: HWND, state: &mut crate::wizard::state::WizardState) {
     let folder = std::path::PathBuf::from(&state.folder);
+    // One file per run, not per route button pressed within it.
+    let dir = pacenotes_installer::runlog::log_dir(&folder);
+    if state.log.path().and_then(|path| path.parent()) == Some(dir.as_path()) {
+        return;
+    }
     let stamp = pacenotes_installer::engine::utc_stamp(pacenotes_installer::engine::unix_now());
     state
         .log
         .attach(pacenotes_installer::runlog::log_path(&folder, &stamp));
+    if let Some(path) = state.log.path() {
+        crate::crash::log_to(path.to_path_buf());
+    }
     if let Some(game) = state.game {
         let line = format!("game: {} in {}", game.title(), state.folder);
         super::progress_page::log_line(dialog, state, &line);

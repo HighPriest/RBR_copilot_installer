@@ -413,6 +413,85 @@ try {
         Assert-That 'the second run kept the first run''s log' ($logs2.Count -eq 2) `
             "found $($logs2.Count) logs"
     }
+
+    # ---------------------------------------------------------------
+    # Third pass — switching routes mid-run
+    # ---------------------------------------------------------------
+    # REGRESSION (2026-10-26): Configure/Install, change a pick, Back, then
+    # Download/Update aborted the process. The Configure route loads a tree
+    # model without a tree CONTROL to mirror it into; the control then sent
+    # an item-changed notification carrying lParam 0 — indistinguishable
+    # from "node 0" — and the posted refresh indexed a handle table that was
+    # still empty. The crash was silent, because a GUI binary with
+    # panic = "abort" has nowhere to print.
+    Write-Host "`n-- third pass: Configure/Install -> Back -> Download/Update --"
+    Press-WizardButton -Sheet $h2 -Button $PSBTN_FINISH
+    Assert-That 'Finish closes the second run' ($proc.WaitForExit(10000))
+
+    $launch3 = Start-Installer -ExePath $ExePath -ExtraArgs @(
+        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+    $proc = $launch3.Process
+    $sheet3 = Wait-ForDialog -OwnerPid $proc.Id
+    if (-not $sheet3) { throw 'no wizard on the third pass' }
+    $h3 = $sheet3.Handle
+
+    $p = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S1_COMBO
+    $combo3 = [NativeUi]::GetDlgItem($p, $IDC_S1_COMBO)
+    [void][NativeUi]::SendMessageW($combo3, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+    Press-WizardButton -Sheet $h3 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S2_MOTD
+    Press-WizardButton -Sheet $h3 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S3_PATH
+    Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder
+    Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+    Start-Sleep -Milliseconds 900
+
+    Invoke-Button -Dialog $p -CtrlId $IDC_S3_CONFIGURE
+    $conf3 = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S5_LANG -TimeoutMs 15000
+    Assert-That 'the questions open on the Configure route' ($conf3 -ne [IntPtr]::Zero)
+    if ($conf3 -ne [IntPtr]::Zero) {
+        # Change the answer: the reported sequence did, and a changed pick is
+        # what the user would have lost if the model had been reset.
+        $was = Get-ListSelection -Dialog $conf3 -CtrlId $IDC_S5_LANG
+        $other = if ($was -eq 0) { 1 } else { 0 }
+        [void](Select-ListItem -Dialog $conf3 -CtrlId $IDC_S5_LANG -Index $other)
+
+        # Back goes to the game folder, not into a page this route skipped.
+        Press-WizardButton -Sheet $h3 -Button $PSBTN_BACK
+        $back3 = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S3_PATH -TimeoutMs 8000
+        Assert-That 'Back from the questions returns to the game folder' `
+        ($back3 -ne [IntPtr]::Zero)
+
+        # ...and the other route still works afterwards.
+        Invoke-Button -Dialog $back3 -CtrlId $IDC_S3_DOWNLOAD
+        $tree3 = Wait-ForPageControl -Sheet $h3 -CtrlId $IDC_S4_TREE -TimeoutMs 20000
+        Assert-That 'Download/Update survives the route switch' ($tree3 -ne [IntPtr]::Zero) `
+            'the installer died opening scene 4'
+        Assert-That 'the process is still alive' (-not $proc.HasExited) `
+            $(if ($proc.HasExited) { "exit 0x$($proc.ExitCode.ToString('X8'))" } else { '' })
+        if ($tree3 -ne [IntPtr]::Zero) {
+            $deadline = (Get-Date).AddSeconds(20)
+            do {
+                Start-Sleep -Milliseconds 300
+                $rows3 = [int][NativeUi]::SendMessageW(
+                    [NativeUi]::GetDlgItem($tree3, $IDC_S4_TREE), $TVM_GETCOUNT,
+                    [IntPtr]::Zero, [IntPtr]::Zero)
+            } while ($rows3 -eq 0 -and (Get-Date) -lt $deadline)
+            Assert-That 'the catalogue is there' ($rows3 -eq $EXPECTED_ROWS) `
+                "control holds $rows3 rows, expected $EXPECTED_ROWS"
+            # Ticking is what posts the refresh that used to abort.
+            $ticked3 = Invoke-TreeCheckRoots -Dialog $tree3 -CtrlId $IDC_S4_TREE
+            Start-Sleep -Milliseconds 500
+            Assert-That 'and ticking still works' `
+            ($ticked3 -eq 4 -and -not $proc.HasExited) "ticked $ticked3 roots"
+        }
+        # No crash line anywhere: the hook writes one if a panic happened,
+        # even when the window has already gone.
+        $crashBeside = Join-Path (Split-Path $launch3.Path -Parent) `
+            'pacenotes-installer-crash.log'
+        Assert-That 'nothing was written to the crash log' (-not (Test-Path $crashBeside)) `
+            $(if (Test-Path $crashBeside) { (Get-Content $crashBeside -Raw) } else { '' })
+    }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

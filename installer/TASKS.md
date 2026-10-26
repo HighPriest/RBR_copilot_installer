@@ -105,10 +105,18 @@ Scenes:
       scan debounced 400 ms on EN_CHANGE, immediate after Browse; 1 match →
       set + disabled, >1 → enabled with matches only, 0 → placeholder +
       warning modal (after Browse and on a route button only)
-- [x] S3's **two route buttons** (2026-10-26): Download/Update → scene 4,
-      Configure/Install → straight to scene 5. In-page buttons with the
-      sheet's Next left disabled, because the two are alternatives rather
-      than a primary and an afterthought, and each route is then one click.
+- [x] S3's **three route buttons** (2026-10-26): Download/Update → scene 4,
+      Configure/Install → straight to scene 5, Restore/Uninstall → the
+      restore scene (not built; answers "not implemented yet", and ships
+      early so the page's shape does not change under users later).
+      In-page buttons with the sheet's Next left disabled, because they are
+      alternatives rather than one primary and two afterthoughts, and each
+      route is then one click.
+      - Download/Update is the MAIN flow and looks it: default button,
+        largest, alone on the right. The other two are secondary work on a
+        folder you already have, so they are smaller and sit together on
+        the left. `Test-UiLayout.ps1` measures that arrangement, because
+        "looks primary" is the whole point of it
       `Route` in `wizard/state.rs` decides only what is SKIPPED — both routes end
       in the same questions and the same install, reading the same tree, so
       there is no separate "offline" path to keep in step. The jumps use
@@ -641,8 +649,37 @@ both string tables, with nothing to change in `engine.rs`.
       `IDS_S7_PENDING_ENGINE` is unused and should be deleted from both
       string tables when something else touches them
 
+### Crash reporting
+
+- [x] **A panic now says where it happened** (2026-10-26). A GUI binary
+      with `panic = "abort"` has nowhere to print, so a panic used to be a
+      window that vanished plus a WER record pointing at an offset in a
+      stripped exe — unusable to a user and nearly so to us. `main.rs`
+      installs a hook that writes `panicked at <file>:<line>: <message>`
+      into the run log, or into `pacenotes-installer-crash.log` beside the
+      exe when no game folder has been settled yet, and shows it once
+      - Only the FIRST panic opens a window: the modal pumps the message
+        queue, which can deliver the very message that panicked, and one
+        fault was seen becoming a cascade of boxes
+      - It found the route-switch abort below on its first run
+- [ ] Decide whether to go further: a `SetUnhandledExceptionFilter` for
+      access violations and other faults that never reach a Rust panic
+      hook, and/or an "open the log" button on the crash box
+
 ### Tests
 
+- [x] **Regression: switching routes mid-run** (2026-10-26). Configure/
+      Install → change a pick → Back → Download/Update aborted the
+      process. The Configure route loads a tree MODEL with no tree CONTROL
+      to mirror it into; the control then sent an item-changed
+      notification whose `lParam` was 0 — indistinguishable from "node 0"
+      — the old guard (`node >= tree.len()`) passed because the model was
+      no longer empty, and the posted refresh indexed a handle table that
+      was still empty. Fixed three ways: the handle table is sized
+      wherever the model is assigned, the refresh is driven off the handle
+      table rather than the model's length, and a notification is
+      validated by its `hItem`. Third pass of `Test-WizardDownload.ps1`
+      walks the whole sequence and checks the crash log stayed empty
 - [x] plan() table tests, 19: fresh install, no-op re-run, switch style,
       switch voice, exclusive_group supersede, changed sha, withdrawn
       package, unfinished install, every `requires` case

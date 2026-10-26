@@ -23,6 +23,7 @@ pub const IDC_S3_GAME: u16 = 325;
 pub const IDC_S3_DOWNLOAD: u16 = 326;
 pub const IDC_S3_CONFIGURE: u16 = 327;
 pub const IDC_S3_ROUTES: u16 = 328;
+pub const IDC_S3_RESTORE: u16 = 329;
 
 pub const IDD_S4_DOWNLOAD: u16 = 330;
 pub const IDC_S4_TREE: u16 = 331;

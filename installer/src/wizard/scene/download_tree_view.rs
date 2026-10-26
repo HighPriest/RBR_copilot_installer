@@ -111,7 +111,8 @@ pub unsafe fn refresh_checks(dialog: HWND, state: &mut crate::wizard::state::Wiz
     let control = tree_control(dialog);
     let was_syncing = state.tree_syncing;
     state.tree_syncing = true;
-    for node in 0..state.tree.len() {
+    // Off the handle table, since a node the control does not hold has nothing to push.
+    for node in 0..state.tree_items.len().min(state.tree.len()) {
         let handle = state.tree_items[node];
         if handle == 0 {
             continue;
@@ -143,8 +144,9 @@ pub unsafe fn on_item_changed(dialog: HWND, lparam: LPARAM) -> isize {
     let Some(change) = (lparam as *const NmTvItemChange).as_ref() else {
         return 0;
     };
+    // An item that is not ours carries lParam 0 too, so only the handle table can say it is node 0.
     let node = change.lparam as usize;
-    if node >= state.tree.len() {
+    if state.tree_items.get(node).copied() != Some(change.item as isize) {
         return 0;
     }
     let image = (change.state_new & ctl::TVIS_STATEIMAGEMASK) >> STATE_IMAGE_SHIFT;

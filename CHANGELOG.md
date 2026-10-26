@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026/10/26 — installer: scene 3's three routes, and a crash that hid itself
+
+- **Scene 3's buttons are now arranged by importance**: Download/Update is
+  the main flow, so it is the default button, the largest, and alone on the
+  right; Configure/Install and the new **Restore/Uninstall** are secondary
+  work on a folder you already have, so they are smaller and sit together on
+  the left. `Test-UiLayout.ps1` measures the arrangement, because "looks
+  primary" is the point of it.
+  - Restore/Uninstall answers "not implemented yet" until the restore scene
+    lands. It ships early so the page's shape does not change under users
+    later, and so someone looking for a way back can see one is coming.
+- **Fixed: Configure/Install → change a pick → Back → Download/Update killed
+  the installer.** The Configure route loads a tree MODEL without a tree
+  CONTROL to mirror it into. SysTreeView32 then sends an item-changed
+  notification carrying `lParam = 0` before it holds anything of ours —
+  indistinguishable from "node 0" — and the old guard (`node >= tree.len()`)
+  no longer caught it, because the model was no longer empty. The posted
+  refresh then indexed a handle table that was still empty and the process
+  aborted. Fixed in three places, each of which would have been enough:
+  - the handle table is sized wherever the model is assigned, so the two
+    cannot drift;
+  - the refresh is driven off the handle table rather than the model's
+    length;
+  - a notification is validated by its `hItem`, not by an lParam that an
+    item we did not insert also has.
+  The third pass of `Test-WizardDownload.ps1` now walks the whole sequence.
+- **A panic now says where it happened.** This is a GUI binary with
+  `panic = "abort"`: a panic had nowhere to print, so the window simply
+  vanished and Windows recorded an offset into a stripped exe. A hook in
+  `main.rs` writes `panicked at <file>:<line>: <message>` into the run log —
+  or into `pacenotes-installer-crash.log` beside the exe before a game
+  folder is known — and shows it once. Only the first panic opens a window:
+  the modal pumps the message queue, which can deliver the very message that
+  panicked, and one fault was observed becoming a cascade of boxes. It found
+  the bug above on its first run.
+- Taking a second route in one session no longer starts a second log file.
+  One file per run, not per button press.
+- Release build 577.5 kB against the 600 kB gate. 48/48 layout checks per
+  language, 76/76 flow checks.
+
 ## 2026/10/26 — installer: two routes, and the log moves into the game folder
 
 - **The run log lives in the game folder**: `<game dir>\.pacenotes\logs\

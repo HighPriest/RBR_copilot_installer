@@ -75,6 +75,7 @@ END
 #define IDC_S3_DOWNLOAD     326
 #define IDC_S3_CONFIGURE    327
 #define IDC_S3_ROUTES       328
+#define IDC_S3_RESTORE      329
 
 #define IDD_S6_INSTALL      350
 #define IDC_S6_PHASE        351
@@ -161,6 +162,7 @@ END
 #define IDS_S3_DOWNLOAD        75
 #define IDS_S3_CONFIGURE       76
 #define IDS_S3_ROUTES          77
+#define IDS_S3_RESTORE         78
 
 // Scene 5 — Configuration (100-109)
 #define IDS_S5_TITLE          100
@@ -239,10 +241,11 @@ BEGIN
     LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 302, 9
     COMBOBOX        IDC_S3_GAME, 14, 78, 244, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
-    // The two routes are buttons rather than Next, since neither is the other's afterthought.
-    LTEXT           "", IDC_S3_ROUTES, 14, 106, 302, 30
-    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 14, 142, 140, 22
-    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 164, 142, 140, 22
+    // Download/Update is the main flow, so the default button, the largest, and alone where Next sits.
+    LTEXT           "", IDC_S3_ROUTES, 14, 100, 302, 34
+    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 142, 94, 16
+    PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 112, 142, 94, 16
+    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 216, 136, 100, 28
 END
 
 IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215
@@ -366,7 +369,8 @@ BEGIN
     IDS_S3_NOGAME       "No supported game was found in that folder.\n\nChoose the folder that contains the game's own executable."
     IDS_S3_DOWNLOAD     "Download/Update"
     IDS_S3_CONFIGURE    "Configure/Install"
-    IDS_S3_ROUTES       "Download/Update: choose content, fetch it, then configure and install it.\r\nConfigure/Install: skip the download and work with what is already on this computer."
+    IDS_S3_RESTORE      "Restore/Uninstall"
+    IDS_S3_ROUTES       "Download/Update — get new content, then set it up and install it.\r\nConfigure/Install — change what is active using what is already on this computer.\r\nRestore/Uninstall — put this game folder back to an earlier state."
 
     IDS_S4_TITLE        "Download"
     IDS_S4_LOADING      "Loading the list of available content..."
@@ -465,7 +469,8 @@ BEGIN
     IDS_S3_NOGAME       "W tym folderze nie znaleziono obsługiwanej gry.\n\nWskaż folder zawierający plik wykonywalny gry."
     IDS_S3_DOWNLOAD     "Pobierz/Aktualizuj"
     IDS_S3_CONFIGURE    "Konfiguruj/Instaluj"
-    IDS_S3_ROUTES       "Pobierz/Aktualizuj: wybierz zawartość, pobierz ją, a potem skonfiguruj i zainstaluj.\r\nKonfiguruj/Instaluj: pomiń pobieranie i użyj tego, co już jest na tym komputerze."
+    IDS_S3_RESTORE      "Przywróć/Odinstaluj"
+    IDS_S3_ROUTES       "Pobierz/Aktualizuj — pobierz nową zawartość, a potem skonfiguruj ją i zainstaluj.\r\nKonfiguruj/Instaluj — zmień aktywne ustawienia, używając tego, co już jest na tym komputerze.\r\nPrzywróć/Odinstaluj — przywróć folder gry do wcześniejszego stanu."
 
     IDS_S4_TITLE        "Pobieranie"
     IDS_S4_LOADING      "Wczytywanie listy dostępnej zawartości..."

@@ -99,21 +99,34 @@ that tells two voices apart.
   - no match → dropdown back to (Detecting).
 - **Warning modal** when no marker is found — after Browse returns and when
   a route button is pressed, never per keystroke.
-- **Two route buttons**, both enabled only when a game is detected/selected,
-  with a line above them saying what each one does:
-  - **Download/Update** → scene 4;
-  - **Configure/Install** → scene 5, skipping both download pages.
-- RECORDED DEVIATION: these are buttons IN THE PAGE, and the sheet's own
-  Next is left disabled on this scene. The two routes are alternatives, not
-  a primary and an afterthought, which is what a primary Next plus a
-  secondary button would make them — and each route is then one click
-  rather than select-then-Next. Back and Cancel are unaffected.
-- The run log moves into this folder here (`.pacenotes\logs\`), replaying
-  the lines from before a folder was known. See "Logging".
-- **UNINSTALL** enabled only when a game is detected/selected; leads to the
-  restore scene below.
+- **Three route buttons**, all enabled only when a game is
+  detected/selected, with a line above them saying what each one does:
 
-## Restore scene (reached from scene 3's UNINSTALL)
+      Configure/Install    Restore/Uninstall            Download/Update
+
+  - **Download/Update** → scene 4. The MAIN flow, and it looks it: the
+    default button, the largest, alone on the right where the eye ends up
+    and where the sheet's own Next sits.
+  - **Configure/Install** → scene 5, skipping both download pages.
+  - **Restore/Uninstall** → the restore scene below. Secondary work on a
+    folder you already have, so it sits with Configure/Install on the left
+    at the same smaller size.
+- RECORDED DEVIATION: these are buttons IN THE PAGE, and the sheet's own
+  Next is left disabled on this scene. They are alternatives rather than one
+  primary and two afterthoughts, each is one click instead of
+  select-then-Next, and three routes do not fit on one Next anyway. Back and
+  Cancel are unaffected.
+- The run log moves into this folder here (`.pacenotes\logs\`), replaying
+  the lines from before a folder was known, and later panics are written to
+  the same file. Pressing a second route button does NOT start a second log:
+  one file per run. See "Logging".
+
+## Restore scene (reached from scene 3's Restore/Uninstall)
+
+NOT BUILT YET: the button is there and answers "not implemented yet". It
+ships ahead of the scene on purpose — the folder page's shape should not
+change under users the day the scene lands, and a user who is looking for a
+way back needs to see that one is coming.
 
 The case this exists for: **a user has been handed a bad package.** They do
 not want the installer gone, they want yesterday back. So Restore is "take
@@ -354,6 +367,20 @@ scenes 4b and 6 and again on 7; any error shows it.
   it, so the file is the whole run and not just its second half.
 - Every line is flushed as it is written: a run that dies still leaves the
   line saying what it was doing.
+- **A panic is written down too.** This is a GUI-subsystem binary built
+  with `panic = "abort"`, so a panic has nowhere to print: the process
+  vanishes and Windows records an offset into a stripped exe, which tells
+  nobody anything. A panic hook (`main.rs`) catches it first and writes
+  `panicked at <file>:<line>: <message>` into the run log — or, before a
+  game folder is known, into `pacenotes-installer-crash.log` beside the
+  exe — and shows it in an error box so a user can read it back.
+  - Only the FIRST panic gets a window. The modal pumps the message queue,
+    which can deliver the very message that panicked, and one real fault
+    was observed turning into a cascade of boxes.
+  - It covers the worker thread as well: the hook is global, and with
+    `panic = "abort"` a worker panic takes the process with it either way.
+  - It does NOT cover access violations or other hardware faults in Win32
+    code — those never reach a Rust panic hook.
 
 ## Implementation notes
 

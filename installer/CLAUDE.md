@@ -233,6 +233,11 @@ written to the user's profile.
 - `main.rs` — entry point, common-controls init, the developer flags
   (`--server`, `--cache`), launches the wizard. `--cache` points a run at a
   throwaway cache, so the UI suite downloads for real.
+- `crash.rs` — the PANIC HOOK. A GUI binary with `panic = "abort"` has
+  nowhere to print, so without it a panic is a vanished window; it writes
+  `panicked at <file>:<line>` into the run log (or beside the exe before a
+  folder is known) and shows it once. It found the Configure→Back→Download
+  abort in one run.
 - `selftest/` — `--selftest-http`, the WinHTTP check that
   `tests/Test-HttpClient.ps1` drives, `--selftest-download`, and
   `--selftest-report`, which posts a fabricated conflict report.
@@ -249,6 +254,13 @@ written to the user's profile.
   what is skipped. Before changing the sheet, read Implementation notes in
   `DESIGN.md`: the scene title, the per-scene button labels and the title
   bar all work around something the OS does not give.
+  - INVARIANT: `WizardState.tree_items` (node index → `HTREEITEM`) is
+    assigned wherever `tree` is, with a zero handle for a node the control
+    does not hold. SysTreeView32 sends an item-changed notification with
+    `lParam = 0`, indistinguishable from node 0, before it holds anything
+    of ours, and acting on it aborted the Configure route. So the two are
+    sized together, the refresh is driven off the handle table, and a
+    notification is validated by its `hItem`.
 - `ui/` — the small Win32 vocabulary the pages are written in: control
   text, combo boxes, list boxes, the three modal shapes, the folder picker.
 - `choices.rs` — scene 5's model: the three single-select lists and the

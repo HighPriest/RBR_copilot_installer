@@ -50,7 +50,7 @@ $IDC_S1_PROMPT = 301; $IDC_S1_COMBO = 302; $IDC_S1_NOTE = 303
 $IDC_S2_MOTD = 311; $IDC_S2_SECRET_LABEL = 312; $IDC_S2_SECRET = 313; $IDC_S2_STATUS = 314
 $IDC_S3_PATH_LABEL = 321; $IDC_S3_PATH = 322; $IDC_S3_BROWSE = 323
 $IDC_S3_GAME_LABEL = 324; $IDC_S3_GAME = 325
-$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_ROUTES = 328
+$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_ROUTES = 328; $IDC_S3_RESTORE = 329
 
 $ID_WIZBACK = 0x3023; $ID_WIZNEXT = 0x3024
 $PSBTN_NEXT = 1; $PSBTN_BACK = 0
@@ -215,18 +215,44 @@ try {
     (Get-CtrlText $page $IDC_S3_DOWNLOAD) $S['IDS_S3_DOWNLOAD']
     Assert-Equal 'the Configure/Install button is labelled' `
     (Get-CtrlText $page $IDC_S3_CONFIGURE) $S['IDS_S3_CONFIGURE']
+    Assert-Equal 'the Restore/Uninstall button is labelled' `
+    (Get-CtrlText $page $IDC_S3_RESTORE) $S['IDS_S3_RESTORE']
     Assert-AnyShipped 'the routes are explained' (Get-CtrlText $page $IDC_S3_ROUTES) 'IDS_S3_ROUTES'
+
+    # Download/Update is the main flow, so it is the one that looks it: the
+    # default button, the largest, and alone on the right. The two secondary
+    # routes sit together on the left. Measured, because "looks primary" is
+    # the whole point of the arrangement.
+    $rects = @{}
+    foreach ($id in $IDC_S3_CONFIGURE, $IDC_S3_RESTORE, $IDC_S3_DOWNLOAD) {
+        $r = New-Object RECT
+        [void][NativeUi]::GetWindowRect([NativeUi]::GetDlgItem($page, $id), [ref]$r)
+        $rects[$id] = $r
+    }
+    Assert-That 'Download/Update is to the right of both other routes' `
+    ($rects[$IDC_S3_DOWNLOAD].L -gt $rects[$IDC_S3_CONFIGURE].R -and
+        $rects[$IDC_S3_DOWNLOAD].L -gt $rects[$IDC_S3_RESTORE].R)
+    Assert-That 'Configure/Install is the leftmost route' `
+    ($rects[$IDC_S3_CONFIGURE].L -lt $rects[$IDC_S3_RESTORE].L)
+    $main = $rects[$IDC_S3_DOWNLOAD]
+    $second = $rects[$IDC_S3_CONFIGURE]
+    Assert-That 'and it is the larger button' `
+    (($main.R - $main.L) -gt ($second.R - $second.L) -and
+        ($main.B - $main.T) -gt ($second.B - $second.T)) `
+        "main $(($main.R - $main.L))x$(($main.B - $main.T)), secondary $(($second.R - $second.L))x$(($second.B - $second.T))"
 
     # Nothing entered yet: placeholder, disabled dropdown, no way forward.
     $gameCombo = [NativeUi]::GetDlgItem($page, $IDC_S3_GAME)
     $routeDown = [NativeUi]::GetDlgItem($page, $IDC_S3_DOWNLOAD)
     $routeConf = [NativeUi]::GetDlgItem($page, $IDC_S3_CONFIGURE)
+    $routeRest = [NativeUi]::GetDlgItem($page, $IDC_S3_RESTORE)
     Assert-Equal 'dropdown starts on the detecting placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
     Assert-That 'dropdown is disabled while nothing is detected' `
     (-not [NativeUi]::IsWindowEnabled($gameCombo))
-    Assert-That 'both routes are blocked until a game is detected' `
-    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That "no route is open until a game is detected" `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf) -and
+        -not [NativeUi]::IsWindowEnabled($routeRest))
     Assert-That 'the sheet Next is not a way out of scene 3' `
     (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT))
 
@@ -234,16 +260,18 @@ try {
     Set-FolderAndSettle -Page $page -Path $plainFolder
     Assert-Equal 'an ordinary folder leaves the placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
-    Assert-That 'an ordinary folder leaves both routes blocked' `
-    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That "an ordinary folder leaves every route blocked" `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf) -and
+        -not [NativeUi]::IsWindowEnabled($routeRest))
 
     # One marker: that game, shown but not selectable, and both routes open.
     Set-FolderAndSettle -Page $page -Path $rbrFolder
     Assert-Equal 'a single game is named in the dropdown' (Get-CtrlText $page $IDC_S3_GAME) $RBR_TITLE
     Assert-That 'dropdown stays disabled when there is nothing to choose' `
     (-not [NativeUi]::IsWindowEnabled($gameCombo))
-    Assert-That 'both routes unlock once a game is detected' `
-    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That "every route unlocks once a game is detected" `
+    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf) -and
+        [NativeUi]::IsWindowEnabled($routeRest))
 
     # Two markers: the dropdown becomes a real choice listing only the matches.
     Set-FolderAndSettle -Page $page -Path $twoGames
@@ -252,15 +280,17 @@ try {
     Assert-That 'dropdown is selectable when the folder holds several games' `
     ([NativeUi]::IsWindowEnabled($gameCombo))
     Assert-Equal 'the first match is preselected' (Get-CtrlText $page $IDC_S3_GAME) $RBR_TITLE
-    Assert-That 'the routes stay available' `
-    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That "the routes stay available" `
+    ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf) -and
+        [NativeUi]::IsWindowEnabled($routeRest))
 
     # Going back to nothing detected must re-lock the scene.
     Set-FolderAndSettle -Page $page -Path $plainFolder
     Assert-Equal 'clearing the detection restores the placeholder' `
     (Get-CtrlText $page $IDC_S3_GAME) $S['IDS_S3_DETECTING']
-    Assert-That 'and blocks both routes again' `
-    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf))
+    Assert-That "and blocks every route again" `
+    (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf) -and
+        -not [NativeUi]::IsWindowEnabled($routeRest))
 
     Write-Host "`n-- back navigation --"
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_BACK

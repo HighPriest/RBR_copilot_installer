@@ -4,6 +4,7 @@
 #![cfg(windows)]
 
 mod api;
+mod crash;
 mod http;
 mod i18n;
 mod package_download;
@@ -18,6 +19,8 @@ mod worker;
 const DEFAULT_SERVER: &str = env!("PACENOTES_DEFAULT_SERVER");
 
 fn main() {
+    crash::install_panic_hook();
+
     if let Some(selftest) = selftest::HttpSelfTest::from_args() {
         std::process::exit(selftest.run());
     }
