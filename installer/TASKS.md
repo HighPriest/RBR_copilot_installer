@@ -112,11 +112,14 @@ Scenes:
       In-page buttons with the sheet's Next left disabled, because they are
       alternatives rather than one primary and two afterthoughts, and each
       route is then one click.
-      - Download/Update is the MAIN flow and looks it: default button,
-        largest, alone on the right. The other two are secondary work on a
-        folder you already have, so they are smaller and sit together on
-        the left. `Test-UiLayout.ps1` measures that arrangement, because
-        "looks primary" is the whole point of it
+      - Two columns. Download/Update is the MAIN flow and the shape says
+        so: default button, widest, and as tall as the other two together,
+        alone on the right. The secondary pair stacks in a narrower column
+        on the left, its top and bottom exactly the big button's, so the
+        three read as one block. `Test-UiLayout.ps1` measures that
+        arrangement — the column, the stacking order, the relative width
+        and the matching height — because "looks primary" is the whole
+        point of it and nothing else would catch a regression
       `Route` in `wizard/state.rs` decides only what is SKIPPED — both routes end
       in the same questions and the same install, reading the same tree, so
       there is no separate "offline" path to keep in step. The jumps use

@@ -99,18 +99,25 @@ that tells two voices apart.
   - no match → dropdown back to (Detecting).
 - **Warning modal** when no marker is found — after Browse returns and when
   a route button is pressed, never per keystroke.
-- **Three route buttons**, all enabled only when a game is
+- **Three route buttons** in two columns, all enabled only when a game is
   detected/selected, with a line above them saying what each one does:
 
-      Configure/Install    Restore/Uninstall            Download/Update
+      ┌───────────────────┐      ┌─────────────────────────┐
+      │ Configure/Install │      │                         │
+      ├───────────────────┤      │     Download/Update     │
+      │ Restore/Uninstall │      │                         │
+      └───────────────────┘      └─────────────────────────┘
 
-  - **Download/Update** → scene 4. The MAIN flow, and it looks it: the
-    default button, the largest, alone on the right where the eye ends up
-    and where the sheet's own Next sits.
+  - **Download/Update** → scene 4. The MAIN flow, and the shape says so:
+    the default button, the widest, and as tall as the other two together,
+    alone on the right where the eye ends up and where the sheet's own Next
+    sits.
   - **Configure/Install** → scene 5, skipping both download pages.
-  - **Restore/Uninstall** → the restore scene below. Secondary work on a
-    folder you already have, so it sits with Configure/Install on the left
-    at the same smaller size.
+  - **Restore/Uninstall** → the restore scene below.
+  - The two secondary ones are work on a folder you already have, so they
+    stack in a narrower column on the left. The stack's top and bottom are
+    exactly the big button's, so the three read as one block, and the gap
+    down the middle is what separates secondary from primary.
 - RECORDED DEVIATION: these are buttons IN THE PAGE, and the sheet's own
   Next is left disabled on this scene. They are alternatives rather than one
   primary and two afterthoughts, each is one click instead of

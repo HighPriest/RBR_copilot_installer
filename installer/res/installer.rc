@@ -243,11 +243,11 @@ BEGIN
     LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 302, 9
     COMBOBOX        IDC_S3_GAME, 14, 78, 244, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
-    // Download/Update is the main flow, so the default button, the largest, and alone where Next sits.
-    LTEXT           "", IDC_S3_ROUTES, 14, 100, 302, 34
-    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 142, 94, 16
-    PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 112, 142, 94, 16
-    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 216, 136, 100, 28
+    // Two columns: the tall main flow on the right, the secondary pair stacked to match it.
+    LTEXT           "", IDC_S3_ROUTES, 14, 98, 302, 30
+    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 132, 120, 18
+    PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 14, 154, 120, 18
+    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 176, 132, 140, 40
 END
 
 IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215

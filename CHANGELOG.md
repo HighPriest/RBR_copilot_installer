@@ -2,12 +2,15 @@
 
 ## 2026/10/26 — installer: scene 3's three routes, and a crash that hid itself
 
-- **Scene 3's buttons are now arranged by importance**: Download/Update is
-  the main flow, so it is the default button, the largest, and alone on the
-  right; Configure/Install and the new **Restore/Uninstall** are secondary
-  work on a folder you already have, so they are smaller and sit together on
-  the left. `Test-UiLayout.ps1` measures the arrangement, because "looks
-  primary" is the point of it.
+- **Scene 3's buttons are now arranged by importance, in two columns**:
+  Download/Update is the main flow, so it is the default button, the widest,
+  and as tall as the other two together, alone on the right;
+  Configure/Install and the new **Restore/Uninstall** are secondary work on
+  a folder you already have, so they stack in a narrower column on the left,
+  top and bottom aligned with the big button so the three read as one block.
+  `Test-UiLayout.ps1` measures the arrangement — column, stacking order,
+  relative width, matching height — because "looks primary" is the point of
+  it and nothing else would catch a regression.
   - Restore/Uninstall answers "not implemented yet" until the restore scene
     lands. It ships early so the page's shape does not change under users
     later, and so someone looking for a way back can see one is coming.

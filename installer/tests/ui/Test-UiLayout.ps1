@@ -229,17 +229,23 @@ try {
         [void][NativeUi]::GetWindowRect([NativeUi]::GetDlgItem($page, $id), [ref]$r)
         $rects[$id] = $r
     }
-    Assert-That 'Download/Update is to the right of both other routes' `
-    ($rects[$IDC_S3_DOWNLOAD].L -gt $rects[$IDC_S3_CONFIGURE].R -and
-        $rects[$IDC_S3_DOWNLOAD].L -gt $rects[$IDC_S3_RESTORE].R)
-    Assert-That 'Configure/Install is the leftmost route' `
-    ($rects[$IDC_S3_CONFIGURE].L -lt $rects[$IDC_S3_RESTORE].L)
     $main = $rects[$IDC_S3_DOWNLOAD]
-    $second = $rects[$IDC_S3_CONFIGURE]
-    Assert-That 'and it is the larger button' `
-    (($main.R - $main.L) -gt ($second.R - $second.L) -and
-        ($main.B - $main.T) -gt ($second.B - $second.T)) `
-        "main $(($main.R - $main.L))x$(($main.B - $main.T)), secondary $(($second.R - $second.L))x$(($second.B - $second.T))"
+    $top = $rects[$IDC_S3_CONFIGURE]
+    $bottom = $rects[$IDC_S3_RESTORE]
+    Assert-That 'the two secondary routes share one column' ($top.L -eq $bottom.L) `
+        "left edges $($top.L) and $($bottom.L)"
+    Assert-That 'Restore/Uninstall sits under Configure/Install' ($bottom.T -ge $top.B) `
+        "Configure ends at $($top.B), Restore starts at $($bottom.T)"
+    Assert-That 'Download/Update is the right-hand column' ($main.L -gt $top.R) `
+        "stack ends at $($top.R), the main button starts at $($main.L)"
+    Assert-That 'and it is wider than they are' `
+    (($main.R - $main.L) -gt ($top.R - $top.L)) `
+        "main $(($main.R - $main.L)) wide, stack $(($top.R - $top.L))"
+    # As tall as the pair, so the three form one clean block rather than
+    # three buttons that happen to be near each other.
+    Assert-That 'and as tall as the pair it stands beside' `
+    ([Math]::Abs($main.T - $top.T) -le 2 -and [Math]::Abs($main.B - $bottom.B) -le 2) `
+        "main $($main.T)..$($main.B), stack $($top.T)..$($bottom.B)"
 
     # Nothing entered yet: placeholder, disabled dropdown, no way forward.
     $gameCombo = [NativeUi]::GetDlgItem($page, $IDC_S3_GAME)
