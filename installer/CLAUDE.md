@@ -248,15 +248,19 @@ written to the user's profile.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.
-  Control ids mirror `res/installer.rc` in `control_ids.rs`. Eight pages and
-  TWO ROUTES, which part on scene 3 (`scene/game_folder_routes.rs`):
-  Download/Update (4 → 4b fetches → 5 asks → 6 installs) and
+  Control ids mirror `res/installer.rc` in `control_ids.rs`. Nine pages and
+  THREE ROUTES, which part on scene 3 (`scene/game_folder_routes.rs`):
+  Download/Update (4 → 4b fetches → 5 asks → 6 installs),
   Configure/Install (straight to 5, then 6, with no server and no
-  transfers). Scenes 4b and 6 are the same screen at two moments, so they
-  share their control ids and `scene/progress_page.rs`; only `Route` decides
-  what is skipped. Before changing the sheet, read Implementation notes in
-  `DESIGN.md`: the scene title, the per-scene button labels and the title
-  bar all work around something the OS does not give.
+  transfers) and Restore/Uninstall (`scene/restore.rs`, then 6). Scenes 4b
+  and 6 are the same screen at two moments, so they share their control ids
+  and `scene/progress_page.rs`; only `Route` decides what is skipped. Before
+  changing the sheet, read Implementation notes in `DESIGN.md`: the scene
+  title, the per-scene button labels and the title bar all work around
+  something the OS does not give.
+  - The restore page is registered LAST in the sheet, because page order is
+    what "Next" means: between the questions and the progress page, Install
+    walked onto it. It is reached and left by id.
   - INVARIANT: `WizardState.tree_items` (node index → `HTREEITEM`) is
     assigned wherever `tree` is, with a zero handle for a node the control
     does not hold. SysTreeView32 sends an item-changed notification with
@@ -300,7 +304,22 @@ written to the user's profile.
   `check()`, the one comparison made against the server's schema hash.
 - `cache.rs` — cache dir layout, cache.json read/write, sha verification.
 - `ledger.rs` — installed.json read/write (atomic), file ownership queries.
-- `engine.rs` — plan + execute the install; backup; restore; uses zip.rs.
+- `engine.rs` — plan + execute the install; backup; restore points; uses
+  zip.rs. `uninstall_package` and `install_package` are `pub(crate)` because
+  `restore/` drives the same steps; `install_package` takes an
+  `Installing` descriptor rather than looking the package up, since the
+  cache index holds only the newest version of each key and a restore
+  wants an older one.
+- `restore/` — the other half of a restore point: reading them back
+  (`point.rs`), planning what going to one would mean (`plan.rs`, pure,
+  table-tested), and carrying that out through the engine's steps
+  (`execute.rs`). "Uninstall
+  everything" is a restore to an empty state, not a separate path. Three
+  rules it exists to keep: the plan is a value computed before anything
+  moves, so the preview and the work cannot disagree; nothing is removed
+  unless what replaces it is ready; and the ledger written afterwards
+  keeps the snapshot's per-file `prior`, because that — not the bytes —
+  is what stops a later uninstall deleting a file the user always had.
 - `sha256.rs` — small std-only sha256 (~100 lines). (No `sha2` crate.)
 - `zip.rs` — zip reader (central directory + miniz_oxide inflate). The
   legacy zip WRITER for backups is no longer needed (backups are plain

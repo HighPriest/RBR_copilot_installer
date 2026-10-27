@@ -1,5 +1,67 @@
 # Changelog
 
+## 2026/10/27 — installer: the restore scene
+
+The last functional gap. Every install has written a restore point since
+I7 — the ledger as it was, plus the files that run replaced — and nothing
+could read one back, so users were accumulating a safety net they could
+not use. Scene 3's Restore/Uninstall button now opens a scene that lists
+those points newest first, previews what going back to one would do, and
+does it.
+
+- The list is a date plus what the run after it did (`+4 -0 ~0`), derived
+  by diffing consecutive snapshots: nothing records what a run was about,
+  and a column of identical dates is not something anyone can choose from.
+  Signs rather than words, so the line needs no Polish plural forms.
+- The last entry, **"Remove everything this installer added"**, is a
+  restore to an empty state — the same code, not a second path, and the
+  other half of the button's name.
+- The preview leads with removals, because that is the part to read before
+  agreeing. The PLAN it renders is the value handed to the worker, so what
+  runs cannot differ from what was approved.
+- A restore takes a restore point of its own: a user who restores to the
+  wrong state must be able to come back from that too.
+- Afterwards the game's configuration step runs again with the picks the
+  restored state implies, or the files would come back without the
+  language and voice the user had chosen.
+
+Three things that cost more code than the happy path:
+
+- **It cannot reuse `engine::plan`.** That asks the cache INDEX which
+  version it holds, and the index holds one per key: the newest. Rolling
+  back an update means naming the older payload, which is still on disk
+  because payloads are sha-keyed. `install_package` now takes an `Installing`
+  descriptor instead of looking the package up.
+- **Never make it worse.** A package whose payload is gone from the cache
+  is not removed either — the wrong version beats an empty folder — and
+  the preview names it before the user commits. Everything else is still
+  restored.
+- **Restore the provenance, not just the bytes.** The snapshot records what
+  was at each path before this installer first wrote there. A fresh
+  install of the old version records `prior: absent` for a file it just
+  deleted and rewrote, so a later uninstall would DELETE a file the user
+  always had. The ledger written afterwards takes the snapshot's entries,
+  and the end-to-end test restores, then uninstalls, and checks the user's
+  own file comes back.
+
+Found while testing, and fixed: **two runs in the same second shared a
+restore point directory**, the second overwriting the first's snapshot and
+saved files — silently destroying the way back the first run had promised.
+Points are now suffixed (`…31Z-2`) when the name is taken.
+
+Also: `rbr.ico` was ONE 256x256 frame costing 85 kB of a 600 kB budget,
+more than serde and the whole install engine together, which Windows then
+downsampled to 16x16 for the title bar. It is now 16/32/48 as BMP plus 128
+as PNG, 45 kB, built by `installer/res/Build-Icon.ps1` from the source art
+— smaller AND sharper at the sizes actually used. `build.rs` watches the
+icon now; it did not, so a new icon was not a reason to rebuild and the old
+bytes stayed in the binary.
+
+Tests: 13 planning tests off Windows, 8 against a real game folder
+(including the bad-update rollback and the provenance proof), and a fourth
+pass in the wizard suite that restores through the real UI and checks the
+folder afterwards. 90/90 there, whole suite green, 576.5 kB against the gate.
+
 ## 2026/10/26 — installer: scene 3's three routes, and a crash that hid itself
 
 - **Scene 3's buttons are now arranged by importance, in two columns**:

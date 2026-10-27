@@ -54,7 +54,18 @@ pub fn execute(
     };
     for key in plan.installs() {
         let files = prepared.files.get(key).map_or(&[][..], Vec::as_slice);
-        super::install_package::install_package(&mut run, key, files, &point, &mut progress)?;
+        // The version the user just chose, which is the one the cache index holds.
+        let cached =
+            run.cache.get(key).cloned().ok_or_else(|| {
+                super::ExecuteError::extract(key, "it is not in the download cache")
+            })?;
+        let what = super::install_package::Installing {
+            key,
+            sha256: &cached.sha256,
+            version: &cached.version,
+            exclusive_group: cached.exclusive_group.as_deref(),
+        };
+        super::install_package::install_package(&mut run, &what, files, &point, &mut progress)?;
         outcome.installed.push(key.to_string());
     }
     Ok(outcome)

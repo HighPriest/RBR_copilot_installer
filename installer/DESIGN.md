@@ -130,48 +130,85 @@ that tells two voices apart.
 
 ## Restore scene (reached from scene 3's Restore/Uninstall)
 
-NOT BUILT YET: the button is there and answers "not implemented yet". It
-ships ahead of the scene on purpose — the folder page's shape should not
-change under users the day the scene lands, and a user who is looking for a
-way back needs to see that one is coming.
-
 The case this exists for: **a user has been handed a bad package.** They do
 not want the installer gone, they want yesterday back. So Restore is "take
 this game folder back to how it was at a point in time", not "copy some
 files back".
 
-- A list of **restore points**, newest first, each showing its date and
-  what it was: `2026-11-02 18:15 — before installing Kamil 3.0.0`. A run
-  that changed nothing creates none.
+- A list of **restore points**, newest first, each a date and what the run
+  after it did: `2026-10-27 12:31      +4 -0 ~0` (added, removed, changed
+  version). The counts are derived by diffing consecutive snapshots —
+  nothing records "what this run was about", and a column of identical
+  dates is not something anyone can choose from. Signs rather than words
+  because the line must not need three plural forms in Polish.
+- The last entry is **"Remove everything this installer added"**, which is
+  a restore to an empty state: the same operation, not a second code path,
+  and the other half of the button's name.
 - The selected point shows a **preview before anything happens** — the
   whole point of restoring after a bad package is knowing what you are
-  getting back:
+  getting back. Removals come first, because that is the part to read
+  before agreeing, and packages are named by their leaf the way every
+  other scene names them:
 
-      Restoring to 2026-10-21 09:40 would:
-        put back    3 files replaced since then
-        remove      2 packages installed since then (1,204 files)
-        keep        Kamil 2.1.0, Descriptive, polish
+      Remove:
+          Kamil
+          Numeric Standard
+      Put back:
+          Ewa
+      Leave as it is:
+          polish
 
 - **Restore** then runs on the progress scene (scene 6) like any other
-  phase, with the same log.
+  phase, with the same log. The PLAN the preview showed is the value the
+  worker is handed, so what runs cannot differ from what was approved.
+- A restore **takes a restore point of its own** first. It changes the
+  folder like any other run, and a user who restores to the wrong state
+  must be able to come back from that too.
 
 Restoring is TWO operations, and the second is the one the legacy installer
 never had:
 
-1. **Put back** the files replaced since that point, taking each from the
-   newest restore point at or after it that holds the file, so the oldest
-   version wins.
+1. **Put back** the files replaced since that point. Each file carries, in
+   the ledger, the point holding what IT replaced, so the right copy is
+   named rather than searched for.
 2. **Remove** what was installed after that point. Copying files back
    cannot do this: a broken package that ADDED files leaves every one of
    them behind, and the user still has the broken install. This needs to
    know what was installed and when, which is what the ledger snapshot
    inside each restore point is for.
 
+Two rules that cost more code than the happy path, and are the difference
+between a restore and a mess:
+
+- **Never make it worse.** A package whose payload is no longer in the
+  cache cannot be put back — so it is NOT removed either. The version
+  installed now, wrong as it may be, beats an empty folder. The preview
+  names it under "CANNOT be put back" before the user commits, and the
+  rest of the restore still happens.
+- **Restore the provenance, not just the bytes.** The snapshot records,
+  per file, what was there before this installer first wrote to it. A
+  fresh install of the old version would record `prior: absent` for a file
+  it just deleted and rewrote, and a later uninstall would then DELETE a
+  file the user had all along. So the ledger written afterwards takes the
+  snapshot's entries for everything restored.
+
+The restored state also **re-runs the game's configuration step**, with the
+picks that state implies. Otherwise the files come back but the user's
+chosen language and voice do not: packages ship their own defaults, and
+what made them the user's choice was an edit to a file the install just
+rewrote.
+
 A restore point is therefore `.pacenotes\restore\<timestamp>\` holding the
 replaced files plus `ledger.json` as it was before that run. Restoring
 replaces the live ledger with that snapshot, so the installer's own record
 matches the folder afterwards — otherwise the next run would "uninstall"
 packages that are no longer there and reinstall ones that are.
+
+Two runs CAN share a timestamp — the stamp is accurate to the second, and
+re-running the wizard straight away is a normal thing to do. The second
+run then gets `…31Z-2`, because reusing the directory would overwrite the
+first run's snapshot and its saved files: silently destroying the way back
+the first run had promised.
 
 Points are never pruned automatically. They are small (only files actually
 replaced, and never the byte-identical ones), and the one a user needs is

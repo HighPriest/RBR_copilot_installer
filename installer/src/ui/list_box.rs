@@ -5,6 +5,10 @@ const LB_GETCURSEL: u32 = 0x0188;
 /// `LB_SETCURSEL`'s index for "nothing selected".
 const NO_SELECTION: isize = -1;
 
+/// The notification a list box sends its parent when the user changes the
+/// selection; windows-sys does not export it.
+pub const LBN_SELCHANGE: u16 = 1;
+
 pub unsafe fn list_reset(dialog: windows_sys::Win32::Foundation::HWND, control: u16) {
     windows_sys::Win32::UI::WindowsAndMessaging::SendDlgItemMessageW(
         dialog,

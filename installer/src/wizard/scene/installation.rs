@@ -62,7 +62,7 @@ pub unsafe extern "system" fn installation_page(
 }
 
 /// Everything it installs from is already in the cache, fetched by scene 4b or
-/// already there on the Configure route.
+/// already there on the other routes.
 unsafe fn start(dialog: HWND) {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return;
@@ -71,6 +71,10 @@ unsafe fn start(dialog: HWND) {
         return;
     }
     state.install_started = true;
+    if state.route == crate::wizard::state::Route::Restore {
+        start_restore(dialog, state);
+        return;
+    }
 
     for key in state.config.install_keys() {
         super::progress_page::log_line(dialog, state, &format!("selected: {key}"));
@@ -96,19 +100,70 @@ unsafe fn start(dialog: HWND) {
             .unwrap_or(pacenotes_installer::gamedir::Game::Rbr),
         selection: state.config.install_keys(),
         picks: state.config.picks_by_category(),
-        choice_categories: pacenotes_installer::schema::choice_categories(state.game_id())
-            .iter()
-            .map(|category| category.to_string())
-            .collect(),
-        facts: pacenotes_installer::engine::HostFacts {
-            free_bytes: free_space(&state.folder),
-            game_running: false, // TODO(I9): look for the game's marker process
-        },
+        choice_categories: choice_categories(state),
+        facts: host_facts(&state.folder),
         cancel: std::sync::Arc::clone(&state.cancel),
     };
     crate::worker::spawn_reporting(dialog, request, move |reporter| {
         crate::worker::run_install(job, reporter)
     });
+}
+
+/// Hands the restore the user approved to the worker, its plan unchanged, since
+/// the preview they read is that value.
+unsafe fn start_restore(dialog: HWND, state: &mut crate::wizard::state::WizardState) {
+    let Some(point) = state.restore_to.clone() else {
+        finish(dialog, state, crate::worker::Outcome::Cancelled);
+        return;
+    };
+    let plan = &state.restore_plan;
+    let lines: Vec<String> = std::iter::once(format!("restoring to {}", point.name))
+        .chain(plan.remove.iter().map(|key| format!("to remove: {key}")))
+        .chain(
+            plan.put_back
+                .iter()
+                .map(|wanted| format!("to put back: {}", wanted.key)),
+        )
+        .collect();
+    for line in &lines {
+        super::progress_page::log_line(dialog, state, line);
+    }
+
+    crate::ui::set_text(
+        dialog,
+        crate::wizard::control_ids::IDC_S6_PHASE,
+        crate::i18n::IDS_RESTORE_RUNNING,
+    );
+    let request = state.next_request();
+    let job = crate::worker::RestoreJob {
+        cache_root: state.cache.root().to_path_buf(),
+        game_dir: std::path::PathBuf::from(&state.folder),
+        game: state
+            .game
+            .unwrap_or(pacenotes_installer::gamedir::Game::Rbr),
+        target: point.snapshot,
+        plan: state.restore_plan.clone(),
+        choice_categories: choice_categories(state),
+        facts: host_facts(&state.folder),
+    };
+    crate::worker::spawn_reporting(dialog, request, move |reporter| {
+        crate::worker::run_restore(job, reporter)
+    });
+}
+
+fn choice_categories(state: &crate::wizard::state::WizardState) -> Vec<String> {
+    pacenotes_installer::schema::choice_categories(state.game_id())
+        .iter()
+        .map(|category| category.to_string())
+        .collect()
+}
+
+/// What the engine cannot find out for itself, since it stays testable off Windows.
+unsafe fn host_facts(folder: &str) -> pacenotes_installer::engine::HostFacts {
+    pacenotes_installer::engine::HostFacts {
+        free_bytes: free_space(folder),
+        game_running: false, // TODO(I9): look for the game's marker process
+    }
 }
 
 /// Names every installed package the selection no longer holds and asks

@@ -2,8 +2,6 @@ use windows_sys::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows_sys::Win32::UI::Controls as ctl;
 use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 
-const LBN_SELCHANGE: u16 = 1;
-
 /// `(list, label)` per list, in `CHOICE_CATEGORIES` order, so index i is the model's list i.
 const LISTS: [(u16, u16); 3] = [
     (
@@ -36,7 +34,7 @@ pub unsafe extern "system" fn configuration_page(
             1
         }
         wm::WM_COMMAND => {
-            if crate::ui::hiword(wparam) == LBN_SELCHANGE {
+            if crate::ui::hiword(wparam) == crate::ui::LBN_SELCHANGE {
                 on_choice_picked(dialog, crate::ui::loword(wparam));
             }
             1
@@ -104,7 +102,9 @@ unsafe fn on_back(dialog: HWND) -> isize {
         .unwrap_or(crate::wizard::state::Route::Download);
     let target = match route {
         crate::wizard::state::Route::Download => crate::wizard::control_ids::IDD_S4_DOWNLOAD,
-        crate::wizard::state::Route::Configure => crate::wizard::control_ids::IDD_S3_FOLDER,
+        crate::wizard::state::Route::Configure | crate::wizard::state::Route::Restore => {
+            crate::wizard::control_ids::IDD_S3_FOLDER
+        }
     };
     crate::wizard::page::reply(dialog, target as isize)
 }

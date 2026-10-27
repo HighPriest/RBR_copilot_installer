@@ -86,6 +86,14 @@ impl Ledger {
         std::fs::write(path, json)
     }
 
+    /// What `save_snapshot` wrote, or `None` when it is missing or unreadable.
+    pub fn read_snapshot(
+        path: &std::path::Path,
+    ) -> Option<std::collections::BTreeMap<String, super::LedgerEntry>> {
+        let bytes = std::fs::read(path).ok()?;
+        serde_json::from_slice(&bytes).ok()
+    }
+
     /// After each package, as a temp file renamed over the old one, so a run
     /// that dies leaves a ledger that still describes the disk. Refuses to
     /// replace a ledger it could not read, which may record a newer build's packages.

@@ -1,5 +1,6 @@
-//! Scene 3's two routes, Download/Update and Configure/Install, as buttons in
-//! the page: alternatives, not a primary and an afterthought, one click each.
+//! Scene 3's three routes, Download/Update, Configure/Install and
+//! Restore/Uninstall, as buttons in the page: alternatives, not a primary and an
+//! afterthought, one click each.
 
 use windows_sys::Win32::Foundation::{HWND, LPARAM};
 use windows_sys::Win32::UI::Controls as ctl;
@@ -16,7 +17,7 @@ pub unsafe fn show_route_buttons(dialog: HWND) {
 }
 
 /// Starts the log in the game folder and jumps to the route's first page, by
-/// page id, since only one of the two is the next page.
+/// page id, since at most one of them is the next page.
 pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return;
@@ -41,6 +42,8 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
             super::progress_page::log_line(dialog, state, &line);
             crate::wizard::control_ids::IDD_S5_CONFIG
         }
+        // Reads the game folder, not the server, so the way back works when nothing else does.
+        crate::wizard::state::Route::Restore => crate::wizard::control_ids::IDD_RESTORE,
     };
     wm::SendMessageW(
         crate::wizard::page::sheet(dialog),

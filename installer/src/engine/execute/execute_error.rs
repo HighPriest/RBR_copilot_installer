@@ -30,7 +30,7 @@ impl ExecuteError {
         }
     }
 
-    pub(super) fn ledger(error: std::io::Error) -> ExecuteError {
+    pub(crate) fn ledger(error: std::io::Error) -> ExecuteError {
         ExecuteError::Ledger {
             reason: error.to_string(),
         }

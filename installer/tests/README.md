@@ -17,7 +17,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 
 | Path | Kind | Needs a desktop? | In CI? |
 |---|---|---|---|
-| `cargo test` | AUTOMATED TEST — the unit tests in `src/`, and `applying_a_selection.rs`: plan, pre-flight and execute over a scratch game folder | no | yes |
+| `cargo test` | AUTOMATED TEST — the unit tests in `src/`, plus `applying_a_selection.rs` and `restoring_a_game_folder.rs`: the engine and a restore over a scratch game folder, sharing `common/mod.rs` | no | yes |
 | `cargo test -- --ignored` | MANUAL CHECK — the zip reader against a corpus of real packages (`src/zip/fixtures/README.md`) | no | no |
 | `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 600 kB release gate | no | yes |

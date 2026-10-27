@@ -10,7 +10,6 @@ pub use language::{os_language, set_language, use_chosen_language, Language};
 pub use string_table::{instance, load_string, load_string_arg};
 pub use wide_string::to_wide;
 
-pub const IDS_NOT_IMPL: u16 = 10;
 pub const IDS_ALREADY_RUNNING: u16 = 11;
 pub const IDS_CRASH: u16 = 12;
 pub const IDS_CRASH_NOFILE: u16 = 13;
@@ -99,3 +98,18 @@ pub const IDS_S7_NOTHING_TODO: u16 = 139;
 pub const IDS_S7_CHANGED: u16 = 140;
 pub const IDS_S7_LEFT_ALONE: u16 = 141;
 pub const IDS_S7_RESTORE_POINT: u16 = 142;
+
+// Restore scene
+pub const IDS_RESTORE_TITLE: u16 = 150;
+pub const IDS_RESTORE_PROMPT: u16 = 151;
+pub const IDS_RESTORE_ALL: u16 = 152;
+pub const IDS_RESTORE_EMPTY: u16 = 153;
+pub const IDS_RESTORE_PUT_BACK: u16 = 154;
+pub const IDS_RESTORE_REMOVE: u16 = 155;
+pub const IDS_RESTORE_KEEP: u16 = 156;
+pub const IDS_RESTORE_MISSING: u16 = 157;
+pub const IDS_RESTORE_NOTHING: u16 = 158;
+pub const IDS_RESTORE_PICK: u16 = 159;
+pub const IDS_BTN_RESTORE: u16 = 160;
+pub const IDS_RESTORE_RUNNING: u16 = 161;
+pub const IDS_S7_RESTORED: u16 = 162;

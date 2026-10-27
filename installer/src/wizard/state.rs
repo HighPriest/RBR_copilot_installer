@@ -1,11 +1,13 @@
-/// Which of scene 3's two buttons started the run. It decides only what is
-/// skipped: both routes end in the same questions and install.
+/// Which of scene 3's three buttons started the run. It decides only what is
+/// skipped: every route ends in the same progress page and summary.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Route {
     /// Download/Update: scene 4 picks from the catalogue, scene 4b fetches.
     Download,
     /// Configure/Install: straight to the questions, against the cache and the ledger.
     Configure,
+    /// Restore/Uninstall: pick a state to go back to, read what that would do, do it.
+    Restore,
 }
 
 /// What the run accumulates, owned by the sheet and shared by every page.
@@ -47,6 +49,13 @@ pub struct WizardState {
     /// Rebuilt from the tree each time scene 5 activates.
     pub config: pacenotes_installer::choices::Configuration,
 
+    /// The points offered, newest first; the list's last row is "remove everything".
+    pub points: Vec<pacenotes_installer::restore::Point>,
+    /// The chosen point and what it would do, handed to the worker unchanged,
+    /// so the preview approved and the work done cannot disagree.
+    pub restore_to: Option<pacenotes_installer::restore::Point>,
+    pub restore_plan: pacenotes_installer::restore::Plan,
+
     /// Shown on scenes 6 and 7, and written to disk as it grows.
     pub log: pacenotes_installer::runlog::Log,
     /// Raised by the UI thread, read by the worker between chunks.
@@ -83,6 +92,9 @@ impl WizardState {
             downloaded_bytes: 0,
             chosen: Vec::new(),
             config: pacenotes_installer::choices::Configuration::default(),
+            points: Vec::new(),
+            restore_to: None,
+            restore_plan: pacenotes_installer::restore::Plan::default(),
             // Attached to the game folder once scene 3 settles it.
             log: pacenotes_installer::runlog::Log::create(None),
             cancel: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),

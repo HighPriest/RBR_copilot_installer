@@ -920,12 +920,11 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 ### Period 2: before the first public release
 
-**Status on 2026-10-26.** The server side of this period is finished, and
+**Status on 2026-10-27.** The server side of this period is finished, and
 so is the protocol except for `generated_at`/`generation` (which Period 3's
-`/ready` wants anyway). What is left is almost all INSTALLER and DEPLOY:
+`/ready` wants anyway). The **restore scene** (P14) landed on 2026-10-27,
+which was the last functional gap in the installer. What is left:
 
-- the **restore scene** (P14) — the one functional gap, and the reason
-  every run's restore point is currently unusable;
 - a cluster of small installer items — redirect policy (C1), a versioned
   user agent (S1, one line), `/packages` without `/health` (D12), a body
   cap (D12), the writability probe (P11), log timestamps and header (§7),
@@ -994,9 +993,12 @@ so is the protocol except for `generated_at`/`generation` (which Period 3's
 - [ ] **D12** Cap the size of `http::get` bodies.
 - [ ] **P11** Writability probe on scene 3, offering to restart elevated or
       stopping with a clear message.
-- [ ] **P14** Restore scene, following the design settled in period 1.
-      *The only functional gap left in the installer: points are written on
-      every run and nothing reads them back.*
+- [x] **P14** Restore scene, following the design settled in period 1.
+      *Done 2026-10-27, with two rules the design did not name: a package
+      whose payload is gone from the cache is left installed rather than
+      removed (the wrong version beats an empty folder), and the ledger
+      written afterwards keeps the snapshot's per-file provenance, without
+      which a later uninstall would delete a file the user always had.*
 - [ ] **§7** Run log: timestamps and a header (installer version, server
       URL, manifest `generation`, Windows version, game folder).
       *Partly done 2026-10-26: the log moved into

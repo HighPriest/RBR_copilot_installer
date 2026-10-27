@@ -46,6 +46,12 @@ pub const IDC_S6_PROGRESS: u16 = 352;
 pub const IDC_S6_ITEM: u16 = 353;
 pub const IDC_S6_LOG: u16 = 354;
 
+/// A route of its own, reached from scene 3 rather than a step through the wizard.
+pub const IDD_RESTORE: u16 = 370;
+pub const IDC_RESTORE_PROMPT: u16 = 371;
+pub const IDC_RESTORE_POINTS: u16 = 372;
+pub const IDC_RESTORE_PREVIEW: u16 = 373;
+
 pub const IDD_S7_SUMMARY: u16 = 360;
 pub const IDC_S7_RESULT: u16 = 361;
 pub const IDC_S7_DETAIL: u16 = 362;

@@ -3,24 +3,25 @@
 Each task ends with: builds on Windows MSVC, `tests/Test-BinarySize.ps1` passes,
 cross-platform `cargo test` green for logic modules.
 
-## Where this stands (2026-10-26)
+## Where this stands (2026-10-27)
 
-I1-I8 are done. The wizard runs end to end on both of scene 3's routes: it
-downloads and verifies into the cache, installs into the game folder, backs
-up what it replaces, records what it wrote, runs RBR's configuration step,
-takes a restore point and reports conflicts to the server.
+I1-I8 are done, and so is the restore scene. The wizard runs end to end on
+all three of scene 3's routes: it downloads and verifies into the cache,
+installs into the game folder, backs up what it replaces, records what it
+wrote, runs RBR's configuration step, takes a restore point, reports
+conflicts to the server — and now takes a folder BACK to any earlier
+state, showing exactly what that would do first.
 
-**The one functional gap is the restore SCENE.** Points have been written
-on every run since I7 and nothing can read them back, so users accumulate
-a safety net they cannot use, and scene 3's Restore/Uninstall button
-answers "not implemented yet". See "Restore" below.
+That was the last functional gap. What is left is I9 (polish), I10
+(release gate) and the small pre-release cluster the review lists under
+Period 2.
 
-After that it is I9 (polish), I10 (release gate) and the small pre-release
-cluster the review lists under Period 2.
-
-**Size:** 584.5 kB against the 600 kB gate. 15.5 kB of headroom, and
-`rbr.ico` is 83 kB of the binary — the first place to look if the restore
-scene does not fit.
+**Size:** 576.5 kB against the 600 kB gate. The restore scene cost about
+30 kB and the icon paid for it: `rbr.ico` was ONE 256x256 frame at 85 kB —
+more than serde and the whole engine together — and is now 16/32/48 as BMP
+plus 128 as PNG at 45 kB, built by `res/Build-Icon.ps1` from
+`res/rbr-source.png`. `build.rs` watches the icon now; it did not, so a new
+one was not a reason to rebuild and the old bytes stayed in the binary.
 
 ## I1 — Toolchain + window  (done)
 
@@ -644,26 +645,53 @@ replaced files beside it, and `Ledger::replace_all`.
       Windows, which rules out real ISO 8601's colons
 - [x] Points are never pruned automatically: they are small, and the one a
       user needs is the one a policy would have deleted
-- [ ] The scene lists points newest first with their dates, and PREVIEWS
-      the chosen one: files put back, packages removed, what survives
-- [ ] Restore = put files back (oldest version wins across points) AND
-      remove what was installed since, then replace the live ledger with
-      the snapshot. Copying files back alone leaves a broken package's
-      added files behind, which is the bug the legacy restore had.
-      `Ledger::replace_all` exists for the last step; nothing else of this
-      is written
-- [ ] Planning it is pure and belongs in `engine.rs` beside `plan()`: a
-      point plus the live ledger in, a list of put-backs and removals out,
-      table-tested off Windows. The scene then shows that list as the
-      preview and hands the same value to the executor, so what the user
-      was shown and what runs cannot diverge
-- [ ] It runs on the progress screen like any other phase, with the same
-      log — a restore that half-finishes has to leave the same ledger
-      guarantees an install does
-- [ ] Reached from scene 3, so the Route enum grows a third arm and the
-      page order grows a page. Back from it goes to scene 3; Cancel
-      behaves as on scene 4b (before anything is written) and is disabled
-      once writing starts
+- [x] The scene lists points newest first, each a date plus what the run
+      after it did (`+4 -0 ~0`, derived by diffing consecutive snapshots:
+      nothing records what a run was about, and a column of identical
+      dates cannot be chosen from). Signs rather than words, so the line
+      needs no Polish plural forms
+- [x] The chosen point is PREVIEWED: removals first, then put-backs, then
+      what is left alone, then what cannot come back — packages named by
+      their leaf, the way every other scene names them
+- [x] "Remove everything this installer added" is the last entry, and is
+      a restore to an EMPTY state: the same code, not a second path, and
+      the other half of the button's name
+- [x] Restore = put files back AND remove what was installed since, then
+      write the ledger. Copying files back alone leaves a broken
+      package's added files behind, which is the bug the legacy restore
+      had
+- [x] Planning is pure (`restore::plan`), a function of the snapshot, the
+      live ledger and "is this payload cached". The scene shows that
+      value as the preview and the worker is handed the same one, so what
+      the user approved and what runs cannot diverge. 13 table tests
+- [x] It runs on the progress screen like any other phase, with the same
+      log, and takes a restore point of ITS OWN first — a user who
+      restores to the wrong state must be able to come back from that too
+- [x] Reached from scene 3: `Route` grew a third arm. The page is
+      registered LAST in the sheet despite sitting mid-story, because
+      page order is what Next means — between the questions and the
+      progress page, Install walked onto it. Back goes to scene 3
+- [x] **It cannot reuse `engine::plan`.** That asks the cache INDEX which
+      version it holds, and the index holds one per key: the newest.
+      Rolling back an update means naming the older payload, which is
+      still on disk because payloads are sha-keyed. `install_package` now
+      takes an `Installing` descriptor instead of looking the package up
+- [x] **Never make it worse**: a package whose payload is gone is not
+      removed either. The wrong version beats an empty folder, and the
+      preview says so before the user commits
+- [x] **Restore the provenance, not just the bytes**: the ledger written
+      afterwards takes the snapshot's per-file `prior`. A fresh install
+      records `absent` for a file it just deleted and rewrote, and a
+      later uninstall would then delete a file the user always had. The
+      end-to-end test restores, then uninstalls, and checks the user's
+      own file comes back
+- [x] The restored state re-runs the game's configuration step with the
+      picks it implies, or the files come back without the language and
+      voice the user had chosen
+- [ ] NOT done: re-downloading a payload that is no longer cached, so a
+      restore can be complete when the server is reachable. Decided
+      2026-10-27 to ship the partial restore first; the preview already
+      names what is missing
 
 ### Scene 6
 

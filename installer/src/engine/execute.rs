@@ -12,5 +12,10 @@ mod uninstall_package;
 
 pub use execute_error::ExecuteError;
 pub use record_configured::record_configured;
-pub use restore_point::{unix_now, utc_stamp};
+pub use restore_point::{snapshot_path, unix_now, utc_stamp, RESTORE_DIR};
 pub use run::{execute, Outcome};
+
+pub(crate) use install_package::{install_package, Installing, Progress};
+pub(crate) use restore_point::open_restore_point;
+pub(crate) use run::RunContext;
+pub(crate) use uninstall_package::uninstall_package;

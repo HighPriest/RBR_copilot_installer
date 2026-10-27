@@ -42,7 +42,7 @@ unsafe fn show_summary(dialog: HWND, state: &crate::wizard::state::WizardState) 
     crate::ui::set_text_raw(
         dialog,
         crate::wizard::control_ids::IDC_S7_RESULT,
-        &result_line(state.outcome.as_ref()),
+        &result_line(state),
     );
     crate::ui::set_text_raw(
         dialog,
@@ -63,8 +63,20 @@ unsafe fn show_summary(dialog: HWND, state: &crate::wizard::state::WizardState) 
     }
 }
 
-fn result_line(outcome: Option<&crate::worker::Outcome>) -> String {
-    match outcome {
+/// A restore says what it went back to, since "it worked" does not answer
+/// "did I get yesterday back".
+fn result_line(state: &crate::wizard::state::WizardState) -> String {
+    match state.outcome.as_ref() {
+        Some(crate::worker::Outcome::Done { .. })
+            if state.route == crate::wizard::state::Route::Restore =>
+        {
+            let when = state
+                .restore_to
+                .as_ref()
+                .map(|point| pacenotes_installer::restore::human_time(&point.name))
+                .unwrap_or_default();
+            crate::i18n::load_string_arg(crate::i18n::IDS_S7_RESTORED, &when)
+        }
         Some(crate::worker::Outcome::Done { .. }) => {
             crate::i18n::load_string(crate::i18n::IDS_S7_OK)
         }

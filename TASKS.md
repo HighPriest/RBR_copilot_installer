@@ -131,14 +131,13 @@ scene, which M6 carries.
       that can: `/packages` answers the public listing for a key it does
       not accept). A key near expiry says so, with the date
 - [ ] installer/TASKS.md → I9 (polish) and I10 (release gate)
-- [ ] **Restore scene** — the last functional gap. Points have been written
-      on every run since I7 and nothing can read them back, so users
-      accumulate a safety net they cannot use. See `installer/TASKS.md`
-      "Restore" and `installer/DESIGN.md` "Restore scene"
-- [ ] Final size audit < 600 kB, `cargo bloat` report saved to docs/.
-      Currently 584.5 kB: 15.5 kB of headroom, and `rbr.ico` alone is
-      83 kB of it, which is where to look first if the restore scene does
-      not fit
+- [x] **Restore scene** (2026-10-27). A user handed a bad package can go
+      back to any earlier state, or remove everything this installer
+      added, after seeing exactly what that would do. See
+      `installer/TASKS.md` "Restore" and `installer/DESIGN.md`
+- [ ] Final size audit < 600 kB. `docs/bloat.txt` is saved; currently
+      576.5 kB, after the icon went from 85 kB (one 256px frame) to 45 kB
+      (16/32/48 BMP + 128 PNG) to pay for the restore scene
 
 ## M7 — Ship
 

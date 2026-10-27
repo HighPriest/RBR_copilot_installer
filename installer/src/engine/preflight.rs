@@ -110,34 +110,35 @@ pub fn preflight(
             index as u64,
             installs.len() as u64,
         );
-        let listed = verified_files(cache, key)?;
+        let missing = || PreflightError::PayloadMissing {
+            package: key.to_string(),
+        };
+        let sha256 = &cache.get(key).ok_or_else(missing)?.sha256;
+        let listed = verified_files(cache, key, sha256)?;
         install_bytes += listed.iter().map(|file| file.size).sum::<u64>();
         files.insert(key.to_string(), listed);
     }
 
-    // Doubled as if every file replaced one of the same size, which errs on the safe side.
-    if let Some(available) = facts.free_bytes {
-        let needed = install_bytes.saturating_mul(2);
-        if needed > available {
-            return Err(PreflightError::NotEnoughSpace { needed, available });
-        }
-    }
+    check_space(install_bytes, facts)?;
     Ok(Preflight {
         files,
         install_bytes,
     })
 }
 
-fn verified_files(
+/// The files of the payload named by `sha256`, checked against it; by digest
+/// rather than through the index, which holds only the newest version, so a
+/// restore can name an older one.
+pub(crate) fn verified_files(
     cache: &crate::cache::Cache,
     key: &str,
+    sha256: &str,
 ) -> Result<Vec<crate::zip::FileEntry>, PreflightError> {
-    let missing = || PreflightError::PayloadMissing {
-        package: key.to_string(),
-    };
-    let entry = cache.get(key).ok_or_else(missing)?;
-    let bytes = std::fs::read(cache.payload_path(&entry.sha256)).map_err(|_| missing())?;
-    if crate::sha256::hex_digest(&bytes) != entry.sha256 {
+    let bytes =
+        std::fs::read(cache.payload_path(sha256)).map_err(|_| PreflightError::PayloadMissing {
+            package: key.to_string(),
+        })?;
+    if crate::sha256::hex_digest(&bytes) != sha256 {
         return Err(PreflightError::PayloadCorrupt {
             package: key.to_string(),
         });
@@ -148,8 +149,20 @@ fn verified_files(
     })
 }
 
+/// Room for what is written plus copies of what it replaces, doubled as if every
+/// file replaced one its size, which errs on the safe side.
+pub(crate) fn check_space(install_bytes: u64, facts: HostFacts) -> Result<(), PreflightError> {
+    if let Some(available) = facts.free_bytes {
+        let needed = install_bytes.saturating_mul(2);
+        if needed > available {
+            return Err(PreflightError::NotEnoughSpace { needed, available });
+        }
+    }
+    Ok(())
+}
+
 /// Creates the state directory and a probe file in it.
-fn probe_writable(game_dir: &std::path::Path) -> Result<(), PreflightError> {
+pub(crate) fn probe_writable(game_dir: &std::path::Path) -> Result<(), PreflightError> {
     let not_writable = |e: std::io::Error| PreflightError::NotWritable {
         reason: e.to_string(),
     };

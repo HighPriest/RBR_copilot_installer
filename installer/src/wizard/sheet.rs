@@ -47,6 +47,13 @@ pub fn run(base_url: &str, cache_root: std::path::PathBuf) {
             Some(crate::wizard::scene::summary_page),
             state_pointer,
         ),
+        // Last, because page order is what Next means: placed where it sits in the
+        // story, Install walked onto it. It is reached and left by id.
+        page(
+            crate::wizard::control_ids::IDD_RESTORE,
+            Some(crate::wizard::scene::restore_page),
+            state_pointer,
+        ),
     ];
 
     let caption = crate::i18n::to_wide(&crate::i18n::load_string(crate::i18n::IDS_APP_TITLE));

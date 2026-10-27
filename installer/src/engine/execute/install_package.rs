@@ -4,30 +4,36 @@ pub struct Progress {
     pub total: u64,
 }
 
+/// Which payload to install and what the ledger says about it, passed in
+/// because the cache index holds only the newest version, while a restore
+/// names an older payload that is still on disk.
+pub struct Installing<'a> {
+    pub key: &'a str,
+    pub sha256: &'a str,
+    pub version: &'a str,
+    pub exclusive_group: Option<&'a str>,
+}
+
 /// Copies out what the package replaces, records it as `installing`, then
 /// extracts, so a run that dies midway leaves files the next run knows are ours.
 pub fn install_package(
     run: &mut super::run::RunContext,
-    key: &str,
+    what: &Installing,
     files: &[crate::zip::FileEntry],
     point: &str,
     progress: &mut Progress,
 ) -> Result<(), super::ExecuteError> {
-    let cached = run
-        .cache
-        .get(key)
-        .cloned()
-        .ok_or_else(|| super::ExecuteError::extract(key, "it is not in the download cache"))?;
-    let payload = std::fs::read(run.cache.payload_path(&cached.sha256))
+    let key = what.key;
+    let payload = std::fs::read(run.cache.payload_path(what.sha256))
         .map_err(|e| super::ExecuteError::extract(key, e))?;
 
     let phase = crate::engine::Phase::BackingUp;
     run.watcher
         .phase(phase, key, progress.written, progress.total);
     let mut entry = crate::ledger::LedgerEntry {
-        sha256: cached.sha256,
-        version: cached.version,
-        exclusive_group: cached.exclusive_group,
+        sha256: what.sha256.to_string(),
+        version: what.version.to_string(),
+        exclusive_group: what.exclusive_group.map(str::to_string),
         state: crate::ledger::EntryState::Installing,
         files: record_priors(run, files, point, &payload)?,
     };

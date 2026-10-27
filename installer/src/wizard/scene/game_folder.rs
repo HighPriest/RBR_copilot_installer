@@ -100,11 +100,9 @@ unsafe fn on_command(dialog: HWND, wparam: WPARAM) {
         (crate::wizard::control_ids::IDC_S3_CONFIGURE, BN_CLICKED) => {
             super::game_folder_routes::take_route(dialog, crate::wizard::state::Route::Configure)
         }
-        // Shipped before the restore scene, so the page keeps its shape when that lands.
-        (crate::wizard::control_ids::IDC_S3_RESTORE, BN_CLICKED) => crate::ui::message_box_info(
-            dialog,
-            &crate::i18n::load_string(crate::i18n::IDS_NOT_IMPL),
-        ),
+        (crate::wizard::control_ids::IDC_S3_RESTORE, BN_CLICKED) => {
+            super::game_folder_routes::take_route(dialog, crate::wizard::state::Route::Restore)
+        }
         _ => {}
     }
 }

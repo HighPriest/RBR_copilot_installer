@@ -38,7 +38,8 @@ $IDC_SCENE_TITLE = 299
 $IDC_S1_COMBO = 302
 $IDC_S2_MOTD = 311; $IDC_S2_STATUS = 314
 $IDC_S3_PATH = 322
-$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327
+$IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_RESTORE = 329
+$IDC_RESTORE_POINTS = 372; $IDC_RESTORE_PREVIEW = 373
 $IDC_S4_TREE = 331; $IDC_S4_STATUS = 332
 $IDC_S6_PHASE = 351
 $IDC_S5_LANG_LABEL = 341; $IDC_S5_LANG = 342
@@ -491,6 +492,103 @@ try {
             'pacenotes-installer-crash.log'
         Assert-That 'nothing was written to the crash log' (-not (Test-Path $crashBeside)) `
             $(if (Test-Path $crashBeside) { (Get-Content $crashBeside -Raw) } else { '' })
+    }
+
+    # ---------------------------------------------------------------
+    # Fourth pass — Restore/Uninstall
+    # ---------------------------------------------------------------
+    # The folder now has real installs and the restore points the runs
+    # above left behind. This is the route that undoes them, and the one
+    # place the installer can REMOVE a user's files, so what it checks is
+    # that the preview says what will happen and that what happens is
+    # what it said.
+    Write-Host "`n-- fourth pass: Restore/Uninstall --"
+    $proc.Kill(); $proc.WaitForExit(5000) | Out-Null
+
+    $launch4 = Start-Installer -ExePath $ExePath -ExtraArgs @(
+        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+    $proc = $launch4.Process
+    $sheet4 = Wait-ForDialog -OwnerPid $proc.Id
+    if (-not $sheet4) { throw 'no wizard on the fourth pass' }
+    $h4 = $sheet4.Handle
+
+    $p = Wait-ForPageControl -Sheet $h4 -CtrlId $IDC_S1_COMBO
+    $combo4 = [NativeUi]::GetDlgItem($p, $IDC_S1_COMBO)
+    [void][NativeUi]::SendMessageW($combo4, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+    Press-WizardButton -Sheet $h4 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h4 -CtrlId $IDC_S2_MOTD
+    Press-WizardButton -Sheet $h4 -Button $PSBTN_NEXT
+    $p = Wait-ForPageControl -Sheet $h4 -CtrlId $IDC_S3_PATH
+    Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder
+    Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+    Start-Sleep -Milliseconds 900
+    Invoke-Button -Dialog $p -CtrlId $IDC_S3_RESTORE
+
+    $rest = Wait-ForPageControl -Sheet $h4 -CtrlId $IDC_RESTORE_POINTS -TimeoutMs 15000
+    Assert-That 'Restore/Uninstall opens the restore scene' ($rest -ne [IntPtr]::Zero)
+    if ($rest -ne [IntPtr]::Zero) {
+        Assert-Equal 'restore scene title' `
+        (Get-CtrlText $rest $IDC_SCENE_TITLE) $S['IDS_RESTORE_TITLE']
+        Assert-Equal 'primary button reads Restore' `
+        (Get-WizardButtonText -Sheet $h4 -ButtonId 0x3024) $S['IDS_BTN_RESTORE']
+
+        # Every run above left a point, plus the "remove everything" row.
+        $rows = Get-ListCount -Dialog $rest -CtrlId $IDC_RESTORE_POINTS
+        Assert-That 'the points taken by the earlier runs are listed' ($rows -ge 2) `
+            "list holds $rows rows"
+        Assert-That 'nothing is chosen until the user chooses' `
+        ((Get-ListSelection -Dialog $rest -CtrlId $IDC_RESTORE_POINTS) -eq -1)
+
+        # Restore with nothing picked must not do anything.
+        Press-WizardButton -Sheet $h4 -Button $PSBTN_NEXT
+        $warn = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h4" -TimeoutMs 4000
+        Assert-That 'Restore with nothing chosen asks for a choice' ($null -ne $warn)
+        if ($warn) { Dismiss-Modal -Modal $warn.Handle }
+
+        $pointsBefore = @(Get-ChildItem (Join-Path $gameFolder '.pacenotes\restore') `
+                -ErrorAction SilentlyContinue).Count
+
+        # The last row is "remove everything" — the oldest state there is.
+        [void](Select-ListItem -Dialog $rest -CtrlId $IDC_RESTORE_POINTS -Index ($rows - 1))
+        Start-Sleep -Milliseconds 400
+        $preview = Get-CtrlText $rest $IDC_RESTORE_PREVIEW
+        Assert-That 'the preview says what would be removed' `
+        ($preview.Length -gt 0 -and $preview.Contains($S['IDS_RESTORE_REMOVE'].Split("`r")[0])) `
+            "preview said [$preview]"
+        # It names packages, not keys: a user reads leaves, not paths.
+        Assert-That 'and names them' ($preview -match 'Kamil|Ewa|polish|Numeric') `
+            "preview said [$preview]"
+
+        Press-WizardButton -Sheet $h4 -Button $PSBTN_NEXT
+        $done = Wait-ForPageControl -Sheet $h4 -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+        Assert-That 'the restore runs and reaches the summary' ($done -ne [IntPtr]::Zero)
+        if ($done -ne [IntPtr]::Zero) {
+            Assert-That 'the summary says what it went back to' `
+            ((Get-CtrlText $done $IDC_S7_RESULT).Length -gt 0)
+            Assert-That 'the process survived it' (-not $proc.HasExited)
+        }
+
+        # And the folder really is back: our files gone, ledger empty.
+        Assert-That 'the overlay is gone from the game folder' `
+        (-not (Test-Path (Join-Path $gameFolder 'Plugins\Pacenote\config\x.ini')))
+        $ledgerPath = Join-Path $gameFolder '.pacenotes\installed.json'
+        # An empty ledger is `"packages": {}`, whose PSObject has no
+        # properties at all — asking for .Name on that is an error under
+        # StrictMode, not an empty list.
+        $left = @()
+        if (Test-Path $ledgerPath) {
+            $packages = (Get-Content $ledgerPath -Raw | ConvertFrom-Json).packages
+            if ($packages) { $left = @($packages.PSObject.Properties | ForEach-Object Name) }
+        }
+        Assert-That 'the ledger is empty afterwards' ($left.Count -eq 0) `
+            "ledger still holds $($left -join ', ')"
+        # A restore changes the folder like any other run, so it has to
+        # leave a way back from ITSELF — a user who restores to the wrong
+        # state must not be stuck there.
+        $pointsAfter = @(Get-ChildItem (Join-Path $gameFolder '.pacenotes\restore') `
+                -ErrorAction SilentlyContinue).Count
+        Assert-That 'the restore is itself undoable' ($pointsAfter -eq $pointsBefore + 1) `
+            "points went from $pointsBefore to $pointsAfter"
     }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }

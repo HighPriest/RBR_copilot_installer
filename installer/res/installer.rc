@@ -83,6 +83,12 @@ END
 #define IDC_S6_ITEM         353
 #define IDC_S6_LOG          354
 
+// The restore scene has no number, being a route of its own reached from scene 3.
+#define IDD_RESTORE         370
+#define IDC_RESTORE_PROMPT  371
+#define IDC_RESTORE_POINTS  372
+#define IDC_RESTORE_PREVIEW 373
+
 #define IDD_S7_SUMMARY      360
 #define IDC_S7_RESULT       361
 #define IDC_S7_DETAIL       362
@@ -105,7 +111,6 @@ END
 #define IDS_INSTALLING          5
 #define IDS_DONE                6
 #define IDS_READY               9
-#define IDS_NOT_IMPL           10
 #define IDS_ALREADY_RUNNING    11
 #define IDS_CRASH              12
 #define IDS_CRASH_NOFILE       13
@@ -203,6 +208,21 @@ END
 #define IDS_S7_LEFT_ALONE     141
 #define IDS_S7_RESTORE_POINT  142
 
+// Restore scene (150-169)
+#define IDS_RESTORE_TITLE     150
+#define IDS_RESTORE_PROMPT    151
+#define IDS_RESTORE_ALL       152
+#define IDS_RESTORE_EMPTY     153
+#define IDS_RESTORE_PUT_BACK  154
+#define IDS_RESTORE_REMOVE    155
+#define IDS_RESTORE_KEEP      156
+#define IDS_RESTORE_MISSING   157
+#define IDS_RESTORE_NOTHING   158
+#define IDS_RESTORE_PICK      159
+#define IDS_BTN_RESTORE       160
+#define IDS_RESTORE_RUNNING   161
+#define IDS_S7_RESTORED       162
+
 // Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
 // A PropertySheet takes its largest page's size, so every page shares one: 330x215 DLU, for scene 5's three lists.
 // The lists are full width because a third of it clips the part of a co-driver's path that tells two voices apart.
@@ -261,6 +281,20 @@ BEGIN
                     | WS_BORDER | WS_TABSTOP,
                     14, 24, 302, 158
     LTEXT           "", IDC_S4_STATUS, 14, 188, 302, 18
+END
+
+// Half preview, since restoring is the one thing here that can remove a user's files.
+IDD_RESTORE DIALOGEX 0, 0, 330, 215
+STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_RESTORE_PROMPT, 14, 26, 302, 18
+    LISTBOX         IDC_RESTORE_POINTS, 14, 48, 302, 70,
+                    LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_RESTORE_PREVIEW, 14, 126, 302, 80,
+                    ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
+                    | WS_VSCROLL | NOT WS_TABSTOP
 END
 
 IDD_S5_CONFIG DIALOGEX 0, 0, 330, 215
@@ -336,7 +370,6 @@ BEGIN
     IDS_INSTALLING      "Installing: %s"
     IDS_DONE            "Done"
     IDS_READY           "Ready."
-    IDS_NOT_IMPL        "Not implemented yet."
     IDS_ALREADY_RUNNING "The Pacenotes Installer is already running.\n\nClose the other window and try again. Two copies would overwrite each other's downloads and installation records."
     IDS_CRASH           "Something went wrong and the installer has to close.\r\n\r\nWhat happened was written to:\r\n%s\r\n\r\nYour game folder has not been left half-installed: anything already written is recorded there too.\r\n\r\nShow that file?"
     IDS_CRASH_NOFILE    "Something went wrong and the installer has to close. It could not write a log, so this is the only copy of what happened:"
@@ -425,6 +458,20 @@ BEGIN
     IDS_S7_CHANGED      "Packages installed / removed: %s"
     IDS_S7_LEFT_ALONE   "Left untouched because something else had changed them: %s"
     IDS_S7_RESTORE_POINT "You can undo this run from the restore point %s"
+
+    IDS_RESTORE_TITLE   "Restore"
+    IDS_RESTORE_PROMPT  "Choose the state to go back to. The signs say what the run after that point did: + added, - removed, ~ changed version."
+    IDS_RESTORE_ALL     "Remove everything this installer added"
+    IDS_RESTORE_EMPTY   "There is nothing to go back to: this installer has not changed anything in this folder yet."
+    IDS_RESTORE_PICK    "Choose a state from the list first."
+    IDS_RESTORE_PUT_BACK "Put back:\r\n%s"
+    IDS_RESTORE_REMOVE  "Remove:\r\n%s"
+    IDS_RESTORE_KEEP    "Leave as it is:\r\n%s"
+    IDS_RESTORE_MISSING "CANNOT be put back, because its download is no longer on this computer. What is installed now will be left alone:\r\n%s"
+    IDS_RESTORE_NOTHING "This folder already matches that state. Nothing would change."
+    IDS_BTN_RESTORE     "Restore"
+    IDS_RESTORE_RUNNING "Restoring..."
+    IDS_S7_RESTORED     "Restored to %s."
 END
 
 // Polish reuses the legacy InstallationForm.pl.resx terms, so returning users see familiar words.
@@ -438,7 +485,6 @@ BEGIN
     IDS_INSTALLING      "Aktualnie instaluję: %s"
     IDS_DONE            "Gotowe"
     IDS_READY           "Gotowy."
-    IDS_NOT_IMPL        "Jeszcze niezaimplementowane."
     IDS_ALREADY_RUNNING "Instalator Pacenotes jest już uruchomiony.\n\nZamknij drugie okno i spróbuj ponownie. Dwie kopie nadpisywałyby sobie nawzajem pobrane pliki i zapis instalacji."
     IDS_CRASH           "Coś poszło nie tak i instalator musi się zamknąć.\r\n\r\nSzczegóły zapisano w pliku:\r\n%s\r\n\r\nFolder gry nie został w połowie zainstalowany: to, co już zapisano, też jest tam odnotowane.\r\n\r\nPokazać ten plik?"
     IDS_CRASH_NOFILE    "Coś poszło nie tak i instalator musi się zamknąć. Nie udało się zapisać dziennika, więc to jedyna kopia informacji o błędzie:"
@@ -527,4 +573,18 @@ BEGIN
     IDS_S7_CHANGED      "Pakiety zainstalowane / usunięte: %s"
     IDS_S7_LEFT_ALONE   "Pozostawione bez zmian, bo zmienił je ktoś inny: %s"
     IDS_S7_RESTORE_POINT "Ten przebieg można cofnąć z punktu przywracania %s"
+
+    IDS_RESTORE_TITLE   "Przywracanie"
+    IDS_RESTORE_PROMPT  "Wybierz stan, do którego chcesz wrócić. Znaki mówią, co zrobił przebieg po tym punkcie: + dodano, - usunięto, ~ zmieniono wersję."
+    IDS_RESTORE_ALL     "Usuń wszystko, co dodał ten instalator"
+    IDS_RESTORE_EMPTY   "Nie ma do czego wracać: ten instalator jeszcze niczego nie zmienił w tym folderze."
+    IDS_RESTORE_PICK    "Najpierw wybierz stan z listy."
+    IDS_RESTORE_PUT_BACK "Zostanie przywrócone:\r\n%s"
+    IDS_RESTORE_REMOVE  "Zostanie usunięte:\r\n%s"
+    IDS_RESTORE_KEEP    "Pozostanie bez zmian:\r\n%s"
+    IDS_RESTORE_MISSING "NIE MOŻNA przywrócić, bo pobranego pliku już nie ma na tym komputerze. To, co jest zainstalowane teraz, zostanie nietknięte:\r\n%s"
+    IDS_RESTORE_NOTHING "Ten folder już odpowiada temu stanowi. Nic się nie zmieni."
+    IDS_BTN_RESTORE     "Przywróć"
+    IDS_RESTORE_RUNNING "Przywracanie..."
+    IDS_S7_RESTORED     "Przywrócono do stanu %s."
 END

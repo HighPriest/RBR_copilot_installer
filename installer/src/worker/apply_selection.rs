@@ -46,7 +46,13 @@ pub fn apply_selection(
     let configured = if plan.is_empty() {
         Vec::new()
     } else {
-        configure(job, &mut ledger, &mut watcher)?
+        configure(
+            job.game,
+            &job.game_dir,
+            &job.picks,
+            &mut ledger,
+            &mut watcher,
+        )?
     };
     Ok(super::Applied {
         installed: outcome.installed,
@@ -99,8 +105,10 @@ fn report_overlaps(
 /// Returns the files the step wrote, with their new hashes in the ledger. The
 /// step failing is logged, not fatal, since the packages are installed and a
 /// missing plugin is fixed elsewhere.
-fn configure(
-    job: &super::InstallJob,
+pub(super) fn configure(
+    game: pacenotes_installer::gamedir::Game,
+    game_dir: &std::path::Path,
+    picks: &std::collections::BTreeMap<String, String>,
     ledger: &mut pacenotes_installer::ledger::Ledger,
     watcher: &mut PostingWatcher,
 ) -> Result<Vec<String>, String> {
@@ -114,30 +122,24 @@ fn configure(
         total: 0,
         log: None,
     });
-    let configured =
-        match pacenotes_installer::install::configure(job.game, &job.game_dir, &job.picks) {
-            Ok(configured) => configured,
-            Err(e) => {
-                reporter.log(format!("configuration skipped — {e}"));
-                return Ok(Vec::new());
-            }
-        };
+    let configured = match pacenotes_installer::install::configure(game, game_dir, picks) {
+        Ok(configured) => configured,
+        Err(e) => {
+            reporter.log(format!("configuration skipped — {e}"));
+            return Ok(Vec::new());
+        }
+    };
     for note in configured.notes {
         reporter.log(note);
     }
-    pacenotes_installer::engine::record_configured(
-        &job.game_dir,
-        &configured.files,
-        ledger,
-        watcher,
-    )
-    .map_err(|e| e.to_string())?;
+    pacenotes_installer::engine::record_configured(game_dir, &configured.files, ledger, watcher)
+        .map_err(|e| e.to_string())?;
     Ok(configured.files)
 }
 
 /// Posts the engine's progress to scene 6.
-struct PostingWatcher<'a> {
-    reporter: &'a super::Reporter,
+pub(super) struct PostingWatcher<'a> {
+    pub(super) reporter: &'a super::Reporter,
 }
 
 impl pacenotes_installer::engine::Watcher for PostingWatcher<'_> {
