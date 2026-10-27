@@ -62,6 +62,9 @@ That the reader copes with the packages that actually exist. For that there
 is a MANUAL CHECK in `src/zip/tests.rs` which walks a directory of real ones:
 
 ```powershell
-$env:PACENOTES_ZIP_CORPUS = "$env:LOCALAPPDATA\PacenotesInstaller\cache"
+$env:PACENOTES_ZIP_CORPUS = "D:\Games\RichardBurnsRally\.pacenotes\cache"
 cargo test --target x86_64-pc-windows-msvc --lib every_real_package -- --ignored --nocapture
 ```
+
+Any directory of real package zips will do. A game folder the installer has
+downloaded into is the easy one, since that is where its cache lives.

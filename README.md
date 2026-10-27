@@ -70,18 +70,24 @@ The wizard:
 What a run leaves on your machine:
 
 ```text
-%LOCALAPPDATA%\PacenotesInstaller\cache\     downloaded packages, verified
-<game folder>\.pacenotes\                    everything about that install:
-                                             what was installed, what was
-                                             replaced, restore points, and
-                                             one log per run
+<game folder>\.pacenotes\    everything, and nothing anywhere else:
+                             the downloaded packages, what was installed,
+                             what was replaced, the restore points, and
+                             one log per run
 ```
 
-The cache is keyed by content hash, so re-running the installer re-uses what
-you have, works offline, and can serve more than one game folder. It is the
-only thing kept in your user profile; everything that describes a particular
-game folder is kept inside that folder, so deleting the game takes its
-installer state with it.
+**Nothing is written outside the game folder** — not to your profile, not to
+the registry, not to Program Files. Deleting the game folder removes every
+trace of this installer, and copying that folder to another drive or PC
+brings your downloads and your restore points with it.
+
+The downloads are kept and named by content hash, so re-running the
+installer re-uses what you have and works offline. Two separate game folders
+each keep their own copy; that is the cost of leaving nothing behind.
+
+If you used a version before 2026-10-27, it kept downloads in
+`%LOCALAPPDATA%\PacenotesInstaller`. Nothing reads that folder any more and
+you can delete it.
 
 ---
 

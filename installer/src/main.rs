@@ -47,7 +47,7 @@ fn main() {
         return;
     }
 
-    wizard::run(&server_url(), cache_root());
+    wizard::run(&server_url(), cache_override());
 }
 
 fn init_common_controls() {
@@ -69,17 +69,10 @@ fn server_url() -> String {
         .unwrap_or_else(|| DEFAULT_SERVER.to_string())
 }
 
-/// `--cache <dir>` gives a test run a cache of its own; otherwise the per-user
-/// cache, or a throwaway one in the temp folder when that cannot be located.
-fn cache_root() -> std::path::PathBuf {
-    argument_after("--cache")
-        .map(std::path::PathBuf::from)
-        .or_else(pacenotes_installer::cache::default_root)
-        .unwrap_or_else(|| {
-            std::env::temp_dir()
-                .join("PacenotesInstaller")
-                .join("cache")
-        })
+/// `--cache <dir>`, an override for development: the cache belongs in the game
+/// folder, which is not known until scene 3 settles one.
+fn cache_override() -> Option<std::path::PathBuf> {
+    argument_after("--cache").map(std::path::PathBuf::from)
 }
 
 fn argument_after(flag: &str) -> Option<String> {

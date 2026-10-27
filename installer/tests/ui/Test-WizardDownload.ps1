@@ -54,6 +54,7 @@ $repoRoot = Split-Path -Parent $crateRoot
 $server = Join-Path $repoRoot 'target\debug\pacenotes-server.exe'
 $S = Get-ResourceStrings -Language $(if ($Language -eq 0) { 'en' } else { 'pl' })
 
+$script:startedAt = Get-Date
 $script:failures = New-Object System.Collections.ArrayList
 $script:checks = 0
 function Assert-That {
@@ -125,10 +126,10 @@ try {
     [void](New-Item -ItemType Directory -Force -Path $gameFolder)
     [void](New-Item -ItemType File -Path (Join-Path $gameFolder 'RichardBurnsRally_SSE.exe'))
 
-    # A cache of its own, so the run downloads for real and never touches the user's cache.
-    $cacheDir = Join-Path $work 'cache'
+    # No --cache, since a run that overrode the path would not test where downloads land.
+    $cacheDir = Join-Path $gameFolder '.pacenotes\cache'
     $launch = Start-Installer -ExePath $ExePath -ExtraArgs @(
-        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+        '--server', "http://127.0.0.1:$port")
     $proc = $launch.Process
 
     $sheet = Wait-ForDialog -OwnerPid $proc.Id
@@ -337,6 +338,18 @@ try {
         "cache holds $($payloads.Count) payloads"
     Assert-That 'the cache index was written' (Test-Path (Join-Path $cacheDir 'cache.json'))
 
+    # NOTHING outside the game folder. The whole point of putting the cache
+    # there: deleting the game takes everything this installer wrote with it.
+    Assert-That 'the downloads went into the game folder, not the profile' `
+    (Test-Path (Join-Path $gameFolder '.pacenotes\cache\cache.json'))
+    # Not "does it exist" — a developer's machine has one left over from
+    # the builds that wrote there. "Did THIS run touch it" is the question.
+    $profileCache = Join-Path $env:LOCALAPPDATA 'PacenotesInstaller'
+    $touched = (Test-Path $profileCache) -and
+        ((Get-Item $profileCache).LastWriteTime -gt $script:startedAt)
+    Assert-That 'and nothing was written to the per-user profile' (-not $touched) `
+        "$profileCache was modified during the run"
+
     # The log lives WITH the game, not in the user's profile.
     $runLogs = @(Get-ChildItem -Path (Join-Path $gameFolder '.pacenotes\logs') `
             -Filter 'install-*.log' -ErrorAction SilentlyContinue)
@@ -366,7 +379,7 @@ try {
     Assert-That 'Finish closes the first run' ($proc.WaitForExit(10000))
 
     $launch2 = Start-Installer -ExePath $ExePath -ExtraArgs @(
-        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+        '--server', "http://127.0.0.1:$port")
     $proc = $launch2.Process
     $sheet2 = Wait-ForDialog -OwnerPid $proc.Id
     Assert-That 'the second run opens' ($null -ne $sheet2)
@@ -430,7 +443,7 @@ try {
     Assert-That 'Finish closes the second run' ($proc.WaitForExit(10000))
 
     $launch3 = Start-Installer -ExePath $ExePath -ExtraArgs @(
-        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+        '--server', "http://127.0.0.1:$port")
     $proc = $launch3.Process
     $sheet3 = Wait-ForDialog -OwnerPid $proc.Id
     if (-not $sheet3) { throw 'no wizard on the third pass' }
@@ -506,7 +519,7 @@ try {
     $proc.Kill(); $proc.WaitForExit(5000) | Out-Null
 
     $launch4 = Start-Installer -ExePath $ExePath -ExtraArgs @(
-        '--server', "http://127.0.0.1:$port", '--cache', $cacheDir)
+        '--server', "http://127.0.0.1:$port")
     $proc = $launch4.Process
     $sheet4 = Wait-ForDialog -OwnerPid $proc.Id
     if (-not $sheet4) { throw 'no wizard on the fourth pass' }

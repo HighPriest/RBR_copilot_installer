@@ -224,3 +224,15 @@ fn removing_an_entry_leaves_the_payload_for_the_sweep() {
     assert!(dir.0.join("aa.zip").is_file());
     assert_eq!(cache.orphans().len(), 1);
 }
+
+/// Deleting the game has to take the downloads with it.
+#[test]
+fn a_cache_lives_beside_the_install_it_belongs_to() {
+    let game = std::path::Path::new(r"C:\Games\RBR");
+
+    assert_eq!(
+        super::dir_for(game),
+        game.join(".pacenotes").join("cache"),
+        "same state directory as the ledger, the backups and the logs"
+    );
+}

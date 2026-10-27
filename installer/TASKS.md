@@ -318,7 +318,9 @@ can be stopped.
       whole-catalogue document; parse `shared::Manifest` incl.
       game/name-as-path/display_name/exclusive_group/requires
 - [x] api.rs: fetch_motd, health
-- [x] cache.rs: %LOCALAPPDATA%\PacenotesInstaller\cache\ layout;
+- [x] cache.rs: `<game dir>\.pacenotes\cache\` layout (moved out of
+      `%LOCALAPPDATA%` on 2026-10-27 — nothing is written outside the game
+      folder now);
       cache.json index (PackageInfo snapshot per entry, so the tree can show
       local-only packages offline); atomic writes
 - [x] cache.json keys include the game. `"directory/name"` is not unique

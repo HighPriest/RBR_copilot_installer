@@ -397,12 +397,10 @@ Every scene appends to an in-memory log, also written to
 `<game dir>\.pacenotes\logs\install-<utc stamp>.log`. The log is visible on
 scenes 4b and 6 and again on 7; any error shows it.
 
-- **In the game folder, not the user's profile.** The installer leaves state
-  in exactly two places, and this is the one that belongs to a game: it sits
-  with the ledger, the backups and the restore points it describes, so a
-  user asking for help about a game folder has everything in one place and
-  nothing is scattered through their profile. (The download cache stays in
-  `%LOCALAPPDATA%`, because it is shared by every game folder.)
+- **In the game folder, like everything else this installer writes.** It
+  sits with the cache, the ledger, the backups and the restore points it
+  describes, so a user asking for help about a game folder has all of it
+  in one place and nothing is scattered through their profile.
 - **One file per run**, dated in the name. A single overwritten file meant
   that re-opening the installer to see what went wrong ERASED the run being
   looked at (DESIGN-REVIEW §7). The newest five are kept; a log is a few kB.

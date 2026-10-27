@@ -2,8 +2,8 @@ use windows_sys::Win32::UI::Controls as ctl;
 use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 
 /// Runs the wizard until the user finishes or cancels.
-pub fn run(base_url: &str, cache_root: std::path::PathBuf) {
-    let mut state = crate::wizard::state::WizardState::new(base_url.to_string(), cache_root);
+pub fn run(base_url: &str, cache_override: Option<std::path::PathBuf>) {
+    let mut state = crate::wizard::state::WizardState::new(base_url.to_string(), cache_override);
     let state_pointer = &mut state as *mut _ as windows_sys::Win32::Foundation::LPARAM;
 
     let pages = [

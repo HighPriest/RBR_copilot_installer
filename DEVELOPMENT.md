@@ -216,16 +216,17 @@ WinHTTP only negotiates TLS when the URL says `https`.
 Where a run leaves things, when `--cache` is not given:
 
 ```text
-%LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip   verified payloads
-%LOCALAPPDATA%\PacenotesInstaller\cache\cache.json     what each one is
-<game dir>\.pacenotes\logs\install-<stamp>.log         one log per run
-<game dir>\.pacenotes\installed.json                   the ledger
-<game dir>\.pacenotes\backup\, restore\<stamp>\        what was replaced
+<game dir>\.pacenotes\cache\<sha256>.zip        verified payloads
+<game dir>\.pacenotes\cache\cache.json          what each one is
+<game dir>\.pacenotes\logs\install-<stamp>.log  one log per run
+<game dir>\.pacenotes\installed.json            the ledger
+<game dir>\.pacenotes\backup\, restore\<stamp>\ what was replaced
 ```
 
-The cache is the only thing in the user's profile, because it is shared by
-every game folder. Everything describing one install — including the run
-log — lives in that folder's `.pacenotes\`.
+Everything, under the folder the installer was pointed at. Deleting the
+game folder removes every trace of the tool. `--cache <dir>` overrides the
+cache location for development; nothing else can be moved, and nothing is
+written to `%LOCALAPPDATA%` or anywhere else in the profile.
 
 ## 6. Releasing
 

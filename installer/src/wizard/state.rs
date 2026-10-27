@@ -26,7 +26,10 @@ pub struct WizardState {
     pub game: Option<pacenotes_installer::gamedir::Game>,
     pub route: Route,
     pub base_url: String,
+    /// The game folder's own cache, opened when scene 3 settles the folder.
     pub cache: pacenotes_installer::cache::Cache,
+    /// `--cache <dir>`, which wins over the game folder's cache when given.
+    pub cache_override: Option<std::path::PathBuf>,
 
     /// The catalogue behind the tree, whose sizes and digests scene 6 needs.
     pub packages: Vec<pacenotes_shared::PackageInfo>,
@@ -69,7 +72,7 @@ pub struct WizardState {
 }
 
 impl WizardState {
-    pub fn new(base_url: String, cache_root: std::path::PathBuf) -> WizardState {
+    pub fn new(base_url: String, cache_override: Option<std::path::PathBuf>) -> WizardState {
         WizardState {
             language: crate::i18n::Language::En,
             secret: String::new(),
@@ -80,7 +83,11 @@ impl WizardState {
             game: None,
             route: Route::Download,
             base_url,
-            cache: pacenotes_installer::cache::Cache::open(cache_root),
+            // Reads as empty until a route is taken, and nothing downloads before that.
+            cache: pacenotes_installer::cache::Cache::open(
+                cache_override.clone().unwrap_or_default(),
+            ),
+            cache_override,
             packages: Vec::new(),
             tree: pacenotes_installer::tree::Tree::default(),
             tree_items: Vec::new(),

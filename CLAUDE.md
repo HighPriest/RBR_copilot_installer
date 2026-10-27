@@ -69,10 +69,16 @@ pacenote packages. Two deliverables:
   - `requires` (optional): list of "directory/name" deps the UI enforces
     (e.g. voice pack requires its language pack). The name half may itself
     contain `/`, so a ref splits on the FIRST separator only.
-- **Cache**: downloads land in a per-user cache
-  (`%LOCALAPPDATA%\PacenotesInstaller\cache\<sha256>.zip` + `cache.json`
-  index). Sha-keyed: integrity + dedupe. Installing is cache → game dir;
-  works offline, works for multiple game dirs.
+- **Nothing is written outside the game folder.** Every trace of this
+  installer — cache, ledger, backups, restore points, run logs — lives in
+  that folder's `.pacenotes\`. Deleting the game removes all of it, and a
+  folder copied to another drive or machine arrives complete.
+- **Cache**: downloads land in `<game dir>\.pacenotes\cache\<sha256>.zip`
+  plus a `cache.json` index. Sha-keyed: integrity, dedupe, and an older
+  version stays reachable after the index moves on — which is what lets a
+  restore roll an update back. Installing is cache → game dir, so it works
+  offline. Two game folders no longer share one cache: that is the price of
+  the rule above, and it is paid deliberately.
 - **Ledger**: each game dir gets `.pacenotes\installed.json` recording, per
   installed package, the exact files written. Uninstall = delete ledgered
   files. Apply = diff (selected vs ledger) → uninstall removed, install

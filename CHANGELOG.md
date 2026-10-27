@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026/10/27 — installer: nothing is written outside the game folder
+
+The download cache moves from `%LOCALAPPDATA%\PacenotesInstaller\cache` to
+`<game dir>\.pacenotes\cache`, beside the ledger, the backups, the restore
+points and the logs. That was the last thing this installer wrote anywhere
+but the folder it was pointed at.
+
+- Deleting the game folder now removes every trace of the tool, and a
+  folder copied to another drive or PC arrives complete — with its
+  downloads and its restore points, which is what makes the way back still
+  work there.
+- The cost, accepted deliberately: two game folders no longer share one
+  cache, so a package wanted in both is fetched twice. Disk is cheaper than
+  state nobody remembers to clean up — and the second copy is what keeps
+  the first folder's restore points working after the second is deleted.
+- `cache::default_root` is gone; `cache::dir_for(game_dir)` replaces it, and
+  the wizard opens the cache when scene 3 settles a folder, exactly as the
+  run log is attached. `--cache <dir>` stays as a development override.
+- An audit of every write the installer makes found nothing else outside
+  the game folder. What remains elsewhere is deliberate and is not install
+  state: the `--selftest-*` developer flags use a throwaway temp directory,
+  and a panic that happens before any folder is chosen writes its report
+  beside the exe, because at that moment there is no game folder to put it
+  in.
+- The UI suite no longer passes `--cache`, so it exercises the real default,
+  and it asserts both halves: the downloads land in the game folder, and
+  nothing under `%LOCALAPPDATA%` is touched during a run.
+
+Older versions left downloads in `%LOCALAPPDATA%\PacenotesInstaller`.
+Nothing reads that folder any more; it can be deleted, and the README says
+so.
+
 ## 2026/10/27 — installer: the restore scene
 
 The last functional gap. Every install has written a restore point since

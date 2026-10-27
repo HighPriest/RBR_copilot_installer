@@ -16,8 +16,8 @@ pub unsafe fn show_route_buttons(dialog: HWND) {
     crate::ui::enable(dialog, crate::wizard::control_ids::IDC_S3_RESTORE, ready);
 }
 
-/// Starts the log in the game folder and jumps to the route's first page, by
-/// page id, since at most one of them is the next page.
+/// Starts the log and opens the cache in the game folder, then jumps to the
+/// route's first page by page id, since at most one of them is the next page.
 pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return;
@@ -27,7 +27,9 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
         return;
     }
     state.route = route;
+    // Both belong to the folder, and this is the moment it is settled.
     attach_log(dialog, state);
+    open_cache(state);
 
     let target = match route {
         crate::wizard::state::Route::Download => crate::wizard::control_ids::IDD_S4_DOWNLOAD,
@@ -51,6 +53,15 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
         0,
         target as LPARAM,
     );
+}
+
+/// Opened per route taken, so a user who corrects the folder and starts again
+/// does not read the previous folder's downloads.
+fn open_cache(state: &mut crate::wizard::state::WizardState) {
+    let root = state.cache_override.clone().unwrap_or_else(|| {
+        pacenotes_installer::cache::dir_for(std::path::Path::new(&state.folder))
+    });
+    state.cache = pacenotes_installer::cache::Cache::open(root);
 }
 
 /// The log belongs with the install it describes, so it moves into the game

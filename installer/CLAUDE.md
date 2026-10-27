@@ -89,13 +89,20 @@ again:
   one game's package silently shadows another's. `PackageInfo::download_path()`
   produces exactly that triple, `game/directory/name`, and is also the tail of
   the download URL; prefer it over assembling keys by hand.
-State lives in exactly two places, and the split is deliberate: the cache is
-shared by every game folder and belongs to the Windows user, while
-everything that describes ONE install — ledger, backups, restore points and
-the run logs — sits in that folder's `.pacenotes\`. Nothing else of ours is
-written to the user's profile.
+**EVERYTHING this installer writes lives under the game folder it was
+pointed at**, in that folder's `.pacenotes\`: the ledger, the backups, the
+restore points, the run logs AND the download cache. Nothing goes into the
+user's profile or anywhere else. Deleting the game takes every trace of
+this tool with it, and a folder moved to another drive brings its
+downloads and its way back along with it.
 
-- **Cache** (`cache.rs`): `%LOCALAPPDATA%\PacenotesInstaller\cache\`
+The cache lived in `%LOCALAPPDATA%` until 2026-10-27, which bought one
+thing — two game folders sharing a download — at the price of state nobody
+remembers to clean up. The trade was made the other way: disk is cheap,
+and a second copy is what keeps the first folder's restore points working
+after the second folder is deleted.
+
+- **Cache** (`cache.rs`): `<game dir>\.pacenotes\cache\`
   - `<sha256>.zip` — the payloads, keyed by manifest sha (integrity+dedupe)
   - `cache.json` — index: (game, directory, name) → {sha256, version, size,
     updated_at, display_name, exclusive_group, requires} — a snapshot of
@@ -140,10 +147,9 @@ written to the user's profile.
     the installer owns and later deletes.
 
     An `identical` original is only recoverable while that payload is in
-    the cache, and nothing can guarantee it: the cache is per-user, the
-    ledger lives in the game folder, and the orphan sweep cannot see which
-    folders reference what. Pinning is best effort. The rule that holds
-    regardless: **if the original cannot be put back, the file is left
+    the cache, and nothing can guarantee it: a user can empty the cache by
+    hand, and the orphan sweep does not read the ledger. Pinning is best
+    effort. The rule that holds regardless: **if the original cannot be put back, the file is left
     alone and logged — never deleted.**
   - **`state: "installing"`**, written BEFORE extracting. A run that dies
     mid-extract leaves half-written files that are in no ledger entry — so
@@ -231,8 +237,9 @@ written to the user's profile.
 ## Module map
 
 - `main.rs` — entry point, common-controls init, the developer flags
-  (`--server`, `--cache`), launches the wizard. `--cache` points a run at a
-  throwaway cache, so the UI suite downloads for real.
+  (`--server`, `--cache`), launches the wizard. `--cache` overrides
+  `<game dir>\.pacenotes\cache` for development, to repeat a download that
+  already happened once.
 - `crash.rs` — the PANIC HOOK. A GUI binary with `panic = "abort"` has
   nowhere to print, so without it a panic is a vanished window; it writes
   `panicked at <file>:<line>` into the run log (or beside the exe before a
@@ -277,8 +284,7 @@ written to the user's profile.
   `<game dir>\.pacenotes\logs\install-<stamp>.log`, newest five kept. The UI
   thread owns it, as it owns the controls. It is attached once scene 3
   settles a folder, replaying what was said before, because the log belongs
-  with the install it describes; the download cache, shared by every game
-  folder, is the only thing left in `%LOCALAPPDATA%`.
+  with the install it describes.
 - `size.rs` — byte counts as a person reads them ("41.6 MB"), in binary units
   so they match Explorer.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;
