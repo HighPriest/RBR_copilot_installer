@@ -100,9 +100,7 @@ if (-not (Test-Path $exe)) {
 
 Write-Host 'building pacenotes-server...'
 Push-Location $repoRoot
-# The server is a different crate with its own CI job and its own lint policy.
-# Inheriting this crate's RUSTFLAGS would both impose our policy on it and
-# force a full rebuild of its dependency tree whenever the flags differ.
+# The server crate has its own lint policy, and changed RUSTFLAGS would rebuild its whole tree.
 $savedRustflags = $env:RUSTFLAGS
 $env:RUSTFLAGS = $null
 try {
@@ -121,10 +119,7 @@ $script:work = Join-Path ([System.IO.Path]::GetTempPath()) ("pacenotes-http-" + 
 $dataRoot = Join-Path $work 'data'
 $proc = $null
 try {
-    # ---- Publish real overlay zips -----------------------------------------
-    # A game-root overlay: extracting at the game dir puts the file in place.
-    # The same directory+name is published under TWO games on purpose: that
-    # pair is no longer unique, and every URL and key has to carry the game.
+    # The same directory+name under two games, so every URL and key must carry the game.
     $stage = Join-Path $work 'stage\Plugins\Pacenote\config'
     [void](New-Item -ItemType Directory -Force -Path $stage)
     Set-Content -Path (Join-Path $stage 'Voice.ini') -Value "; test overlay`r`nname=TestVoice"
@@ -147,7 +142,6 @@ try {
     Assert-That 'a package name is its path under the access directory' `
     ($public.name -eq 'codriver/polish/male/Kamil') "name is $($public.name)"
 
-    # ---- Mint a credential granted only the protected directory ------------
     # --db-url belongs to `token`, not to `mint`.
     $db = "file:$(Join-Path $work 'auth.db')"
     $mint = (& $server token --db-url $db mint --label 'http-client-test' --grant 'premium-voices') -join "`n"
@@ -156,7 +150,6 @@ try {
     if (-not $tokenMatch.Success) { throw 'cannot continue without a credential' }
     $token = $tokenMatch.Value
 
-    # ---- Start it ----------------------------------------------------------
     $proc = Start-Process $server -PassThru -WindowStyle Hidden -ArgumentList @(
         'serve', '--listen', "127.0.0.1:$Port", '--data', $dataRoot, '--db-url', $db)
     $base = "http://127.0.0.1:$Port"
@@ -167,7 +160,6 @@ try {
     } while (-not $up -and (Get-Date) -lt $deadline)
     Assert-That 'server answers /health' $up
 
-    # ---- 200 with a body ---------------------------------------------------
     Write-Host "`n-- GET /health --"
     $r = Invoke-SelfTest -Url "$base/health"
     Assert-That 'health succeeds' ($r.RESULT -eq 'OK') "report says $($r.RESULT)"
@@ -176,7 +168,6 @@ try {
     Assert-That 'Content-Length matches the bytes read' ($r.CONTENT_LENGTH -eq $r.BYTES) `
         "declared $($r.CONTENT_LENGTH), read $($r.BYTES)"
 
-    # ---- The manifest fetch M4 asks for -----------------------------------
     Write-Host "`n-- GET /packages (anonymous) --"
     $r = Invoke-SelfTest -Url "$base/packages?game=rbr"
     Assert-That 'packages succeeds' ($r.RESULT -eq 'OK')
@@ -184,12 +175,10 @@ try {
     ($r.BODY.Contains("`"name`":`"$($public.name)`"")) "body was [$($r.BODY)]"
     Assert-That 'anonymous listing hides the protected directory' `
     (-not $r.BODY.Contains('premium-voices')) "body was [$($r.BODY)]"
-    # The sha is what the installer will verify a download against, so the
-    # bytes must survive the transport exactly.
+    # The installer verifies downloads against this sha.
     Assert-That 'listing carries the sha the server computed' `
     ($r.BODY.Contains($public.sha256))
-    # One server holds every game, so the filter has to be real: the other
-    # game publishes the SAME directory+name, and it must not appear here.
+    # The other game publishes the same directory+name.
     Assert-That '?game= filters other games out server-side' `
     (-not $r.BODY.Contains('dirtrally2')) "body was [$($r.BODY)]"
 
@@ -201,7 +190,6 @@ try {
     Assert-That 'bearer header reached the server (listing grew)' `
     ($r.BODY.Contains($protected.sha256))
 
-    # ---- Downloads: the bytes, and the auth outcomes -----------------------
     Write-Host "`n-- GET /download --"
     $r = Invoke-SelfTest -Url "$base/download/$($public.game)/$($public.directory)/$($public.name)"
     Assert-That 'public download succeeds' ($r.RESULT -eq 'OK')
@@ -219,16 +207,13 @@ try {
     Assert-That 'protected download returns the whole zip' `
     ([int]$r.BYTES -eq [int]$protected.size) "manifest says $($protected.size), read $($r.BYTES)"
 
-    # ---- 404 must be distinguishable from a dead server --------------------
     Write-Host "`n-- error surfaces --"
     $r = Invoke-SelfTest -Url "$base/download/rbr/public/no-such-package"
     Assert-That 'missing package fails' ($r.RESULT -eq 'FAIL')
     Assert-That 'missing package reports 404' ($r.STATUS -eq '404') "status $($r.STATUS)"
     Assert-That 'missing package exits non-zero' ($r.ExitCode -ne 0)
 
-    # The game segment is load-bearing, not decoration: a real directory+name
-    # under a game that does not have it must 404 rather than serve the other
-    # game's bytes. This is why cache and ledger keys carry the game too.
+    # A real directory+name under a game that lacks it must not serve the other game's bytes.
     $r = Invoke-SelfTest -Url "$base/download/beamng/$($public.directory)/$($public.name)"
     Assert-That 'the same directory+name under another game is 404' `
     ($r.STATUS -eq '404') "status $($r.STATUS), message $($r.MESSAGE)"
@@ -238,12 +223,10 @@ try {
     Assert-That 'unreachable server fails' ($r.RESULT -eq 'FAIL')
     Assert-That 'unreachable server has no HTTP status' ($r.STATUS -eq '-') "status $($r.STATUS)"
     Assert-That 'unreachable server reports a WinHTTP code' ($r.CODE -ne '0') "code $($r.CODE)"
-    # The point of resolving WinHTTP codes through winhttp.dll: without it this
-    # message would be a bare hex number the user can do nothing with.
+    # WinHTTP codes resolve through winhttp.dll, or this would be a bare number.
     Assert-That 'transport error is readable English, not just a number' `
     ($r.MESSAGE -match '[A-Za-z]{4,}\s+[A-Za-z]{2,}') "message was [$($r.MESSAGE)]"
 
-    # ---- A credential must not be readable from the report -----------------
     Assert-That 'the access key never appears in the report' `
     (-not $r.MESSAGE.Contains('pcn_'))
 } finally {

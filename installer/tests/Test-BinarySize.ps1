@@ -22,15 +22,13 @@ param([int]$LimitKB = 500)
 
 $ErrorActionPreference = 'Stop'
 
-# Run from the crate root regardless of where the caller invoked us.
 $crateRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $crateRoot
 try {
     cargo build --release --target x86_64-pc-windows-msvc
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-    # The crate is excluded from the workspace, so it normally has its own
-    # target/. Fall back to a workspace-level one in case that ever changes.
+    # The crate is outside the workspace, so its own target comes first.
     $exe = 'target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe'
     if (-not (Test-Path $exe)) {
         $exe = '..\target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe'

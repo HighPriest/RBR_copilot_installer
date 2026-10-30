@@ -52,10 +52,7 @@ function Invoke-Step {
 Push-Location $crateRoot
 $savedRustflags = $env:RUSTFLAGS
 try {
-    # Mirror what CI denies, so a local run fails for the same reasons. Scoped
-    # and restored: Test-HttpClient builds the SERVER, a different crate with
-    # its own lint policy, and a stray RUSTFLAGS also forces a full rebuild of
-    # its dependency tree every time the flags change.
+    # Denies what CI denies; Test-HttpClient clears it again for the server crate.
     $env:RUSTFLAGS = '-D warnings'
     Invoke-Step 'cargo fmt --check' { cargo fmt --check }
     Invoke-Step 'cargo clippy' {

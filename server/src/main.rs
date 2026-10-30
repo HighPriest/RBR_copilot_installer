@@ -1,14 +1,14 @@
-//! Pacenotes server — axum + libSQL. See server/CLAUDE.md and TASKS.md.
+//! `pacenotes-server`: serve packages, administer credentials, publish the manifest.
 
 #[derive(clap::Parser)]
 #[command(name = "pacenotes-server")]
 struct Cli {
     #[command(subcommand)]
-    cmd: Cmd,
+    command: Command,
 }
 
 #[derive(clap::Subcommand)]
-enum Cmd {
+enum Command {
     /// Run the HTTP server.
     Serve {
         #[arg(long, default_value = "127.0.0.1:8080", env = "PACENOTES_LISTEN")]
@@ -25,26 +25,25 @@ enum Cmd {
         #[arg(long, default_value = "file:./data/auth.db", env = "PACENOTES_DB_URL")]
         db_url: String,
         #[command(subcommand)]
-        cmd: TokenCmd,
+        command: TokenCommand,
     },
     /// Package manifest maintenance.
     Manifest {
         #[command(subcommand)]
-        cmd: ManifestCmd,
+        command: ManifestCommand,
     },
 }
 
-/// Every command but `mint` identifies a credential by `<token-or-hash>`:
-/// the raw `pcn_…` key, or the hash (full or the short form `token list`
-/// prints). The raw key is only ever shown once, by `mint`.
+/// Every command but `mint` takes `<token-or-hash>`: the raw `pcn_…` key, or
+/// the full or short hash that `token list` prints.
 #[derive(clap::Subcommand)]
-enum TokenCmd {
+enum TokenCommand {
     /// Mint a credential and print it ONCE.
     Mint {
         #[arg(long)]
         label: Option<String>,
-        /// Directory this credential may list and download. Repeatable.
-        /// A credential with no grants is valid; it just sees only `public`.
+        /// Directory this credential may list and download. Repeatable; with
+        /// none, the credential sees only `public`.
         #[arg(long = "grant", value_name = "DIRECTORY")]
         grants: Vec<String>,
         #[arg(long)]
@@ -67,7 +66,7 @@ enum TokenCmd {
 }
 
 #[derive(clap::Subcommand)]
-enum ManifestCmd {
+enum ManifestCommand {
     /// Rebuild <data>/manifest.json from the zips under
     /// <data>/<game>/packages/<directory>/.
     Gen {
@@ -84,16 +83,16 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    match <Cli as clap::Parser>::parse().cmd {
-        Cmd::Serve {
+    match <Cli as clap::Parser>::parse().command {
+        Command::Serve {
             listen,
             data,
             db_url,
         } => serve(listen, data, db_url).await,
-        Cmd::Token { db_url, cmd } => token_admin(&db_url, cmd).await,
-        Cmd::Manifest {
-            cmd: ManifestCmd::Gen { data },
-        } => manifest_gen(std::path::Path::new(&data)),
+        Command::Token { db_url, command } => administer_tokens(&db_url, command).await,
+        Command::Manifest {
+            command: ManifestCommand::Gen { data },
+        } => generate_manifest(std::path::Path::new(&data)),
     }
 }
 
@@ -104,10 +103,8 @@ async fn serve(listen: String, data: String, db_url: String) -> anyhow::Result<(
         store: pacenotes_server::store::ManifestStore::new(&data),
         db: pacenotes_server::db::open(&db_url).await?,
     });
-    // Load once at startup so a broken manifest shows up in the log
-    // immediately instead of on the first request.
-    let loaded = state.store.current().packages.len();
-    tracing::info!(packages = loaded, "manifest loaded");
+    let package_count = state.store.current().packages.len();
+    tracing::info!(packages = package_count, "manifest loaded");
 
     let listener = tokio::net::TcpListener::bind(&listen).await?;
     tracing::info!(addr = %listener.local_addr()?, "listening");
@@ -119,11 +116,10 @@ async fn serve(listen: String, data: String, db_url: String) -> anyhow::Result<(
     Ok(())
 }
 
-/// `token …`: credential administration against the auth DB.
-async fn token_admin(db_url: &str, cmd: TokenCmd) -> anyhow::Result<()> {
+async fn administer_tokens(db_url: &str, command: TokenCommand) -> anyhow::Result<()> {
     let connection = pacenotes_server::db::open(db_url).await?;
-    match cmd {
-        TokenCmd::Mint {
+    match command {
+        TokenCommand::Mint {
             label,
             grants,
             expires_days,
@@ -131,83 +127,87 @@ async fn token_admin(db_url: &str, cmd: TokenCmd) -> anyhow::Result<()> {
             let token =
                 pacenotes_server::admin::mint(&connection, label.as_deref(), &grants, expires_days)
                     .await?;
-            // The only time this value exists. Printed to stdout so it can be
-            // piped; never logged.
             println!("{token}");
+            let grantless_note = if grants.is_empty() {
+                " This credential has no grants: it sees only the public directory."
+            } else {
+                ""
+            };
             eprintln!(
-                "Store it now — only its hash is kept, so it cannot be shown again.{}",
-                if grants.is_empty() {
-                    " This credential has no grants: it sees only the public directory."
-                } else {
-                    ""
-                }
+                "Store it now — only its hash is kept, so it cannot be shown again.{grantless_note}"
             );
         }
-        TokenCmd::Grant {
+        TokenCommand::Grant {
             token_or_hash,
             directory,
         } => {
             let hash =
                 pacenotes_server::admin::grant(&connection, &token_or_hash, &directory).await?;
-            println!("granted {directory} to {}", &hash[..12]);
+            println!(
+                "granted {directory} to {}",
+                pacenotes_server::admin::short_hash(&hash)
+            );
         }
-        TokenCmd::Ungrant {
+        TokenCommand::Ungrant {
             token_or_hash,
             directory,
         } => {
             let hash =
                 pacenotes_server::admin::ungrant(&connection, &token_or_hash, &directory).await?;
-            println!("removed {directory} from {}", &hash[..12]);
+            println!(
+                "removed {directory} from {}",
+                pacenotes_server::admin::short_hash(&hash)
+            );
         }
-        TokenCmd::Revoke { token_or_hash } => {
+        TokenCommand::Revoke { token_or_hash } => {
             let hash = pacenotes_server::admin::revoke(&connection, &token_or_hash).await?;
-            println!("revoked {}", &hash[..12]);
+            println!("revoked {}", pacenotes_server::admin::short_hash(&hash));
         }
-        TokenCmd::List => {
-            let credentials = pacenotes_server::admin::list(&connection).await?;
-            if credentials.is_empty() {
-                println!("no credentials");
-            }
-            for credential in &credentials {
-                println!(
-                    "{}  {:<20} grants: {:<40} expires: {:<12} {}",
-                    credential.short_hash(),
-                    credential.label.as_deref().unwrap_or("-"),
-                    if credential.grants.is_empty() {
-                        "-".to_string()
-                    } else {
-                        credential.grants.join(",")
-                    },
-                    credential
-                        .expires_at
-                        .map(|e| e.to_string())
-                        .unwrap_or_else(|| "never".to_string()),
-                    if credential.revoked { "REVOKED" } else { "" }
-                );
-            }
-        }
+        TokenCommand::List => print_credentials(&pacenotes_server::admin::list(&connection).await?),
     }
     Ok(())
 }
 
-/// `manifest gen`: scan the data root and rewrite manifest.json.
-/// Publishing flow = drop a zip into <game>/packages/<directory>/… → run
-/// this.
-fn manifest_gen(data: &std::path::Path) -> anyhow::Result<()> {
-    let generated = pacenotes_server::store::ManifestStore::generate(data)?;
+fn print_credentials(credentials: &[pacenotes_server::admin::Credential]) {
+    if credentials.is_empty() {
+        println!("no credentials");
+    }
+    for credential in credentials {
+        let grants = if credential.grants.is_empty() {
+            "-".to_string()
+        } else {
+            credential.grants.join(",")
+        };
+        let expires = credential
+            .expires_at
+            .map(|deadline| deadline.to_string())
+            .unwrap_or_else(|| "never".to_string());
+        println!(
+            "{}  {:<20} grants: {:<40} expires: {:<12} {}",
+            credential.short_hash(),
+            credential.label.as_deref().unwrap_or("-"),
+            grants,
+            expires,
+            if credential.revoked { "REVOKED" } else { "" }
+        );
+    }
+}
+
+fn generate_manifest(data: &std::path::Path) -> anyhow::Result<()> {
+    let generated = pacenotes_server::store::generate(data)?;
     let manifest = generated.manifest;
-    let path = data.join("manifest.json");
+    let path = data.join(pacenotes_server::store::MANIFEST_FILE);
     let json = serde_json::to_string_pretty(&manifest)?;
     std::fs::write(&path, format!("{json}\n"))
         .map_err(|e| anyhow::anyhow!("writing {}: {e}", path.display()))?;
 
-    for p in &manifest.packages {
+    for package in &manifest.packages {
         println!(
             "{} {} [{}] ({} bytes)",
-            p.download_path(),
-            p.version,
-            p.category(),
-            p.size
+            package.download_path(),
+            package.version,
+            package.category(),
+            package.size
         );
     }
     for warning in &generated.warnings {

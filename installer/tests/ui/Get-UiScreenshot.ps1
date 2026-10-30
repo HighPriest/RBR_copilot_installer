@@ -74,8 +74,7 @@ function Save-WindowPng {
     $ok = [NativeUi]::PrintWindow($Window, $hdc, 2)
     $g.ReleaseHdc($hdc)
     if (-not $ok) {
-        # Last resort; may capture occluding windows, so say so rather than
-        # quietly producing a misleading image.
+        # A screen grab can capture occluding windows, hence the warning.
         Write-Warning 'PrintWindow failed; falling back to a screen grab'
         $g.CopyFromScreen($r.L, $r.T, 0, 0, (New-Object System.Drawing.Size $w, $h))
     }
@@ -93,8 +92,7 @@ if (-not $GameFolder) {
     $GameFolder = $temp
 }
 
-# A dead server keeps scene 2 on its documented offline path, so the capture is
-# the same every run instead of depending on what a live server says.
+# A dead server keeps scene 2 on its offline path, so every capture is the same.
 $launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', 'http://127.0.0.1:1')
 $proc = $launch.Process
 

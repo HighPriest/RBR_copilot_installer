@@ -1,9 +1,5 @@
-# Standalone crate on purpose — NOT a default workspace member.
-# Build (Windows only):
-#   cargo build --release --target x86_64-pc-windows-msvc
-# Then run check-size.ps1. The 500 kB limit is a release gate.
-#
-# Versions are pinned with `=` to match shared/ and server/ (root M0).
+# Outside the workspace on purpose; Windows only, and tests/Test-BinarySize.ps1 is its release gate.
+# Versions are pinned with `=`, as in shared/ and server/.
 
 [package]
 name = "pacenotes-installer"

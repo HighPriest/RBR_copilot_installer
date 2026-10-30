@@ -64,16 +64,17 @@ noticeable code. If size regresses, fix it before continuing.
 
 ## Module map
 
-- `main.rs` — entry point, common-controls init, `--selftest-http`, launches
-  the wizard.
-- `wizard.rs` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
-  wizard mode, one page per scene, with `WizardState` shared across pages.
-  Scenes 1-3 (Language, Message of the day, Game folder) are implemented;
-  4-7 are I2b part 2. Before changing the sheet, read Implementation notes in
-  `DESIGN.md`: the scene title, the per-scene button labels and the title bar
-  all work around something the OS does not give, and the reasons are there
-  and at each call site.
-- `ui.rs` — the small Win32 vocabulary the pages are written in: control
+- `main.rs` — entry point, common-controls init, launches the wizard.
+- `selftest_http.rs` — `--selftest-http`, the WinHTTP check that
+  `tests/Test-HttpClient.ps1` drives.
+- `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
+  wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
+  (`state.rs`) shared across pages and what every page does alike in `page/`.
+  Control ids mirror `res/installer.rc` in `control_ids.rs`. Before changing
+  the sheet, read Implementation notes in `DESIGN.md`: the scene title, the
+  per-scene button labels and the title bar all work around something the OS
+  does not give.
+- `ui/` — the small Win32 vocabulary the pages are written in: control
   text, combo boxes, the three modal shapes, the folder picker.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;
   it posts a `Message` and the UI thread acts on it.
@@ -82,7 +83,7 @@ noticeable code. If size regresses, fix it before continuing.
   the wizard's game dropdown. Pure std, so the folder check is testable
   without a desktop. A game folder is NOT "any directory that exists"; see the
   note under Testing.
-- `http.rs` — WinHTTP wrapper: `get(url, bearer: Option<&str>) -> Vec<u8>`
+- `http/` — WinHTTP wrapper: `get(url, bearer: Option<&str>) -> Vec<u8>`
   with a progress callback. Synchronous; always called from the worker thread.
 - `api.rs` — fetch manifest, download into cache (JSON isolated here).
 - `cache.rs` — cache dir layout, cache.json read/write, sha verification.
@@ -94,7 +95,7 @@ noticeable code. If size regresses, fix it before continuing.
   file copies) — do not write one.
 - `install.rs` — `write_rbr_config` port (the one built-in special step)
   + RBR-specific path knowledge.
-- `i18n.rs` — string table lookup (localization via .rc STRINGTABLE), the
+- `i18n/` — string table lookup (localization via .rc STRINGTABLE), the
   shipped `Language` list, and the OS-UI-language default for scene 1.
 
 ## Porting map (C# legacy/DownloadManager.cs → new model)
@@ -132,15 +133,19 @@ first" error.
   serde+serde_json ~80-120 kB; cache/ledger/engine ~40 kB. Headroom is real
   but finite — check after each milestone.
 
-## Tests — ALL of them live in `tests/`
+## Tests
 
-There are no inline `#[cfg(test)]` modules in `src/`, and no validation script
-anywhere else in the crate. Read `tests/README.md` before adding one.
+Rust unit tests live beside the module they test (ST-007 of the
+coding-standards skill): `#[cfg(test)] mod tests` at the bottom of the file,
+or `<module>/tests.rs` once they outgrow it, as `src/gamedir/tests.rs` and
+`src/tree/tests.rs` do. Cargo's `tests/` holds only scenario tests that drive
+the public API across modules, named after the scenario, plus the PowerShell
+suites. Read `tests/README.md` before adding one.
 
     pwsh -File tests/Run-AllTests.ps1          # everything
     pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate
 
-- `tests/gamedir.rs` — cross-platform `cargo test`. Game-folder identification.
+- `src/gamedir/tests.rs` — cross-platform `cargo test`. Game-folder identification.
 - `tests/Test-VersionSync.ps1` — `[package] version` in Cargo.toml must match
   FILEVERSION/PRODUCTVERSION and the FileVersion/ProductVersion strings in
   `res/installer.rc`. The CD workflows tag releases from Cargo.toml, so drift

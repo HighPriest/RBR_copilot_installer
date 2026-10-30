@@ -1,8 +1,10 @@
 # installer/tests
 
-Every automated check for the installer lives here — Rust tests, the size gate
-and the GUI tests. Nothing that validates the installer sits outside this
-directory, and `src/` carries no inline `#[cfg(test)]` modules.
+The installer's scripted checks live here: the size gate, the version sync,
+the WinHTTP test and the GUI tests. Rust unit tests do not: they sit beside
+the module they test (`src/gamedir/tests.rs`, `src/tree/tests.rs`), and this
+directory takes Rust tests only when they drive the public API across several
+modules, named after the scenario they cover.
 
 Run the lot:
 
@@ -15,7 +17,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 
 | Path | Kind | Needs a desktop? | In CI? |
 |---|---|---|---|
-| `gamedir.rs` | AUTOMATED TEST — game-folder identification | no | yes |
+| `cargo test` | AUTOMATED TEST — the unit tests in `src/` | no | yes |
 | `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 500 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
@@ -43,7 +45,7 @@ installer actually talks to. It drives the binary's `--selftest-http` flag,
 which writes a report to a file rather than opening a window — which is why
 it runs in CI while the GUI suite does not.
 
-`cargo test` picks up `gamedir.rs` automatically. It ignores `ui/` and the
+`cargo test` ignores `ui/` and the
 `.ps1` files, so the two suites coexist in one directory without interfering.
 
 ## How tests here are written
@@ -121,7 +123,7 @@ is commented at its call site.
 ## Requirements
 
 - The GUI tests are **Windows-only** and need an **interactive desktop
-  session**; they will not run on a headless agent. `gamedir.rs` and the size
+  session**; they will not run on a headless agent. `cargo test` and the size
   gate have no such restriction.
 - Build before running the GUI tests: they default to
   `target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe`. Pass

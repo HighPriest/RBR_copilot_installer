@@ -1,9 +1,4 @@
-//! Request-path error type. Every non-2xx response body is a
-//! `shared::ApiError` JSON object (server/CLAUDE.md). Handlers never panic:
-//! they return `Result<_, AppError>` and this maps it to a status.
-//!
-//! CONVENTION (root CLAUDE.md): no `use` statements — full paths at use site.
-
+/// A request failure, answered with a status and a `shared::ApiError` body.
 pub struct AppError {
     pub status: axum::http::StatusCode,
     pub code: &'static str,
@@ -11,7 +6,6 @@ pub struct AppError {
 }
 
 impl AppError {
-    /// Missing/malformed/expired/revoked credential on a protected directory.
     pub fn unauthorized() -> Self {
         Self {
             status: axum::http::StatusCode::UNAUTHORIZED,
@@ -20,7 +14,6 @@ impl AppError {
         }
     }
 
-    /// Valid credential, but it does not grant this directory.
     pub fn forbidden() -> Self {
         Self {
             status: axum::http::StatusCode::FORBIDDEN,
@@ -37,7 +30,7 @@ impl AppError {
         }
     }
 
-    /// Something broke on our side. The cause is logged, never returned.
+    /// Logs the cause and answers 500 without it.
     pub fn internal(context: &str, error: impl std::fmt::Display) -> Self {
         tracing::error!(error = %error, "{context}");
         Self {

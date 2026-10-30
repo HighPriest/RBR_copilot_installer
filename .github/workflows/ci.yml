@@ -68,7 +68,7 @@ jobs:
       - name: Clippy
         run: cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc
 
-      # Pure-logic tests: the lib target plus tests/gamedir.rs. The GUI tests
+      # Pure-logic tests: the unit tests beside each lib module. The GUI tests
       # under tests/ui/ are NOT run here — they drive real dialogs and need an
       # interactive desktop session. Run the whole suite locally instead:
       #   pwsh -File installer/tests/Run-AllTests.ps1

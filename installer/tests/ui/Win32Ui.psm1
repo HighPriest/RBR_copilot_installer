@@ -51,7 +51,6 @@ public static class NativeUi {
 }
 "@
 
-# ---- Window messages / notifications used by the scripts ----
 $script:WM_SETTEXT = 0x000C
 $script:WM_CLOSE = 0x0010
 $script:WM_COMMAND = 0x0111
@@ -234,7 +233,6 @@ function Close-Dialog {
     [void][NativeUi]::PostMessageW($Dialog, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
 }
 
-# ---- Wizard (PropertySheet) helpers ----
 # comctl32 button ids from prsht.h, and the PSM_PRESSBUTTON indices.
 $script:ID_WIZBACK = 0x3023
 $script:ID_WIZNEXT = 0x3024

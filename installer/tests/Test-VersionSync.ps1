@@ -45,9 +45,7 @@ function Assert-That {
 
 Write-Host '=== version sync (Cargo.toml <-> installer.rc) ===' -ForegroundColor Cyan
 
-# Anchored at line start so dependency `version = "=1.0.229"` entries, which
-# sit inside braces after a crate name, cannot be picked up by mistake. This is
-# the same expression the CD workflows use to choose the release tag.
+# Anchored at line start so a dependency's `version = "=..."` never matches; the CD workflows tag with the same expression.
 $cargoText = Get-Content -Raw $cargoPath
 $cargoMatch = [regex]::Match($cargoText, '(?m)^version\s*=\s*"(?<v>[^"]+)"')
 if (-not $cargoMatch.Success) { Write-Error "No [package] version in $cargoPath"; exit 1 }

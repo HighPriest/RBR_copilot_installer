@@ -1,10 +1,5 @@
-//! Credential administration (task S7): the `token` subcommands.
-//!
-//! SECURITY: a raw token exists exactly once, in `mint`'s return value, and
-//! the CLI prints it once. Everything else — storage, lookup, every argument
-//! a later command takes — works on the sha256 hash.
-//!
-//! CONVENTION (root CLAUDE.md): full paths at the point of use.
+//! The `token` subcommands. A raw token exists only in `mint`'s return value;
+//! every other command works on its hash.
 
 /// One row of `token list`.
 #[derive(Debug)]
@@ -18,17 +13,20 @@ pub struct Credential {
 }
 
 impl Credential {
-    /// Enough of the hash to identify a row without inviting anyone to treat
-    /// it as the credential itself.
     pub fn short_hash(&self) -> &str {
-        &self.token_hash[..self.token_hash.len().min(12)]
+        short_hash(&self.token_hash)
     }
 }
 
-/// Accepts either a raw token (`pcn_…`, hashed here) or a hash that an
-/// earlier `token list` printed — full or the 12-char prefix.
-/// A prefix that matches more than one credential is an error rather than a
-/// coin flip.
+/// Identifies a credential without looking like a usable one.
+pub fn short_hash(token_hash: &str) -> &str {
+    &token_hash[..token_hash.len().min(SHORT_HASH_LENGTH)]
+}
+
+const SHORT_HASH_LENGTH: usize = 12;
+const SECONDS_PER_DAY: i64 = 86_400;
+
+/// A raw `pcn_…` token, a full hash, or a prefix of one that matches exactly one credential.
 pub async fn resolve_hash(
     connection: &libsql::Connection,
     token_or_hash: &str,
@@ -56,12 +54,11 @@ pub async fn resolve_hash(
     match matches.len() {
         0 => anyhow::bail!("no credential matches {token_or_hash:?}"),
         1 => Ok(matches.remove(0)),
-        n => anyhow::bail!("{token_or_hash:?} matches {n} credentials — use the full hash"),
+        count => anyhow::bail!("{token_or_hash:?} matches {count} credentials — use the full hash"),
     }
 }
 
-/// Mints a credential and stores its hash plus any grants. Returns the raw
-/// token: the ONLY moment it exists.
+/// Stores the hash and grants and returns the raw token, which nothing keeps.
 pub async fn mint(
     connection: &libsql::Connection,
     label: Option<&str>,
@@ -75,7 +72,7 @@ pub async fn mint(
     let token = crate::auth::mint_token();
     let hash = crate::auth::hash_token(&token);
     let created_at = crate::auth::now();
-    let expires_at = expires_days.map(|days| created_at + days * 86_400);
+    let expires_at = expires_days.map(|days| created_at + days * SECONDS_PER_DAY);
 
     connection
         .execute(
@@ -92,7 +89,7 @@ pub async fn mint(
     Ok(token)
 }
 
-/// Adds a directory grant. Idempotent: granting twice is not an error.
+/// Granting a directory twice is not an error.
 pub async fn grant(
     connection: &libsql::Connection,
     token_or_hash: &str,
@@ -104,8 +101,7 @@ pub async fn grant(
     Ok(hash)
 }
 
-/// Removes a directory grant. Takes effect on the next request: grants are
-/// read per request, never cached.
+/// Effective on the next request, since grants are read per request.
 pub async fn ungrant(
     connection: &libsql::Connection,
     token_or_hash: &str,
@@ -122,8 +118,7 @@ pub async fn ungrant(
     Ok(hash)
 }
 
-/// Revokes a credential. The row stays (so `token list` keeps showing it);
-/// `auth::decide` treats revoked exactly like an expired credential.
+/// Keeps the row, so `token list` still shows it.
 pub async fn revoke(
     connection: &libsql::Connection,
     token_or_hash: &str,
@@ -139,7 +134,7 @@ pub async fn revoke(
     Ok(hash)
 }
 
-/// Every credential with its grants, newest first.
+/// Newest first.
 pub async fn list(connection: &libsql::Connection) -> anyhow::Result<Vec<Credential>> {
     let mut rows = connection
         .query(
@@ -159,9 +154,12 @@ pub async fn list(connection: &libsql::Connection) -> anyhow::Result<Vec<Credent
         .map_err(|e| anyhow::anyhow!("reading credential row: {e}"))?
     {
         let token_hash = row.get::<String>(0).unwrap_or_default();
-        if credentials.last().map(|c| c.token_hash.as_str()) != Some(token_hash.as_str()) {
+        let is_new_credential = credentials
+            .last()
+            .is_none_or(|credential| credential.token_hash != token_hash);
+        if is_new_credential {
             credentials.push(Credential {
-                token_hash: token_hash.clone(),
+                token_hash,
                 label: row.get::<Option<String>>(1).unwrap_or_default(),
                 created_at: row.get::<i64>(2).unwrap_or_default(),
                 expires_at: row.get::<Option<i64>>(3).unwrap_or_default(),
@@ -193,9 +191,7 @@ async fn insert_grant(
     Ok(())
 }
 
-/// `public` is reserved for anonymous access and must never appear in
-/// `grants` (server/CLAUDE.md); a grant for a name no directory can have
-/// would silently never match, so both are refused up front.
+/// `public` is everyone's already, and an invalid name could never match a directory.
 fn check_grantable(directory: &str) -> anyhow::Result<()> {
     if directory == pacenotes_shared::PUBLIC_DIR {
         anyhow::bail!(
@@ -211,13 +207,13 @@ fn check_grantable(directory: &str) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    async fn db() -> libsql::Connection {
+    async fn open_database() -> libsql::Connection {
         crate::db::open(":memory:").await.unwrap()
     }
 
     #[tokio::test]
     async fn mint_stores_only_the_hash() {
-        let connection = db().await;
+        let connection = open_database().await;
         let token = super::mint(&connection, Some("Jan"), &["beta".into()], None)
             .await
             .unwrap();
@@ -231,39 +227,39 @@ mod tests {
         assert!(!credentials[0].revoked);
         assert!(credentials[0].expires_at.is_none());
 
-        // The raw token appears nowhere in the database.
-        let loaded = crate::auth::load_token(&connection, &token).await.unwrap();
-        assert!(loaded.is_none());
+        let looked_up_by_raw_token = crate::auth::load_token(&connection, &token).await.unwrap();
+        assert!(looked_up_by_raw_token.is_none());
     }
 
     #[tokio::test]
     async fn expires_days_becomes_an_absolute_deadline() {
-        let connection = db().await;
+        let connection = open_database().await;
         let before = crate::auth::now();
         super::mint(&connection, None, &[], Some(7)).await.unwrap();
         let expires_at = super::list(&connection).await.unwrap()[0]
             .expires_at
             .unwrap();
-        assert!((expires_at - before - 7 * 86_400).abs() <= 2);
+        let clock_slack = 2;
+        assert!((expires_at - before - 7 * super::SECONDS_PER_DAY).abs() <= clock_slack);
     }
 
     #[tokio::test]
     async fn grant_and_ungrant_round_trip_by_token_or_hash() {
-        let connection = db().await;
+        let connection = open_database().await;
         let token = super::mint(&connection, None, &[], None).await.unwrap();
         let hash = crate::auth::hash_token(&token);
 
-        // By raw token...
         super::grant(&connection, &token, "beta").await.unwrap();
-        // ...by full hash...
         super::grant(&connection, &hash, "premium-voices")
             .await
             .unwrap();
-        // ...and by the short hash `token list` prints.
-        super::grant(&connection, &hash[..12], "early-access")
-            .await
-            .unwrap();
-        // Granting twice is not an error.
+        super::grant(
+            &connection,
+            &hash[..super::SHORT_HASH_LENGTH],
+            "early-access",
+        )
+        .await
+        .unwrap();
         super::grant(&connection, &token, "beta").await.unwrap();
 
         let mut grants = super::list(&connection).await.unwrap()[0].grants.clone();
@@ -274,39 +270,37 @@ mod tests {
         let grants = super::list(&connection).await.unwrap()[0].grants.clone();
         assert!(!grants.contains(&"beta".to_string()), "{grants:?}");
 
-        // Ungranting something that was never granted is a no-op, not a crash.
         super::ungrant(&connection, &token, "beta").await.unwrap();
     }
 
     #[tokio::test]
     async fn public_and_invalid_directories_cannot_be_granted() {
-        let connection = db().await;
+        let connection = open_database().await;
         let token = super::mint(&connection, None, &[], None).await.unwrap();
 
-        let err = super::grant(&connection, &token, pacenotes_shared::PUBLIC_DIR)
+        let error = super::grant(&connection, &token, pacenotes_shared::PUBLIC_DIR)
             .await
             .unwrap_err()
             .to_string();
-        assert!(err.contains("everyone"), "{err}");
+        assert!(error.contains("everyone"), "{error}");
 
-        let err = super::grant(&connection, &token, "Premium Voices")
+        let error = super::grant(&connection, &token, "Premium Voices")
             .await
             .unwrap_err()
             .to_string();
-        assert!(err.contains("not a valid directory name"), "{err}");
+        assert!(error.contains("not a valid directory name"), "{error}");
 
-        // The same check applies at mint time, before anything is stored.
-        let err = super::mint(&connection, None, &["public".into()], None)
+        let error = super::mint(&connection, None, &["public".into()], None)
             .await
             .unwrap_err()
             .to_string();
-        assert!(err.contains("everyone"), "{err}");
+        assert!(error.contains("everyone"), "{error}");
         assert_eq!(super::list(&connection).await.unwrap().len(), 1);
     }
 
     #[tokio::test]
     async fn revoke_marks_the_row_and_decide_refuses_it() {
-        let connection = db().await;
+        let connection = open_database().await;
         let token = super::mint(&connection, None, &["beta".into()], None)
             .await
             .unwrap();
@@ -325,20 +319,20 @@ mod tests {
 
     #[tokio::test]
     async fn unknown_and_ambiguous_references_are_refused() {
-        let connection = db().await;
-        let err = super::resolve_hash(&connection, "deadbeef")
+        let connection = open_database().await;
+        let error = super::resolve_hash(&connection, "deadbeef")
             .await
             .unwrap_err()
             .to_string();
-        assert!(err.contains("no credential matches"), "{err}");
+        assert!(error.contains("no credential matches"), "{error}");
 
-        // Two credentials, then a prefix short enough to hit both.
         super::mint(&connection, None, &[], None).await.unwrap();
         super::mint(&connection, None, &[], None).await.unwrap();
-        let err = super::resolve_hash(&connection, "")
+        let prefix_of_every_hash = "";
+        let error = super::resolve_hash(&connection, prefix_of_every_hash)
             .await
             .unwrap_err()
             .to_string();
-        assert!(err.contains("use the full hash"), "{err}");
+        assert!(error.contains("use the full hash"), "{error}");
     }
 }

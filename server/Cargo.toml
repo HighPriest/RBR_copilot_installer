@@ -4,8 +4,7 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 
-# The binary is a thin CLI over the library; the library is what the
-# integration tests in server/tests/ drive.
+# A thin CLI over the library, which server/tests/ drives.
 [lib]
 name = "pacenotes_server"
 path = "src/lib.rs"
@@ -29,11 +28,9 @@ rand = "=0.8.8"           # token minting (admin CLI)
 # `env` feature: flags fall back to PACENOTES_* env vars (server/CLAUDE.md).
 clap = { version = "=4.6.7", features = ["derive", "env"] }
 anyhow = "=1.0.104"
-# tokio-util is used for ReaderStream: tokio::fs::File -> axum Body,
-# so downloads stream instead of buffering a whole zip in memory.
+# ReaderStream, so a download streams instead of buffering a whole zip.
 tokio-util = { version = "=0.7.19", features = ["io"] }
-# Sidecar <name>.toml parsing for `manifest gen` (server-side only: the
-# installer never sees TOML, just the merged manifest JSON).
+# Sidecar parsing for `manifest gen`; the installer only ever sees the merged JSON.
 toml = "=1.1.6"
 # Versions are pinned exactly (M0); bump deliberately + commit Cargo.lock.
 

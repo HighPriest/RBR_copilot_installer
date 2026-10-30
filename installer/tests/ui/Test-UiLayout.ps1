@@ -44,7 +44,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Win32Ui.psm1') -Force
 
-# ---- Control ids: must match res/installer.rc and src/wizard.rs ----
+# Control ids, matching res/installer.rc and src/wizard/control_ids.rs.
 $IDC_SCENE_TITLE = 299
 $IDC_S1_PROMPT = 301; $IDC_S1_COMBO = 302; $IDC_S1_NOTE = 303
 $IDC_S2_MOTD = 311; $IDC_S2_SECRET_LABEL = 312; $IDC_S2_SECRET = 313; $IDC_S2_STATUS = 314
@@ -54,7 +54,7 @@ $IDC_S3_GAME_LABEL = 324; $IDC_S3_GAME = 325
 $ID_WIZBACK = 0x3023; $ID_WIZNEXT = 0x3024
 $PSBTN_NEXT = 1; $PSBTN_BACK = 0
 
-# Markers mirror src/gamedir.rs, which `cargo test --test gamedir` pins to the
+# Markers mirror src/gamedir.rs, whose unit tests pin them to the
 # ids and names the protocol and the legacy installer use.
 $RBR_MARKER = 'RichardBurnsRally_SSE.exe'
 $AC_MARKER = 'assettocorsa.exe'
@@ -118,7 +118,7 @@ function Set-FolderAndSettle {
     param([Parameter(Mandatory)][IntPtr]$Page, [Parameter(Mandatory)][string]$Path)
     Set-CtrlText -Dialog $Page -CtrlId $IDC_S3_PATH -Value $Path
     Invoke-EditChanged -Dialog $Page -CtrlId $IDC_S3_PATH
-    Start-Sleep -Milliseconds 900   # debounce is 400 ms in wizard.rs
+    Start-Sleep -Milliseconds 900   # debounce is 400 ms in src/wizard/scene/game_folder.rs
 }
 
 Write-Host "=== Installer wizard test (language index $Language) ===" -ForegroundColor Cyan
@@ -133,9 +133,6 @@ Write-Host "exe:        $($launch.Path)"
 Write-Host "RBR folder: $rbrFolder"
 
 try {
-    # ---------------------------------------------------------------
-    # Scene 1 — Language
-    # ---------------------------------------------------------------
     Write-Host "`n-- scene 1: language --"
     $sheet = Wait-ForDialog -OwnerPid $proc.Id
     Assert-That 'wizard window appears' ($null -ne $sheet)
@@ -163,9 +160,6 @@ try {
     [void][NativeUi]::SendMessageW($combo, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
 
-    # ---------------------------------------------------------------
-    # Scene 2 — Message of the day (offline path)
-    # ---------------------------------------------------------------
     Write-Host "`n-- scene 2: message of the day --"
     $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S2_MOTD
     Assert-That 'scene 2 follows scene 1' ($page -ne [IntPtr]::Zero)
@@ -200,9 +194,6 @@ try {
     # Empty secret continues anonymously (DESIGN.md).
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
 
-    # ---------------------------------------------------------------
-    # Scene 3 — Game folder
-    # ---------------------------------------------------------------
     Write-Host "`n-- scene 3: game folder --"
     $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S3_PATH
     Assert-That 'scene 3 follows scene 2' ($page -ne [IntPtr]::Zero)
@@ -259,9 +250,6 @@ try {
     Assert-That 'and blocks Next again' `
     (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZNEXT))
 
-    # ---------------------------------------------------------------
-    # Back navigation
-    # ---------------------------------------------------------------
     Write-Host "`n-- back navigation --"
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_BACK
     $back = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S2_MOTD -TimeoutMs 3000

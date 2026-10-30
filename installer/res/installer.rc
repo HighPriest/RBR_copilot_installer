@@ -1,6 +1,6 @@
 // installer.rc — wizard pages, strings, manifest, icon, version.
 // Layout follows installer/DESIGN.md rev. 2 (seven-scene wizard).
-// Control IDs must match src/wizard.rs. Polish strings below are UTF-8; keep
+// Control IDs must match src/wizard/control_ids.rs. Polish strings below are UTF-8; keep
 // this pragma or they will mojibake.
 #pragma code_page(65001)
 #include <windows.h>
@@ -9,16 +9,13 @@
 // Common Controls v6 + DPI awareness manifest
 1 RT_MANIFEST "app.manifest"
 
-// ---- Application icon ----
-// Lowest-numbered icon resource is what Explorer/the taskbar show, so keep
-// IDI_APPICON at 1.
+// Application icon
+// Explorer and the taskbar show the lowest-numbered icon, so IDI_APPICON stays 1.
 #define IDI_APPICON 1
 IDI_APPICON ICON "../../rbr.ico"
 
-// ---- Version info ----
-// Keep FILEVERSION/PRODUCTVERSION in sync with [package] version in
-// Cargo.toml — tests/Test-VersionSync.ps1 enforces it and the CD workflows
-// read that value to tag releases.
+// Version info
+// Must match Cargo.toml's version: tests/Test-VersionSync.ps1 checks it and the CD workflows tag from it.
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     0,1,0,0
 PRODUCTVERSION  0,1,0,0
@@ -48,9 +45,7 @@ BEGIN
     END
 END
 
-// ============================================================
 // Control IDs — one block per scene, so a whole page can be addressed.
-// ============================================================
 #define IDC_SCENE_TITLE     299
 
 #define IDD_S1_LANGUAGE     300
@@ -75,9 +70,7 @@ END
 #define IDC_S3_GAME_LABEL   324
 #define IDC_S3_GAME         325
 
-// ============================================================
 // String IDs
-// ============================================================
 // Worker / status (1-19)
 #define IDS_CONNECTING          1
 #define IDS_DOWNLOADING         2
@@ -134,16 +127,8 @@ END
 #define IDS_S3_DETECTING       73
 #define IDS_S3_NOGAME          74
 
-// ============================================================
-// Wizard pages — language-neutral templates.
-// Text here is an English fallback only; wizard.rs sets every caption from
-// the string table at WM_INITDIALOG, so the shipped UI follows the language
-// chosen on scene 1.
-//
-// A PropertySheet sizes itself to its LARGEST page, so every page shares one
-// size. Scene 1 is therefore not the "small window" DESIGN.md pictures; see
-// installer/TASKS.md I2b for that recorded deviation.
-// ============================================================
+// Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
+// A PropertySheet takes its largest page's size, so every page shares one.
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 IDD_S1_LANGUAGE DIALOGEX 0, 0, 290, 150
@@ -196,12 +181,8 @@ BEGIN
     LTEXT           "", IDC_S4_STATUS, 14, 126, 262, 18
 END
 
-// ============================================================
-// Strings. One STRINGTABLE per language; LoadStringW resolves against the
-// thread UI language, which i18n::set_language sets via SetThreadUILanguage.
-// Every id MUST exist in every table — there is no neutral fallback table.
-// Game names are proper nouns and live in gamedir.rs, untranslated.
-// ============================================================
+// Strings: one STRINGTABLE per language, and every id must exist in every table.
+// Game names are proper nouns, kept untranslated in src/gamedir.rs.
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 STRINGTABLE
 BEGIN
@@ -256,8 +237,7 @@ BEGIN
     IDS_STATE_LOCAL     "(local only)"
 END
 
-// Polish wording reuses the legacy InstallationForm.pl.resx terms where the
-// original had an equivalent control, so returning users see familiar words.
+// Polish reuses the legacy InstallationForm.pl.resx terms, so returning users see familiar words.
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 STRINGTABLE
 BEGIN

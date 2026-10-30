@@ -12,7 +12,7 @@
 
     What it does NOT re-assert: the tree's structure, ordering, check
     propagation and per-category validation are covered exhaustively and
-    cross-platform by `cargo test --test tree`. Reading a tree view's items
+    cross-platform by the unit tests in src/tree/tests.rs. Reading a tree view's items
     from another process needs the item struct written into that process's
     address space, which is a lot of machinery to re-prove what is already
     proven. What this adds is that the model reached the control at all, and
@@ -117,7 +117,6 @@ try {
     $launch = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$port")
     $proc = $launch.Process
 
-    # ---- walk S1 -> S3 ----
     $sheet = Wait-ForDialog -OwnerPid $proc.Id
     Assert-That 'wizard appears' ($null -ne $sheet)
     if (-not $sheet) { throw 'no wizard' }
@@ -143,7 +142,6 @@ try {
     Start-Sleep -Milliseconds 900
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
 
-    # ---- scene 4 ----
     Write-Host "`n-- scene 4: download --"
     $page = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE
     Assert-That 'scene 4 follows scene 3' ($page -ne [IntPtr]::Zero)
@@ -153,8 +151,7 @@ try {
     Assert-Equal 'primary button reads Download' `
     (Get-WizardButtonText -Sheet $h -ButtonId 0x3024) $S['IDS_BTN_DOWNLOAD']
 
-    # The catalogue arrives on the worker thread, so wait for the status line
-    # to leave "loading".
+    # The catalogue arrives from the worker thread.
     $tv = [NativeUi]::GetDlgItem($page, $IDC_S4_TREE)
     $deadline = (Get-Date).AddSeconds(20)
     do {
@@ -167,7 +164,6 @@ try {
     Assert-That 'the whole catalogue reached the tree control' ($rows -eq $EXPECTED_ROWS) `
         "control holds $rows rows, expected $EXPECTED_ROWS"
 
-    # ---- the gate: Download needs a pick in every category ----
     Write-Host "`n-- download gate --"
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
     $modal = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 4000

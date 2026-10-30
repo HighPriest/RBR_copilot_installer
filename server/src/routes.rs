@@ -1,38 +1,17 @@
-//! HTTP surface: router + handlers. Handlers stay thin — access logic lives in
-//! `auth.rs`, package/metadata logic in `store.rs` (server/CLAUDE.md).
-//!
-//! CONVENTION (root CLAUDE.md): no `use` statements — full paths at use site.
+//! The HTTP surface. Handlers stay thin: access rules live in `auth`, package
+//! lookups in `store`.
 
 pub struct AppState {
     pub store: crate::store::ManifestStore,
     pub db: libsql::Connection,
 }
 
-/// The caller's credential, resolved once per request.
-/// `None` = anonymous (or a token that does not exist): either way only
-/// `public` is visible.
-async fn caller(
-    state: &AppState,
-    headers: &axum::http::HeaderMap,
-) -> Result<Option<crate::auth::TokenRow>, crate::error::AppError> {
-    let Some(raw) = crate::auth::bearer_from_headers(headers) else {
-        return Ok(None);
-    };
-    // SECURITY: only the hash leaves this line; the raw token is never logged
-    // and never reaches an error message.
-    crate::auth::load_token(&state.db, &crate::auth::hash_token(&raw))
-        .await
-        .map_err(|e| crate::error::AppError::internal("loading credential", e))
-}
+type SharedState = axum::extract::State<std::sync::Arc<AppState>>;
 
 pub fn router(state: std::sync::Arc<AppState>) -> axum::Router {
     axum::Router::new()
         .route("/health", axum::routing::get(health))
         .route("/packages", axum::routing::get(list_packages))
-        // One server serves every game, so the game leads the download
-        // address. `{*name}` (wildcard) because a package name is its path
-        // under the access directory and spans every remaining segment:
-        // /download/rbr/public/codriver/polish/male/Kamil.
         .route(
             "/download/{game}/{directory}/{*name}",
             axum::routing::get(download),
@@ -48,26 +27,19 @@ async fn health() -> &'static str {
 
 #[derive(serde::Deserialize)]
 pub struct PackagesQuery {
-    /// Optional game filter. Absent = every game in one document, which is
-    /// what a client that manages several games wants.
+    /// Absent means every game in one document.
     game: Option<String>,
 }
 
-/// `GET /packages[?game=xx]` — never 401s or 403s: it silently filters to
-/// the directories the caller may see, so a caller cannot enumerate
-/// directory names by probing (server/CLAUDE.md). A revoked, expired or
-/// unknown token therefore yields exactly the anonymous listing.
-///
-/// An unknown `game` is not an error either: it yields an empty list, the
-/// same as a game with nothing published for it.
+/// Never 401 or 403: an unusable credential silently gets the anonymous
+/// listing, so probing cannot reveal directory names.
 async fn list_packages(
-    axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
+    axum::extract::State(state): SharedState,
     axum::extract::Query(query): axum::extract::Query<PackagesQuery>,
     headers: axum::http::HeaderMap,
 ) -> Result<axum::Json<pacenotes_shared::Manifest>, crate::error::AppError> {
-    let token = caller(&state, &headers).await?;
-    let grants = match token {
-        Some(t) if t.is_live(crate::auth::now()) => t.grants,
+    let grants = match caller(&state, &headers).await? {
+        Some(token) if token.is_live(crate::auth::now()) => token.grants,
         _ => Vec::new(),
     };
     let mut manifest = state.store.current().visible_to(&grants);
@@ -77,13 +49,10 @@ async fn list_packages(
     Ok(axum::Json(manifest))
 }
 
-/// `GET /download/{game}/{directory}/{*name}` — `name` spans every
-/// remaining segment, because it is the package's path under its access
-/// directory. All three stay manifest lookup KEYS, never path fragments
-/// (server/CLAUDE.md): only a manifest hit yields a path on disk, so an
-/// unknown triple — including every traversal attempt — is a 404.
+/// An unknown package is 404 whatever the credential, because access is
+/// decided only after the manifest lookup succeeds.
 async fn download(
-    axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
+    axum::extract::State(state): SharedState,
     axum::extract::Path((game, directory, name)): axum::extract::Path<(String, String, String)>,
     headers: axum::http::HeaderMap,
 ) -> Result<axum::response::Response, crate::error::AppError> {
@@ -91,9 +60,6 @@ async fn download(
         return Err(crate::error::AppError::not_found());
     };
 
-    // Access is decided AFTER the lookup, so the status tells the caller
-    // about a package that exists; a package that does not is always 404,
-    // whatever credential was presented.
     let token = caller(&state, &headers).await?;
     match crate::auth::decide(token.as_ref(), &package.directory, crate::auth::now()) {
         crate::auth::Decision::Allow => {}
@@ -102,21 +68,18 @@ async fn download(
     }
 
     let file = match tokio::fs::File::open(&path).await {
-        Ok(f) => f,
-        // Manifest hit but no file on disk: the manifest is stale, not the
-        // caller's problem — report it as a missing package and log it.
+        Ok(file) => file,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             tracing::warn!(path = %path.display(), "manifest entry without a file on disk");
             return Err(crate::error::AppError::not_found());
         }
         Err(e) => return Err(crate::error::AppError::internal("opening package", e)),
     };
-
-    // Trust the file, not the manifest, for Content-Length.
-    let size = match file.metadata().await {
-        Ok(m) => m.len(),
-        Err(e) => return Err(crate::error::AppError::internal("stat package", e)),
-    };
+    let size = file
+        .metadata()
+        .await
+        .map_err(|e| crate::error::AppError::internal("stat package", e))?
+        .len();
 
     let body = axum::body::Body::from_stream(tokio_util::io::ReaderStream::new(file));
     let headers = [
@@ -135,20 +98,14 @@ async fn download(
 
 #[derive(serde::Deserialize)]
 pub struct MotdQuery {
-    /// Language tag; validated in the store before it touches the
-    /// filesystem. Absent = the fallback language.
+    /// Absent means the fallback language.
     #[serde(default)]
     lang: String,
 }
 
-/// `GET /motd?lang=xx` → the message of the day as `text/plain`, falling back
-/// to English. No auth: it is shown before the user has entered anything.
-///
-/// 404 when there is no text at all, which the installer treats exactly like
-/// being offline — so an operator who publishes no MOTD costs the user
-/// nothing.
+/// No auth; 404 when there is no text at all, which the installer treats as being offline.
 async fn motd(
-    axum::extract::State(state): axum::extract::State<std::sync::Arc<AppState>>,
+    axum::extract::State(state): SharedState,
     axum::extract::Query(query): axum::extract::Query<MotdQuery>,
 ) -> Result<axum::response::Response, crate::error::AppError> {
     let Some(text) = state.store.motd(&query.lang) else {
@@ -161,4 +118,17 @@ async fn motd(
         )],
         text,
     )))
+}
+
+/// The caller's credential, or `None` for anonymous and unknown tokens alike.
+async fn caller(
+    state: &AppState,
+    headers: &axum::http::HeaderMap,
+) -> Result<Option<crate::auth::TokenRow>, crate::error::AppError> {
+    let Some(raw) = crate::auth::bearer_from_headers(headers) else {
+        return Ok(None);
+    };
+    crate::auth::load_token(&state.db, &crate::auth::hash_token(&raw))
+        .await
+        .map_err(|e| crate::error::AppError::internal("loading credential", e))
 }
