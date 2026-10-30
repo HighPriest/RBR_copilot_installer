@@ -1,3 +1,8 @@
+# Claude working files
+.claude/session.md
+
+# Rust 
+# Build & test artifacts
 /target
 **/target
 # A local server run's data root, auth.db included (DEVELOPMENT.md §5.1).

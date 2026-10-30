@@ -166,6 +166,11 @@ after the second folder is deleted.
   Restoring to a point is not just copying files back: it also removes what
   was installed after it, which is what the ledger snapshot is for. See
   `DESIGN.md` "Restore".
+- **Facts the engine cannot measure are INJECTED, never called for.** Free
+  disk space and "is the game running" arrive as values the caller
+  measured (`HostFacts`), because `engine.rs` has to stay testable off
+  Windows. Anything else that would need Win32 inside the engine belongs
+  on that struct instead.
 - **Install** (`engine.rs`): input = the wizard's result (the three
   Configuration picks plus the checked `pacenotes` packages) + the ledger.
   Plan = uninstall (ledgered but no longer chosen, including a ledgered

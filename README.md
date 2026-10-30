@@ -151,6 +151,7 @@ the decisions that are not visible in the code.
 | [`installer/DESIGN.md`](installer/DESIGN.md) | The seven-scene wizard, screen by screen, and the Win32 behaviours worked around to build it. |
 | [`server/CLAUDE.md`](server/CLAUDE.md) | Server rules and the security invariants around package lookup. |
 | [`installer/tests/README.md`](installer/tests/README.md) | How tests here are written, and the traps in driving Win32 from a test. |
+| [`docs/architecture/README.md`](docs/architecture/README.md) | Entity–relationship, activity and SysML diagrams of the installer, the server and the whole system. |
 | [`TASKS.md`](TASKS.md) | Ordered milestones, M0-M7, plus per-crate lists in `installer/TASKS.md` and `server/TASKS.md`. |
 | [`CHANGELOG.md`](CHANGELOG.md) | What changed and why. |
 

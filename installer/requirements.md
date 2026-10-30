@@ -1,0 +1,119 @@
+# Installer requirements
+
+What installer work has to satisfy. The RULES that constrain the code are
+in `installer/CLAUDE.md`, the BEHAVIOUR screen by screen is in
+`installer/DESIGN.md`, and how any task is verified is in the root
+`requirements.md`.
+
+Every task here also ends with: it builds on the Windows MSVC target,
+`tests/Test-BinarySize.ps1` passes, and `cargo test` is green for the
+logic modules on any host.
+
+## The size budget
+
+**600 kB.** It was 500 kB until the install engine landed, and it moved
+once, deliberately. The rules it produced did not move: no tokio, no
+reqwest, no rustls, no GUI framework, and `std` over a dependency.
+
+Measured on the release build for `x86_64-pc-windows-msvc`:
+
+| After | Bytes | |
+| --- | --- | --- |
+| nothing (baseline) | 107,008 | 104.5 kB |
+| I1 — icon + VERSIONINFO | 193,024 | 188.5 kB |
+| I3 — WinHTTP client | 237,056 | 231.5 kB |
+| I2b part 1 — wizard + worker | 275,456 | 269 kB |
+| I2b part 2 — tree model + scene 4 | 337,408 | 329.5 kB |
+| I5 — sha256 + cache + verified download | 402,432 | 393 kB |
+| I2b — scene 5 + the bigger page | 412,160 | 402.5 kB |
+| I2b — scenes 6 and 7 + the run log | 427,520 | 417.5 kB |
+| I7b — the ledger reachable from main | 452,608 | 442 kB |
+| I7f — the engine wired in (gate raised to 600 kB) | 553,984 | 541 kB |
+| restore scene + the recut icon | 590,336 | 576.5 kB |
+
+Two levers are held in reserve, in this order:
+
+1. **The icon.** It was a single 256×256 frame costing 85 kB — more than
+   serde and the whole engine together. It is now 16/32/48 as BMP plus 128
+   as PNG, about 45 kB, built by `res/Build-Icon.ps1` from
+   `res/rbr-source.png`. Dropping the 128 frame would buy ~31 kB more.
+2. **serde_json**, about 48 kB with serde_core. The installer reads three
+   documents — the manifest, `cache.json`, `installed.json` — and a
+   hand-rolled parser over those is the planned fallback.
+
+`docs/bloat.txt` holds the last measurement. `build.rs` watches
+`../rbr.ico`, so changing the icon does rebuild.
+
+## Specs for the open work
+
+### C1 — redirects
+
+The question comes first, because the answer decides the shape: **does
+WinHTTP re-send `Authorization` when a redirect changes host?** Nothing
+documents it, and the client currently sets no policy at all, so WinHTTP
+follows 3xx itself and `http.rs` never sees one.
+
+Answer it against a local server that redirects to a second port, record
+the answer here, and then take the decision away from WinHTTP regardless
+of what it turned out to do:
+
+- redirects disabled (`WINHTTP_OPTION_REDIRECT_POLICY`), followed by hand;
+- a small hop limit;
+- `https` only — never a downgrade;
+- `Authorization` dropped the moment the host changes.
+
+A bearer token must not reach a host the operator merely pointed at.
+
+### §7 — the run log's header
+
+Support asks for three things first: when, which build, and which server.
+The log has none of them. A header at the top of each file, plus a
+timestamp per line.
+
+### D12 — `/packages` without `/health`
+
+One dead endpoint must not declare the whole run offline. The catalogue is
+the request that actually matters; `/health` is a convenience.
+
+### D12 — a cap on buffered bodies
+
+`http::get` reads a whole body into memory with no limit. A manifest is
+small, but that is the server's promise rather than ours.
+
+### P11 — the writability probe
+
+A game under `C:\Program Files` currently fails partway through the
+install with an access error. Probe at the folder page and say so, with an
+offer to restart elevated: a sentence before anything is written beats a
+half-finished install.
+
+### §7 — retrying a transient download
+
+A single failed package ends the run. Retry with backoff, carry on with
+the others, and list what failed on scene 7.
+
+### §7 — remembering the secret
+
+DPAPI (`CryptProtectData` from crypt32, no crate), so another user or a
+script walking the profile cannot read it. It is the one piece of state
+that cannot live in the game folder, since it is not about one game.
+
+## Things that are deliberately NOT done
+
+Recorded so they are not rediscovered as oversights:
+
+- **`SetUnhandledExceptionFilter`** for access violations and other faults
+  that never reach a Rust panic hook. Revisit if a crash ever appears that
+  leaves no panic line — that is exactly its signature.
+- **Re-downloading a payload a restore needs but the cache no longer
+  has.** The partial restore ships first; the preview already names what
+  cannot come back.
+- **Adopting a file the configuration step wrote that no package owns.**
+  The step knows it wrote the file but not what was there before, and
+  claiming it would let a later uninstall delete something the user always
+  had. The consequence is accepted: a `PaceNote.ini` written from the
+  template stays after everything is uninstalled. Fixing it properly means
+  the step must report created-versus-edited.
+- **An install root for the three games other than RBR.** Decided when
+  that game gets packages; BeamNG's mods normally live under
+  `%LOCALAPPDATA%`, not beside the exe.

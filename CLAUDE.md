@@ -191,7 +191,13 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 ## Working conventions for Claude Code sessions
 
 - Follow the task lists: `TASKS.md` (root, ordered milestones), then
-  `installer/TASKS.md` and `server/TASKS.md`. Mark items done as you go.
+  `installer/TASKS.md` and `server/TASKS.md`. Mark items done as you go,
+  and record work you discover mid-task as a SUB-POINT of that task.
+- `requirements.md` sits beside each of those lists and says what a task
+  must satisfy, including which verification applies. `.claude/session.md`
+  says what is being worked on right now. Task lists carry no prose: a
+  rule belongs in a `CLAUDE.md`, behaviour in `DESIGN.md`, the story of a
+  change in `CHANGELOG.md`.
 - Prefer std over dependencies everywhere, but especially in `installer/`.
 - Limit amount of `use` statements. Prefer the full path at the point of use
   (`std::path::PathBuf`, `pacenotes_shared::Manifest`, `anyhow::bail!(...)`),

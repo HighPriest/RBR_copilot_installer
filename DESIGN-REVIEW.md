@@ -25,27 +25,33 @@ O = deployment and CI. U = support and observability.
 
 ## 1. Summary
 
-**Status column added 2026-10-25**, when Period 1 was worked through, and
-updated the same day when the Period-2 SERVER items were done
-(`server/TASKS.md` S12; installer halves are tracked in `installer/TASKS.md`). "Fixed"
-means the code changed and a test covers it; "Specified" means the decision
-is recorded and the work is a line in `installer/TASKS.md` I7; blank means
-untouched, and belongs to a later period. Section 10 has the detail.
+**This document is the review, not the todo.** The findings below are kept
+as written, with how each was resolved; the work that is still OPEN lives
+in the task lists, where work is picked up:
+
+| Still open | Tracked in |
+|---|---|
+| Installer, before release | `installer/TASKS.md` → "Pre-release hardening" |
+| Deploy, CI and supply chain | `TASKS.md` → M7 |
+| Multi-server (period 3) and the backlog | section 10 of this file |
+
+Status, last checked 2026-10-27: "Fixed" means the code changed and a test
+covers it.
 
 | ID | Finding | Severity | Status |
 |---|---|---|---|
 | D1 | Packages marked "(update)" are never downloaded, so a republished package never reaches anyone who has the old one cached | Critical | **Fixed** |
-| P1 | The tree ticks packages based on the per-user **cache**, but Apply compares against the per-folder **ledger**. Anything installed but not cached gets uninstalled silently | Critical | Specified (I7) |
-| P3 | Skipping the backup for byte-identical files makes the installer the owner of files the user already had. Uninstalling then deletes them, and there is no backup to restore | Critical | Specified (I7) |
-| P6 | If an install fails partway, the next run backs up the half-written files as if they were the user's originals | Critical | Specified (I7) |
-| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High | **Fixed** server-side (`/whoami`); installer half open |
+| P1 | The tree ticks packages based on the per-user **cache**, but Apply compares against the per-folder **ledger**. Anything installed but not cached gets uninstalled silently | Critical | **Fixed** (I7) |
+| P3 | Skipping the backup for byte-identical files makes the installer the owner of files the user already had. Uninstalling then deletes them, and there is no backup to restore | Critical | **Fixed** (I7) |
+| P6 | If an install fails partway, the next run backs up the half-written files as if they were the user's originals | Critical | **Fixed** (I7) |
+| D2 | An invalid access key can never be detected, because `/packages` never returns 401 | High | **Fixed** both sides |
 | D3 | `/download` reveals which protected packages exist (401 vs 404). **Reproduced** | High | **Fixed** |
 | D5 | Metadata removed from a sidecar stays in the manifest. A rebuilt manifest differs from the published one, and replicas drift apart. **Reproduced** | High | **Fixed** |
-| P2 | Uninstall deletes ledgered files even after Steam, RSF or the user has replaced them | High | Specified (I7) |
-| P5 | Ledger paths are compared byte-for-byte, but NTFS ignores case | High | Specified (I7) |
-| C1 | Redirecting downloads to object storage or a CDN would break the current client: WinHTTP follows redirects, probably with the `Authorization` header | High | Period 2 |
+| P2 | Uninstall deletes ledgered files even after Steam, RSF or the user has replaced them | High | **Fixed** (I7) |
+| P5 | Ledger paths are compared byte-for-byte, but NTFS ignores case | High | **Fixed** (I7) |
+| C1 | Redirecting downloads to object storage or a CDN would break the current client: WinHTTP follows redirects, probably with the `Authorization` header | High | Open — see the table above |
 | S4 | Publishing is not atomic: a download can stream a half-copied zip, and replacing a zip in place makes every client fail its sha check | High | Minimal fix **done** (size mismatch → 503); blobs still Period 3 |
-| O1 | Every restart, including recovery after a crash, rebuilds the image from the branch tip. Publishing content therefore also deploys code | High | Period 2 |
+| O1 | Every restart, including recovery after a crash, rebuilds the image from the branch tip. Publishing content therefore also deploys code | High | Open — see the table above |
 | D10 | The server never shuts down gracefully in the container. SIGTERM is ignored (PID 1), and podman force-kills it after its stop timeout | Medium | **Fixed** |
 | D4 | `manifest gen` reports false cross-game `requires` warnings because `Manifest::get` ignores the game. **Reproduced** | Medium | **Fixed** |
 | D6 | `Cache::save` deletes the old file and then renames. A crash in between empties the cache index, and the planned orphan sweep would then delete every download | Medium (High once I9 lands) | **Fixed** |
@@ -920,17 +926,14 @@ Each of these is now a line in `installer/TASKS.md` I7 with its reasoning.
 
 ### Period 2: before the first public release
 
-**Status on 2026-10-27.** The server side of this period is finished, and
-so is the protocol except for `generated_at`/`generation` (which Period 3's
-`/ready` wants anyway). The **restore scene** (P14) landed on 2026-10-27,
-which was the last functional gap in the installer. What is left:
+**Status on 2026-10-27.** The SERVER side of this period is finished, and
+so is the protocol except for `generated_at`/`generation`, which Period 3's
+`/ready` wants anyway. The restore scene (P14) closed the last functional
+gap in the installer.
 
-- a cluster of small installer items — redirect policy (C1), a versioned
-  user agent (S1, one line), `/packages` without `/health` (D12), a body
-  cap (D12), the writability probe (P11), log timestamps and header (§7),
-  retrying a transient download (§7);
-- **deploy and CI** (O1, O2), which nobody has started: images built and
-  pinned by CI, a signed `.exe`, a pinned toolchain, backups.
+What is left is a handful of small installer items and the whole of deploy
+and CI, which nobody has started. Both lists moved out of this document —
+see "Installer, deploy and CI" below.
 
 #### Protocol
 
@@ -980,74 +983,37 @@ which was the last functional gap in the installer. What is left:
       non-zero. The entrypoint reports the failure visibly instead of only
       echoing it.
 
-#### Installer
+#### Installer, deploy and CI — moved to the task lists
 
-- [ ] **C1** First, test whether WinHTTP re-sends `Authorization` on a
-      redirect.
-- [ ] **C1** Follow redirects by hand: automatic redirects off, at most N
-      hops, `https` only, `Authorization` dropped when the host changes.
-- [ ] **S1** User agent from `CARGO_PKG_VERSION`.
-- [x] **D12** Write the catalogue error into the run log. *Done: the reason
-      a fetch failed is logged even though scene 4 recovers from the cache.*
-- [ ] **D12** Try `/packages` even when `/health` failed.
-- [ ] **D12** Cap the size of `http::get` bodies.
-- [ ] **P11** Writability probe on scene 3, offering to restart elevated or
-      stopping with a clear message.
-- [x] **P14** Restore scene, following the design settled in period 1.
-      *Done 2026-10-27, with two rules the design did not name: a package
-      whose payload is gone from the cache is left installed rather than
-      removed (the wrong version beats an empty folder), and the ledger
-      written afterwards keeps the snapshot's per-file provenance, without
-      which a later uninstall would delete a file the user always had.*
-- [ ] **§7** Run log: timestamps and a header (installer version, server
-      URL, manifest `generation`, Windows version, game folder).
-      *Partly done 2026-10-26: the log moved into
-      `<game dir>\.pacenotes\logs\`, one file per run with the newest five
-      kept, which closes the "a re-run erases the failed run" half. The
-      game folder is in it; timestamps and the rest of the header are not.*
-- [x] **§7** A panic leaves a report. *Not in the original review, added
-      2026-10-26 after a crash left nothing at all: a GUI binary with
-      `panic = "abort"` has nowhere to print, so the hook writes file, line
-      and message into the run log and offers to open it.*
-- [ ] **§7** Send `X-Request-Id` (or at least the versioned user agent) and
-      log it on both sides.
-- [ ] **§7** Store the remembered secret with DPAPI (I8).
-- [ ] **§7** Retry transient errors, carry on with the other packages, and
-      list the failures on scene 7.
+These were a second copy of a todo list, kept in step by hand, and on
+2026-10-27 that drifted far enough to be worth ending. The items now live
+where work is picked up; the FINDINGS they came from stay above, with the
+reasoning and the severity:
 
-#### Deploy and CI
+- installer items (C1, S1's user agent, the two D12s, P11, the §7 log
+  header, retries and DPAPI) → `installer/TASKS.md`, "Pre-release
+  hardening";
+- deploy, CI and supply chain (O1, O2, C3, S9, and the two
+  `deploy/README.md` notes) → `TASKS.md`, M7.
 
-- [ ] **O1** CI builds the image, tags it with the git sha and pushes it to a
-      registry. The Quadlet pins the tag, so a restart never builds.
-- [ ] **O1** Publishing content means running `manifest gen` alone, and
-      `deploy/README.md` says so.
-- [ ] **O2** Sign the `.exe` with Authenticode in CD, and publish its
-      SHA-256.
-- [ ] **O2** Pin the toolchain (`rust-toolchain.toml`) and the base images by
-      digest.
-- [ ] **O2** A versioned server artifact and release (M7).
-- [ ] **O2** Bind Caddy's plain-HTTP block to the internal network or
-      loopback, or remove it.
-- [ ] **O2** Make the `EnvironmentFile` path agree with the README.
-- [ ] **C3** Confirm that `pacenotes.example.com` stays under the project's
-      control, and never ship a provider hostname.
-- [ ] **S9** Back up `auth.db` with `.backup` or `VACUUM INTO`, and back up
-      the packages themselves.
+Done here since the review was written, for the record:
 
-#### Documentation, with the fixes above
-
-- [x] [CLAUDE.md:122](CLAUDE.md#L122): the "status never reveals what exists"
-      claim (D3) — now true, and the text describes how.
-- [x] [installer/DESIGN.md:53](installer/DESIGN.md#L53): how the secret is
-      validated (D2) — scene 2 now documents `/whoami`, why it is not
+- [x] **D12** The catalogue error is written into the run log.
+- [x] **P14** The restore scene, with two rules the design had not named:
+      a package whose payload is gone is left installed rather than
+      removed, and the ledger afterwards keeps the snapshot's per-file
+      provenance.
+- [x] **§7** One log file per run, in the game folder, newest five kept —
+      so re-opening the installer no longer erases the failed run.
+- [x] A panic leaves a report naming its file and line. Not in the review:
+      added after a crash left nothing at all.
+- [x] [CLAUDE.md](CLAUDE.md): the "status never reveals what exists" claim
+      (D3) — now true, and the text describes how.
+- [x] [installer/DESIGN.md](installer/DESIGN.md): how the secret is
+      validated (D2) — scene 2 documents `/whoami`, why it is not
       `/packages`, and what "could not ask" does.
-- [x] [server/CLAUDE.md:103](server/CLAUDE.md#L103): `Content-Disposition`
-      (D12).
-- [x] [deploy/README.md:235](deploy/README.md#L235): what is reproducible
-      (D5, S9).
-- [ ] `deploy/README.md`: publish by copying to `*.tmp` and renaming (S4).
-- [ ] `deploy/README.md`: renaming or moving a package folder is a breaking
-      change for users (P13).
+- [x] [server/CLAUDE.md](server/CLAUDE.md): `Content-Disposition` (D12).
+- [x] [deploy/README.md](deploy/README.md): what is reproducible (D5, S9).
 
 ### Period 3: before more than one server
 
