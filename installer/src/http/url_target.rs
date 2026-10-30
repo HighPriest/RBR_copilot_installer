@@ -50,6 +50,50 @@ impl UrlTarget {
                 == windows_sys::Win32::Networking::WinHttp::WINHTTP_INTERNET_SCHEME_HTTPS,
         })
     }
+
+    /// Scheme, host and port, which decide whether the token may travel; the
+    /// host is lowercased, since `EXAMPLE.com` and `example.com` are one origin.
+    pub fn origin(&self) -> (bool, String, u16) {
+        (self.secure, self.host.to_ascii_lowercase(), self.port)
+    }
+
+    /// The URL this target stands for, for messages.
+    pub fn url(&self) -> String {
+        format!(
+            "{}://{}:{}{}",
+            self.scheme(),
+            self.host,
+            self.port,
+            self.path
+        )
+    }
+
+    /// Where a `Location` header points: absolute, rooted at `/`, or relative to
+    /// the current directory, all three of which happen.
+    pub fn resolve(&self, location: &str) -> Result<UrlTarget, super::HttpError> {
+        let location = location.trim();
+        if location.is_empty() {
+            return Err(super::HttpError::logical("empty Location header", None));
+        }
+        let lower = location.to_ascii_lowercase();
+        if lower.starts_with("http://") || lower.starts_with("https://") {
+            return UrlTarget::parse(location);
+        }
+        let base = match location.starts_with('/') {
+            true => "",
+            false => self.path.rfind('/').map_or("/", |at| &self.path[..=at]),
+        };
+        let (scheme, host, port) = (self.scheme(), &self.host, self.port);
+        UrlTarget::parse(&format!("{scheme}://{host}:{port}{base}{location}"))
+    }
+
+    fn scheme(&self) -> &'static str {
+        if self.secure {
+            "https"
+        } else {
+            "http"
+        }
+    }
 }
 
 fn wide_slice(start: *const u16, length: u32) -> String {

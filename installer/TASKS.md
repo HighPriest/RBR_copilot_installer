@@ -320,11 +320,15 @@ From the design review's period 2. Specs for each are in
 `installer/requirements.md`; the findings are in `DESIGN-REVIEW.md`.
 Ordered security first, then what support needs, then what a user hits.
 
-- [ ] **C1** Decide what happens on a redirect
-  - [ ] Find out whether WinHTTP re-sends `Authorization` across a host
+- [x] **C1** Decide what happens on a redirect
+  - [x] Find out whether WinHTTP re-sends `Authorization` across a host
         change, and record the answer
-  - [ ] Turn redirects off and follow them by hand: a hop limit, `https`
+  - [x] Turn redirects off and follow them by hand: a hop limit, `https`
         only, and the header dropped when the host changes
+  - [x] Refuse to redirect a request that carries a body, rather than
+        choosing silently between re-sending it and making it a GET
+  - [x] Pin it with `tests/Test-Redirects.ps1`, driving the real WinHTTP
+        path rather than a reimplementation of it
 - [ ] **S1** Build the user agent from `CARGO_PKG_VERSION`
 - [ ] **§7** Give the run log a header and per-line timestamps
 - [ ] **D12** Try `/packages` even when `/health` failed

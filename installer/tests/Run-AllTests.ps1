@@ -18,6 +18,8 @@
       6b. Test-CrashReport   — a deliberate panic leaves a report naming the
                                source file and line. No desktop needed: the
                                window is suppressed
+      6c. Test-Redirects     — a bearer token never leaves the origin it was
+                               meant for. No desktop and no server needed
       7. Test-UiLayout.ps1   — scenes 1-3 against a dead server (the
                                offline path), once per shipped language
       8. Test-WizardDownload — the whole wizard, scenes 1-7, against a LIVE
@@ -66,6 +68,7 @@ try {
     Invoke-Step 'binary size gate' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-BinarySize.ps1') }
     Invoke-Step 'http client vs live server' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-HttpClient.ps1') }
     Invoke-Step 'crash report' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-CrashReport.ps1') }
+    Invoke-Step 'redirect policy' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-Redirects.ps1') }
 
     if ($SkipUi) {
         Write-Host "`nSkipping GUI tests (-SkipUi)." -ForegroundColor Yellow

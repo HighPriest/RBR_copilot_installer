@@ -48,14 +48,18 @@ Two levers are held in reserve, in this order:
 
 ### C1 — redirects
 
-The question comes first, because the answer decides the shape: **does
-WinHTTP re-send `Authorization` when a redirect changes host?** Nothing
-documents it, and the client currently sets no policy at all, so WinHTTP
-follows 3xx itself and `http.rs` never sees one.
+**ANSWERED, 2026-10-30, measured: WinHTTP re-sends `Authorization` to the
+new origin.** Two local listeners on two ports; the first answered 302 to
+the second. Port B received `Bearer <token>` in full, and the client
+reported `RESULT: OK` with B's body — it never saw the 3xx and had no idea
+the token had gone somewhere else.
 
-Answer it against a local server that redirects to a second port, record
-the answer here, and then take the decision away from WinHTTP regardless
-of what it turned out to do:
+So the leak is real, not theoretical. A redirect today sends the user's
+access key to whatever host a 302 names: a misconfigured CDN, a hijacked
+DNS record, or an operator who moved downloads without thinking about the
+header. Nothing in the installer would notice or log it.
+
+The fix, which was always going to be the shape regardless of the answer:
 
 - redirects disabled (`WINHTTP_OPTION_REDIRECT_POLICY`), followed by hand;
 - a small hop limit;
@@ -63,6 +67,16 @@ of what it turned out to do:
 - `Authorization` dropped the moment the host changes.
 
 A bearer token must not reach a host the operator merely pointed at.
+
+`tests/Test-Redirects.ps1` pins three of the four: a cross-origin redirect
+is followed WITHOUT the token, a same-origin one keeps it, and a loop ends
+by itself. The https→http refusal is NOT covered — an `HttpListener` on
+loopback cannot easily serve real TLS, and `http.rs` lives in the bin, out
+of reach of `tests/`. It is a two-line check (`target.secure &&
+!next.secure`) sitting directly above the hop that would otherwise happen,
+and it is the one piece of this policy resting on review rather than on a
+test. A test for it needs either a loopback TLS certificate or `http.rs`
+moved into the lib.
 
 ### §7 — the run log's header
 

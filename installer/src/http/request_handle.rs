@@ -95,6 +95,7 @@ impl OpenRequest {
             },
             "WinHttpOpenRequest",
         )?;
+        refuse_redirects(&request)?;
 
         if let Some(token) = bearer {
             let line = format!(
@@ -164,6 +165,42 @@ impl OpenRequest {
         Ok(value)
     }
 
+    /// A textual response header, or `None` when it is absent or its length
+    /// cannot be read.
+    pub fn query_text(&self, info: u32) -> Option<String> {
+        let mut length: u32 = 0;
+        unsafe {
+            windows_sys::Win32::Networking::WinHttp::WinHttpQueryHeaders(
+                self.request.0,
+                info,
+                core::ptr::null(),
+                core::ptr::null_mut(),
+                &mut length,
+                core::ptr::null_mut(),
+            )
+        };
+        // In bytes, with the NUL; less than one character means no such header.
+        if length < 2 {
+            return None;
+        }
+        let mut buffer: Vec<u16> = vec![0; length as usize / 2 + 1];
+        let found = unsafe {
+            windows_sys::Win32::Networking::WinHttp::WinHttpQueryHeaders(
+                self.request.0,
+                info,
+                core::ptr::null(),
+                buffer.as_mut_ptr() as *mut core::ffi::c_void,
+                &mut length,
+                core::ptr::null_mut(),
+            )
+        };
+        if found == 0 {
+            return None;
+        }
+        let characters = (length as usize / 2).min(buffer.len());
+        Some(String::from_utf16_lossy(&buffer[..characters]))
+    }
+
     /// The next part of the body; 0 at its end.
     pub fn read(&self, buffer: &mut [u8]) -> Result<usize, super::HttpError> {
         let mut read: u32 = 0;
@@ -180,6 +217,25 @@ impl OpenRequest {
         }
         Ok(read as usize)
     }
+}
+
+/// WinHTTP's own following re-sends `Authorization` to the new origin unseen,
+/// so redirects come back to `send`; failing to set this would restore that
+/// default, so it is an error.
+fn refuse_redirects(request: &Handle) -> Result<(), super::HttpError> {
+    let never = windows_sys::Win32::Networking::WinHttp::WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
+    let set = unsafe {
+        windows_sys::Win32::Networking::WinHttp::WinHttpSetOption(
+            request.0,
+            windows_sys::Win32::Networking::WinHttp::WINHTTP_OPTION_REDIRECT_POLICY,
+            &never as *const u32 as *const core::ffi::c_void,
+            core::mem::size_of::<u32>() as u32,
+        )
+    };
+    if set == 0 {
+        return Err(super::HttpError::last("disabling automatic redirects"));
+    }
+    Ok(())
 }
 
 fn add_header(request: &Handle, line: &str) -> Result<(), super::HttpError> {

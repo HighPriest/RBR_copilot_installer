@@ -303,6 +303,17 @@ after the second folder is deleted.
   and `post_json` for the one thing the installer sends
   (`/report/conflict`), over one request path. Synchronous; always called
   from the worker thread.
+  - **REDIRECTS ARE FOLLOWED HERE, NEVER BY WINHTTP, and the bearer token
+    never leaves the origin the caller asked for.** Measured 2026-10-30:
+    left to itself WinHTTP follows a 3xx and re-sends `Authorization` to
+    the new origin while this code never sees the hop — so a 302 from a
+    misconfigured CDN or a hijacked record would hand over the user's
+    access key silently. Each request sets
+    `WINHTTP_OPTION_REDIRECT_POLICY_NEVER` and `send` loops itself: at most
+    `MAX_REDIRECTS` hops, no https→http downgrade, and the token attached
+    only while scheme, host and port are all unchanged. Do not "simplify"
+    this back into WinHTTP's own redirect handling.
+    `tests/Test-Redirects.ps1` is what keeps it honest.
 - `api.rs` — the endpoints: `/packages`, `/motd`, `/whoami`, `/health`,
   `/download/...` into the cache, and `POST /report/conflict`; JSON is
   isolated here. `/whoami` is the ONLY way to validate an access key, since

@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026/10/30 — installer: a bearer token no longer leaks across a redirect
+
+The design review suspected it (C1, "probably with the `Authorization`
+header"). It is now measured, and it was true: **left to itself WinHTTP
+follows a 3xx and re-sends `Authorization` to the new origin**, while
+`http.rs` never sees the hop at all. Two local listeners on two ports, the
+first answering 302 to the second: the second received `Bearer <token>` in
+full, and the client reported a clean `RESULT: OK` with the second's body.
+Nothing logged it, because nothing knew.
+
+That is a real leak, not a theoretical one. A 302 from a misconfigured
+CDN, a hijacked DNS record, or an operator moving downloads without
+thinking about the header would hand over the user's access key to a host
+they never agreed to talk to.
+
+So the decision is taken away from WinHTTP. `send` now sets
+`WINHTTP_OPTION_REDIRECT_POLICY_NEVER` and follows redirects itself:
+
+- at most three hops, so a redirect loop ends in milliseconds rather than
+  on the timeout;
+- no https→http downgrade — refused, not followed;
+- the token attached only while scheme, host AND port are unchanged, and
+  dropped the moment any of them is not;
+- the 3xx body is never fed to the sink: it belongs to a response the
+  caller is not getting, and would otherwise land inside a package file;
+- a request with a body refuses to redirect at all, rather than silently
+  choosing between re-sending the report and turning it into a GET.
+
+A redirect to the same origin still works, so a server that rewrites paths
+does not break auth, and a redirect to a CDN for public content still
+works — what cannot happen is the key going with it.
+
+`tests/Test-Redirects.ps1` pins it, driving the real WinHTTP path through
+`--selftest-http`: cross-origin drops the token, same-origin keeps it, and
+a loop gives up by itself. It needs no desktop and no server, so CI runs
+it. The https→http refusal is deliberately NOT covered — an
+`HttpListener` on loopback cannot easily serve real TLS and `http.rs`
+lives in the bin, out of reach of `tests/` — and that gap is written down
+in `installer/requirements.md` rather than left to be assumed.
+
 ## 2026/10/27 — installer: nothing is written outside the game folder
 
 The download cache moves from `%LOCALAPPDATA%\PacenotesInstaller\cache` to

@@ -74,6 +74,16 @@ pub fn post_json(
     )
 }
 
+/// Enough for a host move followed by a path rewrite, and a loop ends in
+/// milliseconds rather than on the timeout.
+const MAX_REDIRECTS: usize = 3;
+
+/// Follows redirects itself, since WinHTTP left to itself re-sends the bearer
+/// token to whatever origin a 3xx names (measured 2026-10-30).
+///
+/// The token goes only while scheme, host and port match what the caller asked
+/// for, https may never become http, and a request carrying a body is not
+/// redirected at all, rather than quietly re-sent or turned into a GET.
 fn send(
     method: &str,
     url: &str,
@@ -83,15 +93,69 @@ fn send(
     progress: ProgressFn,
     cancel: &std::sync::atomic::AtomicBool,
 ) -> Result<(), HttpError> {
-    let target = url_target::UrlTarget::parse(url)?;
-    let open = request_handle::OpenRequest::send(&target, method, bearer, body)?;
+    let mut target = url_target::UrlTarget::parse(url)?;
+    let origin = target.origin();
+    for _ in 0..=MAX_REDIRECTS {
+        let token = bearer.filter(|_| target.origin() == origin);
+        let open = request_handle::OpenRequest::send(&target, method, token, body)?;
+        let status = open
+            .query_number(windows_sys::Win32::Networking::WinHttp::WINHTTP_QUERY_STATUS_CODE)?
+            as u16;
+        let Some(location) = redirect_location(&open, status, body.is_some())? else {
+            return read_response(&open, status, &target, sink, progress, cancel);
+        };
+        let next = target.resolve(&location)?;
+        if target.secure && !next.secure {
+            return Err(HttpError::logical(
+                format!("refusing a redirect from https to http ({location})"),
+                None,
+            ));
+        }
+        target = next;
+    }
+    Err(HttpError::logical(
+        format!("gave up after {MAX_REDIRECTS} redirects from {url}"),
+        None,
+    ))
+}
 
-    let status = open
-        .query_number(windows_sys::Win32::Networking::WinHttp::WINHTTP_QUERY_STATUS_CODE)?
-        as u16;
+/// The `Location` of a 3xx, whose body is never read: it belongs to a response
+/// the caller is not getting, and would otherwise land in a package file.
+fn redirect_location(
+    open: &request_handle::OpenRequest,
+    status: u16,
+    has_body: bool,
+) -> Result<Option<String>, HttpError> {
+    if !(300..400).contains(&status) {
+        return Ok(None);
+    }
+    if has_body {
+        return Err(HttpError::logical(
+            format!("HTTP {status}: refusing to redirect a request with a body"),
+            Some(status),
+        ));
+    }
+    open.query_text(windows_sys::Win32::Networking::WinHttp::WINHTTP_QUERY_LOCATION)
+        .map(Some)
+        .ok_or_else(|| {
+            HttpError::logical(
+                format!("HTTP {status} without a Location header"),
+                Some(status),
+            )
+        })
+}
+
+fn read_response(
+    open: &request_handle::OpenRequest,
+    status: u16,
+    target: &url_target::UrlTarget,
+    sink: &mut dyn FnMut(&[u8]) -> bool,
+    progress: ProgressFn,
+    cancel: &std::sync::atomic::AtomicBool,
+) -> Result<(), HttpError> {
     if !(200..300).contains(&status) {
         return Err(HttpError::logical(
-            format!("HTTP {status} for {url}"),
+            format!("HTTP {status} for {}", target.url()),
             Some(status),
         ));
     }
@@ -100,7 +164,7 @@ fn send(
         .ok()
         .map(u64::from);
 
-    let bytes_read = read_body(&open, sink, progress, content_length, cancel)?;
+    let bytes_read = read_body(open, sink, progress, content_length, cancel)?;
     if let Some(expected) = content_length {
         if bytes_read != expected {
             return Err(HttpError::logical(

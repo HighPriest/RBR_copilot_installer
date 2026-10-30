@@ -23,6 +23,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 600 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `Test-CrashReport.ps1` | AUTOMATED TEST — a panic leaves a usable report | no | yes |
+| `Test-Redirects.ps1` | AUTOMATED TEST — a token never leaves its origin | no | yes |
 | `ui/Test-UiLayout.ps1` | AUTOMATED TEST — walks the wizard, scenes 1-3 | yes | no |
 | `ui/Get-UiScreenshot.ps1` | AGENT / DEVELOPER AID — captures PNGs of scenes 1-7 | yes | no |
 | `ui/Win32Ui.psm1` | SUPPORT MODULE — shared user32.dll helpers | n/a | n/a |
