@@ -69,6 +69,10 @@ that tells two voices apart.
   (no MOTD published) is treated exactly like being offline.
 - **Secret** field (password style). The secret unlocks extra (private)
   content: it is the bearer access key for every later server request.
+  It is typed each run and **never remembered**: storing it would mean the
+  user profile, since no game folder is chosen yet, and a key left behind
+  on a shared PC is worse than retyping it. Only a restart as
+  administrator carries it over (scene 3).
 - Bottom line: **Server status: Online / Offline**, from `GET /health` on the
   worker thread when the scene opens ("Checking…" until it answers). The
   line is ALL `/health` decides: scene 4 asks for the catalogue whatever it

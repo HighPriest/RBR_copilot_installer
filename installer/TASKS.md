@@ -296,8 +296,6 @@ is in the current design. See the CHANGELOG and git history.
 - [x] Warn when a key is within 14 days of expiry, naming the date rather
       than a day count
 - [x] Handle no 403 at all, and pin that in the auth matrix
-- [ ] Remember the secret and prefill scene 2 — see "Pre-release
-      hardening"
 
 ## Server protocol changes
 
@@ -335,7 +333,6 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] **D12** Cap what `http::get` will buffer
 - [x] **P11** Probe writability on scene 3, offering to restart elevated
 - [x] **§7** Retry a transient download, and list failures on scene 7
-- [ ] **§7** Store the remembered secret with DPAPI
 
 ## I9 — Polish
 

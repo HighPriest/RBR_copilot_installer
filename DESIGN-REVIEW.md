@@ -1010,6 +1010,9 @@ Done here since the review was written, for the record:
       on scene 3 with the language, folder and key.
 - [x] **§7** A transient download failure is retried; one that lasts leaves
       that package out, the rest carry on, and scene 7 names it.
+- [x] **§7** Storing the secret: decided NOT to store it at all, so there is
+      nothing for DPAPI to protect. It is typed each run; only a restart
+      as administrator carries it (P11).
 - [x] **§7** The run log opens with the build, the start time, the server
       and the Windows build, and times every line in UTC — in the shape the
       server's log uses, so the two can be laid side by side.

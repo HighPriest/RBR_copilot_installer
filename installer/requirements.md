@@ -175,16 +175,18 @@ Settled while building it (2026-10-31):
   fails one download once (it must arrive on the retry) and another for
   good (it must be left out and named on scene 7).
 
-### §7 — remembering the secret
-
-DPAPI (`CryptProtectData` from crypt32, no crate), so another user or a
-script walking the profile cannot read it. It is the one piece of state
-that cannot live in the game folder, since it is not about one game.
-
 ## Things that are deliberately NOT done
 
 Recorded so they are not rediscovered as oversights:
 
+- **Remembering the access key between runs** (I8, and DESIGN-REVIEW §7's
+  DPAPI store). Decided by the maintainer on 2026-10-31: the key is typed
+  on scene 2 each run and never stored. Scene 2 runs before a game folder
+  is chosen, so a remembered key could only live in the user profile —
+  the one exception "nothing outside the game folder" would have needed —
+  and a key left on a shared or borrowed PC is worse than retyping it.
+  The only time it travels is a restart as administrator (P11), on that
+  process's command line.
 - **`SetUnhandledExceptionFilter`** for access violations and other faults
   that never reach a Rust panic hook. Revisit if a crash ever appears that
   leaves no panic line — that is exactly its signature.

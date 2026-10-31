@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026/10/31 — decided: the access key is never remembered (I8, §7)
+
+Two open items planned to remember the access key and to encrypt it with
+DPAPI. The maintainer decided against both: the key is typed on scene 2
+each run and never stored. Scene 2 runs before a game folder is chosen, so
+a remembered key could only live in the user profile — the one exception
+the "nothing outside the game folder" rule would have needed — and a key
+left behind on a shared or borrowed PC is worse than retyping it. The only
+time the key travels is a restart as administrator (P11).
+
+The items are gone from `installer/TASKS.md`; the decision is recorded in
+`installer/requirements.md` under "Things that are deliberately NOT done"
+and in `installer/DESIGN.md`, scene 2. No code changed.
+
 ## 2026/10/31 — installer: a failed download is retried, and no longer ends the run (§7)
 
 One failed package ended the whole run at scene 7, whatever the reason and
