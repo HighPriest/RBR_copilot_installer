@@ -53,7 +53,8 @@ start a real server to talk to. Nothing extra to install for that — but it
 means a server-side dependency that breaks on Windows breaks the installer
 suite too (this has happened; see §8).
 
--theirs
+### 2.2 Linux (server and shared work)
+
 ```sh
 sudo apt update && sudo apt install -y build-essential pkg-config git
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh   # defaults
