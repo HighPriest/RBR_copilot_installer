@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026/10/31 — installer: a failed /health no longer hides the catalogue (D12)
+
+One failed `GET /health` on scene 2 made the whole run offline: scene 4
+built its tree from the cache without asking for the catalogue, although
+`/packages` would have answered — a load balancer hiccup, a `/health`
+slower than the rest. It did the same when the user simply reached scene 4
+before `/health` had answered at all.
+
+Scene 4 now always asks for the catalogue; `/health` decides only scene 2's
+status line. When both fail the status still says the server could not be
+reached, when only the catalogue fails it says the list could not be read,
+and a catalogue that answers after `/health` did not is written to the run
+log, since that mismatch is what support would want to see.
+
+`Test-WizardDownload.ps1` gained a fifth pass that builds exactly that
+situation: a stand-in in front of the real server fails `/health` and relays
+everything else. Scene 2 reports Offline, scene 4 shows the whole catalogue
+and says it is ready (103/103).
+
 ## 2026/10/31 — installer: the run log says when, which build and where (§7)
 
 Support asks the same three things before anything else: when did this

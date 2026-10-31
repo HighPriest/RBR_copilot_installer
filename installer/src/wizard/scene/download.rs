@@ -59,6 +59,11 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
     if let crate::worker::Message::Packages(result) = message {
         match result {
             Ok(manifest) => {
+                if state.online == Some(false) {
+                    state
+                        .log
+                        .line("the catalogue answered although /health had not");
+                }
                 state.schema_mismatch = schema_mismatch(state, &manifest);
                 build_tree(dialog, state, manifest.packages, None);
             }
@@ -67,8 +72,13 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
                 state
                     .log
                     .line(format!("the catalogue could not be read: {reason}"));
-                let status = Some(crate::i18n::IDS_S4_FETCH_FAILED);
-                build_tree(dialog, state, Vec::new(), status);
+                // Two failures in a row read as the server being down, one as the catalogue failing.
+                let status = if state.online == Some(false) {
+                    crate::i18n::IDS_S4_OFFLINE
+                } else {
+                    crate::i18n::IDS_S4_FETCH_FAILED
+                };
+                build_tree(dialog, state, Vec::new(), Some(status));
             }
         }
     }
@@ -125,7 +135,10 @@ fn describe_schema_mismatch(
     }
 }
 
-/// Once per run; offline is a documented path that builds from the cache alone.
+/// Once per run, and whatever `/health` said: it is a convenience for scene 2's
+/// status line, and a hiccup there, or an answer still on its way, must not
+/// hide a catalogue that would have come back (D12). A failed fetch builds the
+/// tree from the cache alone.
 unsafe fn start_catalogue_fetch(dialog: HWND) {
     let Some(state) = crate::wizard::page::state(dialog) else {
         return;
@@ -144,11 +157,6 @@ unsafe fn start_catalogue_fetch(dialog: HWND) {
         crate::wizard::control_ids::IDC_S4_STATUS,
         crate::i18n::IDS_S4_LOADING,
     );
-    if state.online != Some(true) {
-        build_tree(dialog, state, Vec::new(), Some(crate::i18n::IDS_S4_OFFLINE));
-        return;
-    }
-
     let request = state.next_request();
     let base_url = state.base_url.clone();
     let token = state.token();

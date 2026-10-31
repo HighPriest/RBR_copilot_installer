@@ -70,7 +70,9 @@ that tells two voices apart.
 - **Secret** field (password style). The secret unlocks extra (private)
   content: it is the bearer access key for every later server request.
 - Bottom line: **Server status: Online / Offline**, from `GET /health` on the
-  worker thread when the scene opens ("Checking…" until it answers).
+  worker thread when the scene opens ("Checking…" until it answers). The
+  line is ALL `/health` decides: scene 4 asks for the catalogue whatever it
+  said (DESIGN-REVIEW D12).
 - **ACCEPT**:
   - empty secret → continue anonymously;
   - secret + online → validate with `GET /whoami`; 401 → warning modal
@@ -241,7 +243,13 @@ the one an automatic policy would have deleted.
      "(downloaded)" and are checked by default; cached packages not on the
      server are added with "(local only)"; cached packages with a newer
      server version get "(update)".
-- Offline: tree built from the cache only.
+- Offline: tree built from the cache only. "Offline" means the catalogue
+  request itself failed — it is always made, even when scene 2's `/health`
+  failed or has not answered yet, because one dead endpoint (a load
+  balancer hiccup, a slow `/health`) must not hide a catalogue that would
+  have come back. When both failed the status says the server could not be
+  reached; when only the catalogue did, that the list could not be read. A
+  catalogue that answers after `/health` did not is noted in the run log.
 - Checking a parent checks all its descendants; mixed descendants show the
   parent as partially checked.
 - Unchecking a downloaded leaf only excludes it from this run; it is not

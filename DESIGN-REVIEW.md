@@ -1002,6 +1002,8 @@ Done here since the review was written, for the record:
 - [x] **S1** The user agent is `Pacenotes-Installer/<version>`, taken from
       the build, so the server's access log (D11) names the build behind
       every request.
+- [x] **D12** Scene 4 asks for the catalogue even when `/health` failed;
+      `/health` decides only scene 2's status line.
 - [x] **§7** The run log opens with the build, the start time, the server
       and the Windows build, and times every line in UTC — in the shape the
       server's log uses, so the two can be laid side by side.

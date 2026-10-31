@@ -625,6 +625,93 @@ try {
         Assert-That 'the restore is itself undoable' ($pointsAfter -eq $pointsBefore + 1) `
             "points went from $pointsBefore to $pointsAfter"
     }
+
+    # ---------------------------------------------------------------
+    # Fifth pass — /health fails, the catalogue answers (D12)
+    # ---------------------------------------------------------------
+    # One failed /health used to make the whole run offline, although
+    # /packages would have answered: a load balancer hiccup, or a /health
+    # slower than the rest. A stand-in in front of the real server fails
+    # /health and relays everything else, which is that situation.
+    Write-Host "`n-- fifth pass: /health fails, the catalogue answers --"
+    $proc.Kill(); $proc.WaitForExit(5000) | Out-Null
+
+    $front = Get-FreePort
+    $standIn = [System.Net.HttpListener]::new()
+    $standIn.Prefixes.Add("http://127.0.0.1:$front/")
+    $standIn.Start()
+    $relay = [powershell]::Create()
+    [void]$relay.AddScript({
+            param($listener, $behind)
+            $client = [System.Net.Http.HttpClient]::new()
+            while ($listener.IsListening) {
+                try { $ctx = $listener.GetContext() } catch { break }
+                if ($ctx.Request.Url.AbsolutePath -eq '/health') {
+                    $ctx.Response.StatusCode = 503
+                } else {
+                    $ask = [System.Net.Http.HttpRequestMessage]::new(
+                        [System.Net.Http.HttpMethod]::Get, "$behind$($ctx.Request.Url.PathAndQuery)")
+                    $auth = $ctx.Request.Headers['Authorization']
+                    if ($auth) { [void]$ask.Headers.TryAddWithoutValidation('Authorization', $auth) }
+                    $answer = $client.SendAsync($ask).Result
+                    $body = $answer.Content.ReadAsByteArrayAsync().Result
+                    $ctx.Response.StatusCode = [int]$answer.StatusCode
+                    $ctx.Response.ContentLength64 = $body.Length
+                    $ctx.Response.OutputStream.Write($body, 0, $body.Length)
+                }
+                $ctx.Response.Close()
+            }
+        }).AddArgument($standIn).AddArgument("http://127.0.0.1:$port")
+    $relayRun = $relay.BeginInvoke()
+    try {
+        $launch5 = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$front")
+        $proc = $launch5.Process
+        $sheet5 = Wait-ForDialog -OwnerPid $proc.Id
+        if (-not $sheet5) { throw 'no wizard on the fifth pass' }
+        $h5 = $sheet5.Handle
+
+        $p = Wait-ForPageControl -Sheet $h5 -CtrlId $IDC_S1_COMBO
+        $combo5 = [NativeUi]::GetDlgItem($p, $IDC_S1_COMBO)
+        [void][NativeUi]::SendMessageW($combo5, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+        Press-WizardButton -Sheet $h5 -Button $PSBTN_NEXT
+        $p = Wait-ForPageControl -Sheet $h5 -CtrlId $IDC_S2_MOTD
+        $deadline = (Get-Date).AddSeconds(15)
+        do {
+            Start-Sleep -Milliseconds 300
+            $status5 = Get-CtrlText $p $IDC_S2_STATUS
+        } while ($status5 -cne $S['IDS_S2_OFFLINE'] -and (Get-Date) -lt $deadline)
+        Assert-Equal 'scene 2 still reports what /health said' $status5 $S['IDS_S2_OFFLINE']
+        Press-WizardButton -Sheet $h5 -Button $PSBTN_NEXT
+
+        $p = Wait-ForPageControl -Sheet $h5 -CtrlId $IDC_S3_PATH
+        Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder
+        Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+        Start-Sleep -Milliseconds 900
+        Invoke-Button -Dialog $p -CtrlId $IDC_S3_DOWNLOAD
+
+        $p = Wait-ForPageControl -Sheet $h5 -CtrlId $IDC_S4_TREE
+        Assert-That 'scene 4 opens' ($p -ne [IntPtr]::Zero)
+        if ($p -ne [IntPtr]::Zero) {
+            $tv5 = [NativeUi]::GetDlgItem($p, $IDC_S4_TREE)
+            $deadline = (Get-Date).AddSeconds(20)
+            do {
+                Start-Sleep -Milliseconds 300
+                $rows5 = [int][NativeUi]::SendMessageW($tv5, $TVM_GETCOUNT, [IntPtr]::Zero, [IntPtr]::Zero)
+                $s4 = Get-CtrlText $p $IDC_S4_STATUS
+            } while ($s4 -ceq $S['IDS_S4_LOADING'] -and (Get-Date) -lt $deadline)
+            Assert-That 'the catalogue is fetched anyway' ($rows5 -eq $EXPECTED_ROWS) `
+                "control holds $rows5 rows, expected $EXPECTED_ROWS"
+            Assert-Equal 'and scene 4 says it is ready, not offline' $s4 $S['IDS_S4_READY']
+        }
+        $newest = Get-ChildItem -Path (Join-Path $gameFolder '.pacenotes\logs') -Filter 'install-*.log' |
+            Sort-Object Name | Select-Object -Last 1
+        $said = if ($newest) { Get-Content $newest.FullName -Raw } else { '' }
+        Assert-That 'the run log records that /health and the catalogue disagreed' `
+        ($said.Contains('the catalogue answered although /health had not')) "log said [$said]"
+    } finally {
+        $standIn.Close()
+        $relay.Stop(); $relay.Dispose()
+    }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }
