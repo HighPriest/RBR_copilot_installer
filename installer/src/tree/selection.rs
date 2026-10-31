@@ -28,6 +28,16 @@ impl super::Tree {
         }
     }
 
+    /// Unchecks the leaf for `key`, for a package scene 4b could not bring:
+    /// scene 5 must not offer what the install has no payload for.
+    pub fn uncheck_key(&mut self, key: &str) {
+        for leaf in self.leaves_under(None) {
+            if self.nodes[leaf].key.as_deref() == Some(key) {
+                self.nodes[leaf].checked = false;
+            }
+        }
+    }
+
     pub fn checked_leaves(&self) -> Vec<usize> {
         self.leaves_under(None)
             .into_iter()

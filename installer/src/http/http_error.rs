@@ -33,13 +33,22 @@ impl HttpError {
         }
     }
 
-    pub(super) fn cancelled() -> HttpError {
+    pub fn cancelled() -> HttpError {
         HttpError::logical(CANCELLED, None)
     }
 
     /// The caller asked to stop, which is not a failure to report.
     pub fn is_cancelled(&self) -> bool {
         self.code == 0 && self.status.is_none() && self.message == CANCELLED
+    }
+
+    /// Whether trying again could succeed: no response at all, or one that
+    /// says the server is busy or broken. A 401 or 404 will not change.
+    pub fn is_transient(&self) -> bool {
+        match self.status {
+            Some(status) => status == 408 || status == 429 || status >= 500,
+            None => self.code != 0,
+        }
     }
 }
 

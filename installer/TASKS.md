@@ -334,7 +334,7 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] **D12** Try `/packages` even when `/health` failed
 - [x] **D12** Cap what `http::get` will buffer
 - [x] **P11** Probe writability on scene 3, offering to restart elevated
-- [ ] **§7** Retry a transient download, and list failures on scene 7
+- [x] **§7** Retry a transient download, and list failures on scene 7
 - [ ] **§7** Store the remembered secret with DPAPI
 
 ## I9 — Polish

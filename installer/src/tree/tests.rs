@@ -395,3 +395,20 @@ fn an_installed_and_current_package_needs_nothing() {
     assert_eq!(tree.node(leaf).state, Some(super::LeafState::Downloaded));
     assert!(tree.checked_needing_download().is_empty());
 }
+
+/// What scene 4b could not bring leaves the selection, and nothing else does.
+#[test]
+fn a_package_that_never_arrived_is_unticked_alone() {
+    let mut tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
+    tree.set_checked(find(&tree, &["codriver"]), true);
+
+    tree.uncheck_key("rbr/public/codriver/polish/male/Kamil");
+
+    assert_eq!(
+        tree.checked_keys(),
+        vec![
+            "rbr/public/codriver/english/male/John".to_string(),
+            "rbr/public/codriver/polish/female/Ewa".to_string(),
+        ]
+    );
+}

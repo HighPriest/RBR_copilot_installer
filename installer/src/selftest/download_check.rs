@@ -78,12 +78,14 @@ impl DownloadSelfTest {
         let started = std::time::Instant::now();
         let mut bytes_read = 0u64;
         let mut progress = |read: u64, _: Option<u64>| bytes_read = read;
-        let outcome = crate::package_download::download_to_cache(
+        let mut retries = 0;
+        let outcome = crate::package_download::download_retrying(
             &api,
             package,
             &mut cache,
             &mut progress,
             &cancel,
+            &mut |_, _| retries += 1,
         );
         // Whole milliseconds, since formatting a float links ~16 kB.
         let millis = started.elapsed().as_millis();
@@ -93,7 +95,7 @@ impl DownloadSelfTest {
                 0,
                 format!(
                     "RESULT: OK\nPACKAGE: {}\nSIZE: {}\nREAD: {bytes_read}\nSHA256: {}\nVERIFIED: yes\n\
-                     PAYLOAD_ON_DISK: {}\nINDEXED: {}\nMILLIS: {millis}\n",
+                     PAYLOAD_ON_DISK: {}\nINDEXED: {}\nRETRIES: {retries}\nMILLIS: {millis}\n",
                     package.download_path(),
                     package.size,
                     package.sha256,
@@ -104,7 +106,7 @@ impl DownloadSelfTest {
             Err(e) => (
                 1,
                 format!(
-                    "RESULT: FAIL\nSTAGE: download\nPACKAGE: {}\nSIZE: {}\nMESSAGE: {}\n",
+                    "RESULT: FAIL\nSTAGE: download\nPACKAGE: {}\nSIZE: {}\nRETRIES: {retries}\nMESSAGE: {}\n",
                     package.download_path(),
                     package.size,
                     e.message

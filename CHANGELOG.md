@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026/10/31 — installer: a failed download is retried, and no longer ends the run (§7)
+
+One failed package ended the whole run at scene 7, whatever the reason and
+however many others had arrived — a server that blinked once cost the user
+everything they had ticked.
+
+- A failure a retry could fix is retried: no response at all, 408, 429,
+  5xx, or a payload damaged in transit (its sha256 did not match). Three
+  attempts, waiting 1 s and then 3 s; Cancel works during the wait, and each
+  retry is a line in the run log. A 401 or 404 fails at once, and so does a
+  local disk error, which is not the network's fault.
+- A package that still fails is left out and the rest carry on: scene 5
+  does not offer it, and scene 7 names it with the log open. A failed
+  UPDATE keeps the installed version — leaving it out would make the plan
+  uninstall it, which a failed download must never do.
+- When nothing at all could be downloaded the run still ends at scene 7.
+- Scene 4b and `--selftest-download` share one retrying path, which now
+  reports `RETRIES:`.
+
+`Test-HttpClient.ps1` drives the selftest through a stand-in in front of the
+real server: a 503 once and a damaged payload once each arrive after exactly
+one retry, and a 404 fails after one request (60/60). `Test-WizardDownload.ps1`
+gained a sixth pass where one package fails once and another for good: the
+run reaches scene 5 without the lost voice, installs the rest, and scene 7
+names it (112/112).
+
+Size: 591.5 kB, up 3 kB. 8.5 kB remain under the gate.
+
 ## 2026/10/31 — installer: a folder it cannot write is caught on scene 3 (P11)
 
 A game under `C:\Program Files` cannot be written by a standard account,

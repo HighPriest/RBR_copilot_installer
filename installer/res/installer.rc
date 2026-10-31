@@ -210,6 +210,8 @@ END
 #define IDS_S7_CHANGED        140
 #define IDS_S7_LEFT_ALONE     141
 #define IDS_S7_RESTORE_POINT  142
+#define IDS_S7_NOT_DOWNLOADED 143
+#define IDS_S7_NONE_DOWNLOADED 144
 
 // Restore scene (150-169)
 #define IDS_RESTORE_TITLE     150
@@ -463,6 +465,8 @@ BEGIN
     IDS_S7_CHANGED      "Packages installed / removed: %s"
     IDS_S7_LEFT_ALONE   "Left untouched because something else had changed them: %s"
     IDS_S7_RESTORE_POINT "You can undo this run from the restore point %s"
+    IDS_S7_NOT_DOWNLOADED "Could not be downloaded: %s. Nothing else was held up, and the run log says why."
+    IDS_S7_NONE_DOWNLOADED "nothing could be downloaded"
 
     IDS_RESTORE_TITLE   "Restore"
     IDS_RESTORE_PROMPT  "Choose the state to go back to. The signs say what the run after that point did: + added, - removed, ~ changed version."
@@ -580,6 +584,8 @@ BEGIN
     IDS_S7_CHANGED      "Pakiety zainstalowane / usunięte: %s"
     IDS_S7_LEFT_ALONE   "Pozostawione bez zmian, bo zmienił je ktoś inny: %s"
     IDS_S7_RESTORE_POINT "Ten przebieg można cofnąć z punktu przywracania %s"
+    IDS_S7_NOT_DOWNLOADED "Nie udało się pobrać: %s. Reszta nie została wstrzymana, a przyczynę podaje dziennik."
+    IDS_S7_NONE_DOWNLOADED "nie udało się niczego pobrać"
 
     IDS_RESTORE_TITLE   "Przywracanie"
     IDS_RESTORE_PROMPT  "Wybierz stan, do którego chcesz wrócić. Znaki mówią, co zrobił przebieg po tym punkcie: + dodano, - usunięto, ~ zmieniono wersję."

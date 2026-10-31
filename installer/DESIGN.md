@@ -314,9 +314,20 @@ happens between the two is the user answering the configuration questions.
   ledger when scene 5 appears.
 - **Cancel** is allowed, and this is the only phase where it is: a
   half-finished download costs nothing and is discarded.
-- A failed or cancelled download ends the run at scene 7 rather than
-  continuing to the questions. There is nothing to configure that could
-  then be honestly installed.
+- **A failure a retry could fix is retried** (DESIGN-REVIEW §7): no
+  response at all, 408, 429, 5xx, or a payload that arrived damaged (its
+  sha256 did not match). Three attempts, waiting 1 s and then 3 s, each
+  retry a line in the log; Cancel works during the wait. A 401 or 404 will
+  not change, and a full disk is not the network's fault, so those fail at
+  once.
+- **One package that still fails does not end the run.** It is logged,
+  the others carry on, and scene 5 does not offer it — unless the cache
+  holds a copy: a failed UPDATE keeps the installed version, since leaving
+  it out would make the plan uninstall it. Scene 7 names what never
+  arrived.
+- When NOTHING could be downloaded, or the user cancels, the run ends at
+  scene 7 rather than continuing to the questions: there is nothing new to
+  configure that could honestly be installed.
 - Back is not offered; the configuration scene's Back returns to scene 4,
   skipping this page, because there is no going back into a finished
   transfer.
@@ -413,7 +424,9 @@ this scene.
   configuration step changed, and the backup location — named only when
   something was actually backed up, since a run that replaced nothing of
   the user's has no backup to point at.
-- Log pane: collapsed on success, expanded on failure. Collapsed means
+- What could not be downloaded, named, when scene 4b left anything out.
+- Log pane: collapsed on success, expanded on failure — and when a package
+  could not be downloaded, since the reason is in the log. Collapsed means
   hidden with the detail block stretched over its room, not a smaller box —
   a successful run's log is noise and a failed one's is the point.
 - Cancel is disabled here: the run is over, and **Finish** is the way out.

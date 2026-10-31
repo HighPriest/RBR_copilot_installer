@@ -23,12 +23,23 @@ pub enum Message {
 /// download is not a finished run: the questions and the install come after it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Fetched {
-    /// Everything ticked is on this computer and verified.
-    Done { downloaded: usize, bytes: u64 },
-    /// Nothing was installed, so the run ends here.
-    Failed(String),
+    /// Every package was tried, each until it arrived verified or ran out of
+    /// attempts; `failed` names the ones that never came.
+    Done {
+        downloaded: usize,
+        bytes: u64,
+        failed: Vec<NotDownloaded>,
+    },
     /// The partial download was discarded.
     Cancelled,
+}
+
+/// A package still missing after every attempt, which scene 7 names.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NotDownloaded {
+    pub key: String,
+    pub label: String,
+    pub reason: String,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

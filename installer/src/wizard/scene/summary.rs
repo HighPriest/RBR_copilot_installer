@@ -36,8 +36,9 @@ pub unsafe extern "system" fn summary_page(
     }
 }
 
-/// DESIGN.md: the log collapses on success and opens on failure, and a
-/// collapsed log's room goes to the detail block.
+// DESIGN.md: the log collapses on success and opens on failure, or when a
+/// package could not be downloaded, and a collapsed log's room goes to the
+/// detail block.
 unsafe fn show_summary(dialog: HWND, state: &crate::wizard::state::WizardState) {
     crate::ui::set_text_raw(
         dialog,
@@ -54,7 +55,7 @@ unsafe fn show_summary(dialog: HWND, state: &crate::wizard::state::WizardState) 
     let failed = matches!(
         state.outcome,
         Some(crate::worker::Outcome::Failed(_)) | None
-    );
+    ) || !state.not_downloaded.is_empty();
     crate::ui::set_text_raw(dialog, log, &state.log.text());
     crate::ui::scroll_to_end(dialog, log);
     crate::ui::show(dialog, log, failed);
@@ -129,6 +130,17 @@ fn detail_lines(state: &crate::wizard::state::WizardState) -> Vec<String> {
     } else {
         crate::i18n::load_string(crate::i18n::IDS_S7_NOTHING_TODO)
     });
+    if !state.not_downloaded.is_empty() {
+        let labels: Vec<&str> = state
+            .not_downloaded
+            .iter()
+            .map(|failure| failure.label.as_str())
+            .collect();
+        lines.push(crate::i18n::load_string_arg(
+            crate::i18n::IDS_S7_NOT_DOWNLOADED,
+            &labels.join(", "),
+        ));
+    }
     if let Some(crate::worker::Outcome::Done { applied, .. }) = &state.outcome {
         lines.extend(applied_lines(applied));
     }

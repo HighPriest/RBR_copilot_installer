@@ -266,7 +266,11 @@ after the second folder is deleted.
   for a name already taken, or that handle would keep the mutex alive.
 - `run_header.rs` — the run log's header: build, start, server, and the
   Windows build from `RtlGetVersion`.
-- `package_download.rs` — fetch a package into the cache, verified by sha256.
+- `package_download.rs` — fetch a package into the cache, verified by sha256,
+  retried after a failure a retry could fix (`HttpError::is_transient`, or
+  a payload damaged in transit) with a cancellable wait. Scene 4b and
+  `--selftest-download` both go through `download_retrying`, so the test
+  drives the code the user runs.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
   (`state.rs`) shared across pages and what every page does alike in `page/`.

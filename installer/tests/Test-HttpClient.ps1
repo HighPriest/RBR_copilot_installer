@@ -89,6 +89,16 @@ function Invoke-SelfReport {
     return ConvertFrom-Report -Path $out -ExitCode $proc.ExitCode
 }
 
+<#  Run one --selftest-download: the smallest package of a game, fetched
+    through the same retrying path scene 4b uses, into a throwaway cache. #>
+function Invoke-SelfDownload {
+    param([Parameter(Mandatory)][string]$Server, [Parameter(Mandatory)][string]$Game)
+    $out = Join-Path $script:work ("download-" + [guid]::NewGuid() + ".txt")
+    $proc = Start-Process $exe -PassThru -Wait -ArgumentList @(
+        '--selftest-download', $Game, '--server', $Server, '--out', $out)
+    return ConvertFrom-Report -Path $out -ExitCode $proc.ExitCode
+}
+
 function ConvertFrom-Report {
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][int]$ExitCode)
     $report = @{ ExitCode = $ExitCode }
@@ -318,6 +328,65 @@ try {
 
     Assert-That 'the access key never appears in the report' `
     (-not $r.MESSAGE.Contains('pcn_'))
+
+    # A stand-in in front of the real server, failing the download the way a
+    # network or a busy server does; the catalogue passes through untouched.
+    Write-Host "`n-- a download that fails is retried, or not --"
+    $relayPort = Get-FreePort
+    $relayListener = [System.Net.HttpListener]::new()
+    $relayListener.Prefixes.Add("http://127.0.0.1:$relayPort/")
+    $relayListener.Start()
+    $fault = [hashtable]::Synchronized(@{ Kind = ''; Downloads = 0 })
+    $relayServer = [powershell]::Create()
+    [void]$relayServer.AddScript({
+            param($listener, $behind, $fault)
+            $client = [System.Net.Http.HttpClient]::new()
+            while ($listener.IsListening) {
+                try { $ctx = $listener.GetContext() } catch { break }
+                try {
+                    $isDownload = $ctx.Request.Url.AbsolutePath.StartsWith('/download/')
+                    if ($isDownload) { $fault.Downloads++ }
+                    $first = $isDownload -and $fault.Downloads -eq 1
+                    if ($isDownload -and $fault.Kind -eq 'missing') {
+                        $ctx.Response.StatusCode = 404
+                    } elseif ($first -and $fault.Kind -eq 'busy') {
+                        $ctx.Response.StatusCode = 503
+                    } else {
+                        $answer = $client.GetAsync("$behind$($ctx.Request.Url.PathAndQuery)").Result
+                        $body = $answer.Content.ReadAsByteArrayAsync().Result
+                        # Damaged in transit: right length, wrong bytes, so only the sha256 can tell.
+                        if ($first -and $fault.Kind -eq 'damaged') { $body[0] = $body[0] -bxor 0xFF }
+                        $ctx.Response.StatusCode = [int]$answer.StatusCode
+                        $ctx.Response.ContentLength64 = $body.Length
+                        $ctx.Response.OutputStream.Write($body, 0, $body.Length)
+                    }
+                    $ctx.Response.Close()
+                } catch {
+                    $ctx.Response.Abort()
+                }
+            }
+        }).AddArgument($relayListener).AddArgument($base).AddArgument($fault)
+    $relayRun = $relayServer.BeginInvoke()
+    try {
+        foreach ($case in @(
+                @{ Kind = 'busy'; Says = 'a 503 is retried, and the package arrives' },
+                @{ Kind = 'damaged'; Says = 'a payload damaged in transit is retried, and arrives' })) {
+            $fault.Kind = $case.Kind; $fault.Downloads = 0
+            $r = Invoke-SelfDownload -Server "http://127.0.0.1:$relayPort" -Game 'rbr'
+            Assert-That $case.Says (($r.RESULT -eq 'OK') -and ($r['VERIFIED'] -eq 'yes')) `
+                "report said $($r.RESULT): $($r['MESSAGE'])"
+            Assert-That '  after exactly one retry' (($r['RETRIES'] -eq '1') -and ($fault.Downloads -eq 2)) `
+                "retries $($r['RETRIES']), requests $($fault.Downloads)"
+        }
+        $fault.Kind = 'missing'; $fault.Downloads = 0
+        $r = Invoke-SelfDownload -Server "http://127.0.0.1:$relayPort" -Game 'rbr'
+        Assert-That 'a 404 fails' ($r.RESULT -eq 'FAIL') "report said $($r.RESULT)"
+        Assert-That '  at once, since a retry cannot change it' (($r['RETRIES'] -eq '0') -and ($fault.Downloads -eq 1)) `
+            "retries $($r['RETRIES']), requests $($fault.Downloads)"
+    } finally {
+        $relayListener.Close()
+        $relayServer.Stop(); $relayServer.Dispose()
+    }
 
     # The real server never sends this much, which is why a listener of our own
     # does: a small document is the server's promise, and the cap is what holds

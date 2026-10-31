@@ -155,6 +155,26 @@ half-finished install.
 A single failed package ends the run. Retry with backoff, carry on with
 the others, and list what failed on scene 7.
 
+Settled while building it (2026-10-31):
+
+- **Transient** means no response at all (a connection or timeout
+  failure), 408, 429 or 5xx, and a payload that arrived corrupted (its
+  sha256 did not match). 401 and 404 will not change on a retry, and a
+  local disk error is not the network's fault, so those fail at once.
+- Three attempts, waiting 1 s and then 3 s; Cancel is honoured during the
+  wait. Each retry is a line in the run log, naming the reason.
+- A package that still failed is left out of the run only when the cache
+  has no copy of it. A failed UPDATE of an installed package keeps the
+  installed version: unticking it would make the plan uninstall it, which
+  a failed download must never do.
+- Scene 7 names what could not be downloaded, and the log opens, as it
+  does whenever something went wrong.
+- When NOTHING could be downloaded the run ends at the summary as before,
+  listing what failed: there is nothing new to configure.
+- Tested through the real path: a stand-in in front of the real server
+  fails one download once (it must arrive on the retry) and another for
+  good (it must be left out and named on scene 7).
+
 ### §7 — remembering the secret
 
 DPAPI (`CryptProtectData` from crypt32, no crate), so another user or a

@@ -712,6 +712,117 @@ try {
         $standIn.Close()
         $relay.Stop(); $relay.Dispose()
     }
+
+    # ---------------------------------------------------------------
+    # Sixth pass — one download fails once, another for good (§7)
+    # ---------------------------------------------------------------
+    # One failed package used to end the whole run. Now a transient failure
+    # is retried, a lasting one is left out, the rest carry on, and scene 7
+    # names what never arrived. A fresh game folder, so everything downloads.
+    Write-Host "`n-- sixth pass: a download fails once, another for good --"
+    $proc.Kill(); $proc.WaitForExit(5000) | Out-Null
+    $gameFolder6 = Join-Path $work 'game6'
+    [void](New-Item -ItemType Directory -Force -Path $gameFolder6)
+    [void](New-Item -ItemType File -Path (Join-Path $gameFolder6 'RichardBurnsRally_SSE.exe'))
+
+    $front6 = Get-FreePort
+    $standIn6 = [System.Net.HttpListener]::new()
+    $standIn6.Prefixes.Add("http://127.0.0.1:$front6/")
+    $standIn6.Start()
+    $seen6 = [hashtable]::Synchronized(@{ Pacenotes = 0; Kamil = 0 })
+    $relay6 = [powershell]::Create()
+    [void]$relay6.AddScript({
+            param($listener, $behind, $seen)
+            $client = [System.Net.Http.HttpClient]::new()
+            while ($listener.IsListening) {
+                try { $ctx = $listener.GetContext() } catch { break }
+                try {
+                    $path = $ctx.Request.Url.AbsolutePath
+                    if ($path -eq '/download/rbr/public/codriver/polish/male/Kamil') {
+                        $seen.Kamil++
+                        $ctx.Response.StatusCode = 404
+                    } elseif ($path -eq '/download/rbr/public/pacenotes/RBR' -and $seen.Pacenotes++ -eq 0) {
+                        $ctx.Response.StatusCode = 503
+                    } else {
+                        $ask = [System.Net.Http.HttpRequestMessage]::new(
+                            [System.Net.Http.HttpMethod]::Get, "$behind$($ctx.Request.Url.PathAndQuery)")
+                        $answer = $client.SendAsync($ask).Result
+                        $body = $answer.Content.ReadAsByteArrayAsync().Result
+                        $ctx.Response.StatusCode = [int]$answer.StatusCode
+                        $ctx.Response.ContentLength64 = $body.Length
+                        $ctx.Response.OutputStream.Write($body, 0, $body.Length)
+                    }
+                    $ctx.Response.Close()
+                } catch {
+                    $ctx.Response.Abort()
+                }
+            }
+        }).AddArgument($standIn6).AddArgument("http://127.0.0.1:$port").AddArgument($seen6)
+    $relay6Run = $relay6.BeginInvoke()
+    try {
+        $launch6 = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$front6")
+        $proc = $launch6.Process
+        $sheet6 = Wait-ForDialog -OwnerPid $proc.Id
+        if (-not $sheet6) { throw 'no wizard on the sixth pass' }
+        $h6 = $sheet6.Handle
+
+        $p = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S1_COMBO
+        $combo6 = [NativeUi]::GetDlgItem($p, $IDC_S1_COMBO)
+        [void][NativeUi]::SendMessageW($combo6, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+        Press-WizardButton -Sheet $h6 -Button $PSBTN_NEXT
+        $p = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S2_MOTD
+        Press-WizardButton -Sheet $h6 -Button $PSBTN_NEXT
+        $p = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S3_PATH
+        Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder6
+        Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+        Start-Sleep -Milliseconds 900
+        Invoke-Button -Dialog $p -CtrlId $IDC_S3_DOWNLOAD
+
+        $p = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S4_TREE
+        $tv6 = [NativeUi]::GetDlgItem($p, $IDC_S4_TREE)
+        $deadline = (Get-Date).AddSeconds(20)
+        do {
+            Start-Sleep -Milliseconds 300
+            $rows6 = [int][NativeUi]::SendMessageW($tv6, $TVM_GETCOUNT, [IntPtr]::Zero, [IntPtr]::Zero)
+        } while ($rows6 -eq 0 -and (Get-Date) -lt $deadline)
+        [void](Invoke-TreeCheckRoots -Dialog $p -CtrlId $IDC_S4_TREE)
+        Press-WizardButton -Sheet $h6 -Button $PSBTN_NEXT
+
+        $p5 = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S5_LANG -TimeoutMs 40000
+        Assert-That 'one failed download no longer ends the run' ($p5 -ne [IntPtr]::Zero)
+        if ($p5 -eq [IntPtr]::Zero) { throw 'scene 5 never appeared on the sixth pass' }
+        Assert-That 'the busy one was asked for again' ($seen6.Pacenotes -eq 2) "asked $($seen6.Pacenotes) times"
+        Assert-That 'the missing one was asked for once, since a 404 will not change' `
+        ($seen6.Kamil -eq 1) "asked $($seen6.Kamil) times"
+        $voices = Get-ListCount -Dialog $p5 -CtrlId $IDC_S5_VOICE
+        Assert-That 'the voice that never arrived is not offered' ($voices -eq 2) "list holds $voices"
+
+        foreach ($id in $IDC_S5_LANG, $IDC_S5_VOICE, $IDC_S5_STYLE) {
+            [void](Select-ListItem -Dialog $p5 -CtrlId $id -Index 0)
+        }
+        Press-WizardButton -Sheet $h6 -Button $PSBTN_NEXT
+        $p7 = Wait-ForPageControl -Sheet $h6 -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+        Assert-That 'the rest installs and reaches the summary' ($p7 -ne [IntPtr]::Zero)
+        if ($p7 -ne [IntPtr]::Zero) {
+            $detail6 = Get-CtrlText $p7 $IDC_S7_DETAIL
+            $named = Expand-ResourceArg -Template $S['IDS_S7_NOT_DOWNLOADED'] -Value 'Kamil'
+            Assert-That 'scene 7 names what could not be downloaded' ($detail6.Contains($named)) `
+                "summary said [$detail6]"
+            Assert-That 'and opens the log, since something went wrong' `
+            (Test-CtrlVisible -Dialog $p7 -CtrlId $IDC_S7_LOG)
+        }
+        $ledger6 = Join-Path $gameFolder6 '.pacenotes\installed.json'
+        $installed6 = if (Test-Path $ledger6) {
+            @((Get-Content $ledger6 -Raw | ConvertFrom-Json).packages.PSObject.Properties.Name)
+        } else { @() }
+        Assert-That 'the package that arrived on its retry was installed' `
+        ($installed6 -contains 'rbr/public/pacenotes/RBR') "ledger holds $($installed6 -join ', ')"
+        Assert-That 'and the one that never arrived was not' `
+        ($installed6 -notcontains 'rbr/public/codriver/polish/male/Kamil')
+    } finally {
+        $standIn6.Close()
+        $relay6.Stop(); $relay6.Dispose()
+    }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

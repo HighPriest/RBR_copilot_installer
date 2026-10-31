@@ -47,6 +47,8 @@ pub struct WizardState {
     /// What scene 4b fetched, for the summary, since the install outcome comes later.
     pub downloaded: usize,
     pub downloaded_bytes: u64,
+    /// What scene 4b could not bring after its retries, which scene 7 names.
+    pub not_downloaded: Vec<crate::worker::NotDownloaded>,
     /// The keys committed with Download, in tree order.
     pub chosen: Vec<String>,
     /// Rebuilt from the tree each time scene 5 activates.
@@ -98,6 +100,7 @@ impl WizardState {
             download_started: false,
             downloaded: 0,
             downloaded_bytes: 0,
+            not_downloaded: Vec::new(),
             chosen: Vec::new(),
             config: pacenotes_installer::choices::Configuration::default(),
             points: Vec::new(),

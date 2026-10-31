@@ -100,6 +100,8 @@ pub const IDS_S7_NOTHING_TODO: u16 = 139;
 pub const IDS_S7_CHANGED: u16 = 140;
 pub const IDS_S7_LEFT_ALONE: u16 = 141;
 pub const IDS_S7_RESTORE_POINT: u16 = 142;
+pub const IDS_S7_NOT_DOWNLOADED: u16 = 143;
+pub const IDS_S7_NONE_DOWNLOADED: u16 = 144;
 
 // Restore scene
 pub const IDS_RESTORE_TITLE: u16 = 150;

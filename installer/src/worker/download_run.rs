@@ -15,14 +15,19 @@ pub struct DownloadJob {
 }
 
 /// Scene 4b's run: fetch what is missing and verify it, writing nothing to the
-/// game folder, so the cache can be filled now and installed from later. The
-/// worker opens its own handle on the cache; the UI reopens its own afterwards.
+/// game folder, so the cache can be filled now and installed from later. A
+/// package that still fails after its retries is recorded and the rest carry
+/// on. The worker opens its own handle on the cache; the UI reopens its own
+/// afterwards.
 pub fn run_download(job: DownloadJob, reporter: &super::Reporter) -> super::Message {
     let api = crate::api::Api::new(&job.base_url, job.token.clone());
     let mut cache = pacenotes_installer::cache::Cache::open(&job.cache_root);
     let missing = &job.downloads;
     let total: u64 = missing.iter().map(|package| package.size).sum();
     let mut done: u64 = 0;
+    let mut downloaded = 0;
+    let mut bytes: u64 = 0;
+    let mut failed = Vec::new();
 
     for package in missing {
         let report = |item_done: u64, log: Option<String>| {
@@ -52,23 +57,43 @@ pub fn run_download(job: DownloadJob, reporter: &super::Reporter) -> super::Mess
                 report(read, None);
             }
         };
-        match crate::package_download::download_to_cache(
+        let mut on_retry = |error: &crate::http::HttpError, delay_ms: u64| {
+            let line = format!(
+                "retrying {} in {} s: {}",
+                package.download_path(),
+                delay_ms / 1000,
+                error.message
+            );
+            report(0, Some(line));
+        };
+        match crate::package_download::download_retrying(
             &api,
             package,
             &mut cache,
             &mut progress,
             &job.cancel,
+            &mut on_retry,
         ) {
-            Ok(()) => done += package.size,
+            Ok(()) => {
+                downloaded += 1;
+                bytes += package.size;
+            }
             Err(e) if e.is_cancelled() => {
                 return super::Message::Downloaded(super::Fetched::Cancelled)
             }
-            Err(e) => return super::Message::Downloaded(super::Fetched::Failed(e.message)),
+            Err(e) => failed.push(super::NotDownloaded {
+                key: package.download_path(),
+                label: package.label().to_string(),
+                reason: e.message,
+            }),
         }
+        // Counted either way, so the bar reaches its end.
+        done += package.size;
     }
 
     super::Message::Downloaded(super::Fetched::Done {
-        downloaded: missing.len(),
-        bytes: total,
+        downloaded,
+        bytes,
+        failed,
     })
 }

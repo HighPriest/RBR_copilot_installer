@@ -86,6 +86,7 @@ unsafe fn start(dialog: HWND) {
         let done = crate::worker::Fetched::Done {
             downloaded: 0,
             bytes: 0,
+            failed: Vec::new(),
         };
         finish(dialog, state, done);
         return;
@@ -114,15 +115,20 @@ unsafe fn start(dialog: HWND) {
     });
 }
 
-/// On success the questions come next; otherwise the run ends at the summary,
-/// by page id, since nothing could honestly be installed.
+// The questions come next, without what never arrived; when nothing did, or
+/// the run was cancelled, it ends at the summary, by page id, since nothing
+/// new could honestly be installed.
 unsafe fn finish(
     dialog: HWND,
     state: &mut crate::wizard::state::WizardState,
     fetched: crate::worker::Fetched,
 ) {
     match fetched {
-        crate::worker::Fetched::Done { downloaded, bytes } => {
+        crate::worker::Fetched::Done {
+            downloaded,
+            bytes,
+            failed,
+        } => {
             state.downloaded = downloaded;
             state.downloaded_bytes = bytes;
             if downloaded > 0 {
@@ -134,17 +140,37 @@ unsafe fn finish(
             }
             // The worker wrote the index through its own handle, and scene 5 and the install read it.
             state.cache = pacenotes_installer::cache::Cache::open(state.cache.root().to_path_buf());
+            leave_out(dialog, state, failed);
+            if downloaded == 0 && !state.not_downloaded.is_empty() {
+                let nothing = crate::i18n::load_string(crate::i18n::IDS_S7_NONE_DOWNLOADED);
+                end_run_early(dialog, state, crate::worker::Outcome::Failed(nothing));
+                return;
+            }
             super::progress_page::finish_page(dialog, crate::i18n::IDS_S4B_DONE, None);
-        }
-        crate::worker::Fetched::Failed(message) => {
-            super::progress_page::log_line(dialog, state, &format!("failed: {message}"));
-            end_run_early(dialog, state, crate::worker::Outcome::Failed(message));
         }
         crate::worker::Fetched::Cancelled => {
             super::progress_page::log_line(dialog, state, "cancelled by the user");
             end_run_early(dialog, state, crate::worker::Outcome::Cancelled);
         }
     }
+}
+
+/// Logs each package that never arrived and unticks it, unless the cache holds
+/// a copy: a failed UPDATE keeps the installed version, which an untick would
+/// have the plan uninstall.
+unsafe fn leave_out(
+    dialog: HWND,
+    state: &mut crate::wizard::state::WizardState,
+    failed: Vec<crate::worker::NotDownloaded>,
+) {
+    for failure in &failed {
+        let line = format!("not downloaded: {} — {}", failure.key, failure.reason);
+        super::progress_page::log_line(dialog, state, &line);
+        if state.cache.get(&failure.key).is_none() {
+            state.tree.uncheck_key(&failure.key);
+        }
+    }
+    state.not_downloaded = failed;
 }
 
 unsafe fn end_run_early(
