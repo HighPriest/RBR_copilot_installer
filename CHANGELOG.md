@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026/10/31 — decided: the last game folder is not remembered (I9)
+
+Remembering the last folder per game would need storage in the user
+profile, outside the game folder — the exception already declined for the
+access key. Scene 3 starts empty each run, except after a restart as
+administrator, which carries the folder over. The item leaves
+`installer/TASKS.md`; the decision is in `installer/requirements.md`. No code
+changed.
+
 ## 2026/10/31 — installer: the cache sweeps what nothing needs (I9)
 
 I9 asked to sweep "orphaned" payloads — the ones the cache index no longer

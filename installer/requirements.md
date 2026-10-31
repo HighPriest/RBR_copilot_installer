@@ -207,6 +207,10 @@ Recorded so they are not rediscovered as oversights:
   and a key left on a shared or borrowed PC is worse than retyping it.
   The only time it travels is a restart as administrator (P11), on that
   process's command line.
+- **Remembering the last game folder** (I9). Decided by the maintainer on
+  2026-10-31, for the same reason as the key: it could only be kept in the
+  user profile, outside the game folder. Scene 3 starts empty each run,
+  except after a restart as administrator, which carries the folder over.
 - **`SetUnhandledExceptionFilter`** for access violations and other faults
   that never reach a Rust panic hook. Revisit if a crash ever appears that
   leaves no panic line — that is exactly its signature.
