@@ -30,4 +30,43 @@ impl super::Cache {
             })
             .collect()
     }
+
+    /// Deletes what a killed download left half-written, and, given `in_use`
+    /// (the digests the ledger and the restore points need), every payload
+    /// neither it nor the index names; `None` deletes no payload, for when
+    /// what is needed is unknown, and so does an index that was not read.
+    pub fn sweep(&self, in_use: Option<&[String]>) -> Swept {
+        let mut swept = Swept::default();
+        let Ok(entries) = std::fs::read_dir(&self.root) else {
+            return swept;
+        };
+        for path in entries.flatten().map(|entry| entry.path()) {
+            let stem = path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .unwrap_or("");
+            let removable = match path.extension().and_then(|extension| extension.to_str()) {
+                Some("part") => true,
+                Some("zip") => in_use.is_some_and(|in_use| {
+                    self.state == super::IndexState::Loaded
+                        && !self.names(stem)
+                        && !in_use.iter().any(|sha256| sha256 == stem)
+                }),
+                _ => false,
+            };
+            let size = std::fs::metadata(&path).map_or(0, |metadata| metadata.len());
+            if removable && std::fs::remove_file(&path).is_ok() {
+                swept.files += 1;
+                swept.bytes += size;
+            }
+        }
+        swept
+    }
+}
+
+/// What a sweep removed, for the run log.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Swept {
+    pub files: usize,
+    pub bytes: u64,
 }

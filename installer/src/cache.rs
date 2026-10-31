@@ -9,6 +9,7 @@ mod payloads;
 
 pub use index::{Cache, IndexState};
 pub use location::dir_for;
+pub use payloads::Swept;
 
 const INDEX_FILE: &str = "cache.json";
 

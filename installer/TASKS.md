@@ -339,8 +339,8 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] Check free disk space (in `preflight`, which knows what the plan
       needs)
 - [x] Replace the unwraps left in UI paths with a modal and a log line
-- [ ] Sweep orphaned payloads from the cache on startup
-  - [ ] Decide where "remove from cache" lives now there is no library view
+- [x] Sweep orphaned payloads from the cache on startup
+  - [x] Decide where "remove from cache" lives now there is no library view
 - [ ] Remember the last game folder per game and prefill scene 3
 - [ ] Fix keyboard and tab order, default buttons, and Esc per scene
 

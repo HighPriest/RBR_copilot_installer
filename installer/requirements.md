@@ -175,6 +175,26 @@ Settled while building it (2026-10-31):
   fails one download once (it must arrive on the retry) and another for
   good (it must be left out and named on scene 7).
 
+### I9 — sweeping the cache
+
+**Decided 2026-10-31.** An "orphan" by the cache index is not the same as
+unused: the index keeps only the newest version of each package, so after
+an update the previous version's payload is unnamed by it — and that is
+exactly the payload a restore needs to roll the update back. Since the
+cache moved into the game folder, everything that can need a payload is in
+the same folder, so the sweep can know what is really in use:
+
+- When the cache opens (a route is taken on scene 3), delete the payloads
+  named by NONE of: the cache index, the ledger, any restore point's
+  snapshot. Plus leftover `.part` files from a download that was killed.
+- If any of those cannot be read — a ledger or a restore point written by a
+  newer build, a damaged file — delete no payloads at all: what it needs is
+  unknown, and a wrong guess deletes someone's way back. `.part` files go
+  regardless.
+- The run log says what was removed and how much space it freed.
+- There is no "remove from cache" control: what nothing needs goes by
+  itself, and what something needs must not go.
+
 ## Things that are deliberately NOT done
 
 Recorded so they are not rediscovered as oversights:

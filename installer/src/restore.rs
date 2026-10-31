@@ -21,7 +21,7 @@ mod point;
 pub use changes::{changes, Changes};
 pub use execute::{execute, prepare, Prepared};
 pub use plan::{ledger_after, picks, plan, Plan, PutBack};
-pub use point::{human_time, points, read, Point, Snapshot};
+pub use point::{human_time, payloads_in_use, points, read, Point, Snapshot};
 
 #[cfg(test)]
 mod tests;

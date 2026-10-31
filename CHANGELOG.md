@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026/10/31 — installer: the cache sweeps what nothing needs (I9)
+
+I9 asked to sweep "orphaned" payloads — the ones the cache index no longer
+names. Built as written it would have broken restore: the index keeps one
+version per package, so after an update the previous version's payload is
+unnamed, and that is exactly the payload a rollback needs.
+
+Since the cache moved into the game folder, everything that can need a
+payload sits in the same folder, so the sweep can know what is in use:
+
+- When a route is taken on scene 3, the cache removes leftover `.part`
+  files and every payload named by none of the index, the ledger and the
+  restore points. The run log says what went and how much it freed.
+- If the ledger or any restore point cannot be read — written by a newer
+  build, or damaged — no payload is deleted: what it needs is unknown.
+- A `--cache` override is never swept; it may serve other folders.
+- No "remove from cache" control: what nothing needs goes by itself, and
+  what something needs must not.
+
+Tests: two unit tests for the sweep; three scenarios on a real game folder
+(the payload a rollback needs survives and the rollback still works, a
+version nothing ever installed goes, and an unreadable ledger stops the
+sweep); and the flow test checks a leftover `.part` file is removed by a
+real run and logged (115/115).
+
+Size: the first version cost 11.5 kB and broke the gate (603 kB) — two
+`BTreeSet`s and a second copy of the restore-point reader. Rewritten over
+plain slices and the existing `restore::points`, it costs 3.5 kB: 595 kB,
+5 kB left under the gate.
+
 ## 2026/10/31 — installer: no unwrap, expect or panic outside tests, enforced (I9)
 
 I9 asked to replace the unwraps left in UI paths. A sweep found none left:

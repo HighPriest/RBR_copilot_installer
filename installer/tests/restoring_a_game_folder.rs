@@ -284,3 +284,65 @@ fn the_picks_come_from_the_restored_state() {
     );
     assert!(!picks.contains_key(pacenotes_shared::CATEGORY_LANGUAGE));
 }
+
+/// The cache index forgets the old version once the update arrives, but the
+/// restore point still needs it: the sweep has to see the point too.
+#[test]
+fn a_cache_sweep_keeps_the_payload_a_rollback_needs() {
+    let world = common::World::new("sweep-rollback");
+    let good = world.publish_version(common::KAMIL, "2.1.0", &[(VOICE, b"good audio")]);
+    world.apply(&[common::KAMIL]);
+    world.publish_version(common::KAMIL, "3.0.0", &[(VOICE, b"BROKEN")]);
+    let point = world
+        .apply(&[common::KAMIL])
+        .restore_point
+        .expect("an update takes a point");
+
+    let in_use = pacenotes_installer::restore::payloads_in_use(&world.game());
+    world.cache().sweep(in_use.as_deref());
+
+    assert!(
+        world.payload(&good).is_file(),
+        "the way back was swept away"
+    );
+    restore_to_point(&world, &point);
+    assert_eq!(
+        world.read_game_file(VOICE).as_deref(),
+        Some(&b"good audio"[..])
+    );
+}
+
+/// A version superseded before anything installed it is needed by nothing.
+#[test]
+fn a_cache_sweep_removes_a_version_nothing_used() {
+    let world = common::World::new("sweep-unused");
+    world.publish(common::KAMIL, &[(VOICE, b"kamil")]);
+    world.apply(&[common::KAMIL]);
+    let never = world.publish_version(common::EWA, "1.0.0", &[(EWA_VOICE, b"ewa v1")]);
+    let current = world.publish_version(common::EWA, "2.0.0", &[(EWA_VOICE, b"ewa v2")]);
+
+    let in_use = pacenotes_installer::restore::payloads_in_use(&world.game());
+    let swept = world.cache().sweep(in_use.as_deref());
+
+    assert_eq!(swept.files, 1);
+    assert!(!world.payload(&never).exists());
+    assert!(
+        world.payload(&current).is_file(),
+        "the index still names it"
+    );
+}
+
+/// A ledger this build cannot read may name anything, so nothing is deleted.
+#[test]
+fn a_cache_sweep_deletes_no_payload_while_a_record_is_unreadable() {
+    let world = common::World::new("sweep-unreadable");
+    let never = world.publish_version(common::EWA, "1.0.0", &[(EWA_VOICE, b"ewa v1")]);
+    world.publish_version(common::EWA, "2.0.0", &[(EWA_VOICE, b"ewa v2")]);
+    world.write_game_file(".pacenotes/installed.json", b"{ written by a newer build");
+
+    let in_use = pacenotes_installer::restore::payloads_in_use(&world.game());
+    world.cache().sweep(in_use.as_deref());
+
+    assert!(in_use.is_none());
+    assert!(world.payload(&never).is_file());
+}

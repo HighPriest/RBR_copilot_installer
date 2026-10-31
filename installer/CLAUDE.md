@@ -110,6 +110,13 @@ after the second folder is deleted.
     tree levels are NOT stored: they are derived from `name`.
   - Download = fetch → sha256 verify → move into cache. Re-download only when
     manifest sha differs from cached sha.
+  - **Swept when it opens** (a route taken on scene 3): leftover `.part`
+    files, and payloads named by NONE of the index, the ledger and every
+    restore point (`restore::payloads_in_use`). NOT "what the index does
+    not name": the index keeps one version per key, and the version an
+    update replaced is exactly what a rollback needs. If any of those
+    records cannot be read, no payload is deleted. A `--cache` override is
+    never swept, since it may serve other folders.
 - **Ledger** (`ledger.rs`): per game dir, `.pacenotes\installed.json`.
   `.pacenotes\` rather than somewhere in the plugin tree, because that path
   is RBR-only and is written to by other tools. Written atomically

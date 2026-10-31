@@ -57,3 +57,42 @@ pub fn human_time(point: &str) -> String {
         _ => point.to_string(),
     }
 }
+
+/// The payload digests this folder's ledger and every restore point name: what
+/// a sweep of the cache must keep beyond what its index names, since a restore
+/// rolls back to an older payload the index has moved past.
+///
+/// `None` when any of them cannot be read — a ledger or point written by a
+/// newer build, a damaged file — since what it needs is then unknown, and a
+/// wrong guess would delete someone's way back.
+pub fn payloads_in_use(game_dir: &std::path::Path) -> Option<Vec<String>> {
+    let ledger = crate::ledger::Ledger::open(game_dir);
+    if ledger.state() == crate::ledger::LedgerState::Unreadable {
+        return None;
+    }
+    let points = points(game_dir);
+    // `points` skips a point it cannot read, which here must stop the sweep.
+    let directories = std::fs::read_dir(
+        game_dir
+            .join(crate::ledger::STATE_DIR)
+            .join(crate::engine::RESTORE_DIR),
+    )
+    .map_or(0, |entries| {
+        entries
+            .flatten()
+            .filter(|entry| entry.path().is_dir())
+            .count()
+    });
+    if points.len() != directories {
+        return None;
+    }
+    let snapshots = points.iter().flat_map(|point| point.snapshot.values());
+    Some(
+        ledger
+            .packages()
+            .values()
+            .chain(snapshots)
+            .map(|entry| entry.sha256.clone())
+            .collect(),
+    )
+}

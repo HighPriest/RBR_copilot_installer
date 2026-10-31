@@ -225,6 +225,49 @@ fn removing_an_entry_leaves_the_payload_for_the_sweep() {
     assert_eq!(cache.orphans().len(), 1);
 }
 
+/// Kept: what the index names and what `in_use` names. Gone: the rest, and a
+/// download a killed run left half-written.
+#[test]
+fn a_sweep_removes_only_what_nothing_needs() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-sweep");
+    for sha in ["indexed", "rollback", "stray"] {
+        put_payload(&dir.0, sha);
+    }
+    std::fs::write(dir.0.join("0123.part"), b"half").expect("partial");
+    let mut cache = super::Cache::open(&dir.0);
+    cache
+        .insert(entry("rbr", "style/Kept", "indexed"))
+        .expect("index");
+    let in_use = ["rollback".to_string()];
+
+    let swept = cache.sweep(Some(&in_use));
+
+    assert_eq!(swept.files, 2);
+    assert_eq!(swept.bytes, "payload".len() as u64 + "half".len() as u64);
+    assert!(dir.0.join("indexed.zip").is_file());
+    assert!(dir.0.join("rollback.zip").is_file());
+    assert!(!dir.0.join("stray.zip").exists());
+    assert!(!dir.0.join("0123.part").exists());
+}
+
+/// What is needed is unknown, so no payload may go; a half-written download still does.
+#[test]
+fn without_knowing_what_is_needed_only_partial_downloads_go() {
+    let dir = crate::scratch_dir::ScratchDir::new("cache-sweep-unknown");
+    put_payload(&dir.0, "stray");
+    std::fs::write(dir.0.join("0123.part"), b"half").expect("partial");
+    let mut cache = super::Cache::open(&dir.0);
+    cache
+        .insert(entry("rbr", "style/Kept", "indexed"))
+        .expect("index");
+
+    let swept = cache.sweep(None);
+
+    assert_eq!(swept.files, 1);
+    assert!(dir.0.join("stray.zip").is_file());
+    assert!(!dir.0.join("0123.part").exists());
+}
+
 /// Deleting the game has to take the downloads with it.
 #[test]
 fn a_cache_lives_beside_the_install_it_belongs_to() {

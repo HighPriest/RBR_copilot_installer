@@ -399,6 +399,9 @@ try {
     # addresses whichever of the two is live by its own PSBTN_* code.
     Press-WizardButton -Sheet $h -Button $PSBTN_FINISH
     Assert-That 'Finish closes the first run' ($proc.WaitForExit(10000))
+    # What a download killed mid-way leaves behind; the next run's sweep removes it (I9).
+    $stray = Join-Path $cacheDir 'abandoned.part'
+    Set-Content -Path $stray -Value 'half a package'
 
     $launch2 = Start-Installer -ExePath $ExePath -ExtraArgs @(
         '--server', "http://127.0.0.1:$port")
@@ -448,6 +451,12 @@ try {
                 -Filter 'install-*.log' -ErrorAction SilentlyContinue)
         Assert-That 'the second run kept the first run''s log' ($logs2.Count -eq 2) `
             "found $($logs2.Count) logs"
+        Assert-That 'the half-finished download was swept from the cache' (-not (Test-Path $stray))
+        $newestLog = $logs2 | Sort-Object Name | Select-Object -Last 1
+        Assert-That 'and the run log says so' `
+        ((Get-Content $newestLog.FullName -Raw).Contains('cache: removed 1 file(s)'))
+        Assert-That 'while every payload the folder uses stayed' `
+        (@(Get-ChildItem -Path $cacheDir -Filter '*.zip').Count -gt 0)
     }
 
     # ---------------------------------------------------------------

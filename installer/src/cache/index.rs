@@ -63,6 +63,14 @@ impl Cache {
             .collect()
     }
 
+    /// Whether an index entry names this payload.
+    pub(super) fn names(&self, sha256: &str) -> bool {
+        self.index
+            .packages
+            .values()
+            .any(|entry| entry.sha256 == sha256)
+    }
+
     pub(super) fn known_digests(&self) -> std::collections::BTreeSet<&str> {
         self.index
             .packages

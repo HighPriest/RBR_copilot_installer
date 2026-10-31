@@ -153,6 +153,12 @@ that tells two voices apart.
     would loop.
   - Files an elevated run installs belong to Administrators, so later runs
     on that folder need elevation too, and the probe will say so.
+- When the folder is settled, its download cache is **swept** of what
+  nothing needs: half-finished downloads, and payloads no longer named by
+  the cache index, the installed packages or any restore point. Older
+  versions a restore point names stay, or "take me back to yesterday"
+  would quietly lose its way back. The run log says what went and how
+  much space it freed. There is no "remove from cache" control.
 
 ## Restore scene (reached from scene 3's Restore/Uninstall)
 

@@ -100,6 +100,30 @@ fn open_cache(state: &mut crate::wizard::state::WizardState) {
         pacenotes_installer::cache::dir_for(std::path::Path::new(&state.folder))
     });
     state.cache = pacenotes_installer::cache::Cache::open(root);
+    // An override may serve other folders, whose needs this one cannot see.
+    if state.cache_override.is_none() {
+        sweep_cache(state);
+    }
+}
+
+/// Removes the downloads nothing in this folder needs any more (I9), which
+/// only the folder itself can tell: the restore points need older versions
+/// the cache index has already forgotten.
+fn sweep_cache(state: &mut crate::wizard::state::WizardState) {
+    let in_use = pacenotes_installer::restore::payloads_in_use(std::path::Path::new(&state.folder));
+    if in_use.is_none() {
+        state
+            .log
+            .line("cache: a record here could not be read, so no download was removed");
+    }
+    let swept = state.cache.sweep(in_use.as_deref());
+    if swept.files > 0 {
+        state.log.line(format!(
+            "cache: removed {} file(s) nothing needs any more, {}",
+            swept.files,
+            pacenotes_installer::size::human(swept.bytes)
+        ));
+    }
 }
 
 /// The log belongs with the install it describes, so it moves into the game
