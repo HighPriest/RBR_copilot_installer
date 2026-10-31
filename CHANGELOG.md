@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026/10/31 — installer: no unwrap, expect or panic outside tests, enforced (I9)
+
+I9 asked to replace the unwraps left in UI paths. A sweep found none left:
+every `unwrap`, `expect` and `panic!` in the installer's own code was in a
+test module, in `--selftest-panic` (whose whole job is to panic), or in the
+build script, which is meant to fail the build with a message.
+
+So the item became a rule that stays true: `lib.rs` and `main.rs` deny
+`clippy::unwrap_used`, `clippy::expect_used` and `clippy::panic` whenever
+they are not compiled for tests, and CI's clippy runs with `-D warnings`.
+The deliberate panic carries an `allow` saying why. The root and installer
+`CLAUDE.md` drop "unwrap tolerated while scaffolding" for the rule as it
+now is. Behaviour and size are unchanged.
+
 ## 2026/10/31 — decided: the access key is never remembered (I8, §7)
 
 Two open items planned to remember the access key and to encrypt it with

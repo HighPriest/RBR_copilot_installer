@@ -397,8 +397,13 @@ first" error.
 
 ## Error handling
 
-- Scaffolding phase: unwrap() tolerated.
-- Final code: every user-reachable failure → `MessageBoxW` with a localized
+- **No `unwrap`, `expect` or `panic!` outside tests**, and clippy enforces
+  it: `lib.rs` and `main.rs` deny `clippy::unwrap_used`, `expect_used` and
+  `panic` when not compiling tests. A panic in a GUI built with
+  `panic = "abort"` is a vanished window. The one deliberate panic,
+  `--selftest-panic`, carries an `allow` saying why; build scripts are a
+  separate crate and fail the BUILD with a message on purpose.
+- Every user-reachable failure → `MessageBoxW` with a localized
   string, then either recover or clean exit. No silent catch-and-continue
   (the C# did this; don't copy it).
 - A failed install must leave the ledger truthful: ledger updates are per-file

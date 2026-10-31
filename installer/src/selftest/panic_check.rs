@@ -1,5 +1,6 @@
 /// `--selftest-panic [--out FILE]`: panics on purpose, quietly, so a suite can
 /// prove the hook writes a report, a path using the installer correctly never takes.
+#[allow(clippy::panic)] // The point of the flag: proving the crash hook works.
 pub fn panic_if_requested() {
     let mut arguments = std::env::args().skip(1);
     let mut requested = false;

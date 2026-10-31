@@ -338,7 +338,7 @@ Ordered security first, then what support needs, then what a user hits.
 
 - [x] Check free disk space (in `preflight`, which knows what the plan
       needs)
-- [ ] Replace the unwraps left in UI paths with a modal and a log line
+- [x] Replace the unwraps left in UI paths with a modal and a log line
 - [ ] Sweep orphaned payloads from the cache on startup
   - [ ] Decide where "remove from cache" lives now there is no library view
 - [ ] Remember the last game folder per game and prefill scene 3

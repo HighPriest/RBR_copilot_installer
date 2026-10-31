@@ -207,5 +207,6 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 - Windows paths in install logic use `\\` separators intentionally (RBR
   expects them in .ini content). Do not "normalize" .ini file contents.
 - No unwrap() in server request paths; map errors to proper HTTP statuses.
-- Installer: unwrap()/panic is acceptable only during early scaffolding; final
-  code shows a MessageBox and exits gracefully.
+- Installer: no unwrap()/expect()/panic! outside tests — clippy denies them
+  (see `installer/CLAUDE.md`, "Error handling"); a failure shows a
+  MessageBox and the installer recovers or exits gracefully.

@@ -2,6 +2,11 @@
 //! The Win32-free logic lives in the sibling library (`lib.rs`).
 #![windows_subsystem = "windows"]
 #![cfg(windows)]
+// A panic here is a vanished window: final code shows a message instead.
+#![cfg_attr(
+    not(test),
+    deny(clippy::unwrap_used, clippy::expect_used, clippy::panic)
+)]
 
 mod api;
 mod crash;
