@@ -32,9 +32,8 @@ Download `pacenotes-installer.exe` from the releases page and run it. It is
 one file: no setup wizard, nothing in Program Files, nothing in the
 registry.
 
-It does need the **Microsoft Visual C++ 2015-2022 Redistributable (x64)**,
-which almost every PC that runs games already has. If Windows complains
-about `vcruntime140.dll`, that is the thing to install.
+It needs nothing else installed: no Visual C++ redistributable, no .NET.
+Windows 10 or later already has everything it uses.
 
 The wizard:
 
@@ -131,7 +130,7 @@ pwsh -File tests\Run-AllTests.ps1   # lint, tests, size gate, GUI suite
 | Path | What it is |
 |---|---|
 | `shared/` | Protocol types shared by both sides. serde only — no I/O, no HTTP. |
-| `installer/` | The Windows GUI. Win32 + WinHTTP, no GUI framework, hard 600 kB gate. |
+| `installer/` | The Windows GUI. Win32 + WinHTTP, no GUI framework, hard 620 kB gate. |
 | `installer/src/` | `wizard/` (the wizard pages and its two routes), `tree/` / `choices/` (their models), `http/` (WinHTTP), `api/`, `cache/`, `sha256.rs`, `runlog/`. |
 | `installer/tests/` | Every installer check: Rust tests, the size gate, and the PowerShell suite that drives the real UI. |
 | `installer/res/installer.rc` | Dialog templates, all user-visible strings per language, icon, version info. |

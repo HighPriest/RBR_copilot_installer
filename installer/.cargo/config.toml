@@ -1,0 +1,12 @@
+# The installer only ever builds for Windows MSVC. Naming the target keeps
+# the flags below off host tools (proc macros, build scripts), which a plain
+# `cargo test` would otherwise rebuild with them.
+[build]
+target = "x86_64-pc-windows-msvc"
+
+# The hybrid CRT (build/runtime_link.rs): the VC runtime linked in, the
+# Universal CRT left to Windows, so the installer needs no Visual C++
+# redistributable. A RUSTFLAGS variable REPLACES this, and build.rs then
+# refuses to build rather than ship the dependency again.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

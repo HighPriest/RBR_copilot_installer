@@ -20,7 +20,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 | `cargo test` | AUTOMATED TEST — the unit tests in `src/`, plus `applying_a_selection.rs` and `restoring_a_game_folder.rs`: the engine and a restore over a scratch game folder, sharing `common/mod.rs` | no | yes |
 | `cargo test -- --ignored` | MANUAL CHECK — the zip reader against a corpus of real packages (`src/zip/fixtures/README.md`) | no | no |
 | `Test-ReleaseVersion.ps1` | AUTOMATED TEST — a build carries its `v/X.Y.Z` tag's version | no | yes |
-| `Test-BinarySize.ps1` | AUTOMATED TEST — the 600 kB release gate | no | yes |
+| `Test-BinarySize.ps1` | AUTOMATED TEST — the 620 kB release gate, and no DLL Windows does not ship | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `Test-CrashReport.ps1` | AUTOMATED TEST — a panic leaves a usable report | no | yes |
 | `Test-Redirects.ps1` | AUTOMATED TEST — a token never leaves its origin | no | yes |

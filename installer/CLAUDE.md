@@ -1,15 +1,16 @@
 # installer/CLAUDE.md — Windows GUI installer
 
-Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 600 kB.
+Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 620 kB.
 Run `tests/Test-BinarySize.ps1` after every change that touches dependencies or adds
 noticeable code. If size regresses, fix it before continuing.
 
 The gate was 500 kB until 2026-10-25, when the install engine (I7) took
-the binary to 546 kB. It was raised ONCE, with the alternatives measured
-first — see "The size budget" below. Treat 600 as the same kind of hard
-line 500 was: the answer to "we are over" is to find the bytes, and the
-levers below are still on the table. The next build that wants more
-should have to argue for it as this one did.
+the binary to 546 kB, and 600 kB until 2026-10-31, when the installer
+stopped needing the Visual C++ redistributable (I10, below). Each raise
+measured the alternatives first — see "The size budget" below. Treat 620
+as the same kind of hard line 500 was: the answer to "we are over" is to
+find the bytes, and the levers below are still on the table. The next
+build that wants more should have to argue for it as these did.
 
 ## Why the binary stays small — do not break these
 
@@ -58,6 +59,30 @@ Two findings worth keeping, because both are counter-intuitive:
   whole float-to-decimal machinery. `size.rs` therefore does its one
   decimal digit with integer arithmetic, and nothing in this crate
   formats a float. Check before adding one.
+
+**The second raise, 600 → 620 kB (2026-10-31), and its argument.** The
+exe imported `VCRUNTIME140.dll`, the Visual C++ redistributable, which
+Windows does not ship: on a PC without it, Windows refuses to start the
+installer with an unlocalized "VCRUNTIME140.dll was not found", before a
+single line of ours runs. Measured on the same commit:
+
+| Build | Size | Needs the redistributable |
+|---|---|---|
+| dynamic CRT (as it was) | 595.5 kB | yes |
+| fully static CRT | 692.5 kB | no |
+| **hybrid CRT** (static VC runtime, Universal CRT from Windows) | 617.5 kB | no |
+
+The icon lever (below) would have fitted the hybrid build under 600; the
+maintainer chose to keep the icon and raise the gate to 620 instead. The
+hybrid CRT is `+crt-static` in `.cargo/config.toml` plus two link
+arguments from `build/runtime_link.rs`, which also REFUSES to build
+without `+crt-static` — a `RUSTFLAGS` variable replaces the config file's
+flags, so CI and `Run-AllTests.ps1` deny warnings through clippy instead.
+The same file sets `[build] target`, so even a plain `cargo test` keeps
+those flags off host tools: without it they reached the proc macros,
+whose rebuild collided with the copies an editor's rust-analyzer holds open.
+`Test-BinarySize.ps1` fails the build if the exe imports anything Windows
+does not ship.
 
 Levers still unspent, in order of cheapness, if the gate is threatened
 again:
@@ -418,7 +443,8 @@ first" error.
 
 ## Size audit workflow
 
-- `tests/Test-BinarySize.ps1` — fails build over 600 kB (release gate).
+- `tests/Test-BinarySize.ps1` — fails build over 620 kB (release gate), or
+  on an import Windows does not ship.
 - When investigating: `cargo bloat --release --target x86_64-pc-windows-msvc`.
 - Budget sketch: WinHTTP+dialog skeleton ~120-180 kB; miniz ~40 kB;
   serde+serde_json ~80-120 kB; cache/ledger/engine ~40 kB. Headroom is real
@@ -444,7 +470,7 @@ suites. Read `tests/README.md` before adding one.
   on any other shape; no tag means `0.0.0-dev`. The test builds from tags
   and reads the version back out of the binary. Never type a version into
   `Cargo.toml` or the `.rc` — nothing reads them.
-- `tests/Test-BinarySize.ps1` — the 600 kB release gate.
+- `tests/Test-BinarySize.ps1` — the 620 kB release gate, and the imports check.
 - `tests/Test-HttpClient.ps1` — builds and runs a real `pacenotes-server`,
   then drives `--selftest-http` against it: /health, anonymous vs
   authenticated /packages, downloads, 401, 404, an unreachable port, and

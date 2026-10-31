@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026/10/31 — installer: no Visual C++ redistributable needed; the gate moves to 620 kB (I10)
+
+The exe imported `VCRUNTIME140.dll`, the Visual C++ redistributable, which
+Windows does not ship. On a PC without it, Windows refused to start the
+installer with an unlocalized "VCRUNTIME140.dll was not found" — before a
+single line of ours could explain anything. The README told users to go
+and install it.
+
+Measured on the same commit:
+
+| Build | Size | Needs the redistributable |
+|---|---|---|
+| dynamic CRT (as it was) | 595.5 kB | yes |
+| fully static CRT | 692.5 kB | no |
+| hybrid CRT: VC runtime linked in, Universal CRT from Windows | 617.5 kB | no |
+
+The installer now builds with the hybrid CRT. The Universal CRT has shipped
+with Windows since Windows 10, so the exe needs nothing installed. The icon
+lever would have fitted that under the old 600 kB gate; the maintainer
+chose to keep the icon and raise the gate to **620 kB**, its second raise,
+argued in `installer/CLAUDE.md` "The size budget".
+
+- `+crt-static` lives in `installer/.cargo/config.toml`, and
+  `build/runtime_link.rs` adds the two link arguments that keep the
+  Universal CRT dynamic. A `RUSTFLAGS` variable silently REPLACES the config
+  file's flags, so `build.rs` refuses to build without `+crt-static`, and CI
+  and `Run-AllTests.ps1` now deny warnings through clippy rather than
+  `RUSTFLAGS` (CI keeps `RUSTFLAGS` for the server job only).
+- `Test-BinarySize.ps1` reads the exe's import table and fails if it needs
+  any DLL Windows does not ship — `VCRUNTIME140.dll` coming back, or any new
+  one. It parses the PE file itself, so it needs no Visual Studio tools.
+- The README no longer sends users to install the redistributable.
+
 ## 2026/10/31 — installer: Enter and Tab on scene 3 (I9)
 
 Measured with real keystrokes on every scene that runs without a server.

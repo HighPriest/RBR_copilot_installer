@@ -11,7 +11,7 @@
       2. cargo clippy        — ditto, under -D warnings as CI uses
       3. cargo test          — pure logic, cross-platform, no desktop needed
       4. Test-ReleaseVersion — a build carries its release tag's version
-      5. Test-BinarySize.ps1 — the 600 kB release gate (builds the release exe
+      5. Test-BinarySize.ps1 — the 620 kB release gate (builds the release exe
                                the next two steps run)
       6. Test-HttpClient.ps1 — the WinHTTP client against a live
                                pacenotes-server, including the auth matrix
@@ -57,11 +57,12 @@ function Invoke-Step {
 Push-Location $crateRoot
 $savedRustflags = $env:RUSTFLAGS
 try {
-    # Denies what CI denies; Test-HttpClient clears it again for the server crate.
-    $env:RUSTFLAGS = '-D warnings'
+    # Cleared, not set: RUSTFLAGS would replace .cargo/config.toml's +crt-static (and
+    # build.rs refuses to build without it). Warnings are denied through clippy instead.
+    $env:RUSTFLAGS = $null
     Invoke-Step 'cargo fmt --check' { cargo fmt --check }
     Invoke-Step 'cargo clippy' {
-        cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc
+        cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc -- -D warnings
     }
     Invoke-Step 'cargo test (pure logic)' { cargo test --locked }
     Invoke-Step 'release version' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-ReleaseVersion.ps1') }

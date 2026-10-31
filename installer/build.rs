@@ -2,6 +2,8 @@
 mod default_server;
 #[path = "build/release_version.rs"]
 mod release_version;
+#[path = "build/runtime_link.rs"]
+mod runtime_link;
 #[path = "build/schema_table.rs"]
 mod schema_table;
 
@@ -15,6 +17,7 @@ fn main() {
     // The .rc only names the icon, so without this a new icon leaves the old one in the binary.
     println!("cargo:rerun-if-changed=../rbr.ico");
 
+    runtime_link::link_hybrid_crt();
     default_server::export_default_server();
     schema_table::generate_schema_table();
 }

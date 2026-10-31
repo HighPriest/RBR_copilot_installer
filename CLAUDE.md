@@ -4,9 +4,10 @@ Rust rewrite of a C#/WinForms + Supabase installer for RBR (Richard Burns Rally)
 pacenote packages. Two deliverables:
 
 1. **`installer/`** — Windows-only GUI installer. HARD constraint: final
-   `.exe` < 600 kB. See `installer/CLAUDE.md` before touching it.
-   (Was 500 kB until 2026-10-25, when the install engine landed. The
-   number moved once, deliberately; the rules it produced did not.)
+   `.exe` < 620 kB. See `installer/CLAUDE.md` before touching it.
+   (Was 500 kB until 2026-10-25, when the install engine landed, and 600 kB
+   until 2026-10-31, when it stopped needing the Visual C++ redistributable.
+   Each move was argued for; the rules it produced did not move.)
 2. **`server/`** — package/auth server. Single static binary, libSQL (SQLite)
    for auth, packages stored as flat files on disk. See `server/CLAUDE.md`.
 3. **`shared/`** — protocol types ONLY (serde structs). No I/O, no async, no
@@ -186,7 +187,8 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 - `installer/` builds only on Windows MSVC target and is excluded from the
   workspace default members on purpose. Do not "fix" that.
 - Check binary size after every installer change:
-  Windows: `installer/tests/Test-BinarySize.ps1` (fails > 600 kB).
+  Windows: `installer/tests/Test-BinarySize.ps1` (fails > 620 kB, or on a
+  DLL Windows does not ship).
 
 ## Working conventions for Claude Code sessions
 
