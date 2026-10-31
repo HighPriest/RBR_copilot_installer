@@ -129,6 +129,17 @@ that tells two voices apart.
   primary and two afterthoughts, each is one click instead of
   select-then-Next, and three routes do not fit on one Next anyway. Back and
   Cancel are unaffected.
+  - **The keyboard follows the same order.** Enter in the folder field
+    takes Download/Update, as the page draws it as the default: the
+    sheet's own Enter would go to its disabled Next and do nothing, so the
+    field claims the key. Tab runs folder → Browse → game → Download/Update
+    → Configure/Install → Restore/Uninstall, the main route first, though
+    it is drawn on the right.
+- **Keyboard on the other scenes**: each opens with the focus on its one
+  input (the language list, the secret field, the tree, the first list),
+  Enter presses the sheet's primary button, and Esc asks before closing on
+  every scene where Cancel is offered. Where it is not (6, while the run
+  writes to the game folder, and 7) the dialog manager ignores Esc.
 - The run log moves into this folder here (`.pacenotes\logs\`), replaying
   the lines from before a folder was known, and later panics are written to
   the same file. Pressing a second route button does NOT start a second log:

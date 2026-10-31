@@ -148,3 +148,39 @@ unsafe fn attach_log(dialog: HWND, state: &mut crate::wizard::state::WizardState
         super::progress_page::log_line(dialog, state, &line);
     }
 }
+
+const VK_RETURN: usize = 0x0D;
+const DLGC_WANTALLKEYS: isize = 0x0004;
+const PATH_SUBCLASS: usize = 1;
+
+/// Enter in the path field takes the main route, Download/Update, as the page
+/// draws it as the default: the sheet sends Enter to its own Next, which this
+/// scene disables, so the field has to claim the key itself.
+pub unsafe fn enter_takes_main_route(dialog: HWND) {
+    let path = wm::GetDlgItem(dialog, i32::from(crate::wizard::control_ids::IDC_S3_PATH));
+    windows_sys::Win32::UI::Shell::SetWindowSubclass(path, Some(path_keys), PATH_SUBCLASS, 0);
+}
+
+unsafe extern "system" fn path_keys(
+    edit: HWND,
+    message: u32,
+    wparam: windows_sys::Win32::Foundation::WPARAM,
+    lparam: LPARAM,
+    _subclass: usize,
+    _reference: usize,
+) -> windows_sys::Win32::Foundation::LRESULT {
+    let enter = wparam == VK_RETURN;
+    match message {
+        wm::WM_GETDLGCODE if enter => {
+            windows_sys::Win32::UI::Shell::DefSubclassProc(edit, message, wparam, lparam)
+                | DLGC_WANTALLKEYS
+        }
+        wm::WM_KEYDOWN if enter => {
+            take_route(wm::GetParent(edit), crate::wizard::state::Route::Download);
+            0
+        }
+        // A single-line edit beeps at a carriage return it does not expect.
+        wm::WM_CHAR if enter => 0,
+        _ => windows_sys::Win32::UI::Shell::DefSubclassProc(edit, message, wparam, lparam),
+    }
+}

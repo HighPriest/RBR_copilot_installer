@@ -51,6 +51,28 @@ public static class NativeUi {
 }
 "@
 
+# Keys through the dialog manager, for what only it decides: Tab order, what
+# Enter presses, where focus starts. A message SENT to a control skips it; one
+# POSTED to the wizard's queue goes through the loop that calls it (Send-Key).
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+
+public static class NativeKeys {
+  [StructLayout(LayoutKind.Sequential)] public struct GUITHREADINFO {
+    public int cbSize; public int flags; public IntPtr hwndActive; public IntPtr hwndFocus;
+    public IntPtr hwndCapture; public IntPtr hwndMenuOwner; public IntPtr hwndMoveSize;
+    public IntPtr hwndCaret; public int caretLeft, caretTop, caretRight, caretBottom; }
+  [DllImport("user32.dll")] public static extern bool GetGUIThreadInfo(uint tid, ref GUITHREADINFO i);
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  // Another process's focus: GetFocus only answers for the calling thread.
+  public static IntPtr Focus(IntPtr window) {
+    uint pid; uint tid = GetWindowThreadProcessId(window, out pid);
+    var info = new GUITHREADINFO(); info.cbSize = Marshal.SizeOf(info);
+    return GetGUIThreadInfo(tid, ref info) ? info.hwndFocus : IntPtr.Zero; }
+}
+"@
+
 $script:WM_SETTEXT = 0x000C
 $script:WM_CLOSE = 0x0010
 $script:WM_COMMAND = 0x0111
@@ -464,6 +486,42 @@ function Dismiss-Modal {
         [void][NativeUi]::PostMessageW($Modal, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
     }
     Start-Sleep -Milliseconds 400
+}
+
+function Get-FocusedControlId {
+    <#  The control id that has the keyboard focus in the window's process. #>
+    param([Parameter(Mandatory)][IntPtr]$Window)
+    $focused = [NativeKeys]::Focus($Window)
+    if ($focused -eq [IntPtr]::Zero) { return 0 }
+    return [NativeUi]::GetDlgCtrlID($focused)
+}
+
+function Send-Key {
+    <#  Press and release one key on the control that has the focus.
+
+        POSTED into the wizard's queue, not synthesized as input: the property
+        sheet's message loop takes it out and hands it to the dialog manager
+        exactly as it does a real key, so Tab order, the default button and a
+        control's own key handling all still decide. Real input (keybd_event)
+        goes to whatever window is in FRONT, and Windows' foreground lock
+        would not reliably let a background test bring the wizard there —
+        measured: it lost a key, and then refused outright — which risks
+        typing into another application on the desktop. #>
+    param([Parameter(Mandatory)][IntPtr]$Window, [Parameter(Mandatory)][byte]$VirtualKey)
+    $target = [NativeKeys]::Focus($Window)
+    if ($target -eq [IntPtr]::Zero) { $target = $Window }
+    # lParam: repeat count 1; the key-up also sets the previous-state and transition bits.
+    [void][NativeUi]::PostMessageW($target, $script:WM_KEYDOWN, [IntPtr]$VirtualKey, [IntPtr]1)
+    [void][NativeUi]::PostMessageW($target, $script:WM_KEYUP, [IntPtr]$VirtualKey, [IntPtr]0xC0000001)
+    Start-Sleep -Milliseconds 400
+}
+
+function Move-Focus {
+    <#  Focus a control the way the dialog manager does (WM_NEXTDLGCTL), which
+        SetFocus cannot do across processes. #>
+    param([Parameter(Mandatory)][IntPtr]$Sheet, [Parameter(Mandatory)][IntPtr]$Control)
+    [void][NativeUi]::PostMessageW($Sheet, 0x0028, $Control, [IntPtr]1)
+    Start-Sleep -Milliseconds 300
 }
 
 function Decline-Modal {

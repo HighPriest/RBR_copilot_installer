@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026/10/31 — installer: Enter and Tab on scene 3 (I9)
+
+Measured with real keystrokes on every scene that runs without a server.
+Scenes 1 and 2 were already right: focus starts on the one input, Enter
+presses the primary button, Esc asks before closing. Scene 3 was not:
+
+- **Enter did nothing.** The page draws Download/Update as its default, but
+  in a property sheet Enter goes to the sheet's own Next, which scene 3
+  disables, since its routes are buttons in the page. The folder field now
+  claims Enter and takes Download/Update, with the same checks as a click —
+  no game found, or a folder this account cannot write, say so.
+- **Tab reached the main route last**, after both secondary ones, because
+  template order is Tab order. Download/Update now comes straight after the
+  folder and game; nothing moved on screen.
+
+Esc needed nothing: it asks first wherever Cancel is offered, and the
+dialog manager ignores it on scenes 6 and 7, where Cancel is not.
+
+`Test-UiLayout.ps1` now presses keys through the dialog manager (`Send-Key`,
+`Get-FocusedControlId` in `Win32Ui.psm1`), posted into the wizard's queue
+rather than sent as real input: real keys go to whatever window is in front,
+and a background test could not reliably put the wizard there. It checks
+where focus starts on scenes 1–3, scene 3's Tab order and its Enter, in both
+languages (65/65). Size: 595.5 kB.
+
 ## 2026/10/31 — decided: the last game folder is not remembered (I9)
 
 Remembering the last folder per game would need storage in the user

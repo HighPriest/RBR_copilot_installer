@@ -341,7 +341,7 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] Replace the unwraps left in UI paths with a modal and a log line
 - [x] Sweep orphaned payloads from the cache on startup
   - [x] Decide where "remove from cache" lives now there is no library view
-- [ ] Fix keyboard and tab order, default buttons, and Esc per scene
+- [x] Fix keyboard and tab order, default buttons, and Esc per scene
 
 ## I10 — Release gate
 

@@ -270,9 +270,10 @@ BEGIN
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     // Two columns: the tall main flow on the right, the secondary pair stacked to match it.
     LTEXT           "", IDC_S3_ROUTES, 14, 98, 302, 30
+    // Listed first though drawn on the right: template order is Tab order, and the main route comes first.
+    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 176, 132, 140, 40
     PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 132, 120, 18
     PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 14, 154, 120, 18
-    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 176, 132, 140, 40
 END
 
 IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215

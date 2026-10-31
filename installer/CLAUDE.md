@@ -460,6 +460,14 @@ suites. Read `tests/README.md` before adding one.
   the right message and leaves no trace, and launches with the restart
   arguments while the first instance still runs. It answers the
   restart question NO (`Decline-Modal`): yes would raise a real UAC prompt.
+  And the keyboard (`Send-Key`, `Get-FocusedControlId` in `Win32Ui.psm1`):
+  where focus starts on scenes 1–3, scene 3's Tab order, and that Enter in
+  the folder field takes Download/Update. Only the dialog manager decides
+  those, so `Send-Key` POSTS the key into the wizard's queue, where the
+  sheet's loop hands it to the dialog manager; a message SENT to a control
+  would skip it. Not real input (`keybd_event`): that goes to whatever window
+  is in front, Windows' foreground lock would not reliably let a background
+  test put the wizard there, and a missed key lands in another application.
 - `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID. Writes PNGs so a human
   or an agent can SEE the layout. Asserts nothing, so never gate on it. Use it
   whenever you change geometry: assertions cannot reveal an overlap, and a

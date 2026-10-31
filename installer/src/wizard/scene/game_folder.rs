@@ -56,6 +56,7 @@ pub unsafe extern "system" fn game_folder_page(
             ] {
                 crate::ui::set_text(dialog, control, text);
             }
+            super::game_folder_routes::enter_takes_main_route(dialog);
             show_carried_folder(dialog);
             1
         }

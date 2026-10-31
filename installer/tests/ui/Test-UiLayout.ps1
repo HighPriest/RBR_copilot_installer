@@ -51,6 +51,8 @@ $IDC_S2_MOTD = 311; $IDC_S2_SECRET_LABEL = 312; $IDC_S2_SECRET = 313; $IDC_S2_ST
 $IDC_S3_PATH_LABEL = 321; $IDC_S3_PATH = 322; $IDC_S3_BROWSE = 323
 $IDC_S3_GAME_LABEL = 324; $IDC_S3_GAME = 325
 $IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_ROUTES = 328; $IDC_S3_RESTORE = 329
+$IDC_S4_TREE = 331
+$VK_TAB = 0x09; $VK_RETURN = 0x0D
 
 $ID_WIZBACK = 0x3023; $ID_WIZNEXT = 0x3024
 $PSBTN_NEXT = 1; $PSBTN_BACK = 0
@@ -143,6 +145,8 @@ try {
     $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S1_COMBO
     Assert-That 'scene 1 is the first page shown' ($page -ne [IntPtr]::Zero)
     if ($page -eq [IntPtr]::Zero) { throw 'scene 1 never appeared' }
+    Start-Sleep -Milliseconds 300
+    Assert-Equal 'the keyboard starts on the language list' (Get-FocusedControlId $sheetH) $IDC_S1_COMBO
 
     Assert-AnyShipped 'window caption is a shipped string' $sheet.Title 'IDS_APP_TITLE'
     Assert-AnyShipped 'scene 1 prompt' (Get-CtrlText $page $IDC_S1_PROMPT) 'IDS_S1_PROMPT'
@@ -165,6 +169,8 @@ try {
     $page = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S2_MOTD
     Assert-That 'scene 2 follows scene 1' ($page -ne [IntPtr]::Zero)
     if ($page -eq [IntPtr]::Zero) { throw 'scene 2 never appeared' }
+    Start-Sleep -Milliseconds 300
+    Assert-Equal 'the keyboard starts on the secret field' (Get-FocusedControlId $sheetH) $IDC_S2_SECRET
 
     # From here on the chosen language must be in force — including the title
     # bar, which each scene re-sets.
@@ -362,6 +368,18 @@ try {
             Assert-Equal 'and its game detected' (Get-CtrlText $pageR $IDC_S3_GAME) $RBR_TITLE
             Assert-That 'so a route can be taken at once' `
             ([NativeUi]::IsWindowEnabled([NativeUi]::GetDlgItem($pageR, $IDC_S3_DOWNLOAD)))
+            # Keystrokes, since only the dialog manager decides these (I9).
+            $hR = $sheetR.Handle
+            Assert-Equal 'the keyboard starts on the folder field' (Get-FocusedControlId $hR) $IDC_S3_PATH
+            $order = @()
+            foreach ($i in 1..4) { Send-Key -Window $hR -VirtualKey $VK_TAB; $order += Get-FocusedControlId $hR }
+            $expected = @($IDC_S3_BROWSE, $IDC_S3_DOWNLOAD, $IDC_S3_CONFIGURE, $IDC_S3_RESTORE)
+            Assert-That 'Tab reaches the main route before the other two' `
+            (-not (Compare-Object $order $expected -SyncWindow 0)) "Tab went $($order -join ' -> ')"
+            Move-Focus -Sheet $hR -Control ([NativeUi]::GetDlgItem($pageR, $IDC_S3_PATH))
+            Send-Key -Window $hR -VirtualKey $VK_RETURN
+            $page4 = Wait-ForPageControl -Sheet $hR -CtrlId $IDC_S4_TREE -TimeoutMs 4000
+            Assert-That 'Enter in the folder field takes Download/Update' ($page4 -ne [IntPtr]::Zero)
         }
     }
 } finally {
