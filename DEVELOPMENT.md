@@ -106,7 +106,7 @@ Eight steps, in order, and what each one is actually for:
 | 3 | `cargo test` | The pure modules: game detection, the two scene models, sha256, the cache, the run log, size formatting. No Windows needed; CI runs these. |
 | 4 | `Test-VersionSync.ps1` | `Cargo.toml` version vs the four VERSIONINFO fields in `res/installer.rc`. The CD workflows tag releases from `Cargo.toml`, so drift ships an `.exe` whose properties contradict its tag. |
 | 5 | `Test-BinarySize.ps1` | The 600 kB release gate. Also produces the `.exe` the next three steps run. |
-| 6 | `Test-HttpClient.ps1` | Builds and starts a real `pacenotes-server`, then drives the installer's `--selftest-http` against it: health, anonymous vs bearer, 401/403/404, unreachable. WinHTTP cannot be unit tested, so this is the only honest check of it. Needs no desktop, so **CI runs it**. |
+| 6 | `Test-HttpClient.ps1` | Builds and starts a real `pacenotes-server`, then drives the installer's `--selftest-http` against it: health, anonymous vs bearer, 401/403/404, unreachable, and that the server's access log names this build's user agent. WinHTTP cannot be unit tested, so this is the only honest check of it. Needs no desktop, so **CI runs it**. |
 | 7 | `ui\Test-UiLayout.ps1` | Walks scenes 1-3 against a deliberately dead server (`--server http://127.0.0.1:1`), once per shipped language, asserting every caption against what `res/installer.rc` defines. |
 | 8 | `ui\Test-WizardDownload.ps1` | Walks the **whole wizard**, scenes 1-7, against a live server holding a nested catalogue, with real downloads into a throwaway cache. Asserts both gates, the lists, the summary and the cache on disk. |
 

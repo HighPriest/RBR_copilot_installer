@@ -329,7 +329,7 @@ Ordered security first, then what support needs, then what a user hits.
         choosing silently between re-sending it and making it a GET
   - [x] Pin it with `tests/Test-Redirects.ps1`, driving the real WinHTTP
         path rather than a reimplementation of it
-- [ ] **S1** Build the user agent from `CARGO_PKG_VERSION`
+- [x] **S1** Build the user agent from `CARGO_PKG_VERSION`
 - [ ] **§7** Give the run log a header and per-line timestamps
 - [ ] **D12** Try `/packages` even when `/health` failed
 - [ ] **D12** Cap what `http::get` will buffer

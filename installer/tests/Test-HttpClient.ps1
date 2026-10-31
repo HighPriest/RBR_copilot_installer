@@ -177,7 +177,9 @@ try {
     if (-not $tokenMatch.Success) { throw 'cannot continue without a credential' }
     $token = $tokenMatch.Value
 
-    $proc = Start-Process $server -PassThru -WindowStyle Hidden -ArgumentList @(
+    # Its stdout is the access log, which is where the user agent ends up.
+    $serverLog = Join-Path $work 'server.log'
+    $proc = Start-Process $server -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverLog -ArgumentList @(
         'serve', '--listen', "127.0.0.1:$Port", '--data', $dataRoot, '--db-url', $db)
     $base = "http://127.0.0.1:$Port"
     $deadline = (Get-Date).AddSeconds(15)
@@ -316,6 +318,15 @@ try {
 
     Assert-That 'the access key never appears in the report' `
     (-not $r.MESSAGE.Contains('pcn_'))
+
+    Write-Host "`n-- user agent --"
+    # Cargo.toml is the source of truth, read the way Test-VersionSync reads it.
+    $cargoText = Get-Content -Raw (Join-Path $crateRoot 'Cargo.toml')
+    $version = [regex]::Match($cargoText, '(?m)^version\s*=\s*"(?<v>[^"]+)"').Groups['v'].Value
+    $agent = "Pacenotes-Installer/$version"
+    $logged = if (Test-Path $serverLog) { Get-Content -Raw $serverLog } else { '' }
+    Assert-That "the server's access log names this build ($agent)" `
+    ($logged -match "agent=$([regex]::Escape($agent))(\s|$)") 'no access line carried that agent'
 } finally {
     if ($proc -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
     Remove-Item -Recurse -Force $script:work -ErrorAction SilentlyContinue

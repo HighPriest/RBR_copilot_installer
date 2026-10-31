@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026/10/31 — installer: the user agent names the build (S1)
+
+The installer announced itself as `Pacenotes-Installer/0.1` whatever its
+version, so the server's access log could not tell one build from another.
+It is now `Pacenotes-Installer/<version>`, taken from `Cargo.toml` at
+compile time, so it moves with the version bump that tags a release.
+`Test-HttpClient.ps1` checks it where it matters: in the real server's
+access log, against the version in `Cargo.toml`.
+
+That closes the installer's share of S1. The rest of the finding was
+settled elsewhere: the manifest version and minimum installer were
+superseded by the per-game schema hash (S11), which already tells an
+out-of-date installer to update; the server has logged the agent since D11;
+and `generated_at` / `generation` wait for the server's `/ready` (S6).
+The conflict report already carried the same version, so the two agree.
+
 ## 2026/10/30 — installer: a bearer token no longer leaks across a redirect
 
 The design review suspected it (C1, "probably with the `Authorization`

@@ -999,6 +999,9 @@ reasoning and the severity:
 Done here since the review was written, for the record:
 
 - [x] **D12** The catalogue error is written into the run log.
+- [x] **S1** The user agent is `Pacenotes-Installer/<version>`, taken from
+      the build, so the server's access log (D11) names the build behind
+      every request.
 - [x] **P14** The restore scene, with two rules the design had not named:
       a package whose payload is gone is left installed rather than
       removed, and the ledger afterwards keeps the snapshot's per-file
