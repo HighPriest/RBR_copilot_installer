@@ -8,7 +8,7 @@ pub fn log_dir(game_dir: &std::path::Path) -> std::path::PathBuf {
     game_dir.join(crate::ledger::STATE_DIR).join("logs")
 }
 
-/// One file per run, named by its `engine::utc_stamp`, so reopening the
+/// One file per run, named by its `utc_time::file_stamp`, so reopening the
 /// installer to read a run cannot erase it.
 pub fn log_path(game_dir: &std::path::Path, stamp: &str) -> std::path::PathBuf {
     log_dir(game_dir).join(format!("install-{stamp}.log"))

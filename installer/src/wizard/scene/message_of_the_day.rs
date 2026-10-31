@@ -148,7 +148,8 @@ unsafe fn on_secret_checked(dialog: HWND, outcome: crate::worker::SecretOutcome)
             return;
         }
         crate::worker::SecretOutcome::Accepted { expires_at } => {
-            if let Some(date) = expiry_notice(expires_at, pacenotes_installer::engine::unix_now()) {
+            if let Some(date) = expiry_notice(expires_at, pacenotes_installer::utc_time::unix_now())
+            {
                 crate::ui::message_box_info(
                     dialog,
                     &crate::i18n::load_string_arg(crate::i18n::IDS_S2_EXPIRING, &date),
@@ -175,6 +176,6 @@ fn expiry_notice(expires_at: Option<i64>, now: i64) -> Option<String> {
     if at - now > EXPIRY_NOTICE_DAYS * 86_400 {
         return None;
     }
-    let stamp = pacenotes_installer::engine::utc_stamp(at);
+    let stamp = pacenotes_installer::utc_time::file_stamp(at);
     Some(stamp.split('T').next().unwrap_or("").to_string())
 }

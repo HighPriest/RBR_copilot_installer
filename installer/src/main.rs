@@ -8,6 +8,7 @@ mod crash;
 mod http;
 mod i18n;
 mod package_download;
+mod run_header;
 mod selftest;
 mod single_instance;
 mod ui;

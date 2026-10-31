@@ -409,6 +409,17 @@ scenes 4b and 6 and again on 7; any error shows it.
   it, so the file is the whole run and not just its second half.
 - Every line is flushed as it is written: a run that dies still leaves the
   line saying what it was doing.
+- **The file opens with what support asks for first** (DESIGN-REVIEW §7):
+  the build (`Pacenotes Installer 1.2.3`, from the release tag), when the
+  run started, the server it talked to, and the Windows build — the real
+  one, from `RtlGetVersion`, since `GetVersionExW` reports Windows 8 to a
+  program whose manifest names nothing newer. A blank line ends the header.
+- **Every line in the file says when it was said**, in UTC and in the
+  server log's own shape (`2026-10-31T12:11:31Z  installed …`), so a
+  user's log can be laid next to the server's. A line replayed when the
+  folder is settled keeps the time it was said, not the time it was copied.
+- The pane shows neither the header nor the times: they are for whoever
+  reads the report, and a user reading along needs only the lines.
 - **A panic is written down too.** This is a GUI-subsystem binary built
   with `panic = "abort"`, so a panic has nowhere to print: the process
   vanishes and Windows records an offset into a stripped exe, which tells

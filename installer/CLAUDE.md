@@ -289,7 +289,10 @@ after the second folder is deleted.
   `<game dir>\.pacenotes\logs\install-<stamp>.log`, newest five kept. The UI
   thread owns it, as it owns the controls. It is attached once scene 3
   settles a folder, replaying what was said before, because the log belongs
-  with the install it describes.
+  with the install it describes. The FILE opens with a header (build, start,
+  server, Windows build; `run_header.rs` in the bin) and times every line in
+  UTC; the pane shows neither. `utc_time.rs` is the one place a date is
+  formatted — do not hand-roll another.
 - `size.rs` — byte counts as a person reads them ("41.6 MB"), in binary units
   so they match Explorer.
 - `worker.rs` — the one background thread. A worker NEVER touches a control;

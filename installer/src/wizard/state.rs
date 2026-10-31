@@ -73,6 +73,7 @@ pub struct WizardState {
 
 impl WizardState {
     pub fn new(base_url: String, cache_override: Option<std::path::PathBuf>) -> WizardState {
+        let header = crate::run_header::run_header(&base_url);
         WizardState {
             language: crate::i18n::Language::En,
             secret: String::new(),
@@ -103,7 +104,7 @@ impl WizardState {
             restore_to: None,
             restore_plan: pacenotes_installer::restore::Plan::default(),
             // Attached to the game folder once scene 3 settles it.
-            log: pacenotes_installer::runlog::Log::create(None),
+            log: pacenotes_installer::runlog::Log::create(header, None),
             cancel: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
             install_started: false,
             outcome: None,

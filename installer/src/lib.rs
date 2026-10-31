@@ -13,6 +13,7 @@ pub mod schema;
 pub mod sha256;
 pub mod size;
 pub mod tree;
+pub mod utc_time;
 pub mod zip;
 
 mod relative_path;

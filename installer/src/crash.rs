@@ -82,7 +82,9 @@ fn record(text: &str) -> Option<std::path::PathBuf> {
         .append(true)
         .open(&path)
         .ok()?;
-    std::io::Write::write_all(&mut file, format!("{text}\n").as_bytes()).ok()?;
+    // Timed like every other line of the run log it usually lands in.
+    let now = pacenotes_installer::utc_time::iso_stamp(pacenotes_installer::utc_time::unix_now());
+    std::io::Write::write_all(&mut file, format!("{now}  {text}\n").as_bytes()).ok()?;
     Some(path)
 }
 

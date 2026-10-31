@@ -73,7 +73,8 @@ unsafe fn attach_log(dialog: HWND, state: &mut crate::wizard::state::WizardState
     if state.log.path().and_then(|path| path.parent()) == Some(dir.as_path()) {
         return;
     }
-    let stamp = pacenotes_installer::engine::utc_stamp(pacenotes_installer::engine::unix_now());
+    let stamp =
+        pacenotes_installer::utc_time::file_stamp(pacenotes_installer::utc_time::unix_now());
     state
         .log
         .attach(pacenotes_installer::runlog::log_path(&folder, &stamp));

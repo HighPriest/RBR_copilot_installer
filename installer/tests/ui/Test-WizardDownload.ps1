@@ -364,6 +364,28 @@ try {
             "log file said [$onDisk]"
         Assert-That 'the summary points at that file' `
         ($detail.Contains($runLogs[0].FullName)) "summary said [$detail]"
+
+        # What support asks for first: which build, when, which server, which Windows.
+        $logLines = @(Get-Content $runLogs[0].FullName)
+        $build = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($launch.Path).ProductVersion
+        Assert-That 'the log opens by naming this build' `
+        ($logLines[0] -eq "Pacenotes Installer $build") "first line [$($logLines[0])]"
+        Assert-That 'and says when the run started, in UTC' `
+        ($onDisk -match '(?m)^started  \d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$')
+        Assert-That 'and names the server the run used' `
+        ($onDisk -match "(?m)^server   http://127\.0\.0\.1:$port$")
+        $os = [Environment]::OSVersion.Version
+        Assert-That 'and the real Windows build, not the compatibility one' `
+        ($onDisk -match "(?m)^windows  $($os.Major)\.$($os.Minor)\.$($os.Build)$") `
+            "expected windows $($os.Major).$($os.Minor).$($os.Build)"
+        $blank = [array]::IndexOf($logLines, '')
+        $body = @($logLines | Select-Object -Skip ($blank + 1))
+        $untimed = @($body | Where-Object { $_ -notmatch '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ  ' })
+        Assert-That 'every line after the header says when it was written' `
+        (($blank -gt 0) -and $body.Count -gt 0 -and $untimed.Count -eq 0) "untimed: [$($untimed -join ' | ')]"
+        Assert-That 'while the pane shows the same lines without header or times' `
+        ($logText.Contains('installed rbr/public/') -and -not $logText.Contains('started  ') -and
+            -not ($logText -match '\d\d:\d\d:\d\dZ  ')) "pane said [$logText]"
     }
 
     # ---------------------------------------------------------------

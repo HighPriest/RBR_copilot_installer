@@ -108,7 +108,7 @@ Eight steps, in order, and what each one is actually for:
 | 5 | `Test-BinarySize.ps1` | The 600 kB release gate. Also produces the `.exe` the next three steps run. |
 | 6 | `Test-HttpClient.ps1` | Builds and starts a real `pacenotes-server`, then drives the installer's `--selftest-http` against it: health, anonymous vs bearer, 401/403/404, unreachable, and that the server's access log names this build's user agent. WinHTTP cannot be unit tested, so this is the only honest check of it. Needs no desktop, so **CI runs it**. |
 | 7 | `ui\Test-UiLayout.ps1` | Walks scenes 1-3 against a deliberately dead server (`--server http://127.0.0.1:1`), once per shipped language, asserting every caption against what `res/installer.rc` defines. |
-| 8 | `ui\Test-WizardDownload.ps1` | Walks the **whole wizard**, scenes 1-7, against a live server holding a nested catalogue, with real downloads into a throwaway cache. Asserts both gates, the lists, the summary and the cache on disk. |
+| 8 | `ui\Test-WizardDownload.ps1` | Walks the **whole wizard**, scenes 1-7, against a live server holding a nested catalogue, with real downloads into a throwaway cache. Asserts both gates, the lists, the summary, the cache on disk and the run log's header and times. |
 
 Steps 7 and 8 need an interactive desktop. CI skips them; run them locally
 before anything that touches the UI.

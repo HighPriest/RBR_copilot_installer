@@ -12,7 +12,7 @@ mod uninstall_package;
 
 pub use execute_error::ExecuteError;
 pub use record_configured::record_configured;
-pub use restore_point::{snapshot_path, unix_now, utc_stamp, RESTORE_DIR};
+pub use restore_point::{snapshot_path, RESTORE_DIR};
 pub use run::{execute, Outcome};
 
 pub(crate) use install_package::{install_package, Installing, Progress};

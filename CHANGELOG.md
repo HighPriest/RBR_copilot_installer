@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026/10/31 — installer: the run log says when, which build and where (§7)
+
+Support asks the same three things before anything else: when did this
+happen, which build was it, and which server was it talking to. The run log
+answered none of them.
+
+- Each log FILE now opens with a header — `Pacenotes Installer <version>`
+  (the release tag's), the UTC start time, the server URL and the Windows
+  build — then a blank line.
+- Every line in the file carries its time, in UTC and in the shape the
+  server's log writes (`2026-10-31T12:11:31Z  …`), so the two can be lined
+  up. A line said before the game folder was known keeps the time it was
+  said when it is replayed into the file; the crash hook's line is timed too.
+- The Windows build comes from `RtlGetVersion`. `GetVersionExW` would have
+  said Windows 8: the manifest names no newer Windows, so it is told the
+  compatibility answer.
+- The pane on scenes 6 and 7 is unchanged: no header, no times.
+- Dates are formatted in one place, `utc_time.rs`, which the restore point
+  names and the key-expiry notice now use as well.
+
+`Test-WizardDownload.ps1` checks the header and the times on the real file
+the wizard wrote (98/98). 582 kB against the gate.
+
 ## 2026/10/31 — installer: the release tag is the version
 
 A release used to start by typing the same version into five places —
