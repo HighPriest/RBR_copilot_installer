@@ -49,7 +49,7 @@ warning as a failure here too.
 pwsh -File installer/tests/Run-AllTests.ps1
 ```
 
-Which is: fmt, clippy, the cargo test binaries, version sync, the 600 kB
+Which is: fmt, clippy, the cargo test binaries, the release version, the 600 kB
 size gate, the WinHTTP client against a live server, the crash report, the
 UI layout in both languages, and the wizard flow end to end. It needs an
 interactive desktop for the last three.

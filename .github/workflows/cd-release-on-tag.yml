@@ -1,0 +1,97 @@
+# Releases the installer when a `v/X.Y.Z` tag is pushed.
+#
+# The tag is the only place a version is written. It reaches the build as
+# PACENOTES_RELEASE_TAG, and build.rs turns it into the user agent, the
+# conflict report's version and the VERSIONINFO, refusing any other shape
+# (installer/requirements.md, "I10 — the version comes from the tag").
+# Replaces the release on merge to master and the manual release, which read
+# the version from installer/Cargo.toml and created the tag from it.
+#
+#   git tag v/1.2.3 && git push origin v/1.2.3
+
+name: Pacenotes Installer Release
+
+on:
+  push:
+    tags: [ "v/*" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  PACENOTES_RELEASE_TAG: ${{ github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust (MSVC target)
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: x86_64-pc-windows-msvc
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: installer
+
+    - name: Default server (the public address, from the repository variable)
+      working-directory: installer
+      shell: pwsh
+      env:
+        PACENOTES_DEFAULT_SERVER: ${{ vars.PACENOTES_DEFAULT_SERVER }}
+      run: |
+        if (-not $env:PACENOTES_DEFAULT_SERVER) {
+          Write-Error "Set the repository variable PACENOTES_DEFAULT_SERVER to the public server URL."
+          exit 1
+        }
+        "PACENOTES_DEFAULT_SERVER=$env:PACENOTES_DEFAULT_SERVER" | Set-Content .env
+
+    - name: Test pure-logic modules
+      working-directory: installer
+      run: cargo test --locked
+
+    - name: Build the application (release + size gate)
+      working-directory: installer
+      shell: pwsh
+      run: .\tests\Test-BinarySize.ps1
+
+    # build.rs already refuses a malformed tag; this catches a job that built
+    # without one, which would otherwise release a development build.
+    - name: The installer carries the tag's version
+      shell: pwsh
+      run: |
+        $exe = "installer\target\x86_64-pc-windows-msvc\release\pacenotes-installer.exe"
+        if (-not (Test-Path $exe -PathType Leaf)) {
+          Write-Error "Output file not found: $exe"
+          exit 1
+        }
+        $expected = $env:PACENOTES_RELEASE_TAG -replace '^v/', ''
+        $actual = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Resolve-Path $exe)).ProductVersion
+        if ($actual -ne $expected) {
+          Write-Error "Built version $actual from tag $env:PACENOTES_RELEASE_TAG."
+          exit 1
+        }
+        echo "Application Version: $actual"
+        echo "VERSION=$actual" >> $env:GITHUB_ENV
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pacenotes-installer-${{ env.VERSION }}
+        path: installer/target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe
+
+    - name: Create release and upload installer
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        files: installer/target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe

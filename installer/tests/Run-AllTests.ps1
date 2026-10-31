@@ -10,7 +10,7 @@
                                so the root CI job's fmt/clippy never sees it
       2. cargo clippy        — ditto, under -D warnings as CI uses
       3. cargo test          — pure logic, cross-platform, no desktop needed
-      4. Test-VersionSync    — Cargo.toml version vs the .rc VERSIONINFO
+      4. Test-ReleaseVersion — a build carries its release tag's version
       5. Test-BinarySize.ps1 — the 600 kB release gate (builds the release exe
                                the next two steps run)
       6. Test-HttpClient.ps1 — the WinHTTP client against a live
@@ -64,7 +64,7 @@ try {
         cargo clippy --locked --all-targets --target x86_64-pc-windows-msvc
     }
     Invoke-Step 'cargo test (pure logic)' { cargo test --locked }
-    Invoke-Step 'version sync' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-VersionSync.ps1') }
+    Invoke-Step 'release version' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-ReleaseVersion.ps1') }
     Invoke-Step 'binary size gate' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-BinarySize.ps1') }
     Invoke-Step 'http client vs live server' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-HttpClient.ps1') }
     Invoke-Step 'crash report' { pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-CrashReport.ps1') }

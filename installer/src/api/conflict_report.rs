@@ -14,7 +14,7 @@ impl super::Api {
     ) -> Result<(), crate::http::HttpError> {
         let report = pacenotes_shared::ConflictReport {
             game: game.to_string(),
-            installer: env!("CARGO_PKG_VERSION").to_string(),
+            installer: env!("PACENOTES_VERSION").to_string(),
             conflicts: fitting_conflicts(overlaps),
         };
         if report.conflicts.is_empty() {

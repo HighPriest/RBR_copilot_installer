@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026/10/31 — installer: the release tag is the version
+
+A release used to start by typing the same version into five places —
+`installer/Cargo.toml` and four VERSIONINFO fields in `res/installer.rc` —
+which the workflows then read to CREATE a tag. It now runs the other way:
+**pushing `v/X.Y.Z` is the release**, and that tag is the only place a
+version is written.
+
+- `cd-release-on-tag.yml` builds on a pushed `v/*` tag and passes it to the
+  build as `PACENOTES_RELEASE_TAG`. `build/release_version.rs` turns it into
+  the user agent, the conflict report's version and all four VERSIONINFO
+  fields (through a header the `.rc` includes), and FAILS THE BUILD on any
+  other shape — a mistyped tag cannot become a release. The workflow then
+  checks the built `.exe` carries the tag's version before publishing.
+- Without a tag a build is `0.0.0-dev`, so a developer's build is obvious in
+  the server's access log and in the file properties.
+- The release on merge to `master` and the manual release are gone: both
+  read `Cargo.toml` and created the tag from it. Merging publishes nothing.
+- `Cargo.toml` says `version = "0.0.0"`, with a comment that the tag decides.
+- `Test-VersionSync.ps1`, which checked that the five hand-typed copies
+  agreed, is replaced by `Test-ReleaseVersion.ps1`, which builds from real
+  tags and reads the version back out of the binary — file properties and
+  user agent — and checks that nine malformed tags (`v1.2.3`, `v/1.2`,
+  `v/1.2.3-rc1`, `v/65536.0.0`, an empty one, …) each fail the build.
+
+This supersedes the S1 entry below in one respect: the user agent's version
+now comes from the tag, not from `Cargo.toml`.
+
 ## 2026/10/31 — installer: the user agent names the build (S1)
 
 The installer announced itself as `Pacenotes-Installer/0.1` whatever its

@@ -21,7 +21,7 @@ const TIMEOUT_RECEIVE_MS: i32 = 30_000;
 const CHUNK_SIZE: usize = 64 * 1024;
 
 /// The server's access log records it, so a report can be traced to the build that sent it.
-const USER_AGENT: &str = concat!("Pacenotes-Installer/", env!("CARGO_PKG_VERSION"));
+const USER_AGENT: &str = concat!("Pacenotes-Installer/", env!("PACENOTES_VERSION"));
 
 /// The whole body in memory: right for a manifest, wrong for a package zip.
 pub fn get(

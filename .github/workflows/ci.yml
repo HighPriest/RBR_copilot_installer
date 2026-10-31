@@ -78,11 +78,11 @@ jobs:
       - name: Test (pure-logic modules)
         run: cargo test --locked
 
-      # Cargo.toml is what the CD workflows tag releases from, so a drifted
-      # VERSIONINFO would ship an .exe whose properties contradict its tag.
-      - name: Version sync (Cargo.toml vs installer.rc)
+      # A release's version comes from its v/X.Y.Z tag; this builds from tags
+      # and reads the version back out of the binary.
+      - name: Release version (tag -> build)
         shell: pwsh
-        run: .\tests\Test-VersionSync.ps1
+        run: .\tests\Test-ReleaseVersion.ps1
 
       - name: Release build + 600 kB size gate
         shell: pwsh

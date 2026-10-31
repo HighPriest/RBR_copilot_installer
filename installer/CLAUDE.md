@@ -403,11 +403,13 @@ suites. Read `tests/README.md` before adding one.
     pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate
 
 - `src/gamedir/tests.rs` — cross-platform `cargo test`. Game-folder identification.
-- `tests/Test-VersionSync.ps1` — `[package] version` in Cargo.toml must match
-  FILEVERSION/PRODUCTVERSION and the FileVersion/ProductVersion strings in
-  `res/installer.rc`. The CD workflows tag releases from Cargo.toml, so drift
-  would ship an .exe whose properties contradict its own tag. Bump all four
-  together.
+- `tests/Test-ReleaseVersion.ps1` — a release's version comes from its
+  `v/X.Y.Z` tag and ONLY from there: `build/release_version.rs` reads
+  `PACENOTES_RELEASE_TAG` and feeds the user agent, the conflict report and
+  all four VERSIONINFO fields (via a generated header), and fails the build
+  on any other shape; no tag means `0.0.0-dev`. The test builds from tags
+  and reads the version back out of the binary. Never type a version into
+  `Cargo.toml` or the `.rc` — nothing reads them.
 - `tests/Test-BinarySize.ps1` — the 600 kB release gate.
 - `tests/Test-HttpClient.ps1` — builds and runs a real `pacenotes-server`,
   then drives `--selftest-http` against it: /health, anonymous vs
@@ -433,7 +435,7 @@ the lib target (`src/lib.rs`) and the Windows-only bin (`src/main.rs`) owns
 `http`/`ui`/`i18n`, so `cargo test` never needs Win32.
 
 CI (`.github/workflows/ci.yml`, `installer` job) runs fmt, clippy, `cargo
-test`, the version sync and the size gate — everything except the GUI tests.
+test`, the release-version test and the size gate — everything except the GUI tests.
 The installer is excluded from the Cargo workspace, so the `server` job's
 fmt/clippy do NOT reach it; that job is the only thing linting this crate.
 `Run-AllTests.ps1` runs the same set plus the GUI tests, so a green local run

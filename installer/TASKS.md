@@ -351,8 +351,19 @@ Ordered security first, then what support needs, then what a user hits.
 
 - [x] Save a `cargo bloat` report to `docs/bloat.txt`
 - [ ] Pass the 600 kB gate on the release build, and record the final size
-- [ ] Bump the version in `Cargo.toml` and the four VERSIONINFO fields
-      together
+- [x] Version every build from its release tag, `v/X.Y.Z`, so no version
+      is ever typed by hand
+  - [x] `build.rs` reads the tag, refuses any other shape, and falls back
+        to `0.0.0-dev` without one
+  - [x] The user agent and the conflict report take that version
+  - [x] VERSIONINFO comes from a header `build.rs` writes, so its four
+        fields cannot drift
+  - [x] `Cargo.toml`'s version stops meaning anything, and says so
+  - [x] Release on pushing a `v/*` tag, retiring the merge and manual
+        releases that read `Cargo.toml`
+  - [x] Replace `Test-VersionSync.ps1` with a test that builds from a tag
+        and reads the version back out of the binary
+  - [x] Update DEVELOPMENT.md, the CLAUDE.md files and the test docs
 - [ ] If over budget, pull a lever from `requirements.md`: the icon first,
       then a hand-rolled JSON parser
 - [ ] Decide what to do about `vcruntime140.dll`: document the dependency

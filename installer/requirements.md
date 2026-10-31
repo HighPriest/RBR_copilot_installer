@@ -78,6 +78,33 @@ and it is the one piece of this policy resting on review rather than on a
 test. A test for it needs either a loopback TLS certificate or `http.rs`
 moved into the lib.
 
+### I10 — the version comes from the tag
+
+**Decided 2026-10-31:** a release is a pushed tag shaped `v/X.Y.Z`, and
+that tag is the only place a version is written. Nothing is bumped by hand.
+
+- `build.rs` owns the rule, so it lives in one place: it reads
+  `PACENOTES_RELEASE_TAG` (CI sets it to the pushed tag), accepts exactly
+  `v/` plus three decimal numbers, each 0..=65535 because VERSIONINFO
+  stores them as 16-bit words, and FAILS THE BUILD on anything else. A
+  release built from a mistyped tag must not exist.
+- Without the variable the build is a development one, `0.0.0-dev`
+  (VERSIONINFO `0,0,0,0`), so a dev build is recognisable in the server's
+  access log and in the file properties.
+- One value reaches every place a version shows: the user agent, the
+  conflict report's `installer` field, and all four VERSIONINFO fields,
+  which come from a header `build.rs` writes into `OUT_DIR` for the `.rc`
+  to include.
+- `Cargo.toml`'s `version` is fixed at `0.0.0` with a comment saying the
+  tag decides. Leaving a real-looking number there would invite someone to
+  bump it.
+- CD releases when a `v/*` tag is pushed, and names the GitHub release
+  after that tag. The release on merge to `master` and the manual one both
+  READ `Cargo.toml` and CREATE the tag; with nothing to read they go.
+- Verified by building, not by reading files: the test builds from a real
+  tag and reads the version back out of the binary's file properties and
+  its user agent string, and checks that malformed tags fail the build.
+
 ### §7 — the run log's header
 
 Support asks for three things first: when, which build, and which server.

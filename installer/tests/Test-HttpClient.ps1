@@ -320,9 +320,8 @@ try {
     (-not $r.MESSAGE.Contains('pcn_'))
 
     Write-Host "`n-- user agent --"
-    # Cargo.toml is the source of truth, read the way Test-VersionSync reads it.
-    $cargoText = Get-Content -Raw (Join-Path $crateRoot 'Cargo.toml')
-    $version = [regex]::Match($cargoText, '(?m)^version\s*=\s*"(?<v>[^"]+)"').Groups['v'].Value
+    # The binary's own product version, which Test-ReleaseVersion ties to the release tag.
+    $version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe).ProductVersion
     $agent = "Pacenotes-Installer/$version"
     $logged = if (Test-Path $serverLog) { Get-Content -Raw $serverLog } else { '' }
     Assert-That "the server's access log names this build ($agent)" `

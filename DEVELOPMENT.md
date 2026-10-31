@@ -104,7 +104,7 @@ Eight steps, in order, and what each one is actually for:
 | 1 | `cargo fmt --check` | The installer is outside the workspace, so the root CI job never formats it. |
 | 2 | `cargo clippy` | Same, under `-D warnings` exactly as CI does. |
 | 3 | `cargo test` | The pure modules: game detection, the two scene models, sha256, the cache, the run log, size formatting. No Windows needed; CI runs these. |
-| 4 | `Test-VersionSync.ps1` | `Cargo.toml` version vs the four VERSIONINFO fields in `res/installer.rc`. The CD workflows tag releases from `Cargo.toml`, so drift ships an `.exe` whose properties contradict its tag. |
+| 4 | `Test-ReleaseVersion.ps1` | Builds from a `v/X.Y.Z` tag and from none, and reads the version back out of the binary: file properties and user agent. Then checks every malformed tag fails the build (§6). |
 | 5 | `Test-BinarySize.ps1` | The 600 kB release gate. Also produces the `.exe` the next three steps run. |
 | 6 | `Test-HttpClient.ps1` | Builds and starts a real `pacenotes-server`, then drives the installer's `--selftest-http` against it: health, anonymous vs bearer, 401/403/404, unreachable, and that the server's access log names this build's user agent. WinHTTP cannot be unit tested, so this is the only honest check of it. Needs no desktop, so **CI runs it**. |
 | 7 | `ui\Test-UiLayout.ps1` | Walks scenes 1-3 against a deliberately dead server (`--server http://127.0.0.1:1`), once per shipped language, asserting every caption against what `res/installer.rc` defines. |
@@ -231,27 +231,37 @@ written to `%LOCALAPPDATA%` or anywhere else in the profile.
 
 ## 6. Releasing
 
-The installer version lives in **two** places and they must agree —
-`Test-VersionSync.ps1` enforces it, and CI runs that check:
+A release is a pushed tag, and the tag is the only place a version is
+written. Nothing is bumped by hand:
 
-1. `installer/Cargo.toml` → `[package] version`
-2. `installer/res/installer.rc` → `FILEVERSION`, `PRODUCTVERSION`, and the
-   `FileVersion` / `ProductVersion` strings
+```sh
+git tag v/1.2.3
+git push origin v/1.2.3
+```
 
-Then merge a PR into `master`, or run a workflow by hand. A plain push to
-`master` runs CI but publishes nothing.
+`cd-release-on-tag.yml` builds from it. The tag reaches the build as
+`PACENOTES_RELEASE_TAG`, and `installer/build/release_version.rs` turns it
+into everything that shows a version: the file properties (all four
+VERSIONINFO fields, through a header it writes for `res/installer.rc`), the
+user agent the server logs, and the version a conflict report carries.
+
+- The shape is exactly `v/X.Y.Z`, each part 0..=65535 (VERSIONINFO stores
+  16-bit words). Anything else — `v1.2.3`, `v/1.2`, `v/1.2.3-rc1` — FAILS
+  THE BUILD, so a mistyped tag cannot become a release.
+- Without the variable a build is a development one, `0.0.0-dev`. That is
+  every local build, every CI run and the debug-build workflow, and it is
+  how a dev build is told apart in the server's access log.
+- `installer/Cargo.toml` says `version = "0.0.0"` and nothing reads it.
+- `Test-ReleaseVersion.ps1` builds from real tags and reads the version
+  back out of the binary; CI runs it.
 
 | Workflow | Trigger | Result |
 |---|---|---|
-| `ci.yml` | push / PR to `master` | shared+server on Linux, installer on Windows (fmt, clippy, tests, version sync, size gate, HTTP client) |
-| `cd-deploy-on-pull-request.yml` | a PR into `master` is **merged** | Release build, tags `v<version>`, publishes the `.exe` as a GitHub release |
-| `cd-deploy-manually.yml` | `workflow_dispatch` | The same, on demand |
+| `ci.yml` | push / PR to `master` | shared+server on Linux, installer on Windows (fmt, clippy, tests, release version, size gate, HTTP client) |
+| `cd-release-on-tag.yml` | a `v/*` tag is **pushed** | Release build, checks the `.exe` carries the tag's version, publishes it as the GitHub release of that tag |
 | `cd-debugbuild-manually.yml` | `workflow_dispatch` | Debug `.exe` + `.pdb` as a build artifact, no release |
 
-The two deploy workflows **stop** if the tag for that version already
-exists, so bumping the version *is* the release step. (The debug-build one
-only warns — it publishes nothing to tag.) Tags use a
-`v/x.y.z` shape.
+Merging into `master` publishes nothing; tagging does.
 
 Deploying the **server** is a separate thing and lives in
 `deploy/README.md`: a Podman Quadlet that builds straight from git, plus a

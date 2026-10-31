@@ -15,10 +15,11 @@
 IDI_APPICON ICON "../../rbr.ico"
 
 // Version info
-// Must match Cargo.toml's version: tests/Test-VersionSync.ps1 checks it and the CD workflows tag from it.
+// build.rs writes pacenotes_version.h from the release tag, so no version is typed here.
+#include "pacenotes_version.h"
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     0,1,0,0
-PRODUCTVERSION  0,1,0,0
+FILEVERSION     PACENOTES_VERSION_NUMBERS
+PRODUCTVERSION  PACENOTES_VERSION_NUMBERS
 FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 FILEFLAGS       0
 FILEOS          VOS_NT_WINDOWS32
@@ -31,13 +32,13 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "Pacenotes"
             VALUE "FileDescription",  "Pacenotes Installer for Richard Burns Rally"
-            VALUE "FileVersion",      "0.1.0.0"
+            VALUE "FileVersion",      PACENOTES_FILE_VERSION
             VALUE "InternalName",     "pacenotes-installer"
             // Explorer shows this as "Copyright", so it holds LICENSE's copyright line.
             VALUE "LegalCopyright",   "(c) 2026 HighPriest. MIT licensed."
             VALUE "OriginalFilename", "pacenotes-installer.exe"
             VALUE "ProductName",      "Pacenotes Installer"
-            VALUE "ProductVersion",   "0.1.0.0"
+            VALUE "ProductVersion",   PACENOTES_PRODUCT_VERSION
         END
     END
     BLOCK "VarFileInfo"

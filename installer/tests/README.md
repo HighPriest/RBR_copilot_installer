@@ -1,6 +1,6 @@
 # installer/tests
 
-The installer's scripted checks live here: the size gate, the version sync,
+The installer's scripted checks live here: the size gate, the release version,
 the WinHTTP test and the GUI tests. Rust unit tests do not: they sit beside
 the module they test (`src/gamedir/tests.rs`, `src/tree/tests.rs`), and this
 directory takes Rust tests only when they drive the public API across several
@@ -19,7 +19,7 @@ pwsh -File tests/Run-AllTests.ps1 -SkipUi  # headless: logic + size gate only
 |---|---|---|---|
 | `cargo test` | AUTOMATED TEST — the unit tests in `src/`, plus `applying_a_selection.rs` and `restoring_a_game_folder.rs`: the engine and a restore over a scratch game folder, sharing `common/mod.rs` | no | yes |
 | `cargo test -- --ignored` | MANUAL CHECK — the zip reader against a corpus of real packages (`src/zip/fixtures/README.md`) | no | no |
-| `Test-VersionSync.ps1` | AUTOMATED TEST — Cargo.toml vs .rc VERSIONINFO | no | yes |
+| `Test-ReleaseVersion.ps1` | AUTOMATED TEST — a build carries its `v/X.Y.Z` tag's version | no | yes |
 | `Test-BinarySize.ps1` | AUTOMATED TEST — the 600 kB release gate | no | yes |
 | `Test-HttpClient.ps1` | AUTOMATED TEST — WinHTTP vs a live server | no | yes |
 | `Test-CrashReport.ps1` | AUTOMATED TEST — a panic leaves a usable report | no | yes |

@@ -3,7 +3,8 @@
 
 [package]
 name = "pacenotes-installer"
-version = "0.1.0"
+# Not the release version: that comes from the `v/X.Y.Z` tag (build/release_version.rs).
+version = "0.0.0"
 edition = "2021"
 
 # DEPENDENCY BUDGET — read installer/CLAUDE.md before adding ANYTHING.
