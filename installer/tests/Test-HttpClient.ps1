@@ -319,6 +319,49 @@ try {
     Assert-That 'the access key never appears in the report' `
     (-not $r.MESSAGE.Contains('pcn_'))
 
+    # The real server never sends this much, which is why a listener of our own
+    # does: a small document is the server's promise, and the cap is what holds
+    # when it is broken.
+    Write-Host "`n-- a body larger than the installer will buffer --"
+    $capPort = Get-FreePort
+    $capListener = [System.Net.HttpListener]::new()
+    $capListener.Prefixes.Add("http://127.0.0.1:$capPort/")
+    $capListener.Start()
+    $capServer = [powershell]::Create()
+    [void]$capServer.AddScript({
+            param($listener)
+            $chunk = [byte[]]::new(64KB)
+            while ($listener.IsListening) {
+                try { $ctx = $listener.GetContext() } catch { break }
+                try {
+                    if ($ctx.Request.Url.AbsolutePath -eq '/exact') {
+                        $ctx.Response.ContentLength64 = 8MB
+                        for ($i = 0; $i -lt 128; $i++) { $ctx.Response.OutputStream.Write($chunk, 0, $chunk.Length) }
+                    } else {
+                        # Chunked, so no Content-Length warns the client: it has to count.
+                        $ctx.Response.SendChunked = $true
+                        for ($i = 0; $i -lt 1024; $i++) { $ctx.Response.OutputStream.Write($chunk, 0, $chunk.Length) }
+                    }
+                    $ctx.Response.Close()
+                } catch {
+                    # The client hanging up mid-body is the point of /endless.
+                    $ctx.Response.Abort()
+                }
+            }
+        }).AddArgument($capListener)
+    $capRun = $capServer.BeginInvoke()
+    try {
+        $r = Invoke-SelfTest -Url "http://127.0.0.1:$capPort/exact"
+        Assert-That 'a body of exactly 8 MiB is accepted' ($r.RESULT -eq 'OK') "report said $($r.RESULT): $($r['MESSAGE'])"
+        Assert-That 'and all of it is read' ($r.BYTES -eq "$(8MB)") "read $($r.BYTES)"
+        $r = Invoke-SelfTest -Url "http://127.0.0.1:$capPort/endless"
+        Assert-That 'a body that does not stop is refused' ($r.RESULT -eq 'FAIL') "report said $($r.RESULT)"
+        Assert-That 'and the reason names the cap' ([string]$r['MESSAGE'] -match 'larger than the 8') "message was [$($r['MESSAGE'])]"
+    } finally {
+        $capListener.Close()
+        $capServer.Stop(); $capServer.Dispose()
+    }
+
     Write-Host "`n-- user agent --"
     # The binary's own product version, which Test-ReleaseVersion ties to the release tag.
     $version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe).ProductVersion

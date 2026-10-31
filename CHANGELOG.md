@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026/10/31 — installer: a cap on what `http::get` holds in memory (D12)
+
+`http::get` — the manifest, the MOTD, `/health`, `/whoami` — read the
+whole body into memory with no limit. The documents are small, but that is
+the server's promise rather than the installer's, and a broken or hostile
+server sending without end would have eaten the machine.
+
+It now refuses a body over 8 MiB, far beyond any real manifest (kilobytes;
+8 MiB would hold some 20,000 packages), and says so: "the response is
+larger than the 8.0 MB accepted from …", not a bare abort. It COUNTS as the
+body arrives rather than trusting `Content-Length`, which a chunked reply
+does not send. Packages are unaffected: they stream to a file through
+`get_streaming`.
+
+`Test-HttpClient.ps1` checks both sides of the line with a loopback
+listener — the real server never sends such a body: exactly 8 MiB is
+accepted and read in full, an endless chunked one is refused naming the
+cap (54/54).
+
 ## 2026/10/31 — installer: a failed /health no longer hides the catalogue (D12)
 
 One failed `GET /health` on scene 2 made the whole run offline: scene 4

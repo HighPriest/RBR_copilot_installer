@@ -23,7 +23,14 @@ const CHUNK_SIZE: usize = 64 * 1024;
 /// The server's access log records it, so a report can be traced to the build that sent it.
 const USER_AGENT: &str = concat!("Pacenotes-Installer/", env!("PACENOTES_VERSION"));
 
-/// The whole body in memory: right for a manifest, wrong for a package zip.
+/// What `get` holds in memory: far beyond any real manifest, which runs to
+/// kilobytes, and small enough that a server sending without end cannot
+/// exhaust the machine; that the documents are small is the server's promise,
+/// not ours.
+const MAX_BUFFERED_BYTES: usize = 8 * 1024 * 1024;
+
+/// The whole body in memory, up to `MAX_BUFFERED_BYTES`: right for a manifest,
+/// wrong for a package zip.
 pub fn get(
     url: &str,
     bearer: Option<&str>,
@@ -31,17 +38,30 @@ pub fn get(
     cancel: &std::sync::atomic::AtomicBool,
 ) -> Result<Vec<u8>, HttpError> {
     let mut body = Vec::new();
-    get_streaming(
+    let mut too_large = false;
+    let fetched = get_streaming(
         url,
         bearer,
         &mut |chunk| {
-            body.extend_from_slice(chunk);
-            true
+            too_large = body.len() + chunk.len() > MAX_BUFFERED_BYTES;
+            if !too_large {
+                body.extend_from_slice(chunk);
+            }
+            !too_large
         },
         progress,
         cancel,
-    )?;
-    Ok(body)
+    );
+    if too_large {
+        return Err(HttpError::logical(
+            format!(
+                "the response is larger than the {} accepted from {url}",
+                pacenotes_installer::size::human(MAX_BUFFERED_BYTES as u64)
+            ),
+            None,
+        ));
+    }
+    fetched.map(|()| body)
 }
 
 /// Hands each chunk to `sink` as it arrives; `sink` returns false to abort.

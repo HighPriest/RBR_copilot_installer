@@ -306,6 +306,11 @@ after the second folder is deleted.
   and `post_json` for the one thing the installer sends
   (`/report/conflict`), over one request path. Synchronous; always called
   from the worker thread.
+  - `get` holds the whole body in memory, so it refuses one over 8 MiB
+    (`MAX_BUFFERED_BYTES`), counting rather than trusting `Content-Length`,
+    which a chunked reply does not send. A small document is the server's
+    promise, and the cap is what holds when it is broken. Anything big —
+    a package — goes through `get_streaming` into a file.
   - **REDIRECTS ARE FOLLOWED HERE, NEVER BY WINHTTP, and the bearer token
     never leaves the origin the caller asked for.** Measured 2026-10-30:
     left to itself WinHTTP follows a 3xx and re-sends `Authorization` to
