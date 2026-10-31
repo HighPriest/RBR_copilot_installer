@@ -186,9 +186,9 @@ is in the current design. See the CHANGELOG and git history.
 - [x] Prune emptied directories, deepest first
 - [x] Detect overlaps as a pure function over the file lists the
       pre-flight already read
-- [ ] Measure "the game is not running" — the engine refuses when told,
+- [x] Measure "the game is not running" — the engine refuses when told,
       but `wizard/scene/installation.rs` still passes `false`
-  - [ ] Check for the marker process (I9)
+  - [x] Check for the marker process (I9)
 
 ### Conflict reporting
 

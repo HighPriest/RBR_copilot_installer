@@ -399,7 +399,11 @@ this scene.
   ("Numeric 1to7.zip — 1.2 / 4.8 MB"), live log pane. Same layout as scene
   4b; the download phase is no longer part of this page.
 - Phases, in order:
-  1. **Check** the plan against the folder (free space, CRCs);
+  1. **Check** the plan against the folder (free space, CRCs, and that the
+     game is not running FROM THIS FOLDER — it holds its files open, so the
+     install would fail partway. A copy running from another folder does
+     not count; one whose path cannot be read does, to be safe. The same
+     check guards a restore.);
   2. **Uninstall** what a new pick supersedes — before anything is written,
      because the style packages all own the SAME 49 paths and uninstalling
      after installing would delete the new one's files;

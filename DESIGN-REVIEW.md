@@ -1010,6 +1010,8 @@ Done here since the review was written, for the record:
       on scene 3 with the language, folder and key.
 - [x] **§7** A transient download failure is retried; one that lasts leaves
       that package out, the rest carry on, and scene 7 names it.
+- [x] **P12** The pre-flight refuses while the game runs from this folder,
+      found by the process's own path.
 - [x] **§7** Storing the secret: decided NOT to store it at all, so there is
       nothing for DPAPI to protect. It is typed each run; only a restart
       as administrator carries it (P11).

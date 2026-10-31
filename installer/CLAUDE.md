@@ -293,6 +293,11 @@ after the second folder is deleted.
   UAC launch, and whether this process is already elevated. Its command
   line is tested against Windows' own splitter (`CommandLineToArgvW`), since
   a folder with spaces or a trailing backslash must come back exactly.
+- `game_process.rs` — whether the game is running FROM THIS FOLDER
+  (P12), by the process's own path, so a copy installed elsewhere does not
+  block; unreadable counts as running. Feeds `HostFacts::game_running`,
+  which the engine's pre-flight refuses on. Paths are compared by hand:
+  `std::fs::canonicalize` cost 3.5 kB.
 - `single_instance.rs` — one copy per user. A restarted instance waits for
   the one that launched it to close; the check closes the handle it gets
   for a name already taken, or that handle would keep the mutex alive.

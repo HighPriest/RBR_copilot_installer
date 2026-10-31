@@ -832,6 +832,70 @@ try {
         $standIn6.Close()
         $relay6.Stop(); $relay6.Dispose()
     }
+
+    # ---------------------------------------------------------------
+    # Seventh pass — the game is running (P12)
+    # ---------------------------------------------------------------
+    # A running game holds its files open, so an install would fail partway.
+    # The "game" is Windows' own ping.exe under the marker's name, which just
+    # waits; first from another folder, which must not block this one, then
+    # from this one, which must.
+    Write-Host "`n-- seventh pass: the game is running --"
+    $proc.Kill(); $proc.WaitForExit(5000) | Out-Null
+    $marker = 'RichardBurnsRally_SSE.exe'
+    $elsewhere = Join-Path $work 'other-install'
+    [void](New-Item -ItemType Directory -Force -Path $elsewhere)
+    $fakeGames = @()
+
+    <#  Configure/Install on $gameFolder with the first option of each list;
+        returns scene 7's result line. #>
+    function Invoke-ConfigureRun {
+        $launch7 = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$port")
+        $script:proc = $launch7.Process
+        $h7 = (Wait-ForDialog -OwnerPid $script:proc.Id).Handle
+        $p = Wait-ForPageControl -Sheet $h7 -CtrlId $IDC_S1_COMBO
+        [void][NativeUi]::SendMessageW([NativeUi]::GetDlgItem($p, $IDC_S1_COMBO), 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+        Press-WizardButton -Sheet $h7 -Button $PSBTN_NEXT
+        [void](Wait-ForPageControl -Sheet $h7 -CtrlId $IDC_S2_MOTD)
+        Press-WizardButton -Sheet $h7 -Button $PSBTN_NEXT
+        $p = Wait-ForPageControl -Sheet $h7 -CtrlId $IDC_S3_PATH
+        Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder
+        Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+        Start-Sleep -Milliseconds 900
+        Invoke-Button -Dialog $p -CtrlId $IDC_S3_CONFIGURE
+        $p5 = Wait-ForPageControl -Sheet $h7 -CtrlId $IDC_S5_LANG -TimeoutMs 10000
+        foreach ($id in $IDC_S5_LANG, $IDC_S5_VOICE, $IDC_S5_STYLE) {
+            [void](Select-ListItem -Dialog $p5 -CtrlId $id -Index 0)
+        }
+        Press-WizardButton -Sheet $h7 -Button $PSBTN_NEXT
+        $p7 = Wait-ForPageControl -Sheet $h7 -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+        $result = if ($p7 -ne [IntPtr]::Zero) { Get-CtrlText $p7 $IDC_S7_RESULT } else { '' }
+        $script:proc.Kill(); $script:proc.WaitForExit(5000) | Out-Null
+        return $result
+    }
+    function Start-FakeGame([string]$Folder) {
+        $exe = Join-Path $Folder $marker
+        Copy-Item (Join-Path $env:SystemRoot 'System32\PING.EXE') $exe -Force
+        return Start-Process $exe -PassThru -WindowStyle Hidden -ArgumentList @('-n', '300', '127.0.0.1')
+    }
+    try {
+        $fakeGames += Start-FakeGame $elsewhere
+        $result7 = Invoke-ConfigureRun
+        Assert-Equal 'a copy of the game running from another folder does not block this one' `
+            $result7 $S['IDS_S7_OK']
+        $fakeGames | ForEach-Object { if (-not $_.HasExited) { $_.Kill(); $_.WaitForExit(5000) | Out-Null } }
+
+        $ledgerPath = Join-Path $gameFolder '.pacenotes\installed.json'
+        $ledgerBefore = Get-Content -Raw $ledgerPath
+        $fakeGames += Start-FakeGame $gameFolder
+        $result7 = Invoke-ConfigureRun
+        $failedPrefix = $S['IDS_S7_FAILED'].Substring(0, $S['IDS_S7_FAILED'].IndexOf('%s'))
+        Assert-That 'the game running from this folder stops the install' `
+        ($result7.StartsWith($failedPrefix) -and $result7.Contains('the game is running')) "result was [$result7]"
+        Assert-That 'before anything in the folder changed' ((Get-Content -Raw $ledgerPath) -eq $ledgerBefore)
+    } finally {
+        $fakeGames | ForEach-Object { if (-not $_.HasExited) { $_.Kill(); $_.WaitForExit(5000) | Out-Null } }
+    }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     if ($srvProc -and -not $srvProc.HasExited) { Stop-Process -Id $srvProc.Id -Force -ErrorAction SilentlyContinue }

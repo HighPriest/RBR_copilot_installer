@@ -32,6 +32,7 @@ windows-sys = { version = "=0.59.0", features = [
   "Win32_System_Threading",
   "Win32_Security",              # CreateMutexW's SECURITY_ATTRIBUTES argument
   "Win32_Storage_FileSystem",    # GetDiskFreeSpaceExW for the install pre-flight
+  "Win32_System_Diagnostics_ToolHelp", # CreateToolhelp32Snapshot, to see the game running (P12)
   "Win32_System_SystemInformation", # OSVERSIONINFOW, for the run log header
   "Wdk_System_SystemServices",   # RtlGetVersion, which tells the truth about the Windows version
 ] }

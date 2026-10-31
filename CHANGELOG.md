@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026/10/31 — installer: it will not install while the game is running (P12)
+
+A running game holds its files open, so an install into its folder failed
+partway with sharing violations. The engine's pre-flight has refused when
+told the game was running since I7 — but nothing ever told it: the wizard
+passed `false`.
+
+The installer now looks for the game's executable among running processes,
+and compares each one's FULL PATH with this folder. A copy of the game
+running from another install does not lock this folder, so it does not
+block; one whose path cannot be read (running elevated, say) counts as
+running, since refusing is the safe answer. The check guards installs and
+restores alike, before anything is written.
+
+`Test-WizardDownload.ps1` gained a seventh pass, with Windows' own
+`ping.exe` standing in for the game under its marker's name: running from
+another folder, the install goes ahead; running from this one, it stops
+with "the game is running", the ledger untouched (118/118).
+
+Size: 618 kB, +0.5 kB. `std::fs::canonicalize` would have cost 3.5 kB and
+broken the gate; the two path variations that matter are normalised by hand.
+
 ## 2026/10/31 — installer: no Visual C++ redistributable needed; the gate moves to 620 kB (I10)
 
 The exe imported `VCRUNTIME140.dll`, the Visual C++ redistributable, which

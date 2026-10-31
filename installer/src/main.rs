@@ -11,6 +11,7 @@
 mod api;
 mod crash;
 mod elevation;
+mod game_process;
 mod http;
 mod i18n;
 mod package_download;

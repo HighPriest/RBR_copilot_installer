@@ -101,7 +101,7 @@ unsafe fn start(dialog: HWND) {
         selection: state.config.install_keys(),
         picks: state.config.picks_by_category(),
         choice_categories: choice_categories(state),
-        facts: host_facts(&state.folder),
+        facts: host_facts(state),
         cancel: std::sync::Arc::clone(&state.cancel),
     };
     crate::worker::spawn_reporting(dialog, request, move |reporter| {
@@ -144,7 +144,7 @@ unsafe fn start_restore(dialog: HWND, state: &mut crate::wizard::state::WizardSt
         target: point.snapshot,
         plan: state.restore_plan.clone(),
         choice_categories: choice_categories(state),
-        facts: host_facts(&state.folder),
+        facts: host_facts(state),
     };
     crate::worker::spawn_reporting(dialog, request, move |reporter| {
         crate::worker::run_restore(job, reporter)
@@ -159,10 +159,14 @@ fn choice_categories(state: &crate::wizard::state::WizardState) -> Vec<String> {
 }
 
 /// What the engine cannot find out for itself, since it stays testable off Windows.
-unsafe fn host_facts(folder: &str) -> pacenotes_installer::engine::HostFacts {
+unsafe fn host_facts(
+    state: &crate::wizard::state::WizardState,
+) -> pacenotes_installer::engine::HostFacts {
     pacenotes_installer::engine::HostFacts {
-        free_bytes: free_space(folder),
-        game_running: false, // TODO(I9): look for the game's marker process
+        free_bytes: free_space(&state.folder),
+        game_running: state
+            .game
+            .is_some_and(|game| crate::game_process::is_running_from(game, &state.folder)),
     }
 }
 
