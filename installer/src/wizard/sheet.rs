@@ -1,9 +1,24 @@
 use windows_sys::Win32::UI::Controls as ctl;
 use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 
-/// Runs the wizard until the user finishes or cancels.
-pub fn run(base_url: &str, cache_override: Option<std::path::PathBuf>) {
+/// Scene 3's index in `pages`.
+const GAME_FOLDER_PAGE: u32 = 2;
+
+/// Runs the wizard until the user finishes or cancels; a restart as
+/// administrator opens on scene 3, where it was asked for.
+pub fn run(
+    base_url: &str,
+    cache_override: Option<std::path::PathBuf>,
+    restart: Option<crate::elevation::Restart>,
+) {
     let mut state = crate::wizard::state::WizardState::new(base_url.to_string(), cache_override);
+    let start_page = match restart {
+        Some(restart) => {
+            state.resume(restart);
+            GAME_FOLDER_PAGE
+        }
+        None => 0,
+    };
     let state_pointer = &mut state as *mut _ as windows_sys::Win32::Foundation::LPARAM;
 
     let pages = [
@@ -65,7 +80,7 @@ pub fn run(base_url: &str, cache_override: Option<std::path::PathBuf>) {
         header.pszCaption = caption.as_ptr();
         header.nPages = pages.len() as u32;
         header.Anonymous1.hIcon = crate::ui::load_app_icon();
-        header.Anonymous2.nStartPage = 0;
+        header.Anonymous2.nStartPage = start_page;
         header.Anonymous3.ppsp = pages.as_ptr() as *mut ctl::PROPSHEETPAGEW;
         ctl::PropertySheetW(&mut header);
     }

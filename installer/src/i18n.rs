@@ -48,6 +48,8 @@ pub const IDS_S3_DOWNLOAD: u16 = 75;
 pub const IDS_S3_CONFIGURE: u16 = 76;
 pub const IDS_S3_ROUTES: u16 = 77;
 pub const IDS_S3_RESTORE: u16 = 78;
+pub const IDS_S3_NOT_WRITABLE: u16 = 79;
+pub const IDS_S3_NOT_WRITABLE_ADMIN: u16 = 95;
 
 pub const IDS_S4_TITLE: u16 = 80;
 pub const IDS_S4_LOADING: u16 = 81;

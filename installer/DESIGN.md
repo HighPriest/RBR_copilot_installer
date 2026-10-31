@@ -129,6 +129,26 @@ that tells two voices apart.
   the lines from before a folder was known, and later panics are written to
   the same file. Pressing a second route button does NOT start a second log:
   one file per run. See "Logging".
+- **A folder this account cannot write is caught here (P11)**, when a route
+  button is pressed — every route writes into the folder, and this is
+  where the user commits to it. The probe creates `.pacenotes\` and a file
+  in it, and removes whatever it created, so a folder the user then
+  abandons keeps no trace. Without it, a game under `Program Files` failed
+  at scene 4b's downloads, after everything had been chosen.
+  - The message names the folder, says that is usual under Program Files,
+    and offers to **restart as administrator** (UAC). No — or cancelling
+    the UAC prompt — leaves the user on scene 3 to pick another folder.
+  - The elevated instance opens straight on scene 3 with the language, the
+    folder and the access key carried over, so nothing is asked twice.
+    The key travels on that process's command line, readable by other
+    programs running as this user; the maintainer accepted that for a
+    seamless restart. It waits for this instance to close rather than
+    reporting "already running".
+  - Already elevated and still not writable (read-only media, a deny
+    rule): the message says so and offers nothing, since asking again
+    would loop.
+  - Files an elevated run installs belong to Administrators, so later runs
+    on that folder need elevation too, and the probe will say so.
 
 ## Restore scene (reached from scene 3's Restore/Uninstall)
 

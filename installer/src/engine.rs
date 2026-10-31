@@ -12,7 +12,7 @@ mod watcher;
 pub use execute::{execute, record_configured, snapshot_path, ExecuteError, Outcome, RESTORE_DIR};
 pub use overlap::{overlaps, Overlap};
 pub use plan::{plan, Action, Plan, PlanError, PlanInput};
-pub use preflight::{preflight, HostFacts, Preflight, PreflightError};
+pub use preflight::{check_writable, preflight, HostFacts, Preflight, PreflightError};
 pub use watcher::{Phase, Silent, Watcher};
 
 pub(crate) use execute::{

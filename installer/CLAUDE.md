@@ -256,6 +256,16 @@ after the second folder is deleted.
   `tests/Test-HttpClient.ps1` drives, `--selftest-download`,
   `--selftest-report`, which posts a fabricated conflict report, and
   `--selftest-panic`.
+- `elevation.rs` — P11's restart as administrator: the `Restart` a new
+  instance resumes from (language, folder, key; it opens on scene 3), the
+  UAC launch, and whether this process is already elevated. Its command
+  line is tested against Windows' own splitter (`CommandLineToArgvW`), since
+  a folder with spaces or a trailing backslash must come back exactly.
+- `single_instance.rs` — one copy per user. A restarted instance waits for
+  the one that launched it to close; the check closes the handle it gets
+  for a name already taken, or that handle would keep the mutex alive.
+- `run_header.rs` — the run log's header: build, start, server, and the
+  Windows build from `RtlGetVersion`.
 - `package_download.rs` — fetch a package into the cache, verified by sha256.
 - `wizard/` — the UI. Layout per `DESIGN.md`: a comctl32 PropertySheet in
   wizard mode (`sheet.rs`), one page per scene (`scene/`), with `WizardState`
@@ -429,6 +439,11 @@ suites. Read `tests/README.md` before adding one.
   through user32.dll. Run it in BOTH languages (`-Language 0` / `-Language 1`)
   after ANY change to `res/installer.rc`, `ui.rs` or `i18n.rs`. The Polish pass
   is what proves the per-language STRINGTABLE lookup and the UTF-8 diacritics.
+  It also makes a folder this account cannot write (a deny rule set
+  through .NET, so no admin rights are needed), checks scene 3 stops with
+  the right message and leaves no trace, and launches with the restart
+  arguments while the first instance still runs. It answers the
+  restart question NO (`Decline-Modal`): yes would raise a real UAC prompt.
 - `tests/ui/Get-UiScreenshot.ps1` — AGENT/DEVELOPER AID. Writes PNGs so a human
   or an agent can SEE the layout. Asserts nothing, so never gate on it. Use it
   whenever you change geometry: assertions cannot reveal an overlap, and a

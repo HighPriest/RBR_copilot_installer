@@ -49,11 +49,9 @@ unsafe fn initialize(dialog: HWND, lparam: LPARAM) {
     for language in crate::i18n::Language::ALL {
         crate::ui::combo_add(dialog, combo, language.label());
     }
-    let initial = crate::i18n::os_language().unwrap_or(crate::i18n::Language::En);
+    // The OS language on a fresh run, the kept one after a restart.
+    let initial = state.map_or(crate::i18n::Language::En, |state| state.language);
     crate::ui::combo_select(dialog, combo, initial.index());
-    if let Some(state) = state {
-        state.language = initial;
-    }
 }
 
 /// Later pages are created after this, so they come up in the picked language.

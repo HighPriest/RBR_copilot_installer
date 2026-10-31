@@ -183,9 +183,17 @@ function Test-CtrlVisible {
 }
 
 function Invoke-Button {
-    <#  Synthesize BN_CLICKED (HIWORD 0) for a control id. #>
-    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
-    [void][NativeUi]::SendMessageW($Dialog, $script:WM_COMMAND, [IntPtr]$CtrlId, [IntPtr]::Zero)
+    <#  Synthesize BN_CLICKED (HIWORD 0) for a control id.
+
+        -Post for a click that opens a modal: a SENT message returns only when
+        the handler does, and the handler is inside the modal's loop until
+        someone closes it — which the test, still waiting, never will. #>
+    param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId, [switch]$Post)
+    if ($Post) {
+        [void][NativeUi]::PostMessageW($Dialog, $script:WM_COMMAND, [IntPtr]$CtrlId, [IntPtr]::Zero)
+    } else {
+        [void][NativeUi]::SendMessageW($Dialog, $script:WM_COMMAND, [IntPtr]$CtrlId, [IntPtr]::Zero)
+    }
 }
 
 function Invoke-EditChanged {
@@ -455,6 +463,21 @@ function Dismiss-Modal {
         # to close itself.
         [void][NativeUi]::PostMessageW($Modal, $script:WM_CLOSE, [IntPtr]::Zero, [IntPtr]::Zero)
     }
+    Start-Sleep -Milliseconds 400
+}
+
+function Decline-Modal {
+    <#  Answer No on a Yes/No MessageBox, by clicking the button whose id is
+        IDNO (7).
+
+        Not Dismiss-Modal, which clicks the FIRST button: on a Yes/No box that
+        is Yes, and saying yes to the installer's restart-as-administrator
+        question would start a real UAC prompt in the middle of a test. With no
+        No button, this throws rather than guess. #>
+    param([Parameter(Mandatory)][IntPtr]$Modal)
+    $no = Get-ControlInventory -Dialog $Modal | Where-Object { $_.Class -eq 'Button' -and $_.Id -eq 7 }
+    if (-not $no) { throw 'the box has no No button' }
+    [void][NativeUi]::PostMessageW($no.Handle, $script:BM_CLICK, [IntPtr]0, [IntPtr]::Zero)
     Start-Sleep -Milliseconds 400
 }
 

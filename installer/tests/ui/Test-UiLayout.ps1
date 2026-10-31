@@ -298,12 +298,72 @@ try {
     (-not [NativeUi]::IsWindowEnabled($routeDown) -and -not [NativeUi]::IsWindowEnabled($routeConf) -and
         -not [NativeUi]::IsWindowEnabled($routeRest))
 
+    # A deny on writing for this account is what a standard user meets under
+    # Program Files, made here without needing administrator rights (P11).
+    Write-Host "`n-- a folder this account cannot write --"
+    $locked = New-GameFolder -Markers @($RBR_MARKER)
+    $deny = [System.Security.AccessControl.FileSystemAccessRule]::new(
+        [System.Security.Principal.WindowsIdentity]::GetCurrent().Name, 'Write',
+        'ContainerInherit, ObjectInherit', 'None', 'Deny')
+    $acl = Get-Acl $locked; $acl.AddAccessRule($deny); Set-Acl -Path $locked -AclObject $acl
+    try {
+        Set-FolderAndSettle -Page $page -Path $locked
+        Invoke-Button -Dialog $page -CtrlId $IDC_S3_DOWNLOAD -Post
+        $modal = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$sheetH" -TimeoutMs 4000
+        Assert-That 'a route into it stops with a message' ($null -ne $modal)
+        if ($modal) {
+            $said = (Get-ControlInventory -Dialog $modal.Handle |
+                Where-Object { $_.Class -eq 'Static' -and $_.Text } | ForEach-Object { $_.Text }) -join ' '
+            # Elevated already, there is nothing to offer, and the other text says so.
+            $elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).
+            IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+            $id = if ($elevated) { 'IDS_S3_NOT_WRITABLE_ADMIN' } else { 'IDS_S3_NOT_WRITABLE' }
+            $expected = Expand-ResourceArg -Template $S[$id] -Value $locked
+            Assert-Equal "it says why, naming the folder ($id)" ($said -replace '\s+', ' ') ($expected -replace '\s+', ' ')
+            if ($elevated) { Dismiss-Modal -Modal $modal.Handle } else { Decline-Modal -Modal $modal.Handle }
+        }
+        $still = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S3_PATH -TimeoutMs 3000
+        Assert-That 'declining leaves the user on scene 3' ($still -ne [IntPtr]::Zero)
+        Assert-That 'and the folder exactly as it was' (-not (Test-Path (Join-Path $locked '.pacenotes')))
+    } finally {
+        $acl = Get-Acl $locked; [void]$acl.RemoveAccessRule($deny); Set-Acl -Path $locked -AclObject $acl
+        Remove-Item -Recurse -Force $locked -ErrorAction SilentlyContinue
+    }
+
     Write-Host "`n-- back navigation --"
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_BACK
     $back = Wait-ForPageControl -Sheet $sheetH -CtrlId $IDC_S2_MOTD -TimeoutMs 3000
     Assert-That 'Back returns to scene 2' ($back -ne [IntPtr]::Zero)
     Assert-Equal 'scene 2 primary button is restored' `
     (Get-WizardButtonText -Sheet $sheetH -ButtonId $ID_WIZNEXT) $S['IDS_BTN_ACCEPT']
+
+    # What the elevated instance is started with, launched the same way: it
+    # must resume on scene 3 rather than ask everything again (P11).
+    Write-Host "`n-- restarted as administrator --"
+    # Started while this instance is still open, as the real restart is: it
+    # must wait for the old one to go rather than report "already running".
+    # Start-Process, because Start-Installer refuses while a copy runs.
+    $tag = if ($Language -eq 0) { 'en' } else { 'pl' }
+    $old = $proc
+    $proc = Start-Process $launch.Path -PassThru -ArgumentList @(
+        '--server', 'http://127.0.0.1:1', '--restarted', '--language', $tag,
+        '--folder', $rbrFolder, '--secret', 'pcn_0123456789abcdefghijklmnopqrstuvwxyzABCDEFG')
+    Start-Sleep -Milliseconds 1500
+    $old.Kill(); $old.WaitForExit(5000) | Out-Null
+    $sheetR = Wait-ForDialog -OwnerPid $proc.Id
+    Assert-That 'the restarted wizard appears' ($null -ne $sheetR)
+    if ($sheetR) {
+        $pageR = Wait-ForPageControl -Sheet $sheetR.Handle -CtrlId $IDC_S3_PATH -TimeoutMs 5000
+        Assert-That 'it opens on scene 3' ($pageR -ne [IntPtr]::Zero)
+        if ($pageR -ne [IntPtr]::Zero) {
+            Start-Sleep -Milliseconds 900
+            Assert-Equal 'in the language it was given' (Get-CtrlText $pageR $IDC_SCENE_TITLE) $S['IDS_S3_TITLE']
+            Assert-Equal 'with the folder filled in' (Get-CtrlText $pageR $IDC_S3_PATH) $rbrFolder
+            Assert-Equal 'and its game detected' (Get-CtrlText $pageR $IDC_S3_GAME) $RBR_TITLE
+            Assert-That 'so a route can be taken at once' `
+            ([NativeUi]::IsWindowEnabled([NativeUi]::GetDlgItem($pageR, $IDC_S3_DOWNLOAD)))
+        }
+    }
 } finally {
     if (-not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }
     foreach ($d in @($rbrFolder, $twoGames, $plainFolder)) {

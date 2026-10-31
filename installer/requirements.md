@@ -128,6 +128,28 @@ install with an access error. Probe at the folder page and say so, with an
 offer to restart elevated: a sentence before anything is written beats a
 half-finished install.
 
+**Decided 2026-10-31:**
+
+- The probe runs when a route button is pressed — the moment the user
+  commits to the folder — not while they type. It creates `.pacenotes\`
+  and a file in it, and removes whatever it created: a folder the user
+  then abandons keeps no trace.
+- Not writable → explain, and offer to restart as administrator (UAC, via
+  `ShellExecuteW` with `runas`). Declining, or cancelling the UAC prompt,
+  leaves the user on scene 3 to choose another folder.
+- Already elevated and still not writable (read-only media, a deny ACL) →
+  explain only; offering elevation again would loop.
+- The elevated instance opens on scene 3 with the LANGUAGE, the FOLDER and
+  the ACCESS KEY carried over, so nothing is asked twice. The key travels
+  on the elevated process's command line, readable by other programs
+  running as this user — accepted by the maintainer for the seamless
+  restart.
+- The restarted instance waits for this one to exit rather than reporting
+  "already running".
+- Files an elevated run installs belong to Administrators, so later runs
+  on that folder need elevation too. Inherent to the choice; the probe
+  will say so each time.
+
 ### §7 — retrying a transient download
 
 A single failed package ends the run. Retry with backoff, carry on with

@@ -161,7 +161,7 @@ END
 #define IDS_STATE_INSTALLED    93
 #define IDS_STATE_UNAVAILABLE  94
 
-// Scene 3 — Game folder (70-79)
+// Scene 3 — Game folder (70-79, then 95 once the block was full)
 #define IDS_S3_TITLE           70
 #define IDS_S3_PATH            71
 #define IDS_S3_GAME            72
@@ -171,6 +171,8 @@ END
 #define IDS_S3_CONFIGURE       76
 #define IDS_S3_ROUTES          77
 #define IDS_S3_RESTORE         78
+#define IDS_S3_NOT_WRITABLE    79
+#define IDS_S3_NOT_WRITABLE_ADMIN 95
 
 // Scene 5 — Configuration (100-109)
 #define IDS_S5_TITLE          100
@@ -408,6 +410,8 @@ BEGIN
     IDS_S3_DOWNLOAD     "Download/Update"
     IDS_S3_CONFIGURE    "Configure/Install"
     IDS_S3_RESTORE      "Restore/Uninstall"
+    IDS_S3_NOT_WRITABLE "Your Windows account cannot write to this folder:\r\n%s\r\n\r\nThat is usual for a game installed under Program Files. Restart the installer as administrator? What you have chosen so far is kept."
+    IDS_S3_NOT_WRITABLE_ADMIN "This folder cannot be written to, even as administrator:\r\n%s\r\n\r\nChoose another folder."
     IDS_S3_ROUTES       "Download/Update — get new content, then set it up and install it.\r\nConfigure/Install — change what is active using what is already on this computer.\r\nRestore/Uninstall — put this game folder back to an earlier state."
 
     IDS_S4_TITLE        "Download"
@@ -523,6 +527,8 @@ BEGIN
     IDS_S3_DOWNLOAD     "Pobierz/Aktualizuj"
     IDS_S3_CONFIGURE    "Konfiguruj/Instaluj"
     IDS_S3_RESTORE      "Przywróć/Odinstaluj"
+    IDS_S3_NOT_WRITABLE "Twoje konto Windows nie może zapisywać w tym folderze:\r\n%s\r\n\r\nTak zwykle jest, gdy gra jest zainstalowana w Program Files. Uruchomić instalator ponownie jako administrator? Dotychczasowe wybory zostaną zachowane."
+    IDS_S3_NOT_WRITABLE_ADMIN "Nie można zapisywać w tym folderze, nawet jako administrator:\r\n%s\r\n\r\nWybierz inny folder."
     IDS_S3_ROUTES       "Pobierz/Aktualizuj — pobierz nową zawartość, a potem skonfiguruj ją i zainstaluj.\r\nKonfiguruj/Instaluj — zmień aktywne ustawienia, używając tego, co już jest na tym komputerze.\r\nPrzywróć/Odinstaluj — przywróć folder gry do wcześniejszego stanu."
 
     IDS_S4_TITLE        "Pobieranie"

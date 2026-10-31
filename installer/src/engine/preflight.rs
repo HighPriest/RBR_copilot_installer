@@ -161,6 +161,19 @@ pub(crate) fn check_space(install_bytes: u64, facts: HostFacts) -> Result<(), Pr
     Ok(())
 }
 
+/// Whether this account can write to `game_dir`, asked when the user settles on
+/// it and before anything is installed, so it removes whatever the probe
+/// created: a folder the user then abandons keeps no trace.
+pub fn check_writable(game_dir: &std::path::Path) -> Result<(), PreflightError> {
+    let dir = game_dir.join(crate::ledger::STATE_DIR);
+    let created = !dir.exists();
+    let probed = probe_writable(game_dir);
+    if created {
+        let _ = std::fs::remove_dir(&dir);
+    }
+    probed
+}
+
 /// Creates the state directory and a probe file in it.
 pub(crate) fn probe_writable(game_dir: &std::path::Path) -> Result<(), PreflightError> {
     let not_writable = |e: std::io::Error| PreflightError::NotWritable {
@@ -172,4 +185,32 @@ pub(crate) fn probe_writable(game_dir: &std::path::Path) -> Result<(), Preflight
     std::fs::write(&probe, b"pacenotes").map_err(not_writable)?;
     let _ = std::fs::remove_file(&probe);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    /// The probe runs on folders the user may abandon a moment later.
+    #[test]
+    fn a_writable_folder_is_left_as_it_was_found() {
+        let game = crate::scratch_dir::ScratchDir::new("probe-fresh");
+
+        assert_eq!(super::check_writable(&game.0), Ok(()));
+        assert!(
+            !game.0.join(crate::ledger::STATE_DIR).exists(),
+            "the probe left its directory behind"
+        );
+    }
+
+    /// A folder this installer already manages keeps everything in it.
+    #[test]
+    fn an_existing_state_directory_survives_the_probe() {
+        let game = crate::scratch_dir::ScratchDir::new("probe-existing");
+        let state = game.0.join(crate::ledger::STATE_DIR);
+        std::fs::create_dir_all(&state).expect("state dir");
+        std::fs::write(state.join("installed.json"), b"{}").expect("ledger");
+
+        assert_eq!(super::check_writable(&game.0), Ok(()));
+        assert!(state.join("installed.json").is_file());
+        assert_eq!(std::fs::read_dir(&state).expect("read").count(), 1);
+    }
 }

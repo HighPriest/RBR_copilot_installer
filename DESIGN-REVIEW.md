@@ -1005,6 +1005,9 @@ Done here since the review was written, for the record:
 - [x] **D12** Scene 4 asks for the catalogue even when `/health` failed;
       `/health` decides only scene 2's status line.
 - [x] **D12** `http::get` refuses a body over 8 MiB, counted as it arrives.
+- [x] **P11** Scene 3 probes the folder when a route is taken and, when this
+      account cannot write it, offers to restart as administrator, resuming
+      on scene 3 with the language, folder and key.
 - [x] **§7** The run log opens with the build, the start time, the server
       and the Windows build, and times every line in UTC — in the shape the
       server's log uses, so the two can be laid side by side.

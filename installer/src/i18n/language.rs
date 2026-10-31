@@ -46,6 +46,14 @@ impl Language {
         }
     }
 
+    /// The inverse of `tag`, for a restarted instance told which language to keep.
+    pub fn from_tag(tag: &str) -> Option<Language> {
+        Language::ALL
+            .iter()
+            .copied()
+            .find(|language| language.tag() == tag)
+    }
+
     fn langid(self) -> u16 {
         match self {
             Language::En => make_langid(LANG_ENGLISH, SUBLANG_ENGLISH_US),

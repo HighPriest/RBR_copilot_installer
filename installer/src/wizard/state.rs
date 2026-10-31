@@ -75,7 +75,7 @@ impl WizardState {
     pub fn new(base_url: String, cache_override: Option<std::path::PathBuf>) -> WizardState {
         let header = crate::run_header::run_header(&base_url);
         WizardState {
-            language: crate::i18n::Language::En,
+            language: crate::i18n::os_language().unwrap_or(crate::i18n::Language::En),
             secret: String::new(),
             online: None,
             secret_checked: false,
@@ -125,6 +125,15 @@ impl WizardState {
     /// The access key for a request, or `None` for anonymous.
     pub fn token(&self) -> Option<String> {
         Some(self.secret.clone()).filter(|secret| !secret.is_empty())
+    }
+
+    /// Takes up where an instance restarted as administrator left off: its
+    /// language, folder and key, the key already past scene 2.
+    pub fn resume(&mut self, restart: crate::elevation::Restart) {
+        self.language = restart.language;
+        self.folder = restart.folder;
+        self.secret = restart.secret;
+        self.secret_checked = true;
     }
 
     /// Scene 3 settles the game before anything needs it; RBR only spares the lookups a `None`.

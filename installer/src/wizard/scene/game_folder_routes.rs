@@ -26,6 +26,12 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
         super::game_folder::warn_no_game(dialog);
         return;
     }
+    // Every route writes into the folder, and this is where the user commits to it.
+    let folder = std::path::PathBuf::from(&state.folder);
+    if let Err(reason) = pacenotes_installer::engine::check_writable(&folder) {
+        refuse_unwritable(dialog, state, &reason.to_string());
+        return;
+    }
     state.route = route;
     // Both belong to the folder, and this is the moment it is settled.
     attach_log(dialog, state);
@@ -53,6 +59,38 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
         0,
         target as LPARAM,
     );
+}
+
+/// Says why, and offers to restart as administrator with what this run already
+/// knows (P11); already elevated, there is nothing to offer, since asking again
+/// would loop. The user stays on scene 3 unless the restart starts.
+unsafe fn refuse_unwritable(
+    dialog: HWND,
+    state: &mut crate::wizard::state::WizardState,
+    reason: &str,
+) {
+    let line = format!("the game folder cannot be written to: {reason}");
+    super::progress_page::log_line(dialog, state, &line);
+    if crate::elevation::is_elevated() {
+        let text =
+            crate::i18n::load_string_arg(crate::i18n::IDS_S3_NOT_WRITABLE_ADMIN, &state.folder);
+        crate::ui::message_box_warning(dialog, &text);
+        return;
+    }
+    let question = crate::i18n::load_string_arg(crate::i18n::IDS_S3_NOT_WRITABLE, &state.folder);
+    if !crate::ui::confirm(dialog, &question) {
+        return;
+    }
+    let restart = crate::elevation::Restart {
+        language: state.language,
+        folder: state.folder.clone(),
+        secret: state.secret.clone(),
+    };
+    if crate::elevation::restart_elevated(crate::wizard::page::sheet(dialog), &restart) {
+        // The elevated instance takes over, and waits for this one to be gone.
+        std::process::exit(0);
+    }
+    super::progress_page::log_line(dialog, state, "restarting as administrator was cancelled");
 }
 
 /// Opened per route taken, so a user who corrects the folder and starts again

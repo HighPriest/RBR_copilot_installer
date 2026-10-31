@@ -333,7 +333,7 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] **§7** Give the run log a header and per-line timestamps
 - [x] **D12** Try `/packages` even when `/health` failed
 - [x] **D12** Cap what `http::get` will buffer
-- [ ] **P11** Probe writability on scene 3, offering to restart elevated
+- [x] **P11** Probe writability on scene 3, offering to restart elevated
 - [ ] **§7** Retry a transient download, and list failures on scene 7
 - [ ] **§7** Store the remembered secret with DPAPI
 

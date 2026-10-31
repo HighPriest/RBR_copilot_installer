@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026/10/31 — installer: a folder it cannot write is caught on scene 3 (P11)
+
+A game under `C:\Program Files` cannot be written by a standard account,
+and the installer asks for no elevation (`asInvoker`). Since the download
+cache moved into the game folder, such a run got through scenes 3, 4 and
+the picks, then failed at scene 4b's downloads.
+
+Now scene 3 probes the folder when a route button is pressed — the moment
+the user commits to it. The probe removes whatever it created, so a folder
+the user abandons keeps no trace. When it cannot write:
+
+- it names the folder, says that is usual under Program Files, and offers
+  to **restart as administrator**. No, or cancelling the UAC prompt, leaves
+  the user on scene 3;
+- the elevated instance opens straight on scene 3 with the language, the
+  folder and the access key carried over. The key is on that process's
+  command line, readable by other programs running as this user: the
+  maintainer's call, for a restart that asks nothing twice;
+- it waits for the instance that launched it to close. That needed a fix
+  in the single-instance check, which kept the handle it got for a name
+  already taken — and so kept the mutex alive after its owner had gone;
+- already elevated and still unable to write, it explains and offers
+  nothing, since asking again would loop.
+
+Tested where it happens: `Test-UiLayout.ps1` makes a folder this account
+cannot write (a deny rule, no admin needed), checks scene 3 stops with the
+`.rc`'s own message and leaves the folder untouched, then launches with the
+restart arguments while the first instance is still open and checks it
+resumes on scene 3 in that language, with the folder and its game (60/60 in
+each language). The command line round-trips through Windows' own
+`CommandLineToArgvW` in unit tests, folders with spaces and a trailing
+backslash included. The UAC prompt itself is not automated.
+
+Size: 588.5 kB, up 6 kB — the most of today's changes, for the token query,
+the UAC launch and the restart's command line. 11.5 kB remain under the gate.
+
 ## 2026/10/31 — installer: a cap on what `http::get` holds in memory (D12)
 
 `http::get` — the manifest, the MOTD, `/health`, `/whoami` — read the

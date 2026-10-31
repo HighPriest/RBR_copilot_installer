@@ -56,7 +56,7 @@ pub unsafe extern "system" fn game_folder_page(
             ] {
                 crate::ui::set_text(dialog, control, text);
             }
-            show_detection(dialog);
+            show_carried_folder(dialog);
             1
         }
         wm::WM_COMMAND => {
@@ -115,6 +115,21 @@ unsafe fn on_browse(dialog: HWND) {
     };
     crate::ui::set_text_raw(dialog, crate::wizard::control_ids::IDC_S3_PATH, &picked);
     redetect(dialog, true);
+}
+
+/// An instance restarted as administrator arrives with its folder chosen, so
+/// it is shown and detected at once; otherwise the page starts empty.
+unsafe fn show_carried_folder(dialog: HWND) {
+    let carried = crate::wizard::page::state(dialog)
+        .map(|state| state.folder.clone())
+        .filter(|folder| !folder.is_empty());
+    match carried {
+        Some(folder) => {
+            crate::ui::set_text_raw(dialog, crate::wizard::control_ids::IDC_S3_PATH, &folder);
+            redetect(dialog, false);
+        }
+        None => show_detection(dialog),
+    }
 }
 
 /// Keeps the previous game while the folder still holds it, else takes the first match.
