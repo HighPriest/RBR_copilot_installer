@@ -75,6 +75,7 @@ pub const IDS_S5_VOICE: u16 = 102;
 pub const IDS_S5_STYLE: u16 = 103;
 pub const IDS_S5_MISSING: u16 = 104;
 pub const IDS_S5_NONE: u16 = 105;
+pub const IDS_S5_NOT_READY: u16 = 106;
 
 pub const IDS_S6_TITLE: u16 = 110;
 pub const IDS_S6_DOWNLOADING: u16 = 111;

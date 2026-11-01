@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026/11/01 — installer: scene 5 opens only with something to pick (I9)
+
+Download/Update → Back → Configure/Install → Back → Download/Update, on a
+folder with nothing downloaded, let Download through with nothing ticked
+into an empty configuration screen; doing it again locked scene 4. The
+Configure route rebuilds the shared tree from the cache alone, and scene 4,
+having loaded its catalogue once, never loaded it again: the page showed
+the catalogue while its gate read the cache-only model, and every tick
+pointed at a row the model no longer had. Taking that route now marks the
+catalogue as not loaded, so scene 4's next visit fetches and rebuilds both.
+
+The rule the report asked for holds on its own: the configuration screen
+opens only when every one of its questions has a ticked package whose
+payload is in the cache. Configure/Install checks it on scene 3 and stays
+there with a warning naming what is missing; Download checks it after 4b,
+and when every voice failed, say, returns to scene 4 with those unticked.
+This reverses an earlier choice: a category the server publishes nothing
+under used to leave an empty list and install without it, and now holds
+the wizard short of scene 5.
+
+Returning to scene 4 exposed a second bug: 4b decided what to fetch from
+tree states dating from scene 4's first visit, so a second transfer fetched
+everything again. It now skips what the cache already holds at the
+catalogue's sha256.
+
+`Test-WizardDownload.ps1` repeats the reported sequence twice on a fresh
+folder before its download gate, and an eighth pass fails every voice
+(138/138).
+
+Size: 620 kB, +2 kB — exactly at the gate.
+
 ## 2026/10/31 — installer: it will not install while the game is running (P12)
 
 A running game holds its files open, so an install into its folder failed

@@ -144,6 +144,8 @@ unsafe fn start_catalogue_fetch(dialog: HWND) {
         return;
     };
     if state.catalogue_loaded {
+        // Scene 4b unticks what never arrived before sending the selection back here.
+        super::download_tree_view::refresh_checks(dialog, state);
         return;
     }
     state.catalogue_loaded = true;

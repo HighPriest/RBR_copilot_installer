@@ -181,6 +181,7 @@ END
 #define IDS_S5_STYLE          103
 #define IDS_S5_MISSING        104
 #define IDS_S5_NONE           105
+#define IDS_S5_NOT_READY      106
 
 // Scene 6 — Installation (110-129)
 #define IDS_S6_TITLE          110
@@ -439,6 +440,7 @@ BEGIN
     IDS_S5_STYLE        "Pacenotes style:"
     IDS_S5_MISSING      "Choose one option under: %s"
     IDS_S5_NONE         "(nothing was selected on the previous screen)"
+    IDS_S5_NOT_READY    "There is nothing on this computer to choose from in: %s\r\n\r\nDownload at least one item in each of them first."
 
     IDS_S6_TITLE        "Installation"
     IDS_S6_DOWNLOADING  "Downloading"
@@ -558,6 +560,7 @@ BEGIN
     IDS_S5_STYLE        "Styl pacenotes:"
     IDS_S5_MISSING      "Wybierz jedną pozycję w: %s"
     IDS_S5_NONE         "(na poprzednim ekranie nie wybrano nic)"
+    IDS_S5_NOT_READY    "Na tym komputerze nie ma nic do wyboru w kategoriach: %s\r\n\r\nNajpierw pobierz co najmniej jedną pozycję w każdej z nich."
 
     IDS_S6_TITLE        "Instalacja"
     IDS_S6_DOWNLOADING  "Pobieranie"

@@ -79,6 +79,13 @@ unsafe fn start(dialog: HWND) {
                 .find(|package| &package.download_path() == key)
                 .cloned()
         })
+        // The tree's states date from scene 4's first visit, and a selection
+        // sent back here has had a transfer since.
+        .filter(|package| {
+            let cached = state.cache.get(&package.download_path());
+            !cached.is_some_and(|entry| entry.sha256 == package.sha256)
+                || !state.cache.has_payload(&package.sha256)
+        })
         .collect();
     if missing.is_empty() {
         let nothing = crate::i18n::load_string(crate::i18n::IDS_S6_NOTHING);
@@ -115,9 +122,10 @@ unsafe fn start(dialog: HWND) {
     });
 }
 
-// The questions come next, without what never arrived; when nothing did, or
+/// The questions come next, without what never arrived; when nothing did, or
 /// the run was cancelled, it ends at the summary, by page id, since nothing
-/// new could honestly be installed.
+/// new could honestly be installed. When a category is left with nothing to
+/// pick from, it is back to scene 4 for another selection.
 unsafe fn finish(
     dialog: HWND,
     state: &mut crate::wizard::state::WizardState,
@@ -129,8 +137,9 @@ unsafe fn finish(
             bytes,
             failed,
         } => {
-            state.downloaded = downloaded;
-            state.downloaded_bytes = bytes;
+            // Added up, since a selection sent back from here comes through again.
+            state.downloaded += downloaded;
+            state.downloaded_bytes += bytes;
             if downloaded > 0 {
                 let line = format!(
                     "downloaded {downloaded} package(s), {}",
@@ -144,6 +153,10 @@ unsafe fn finish(
             if downloaded == 0 && !state.not_downloaded.is_empty() {
                 let nothing = crate::i18n::load_string(crate::i18n::IDS_S7_NONE_DOWNLOADED);
                 end_run_early(dialog, state, crate::worker::Outcome::Failed(nothing));
+                return;
+            }
+            if !super::configuration::has_something_to_pick(dialog, state) {
+                back_to_selection(dialog, state);
                 return;
             }
             super::progress_page::finish_page(dialog, crate::i18n::IDS_S4B_DONE, None);
@@ -171,6 +184,21 @@ unsafe fn leave_out(
         }
     }
     state.not_downloaded = failed;
+}
+
+/// Scene 4 again, with what never arrived unticked there, and a fresh transfer
+/// once the user sends a new selection.
+unsafe fn back_to_selection(dialog: HWND, state: &mut crate::wizard::state::WizardState) {
+    super::progress_page::log_line(
+        dialog,
+        state,
+        "nothing to configure yet: back to the selection",
+    );
+    state.download_started = false;
+    super::progress_page::set_progress(dialog, 0);
+    let sheet = crate::wizard::page::sheet(dialog);
+    let selection = crate::wizard::control_ids::IDD_S4_DOWNLOAD;
+    wm::PostMessageW(sheet, ctl::PSM_SETCURSELID, 0, selection as LPARAM);
 }
 
 unsafe fn end_run_early(

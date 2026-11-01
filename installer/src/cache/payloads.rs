@@ -9,6 +9,12 @@ impl super::Cache {
         self.payload_path(sha256).is_file()
     }
 
+    /// Whether `key`'s payload is here to install, not merely named by the index.
+    pub fn holds(&self, key: &str) -> bool {
+        self.get(key)
+            .is_some_and(|entry| self.has_payload(&entry.sha256))
+    }
+
     /// Payloads no index entry refers to, for the I9 sweep, and none unless
     /// the index was really read, or a damaged index would condemn the whole cache.
     pub fn orphans(&self) -> Vec<std::path::PathBuf> {

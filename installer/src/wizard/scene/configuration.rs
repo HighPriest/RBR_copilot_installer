@@ -118,7 +118,33 @@ unsafe fn on_install(dialog: HWND) -> isize {
     if missing.is_empty() {
         return crate::wizard::page::reply(dialog, 0);
     }
-    let named: Vec<String> = missing
+    let text = crate::i18n::load_string_arg(crate::i18n::IDS_S5_MISSING, &captions(&missing));
+    crate::ui::message_box_warning(dialog, &text);
+    crate::wizard::page::stay(dialog)
+}
+
+/// Scene 5's way in, from either route: one pick per category needs something
+/// on this computer to pick from, so a category with nothing ticked AND cached
+/// is named in a warning, and the caller keeps its page.
+pub(super) unsafe fn has_something_to_pick(
+    dialog: HWND,
+    state: &crate::wizard::state::WizardState,
+) -> bool {
+    let choices = pacenotes_installer::schema::choice_categories(state.game_id());
+    let empty = state
+        .tree
+        .categories_not_ready(&choices, &|key| state.cache.holds(key));
+    if empty.is_empty() {
+        return true;
+    }
+    let text = crate::i18n::load_string_arg(crate::i18n::IDS_S5_NOT_READY, &captions(&empty));
+    crate::ui::message_box_warning(dialog, &text);
+    false
+}
+
+/// The categories as the lists are labelled, for a warning that names them.
+fn captions(categories: &[&str]) -> String {
+    let named: Vec<String> = categories
         .iter()
         .map(|category| {
             crate::i18n::load_string(category_caption(category))
@@ -126,9 +152,7 @@ unsafe fn on_install(dialog: HWND) -> isize {
                 .to_string()
         })
         .collect();
-    let text = crate::i18n::load_string_arg(crate::i18n::IDS_S5_MISSING, &named.join(", "));
-    crate::ui::message_box_warning(dialog, &text);
-    crate::wizard::page::stay(dialog)
+    named.join(", ")
 }
 
 /// Matched by category rather than position, so a reordered list cannot be mislabelled.

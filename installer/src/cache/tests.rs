@@ -99,6 +99,9 @@ fn an_entry_whose_payload_vanished_is_not_offered() {
     assert_eq!(offered, vec!["style/Here".to_string()]);
     assert!(cache.get("rbr/public/style/Gone").is_some());
     assert!(!cache.has_payload("gone"));
+    assert!(cache.holds("rbr/public/style/Here"));
+    assert!(!cache.holds("rbr/public/style/Gone"));
+    assert!(!cache.holds("rbr/public/style/Never"));
 }
 
 /// Losing the index costs a re-download; deleting the payloads over a parse error would cost more.

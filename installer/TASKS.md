@@ -342,6 +342,12 @@ Ordered security first, then what support needs, then what a user hits.
 - [x] Sweep orphaned payloads from the cache on startup
   - [x] Decide where "remove from cache" lives now there is no library view
 - [x] Fix keyboard and tab order, default buttons, and Esc per scene
+- [x] Download/Update → Back → Configure/Install → Back → Download/Update skips the
+      "at least one item checked" check, and repeating it locks scene 4; the
+      configuration screen must not open unless every category has at least
+      one item downloaded and cached
+  - [x] Scene 4b fetched again what an earlier transfer had cached, once a
+        selection could come back to it
 
 ## I10 — Release gate
 

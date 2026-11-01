@@ -42,6 +42,11 @@ pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {
         crate::wizard::state::Route::Configure => {
             // Scene 5 reads the tree, here the cache plus the ledger, ticking what is already here.
             super::download::load_tree(state, Vec::new());
+            // That replaced the catalogue scene 4 shows, so its next visit fetches it again.
+            state.catalogue_loaded = false;
+            if !super::configuration::has_something_to_pick(dialog, state) {
+                return;
+            }
             state.chosen = state.tree.checked_keys();
             let line = format!(
                 "configuring from what is already here: {} package(s)",

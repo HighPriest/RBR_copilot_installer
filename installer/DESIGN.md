@@ -118,7 +118,10 @@ that tells two voices apart.
     the default button, the widest, and as tall as the other two together,
     alone on the right where the eye ends up and where the sheet's own Next
     sits.
-  - **Configure/Install** → scene 5, skipping both download pages.
+  - **Configure/Install** → scene 5, skipping both download pages — but
+    only when every scene 5 question has something on this computer to
+    choose from. Otherwise a warning names the empty categories, says to
+    download first, and the wizard stays here.
   - **Restore/Uninstall** → the restore scene below.
   - The two secondary ones are work on a folder you already have, so they
     stack in a narrower column on the left. The stack's top and bottom are
@@ -349,6 +352,13 @@ happens between the two is the user answering the configuration questions.
 - When NOTHING could be downloaded, or the user cancels, the run ends at
   scene 7 rather than continuing to the questions: there is nothing new to
   configure that could honestly be installed.
+- **When a question would have nothing to choose from** — every ticked
+  package of a choice category failed — a warning names the category and
+  the page returns to scene 4, where those packages are now unticked. The
+  next selection runs a transfer of its own, fetching only what the cache
+  does not hold yet. The rule above comes first: a transfer that brought
+  nothing at all is a server or network failure, which the summary and its
+  log explain better.
 - Back is not offered; the configuration scene's Back returns to scene 4,
   skipping this page, because there is no going back into a finished
   transfer.
@@ -382,11 +392,17 @@ this scene.
   tree either way.
 - Checked `pacenotes`-category packages are installed as-is (no choice), and
   so is anything under a category the installer does not know.
-- **Install** requires a pick in every list that HAS options; a warning modal
-  names the ones still unanswered. A category the server publishes nothing
-  under leaves an empty, disabled list that says so — scene 4 does not demand
-  a tick there either, and dead-ending the wizard on a catalogue the operator
-  is entitled to publish would be worse than installing without it.
+- **The scene opens only when every list has something to offer**: a
+  checked package of that category whose payload is in the cache. Both
+  routes check this on the way in — Configure/Install on scene 3, Download
+  after scene 4b — so the user never meets a question they cannot answer.
+  This reverses an earlier choice (2026-11-01, at the maintainer's request):
+  a category the server publishes nothing under used to leave an empty list
+  and install without it; now it holds the wizard short of this scene, and
+  the operator has to publish one. An empty list still says so, as a
+  fallback that should no longer be reachable.
+- **Install** requires a pick in every list; a warning modal names the ones
+  still unanswered.
 - Going Back rebuilds the lists. A pick still on offer is kept; one whose
   package was unticked is dropped and the question is asked again. Back
   leads to scene 4 on the Download route and to scene 3 on the

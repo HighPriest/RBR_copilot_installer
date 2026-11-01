@@ -64,6 +64,28 @@ impl super::Tree {
             .collect()
     }
 
+    /// The choice categories with nothing to configure: no checked leaf whose
+    /// payload `is_cached` says is here. Every category the game's schema
+    /// asks about counts, present in this tree or not, since scene 5 cannot
+    /// make a pick from nothing.
+    pub fn categories_not_ready<'a>(
+        &self,
+        choice_categories: &[&'a str],
+        is_cached: &dyn Fn(&str) -> bool,
+    ) -> Vec<&'a str> {
+        let ready: Vec<&str> = self
+            .checked_leaves()
+            .into_iter()
+            .filter(|&leaf| self.nodes[leaf].key.as_deref().is_some_and(is_cached))
+            .map(|leaf| self.category_of(leaf))
+            .collect();
+        choice_categories
+            .iter()
+            .copied()
+            .filter(|category| !ready.contains(category))
+            .collect()
+    }
+
     /// The checked leaves scene 6 fetches, updates included.
     pub fn checked_needing_download(&self) -> Vec<String> {
         self.checked_leaves()

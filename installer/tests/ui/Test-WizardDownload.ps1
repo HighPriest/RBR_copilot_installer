@@ -47,7 +47,7 @@ $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
 $PSBTN_NEXT = 1; $PSBTN_FINISH = 2
-$TVM_GETCOUNT = 0x1105
+$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1
 
 $crateRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $repoRoot = Split-Path -Parent $crateRoot
@@ -180,6 +180,48 @@ try {
     # Every grouping row the operator's folders imply, plus every package.
     Assert-That 'the whole catalogue reached the tree control' ($rows -eq $EXPECTED_ROWS) `
         "control holds $rows rows, expected $EXPECTED_ROWS"
+
+    # REGRESSION (2026-11-01): Back, Configure/Install, Back, Download/Update,
+    # on a folder with nothing downloaded yet. The Configure route replaced
+    # the model behind scene 4's control, so the next visit let Download
+    # through with nothing ticked into an empty scene 5, and the one after
+    # locked the page. Twice, as reported. Configure must refuse here, with
+    # nothing on this computer to choose from; the gate and the ticks that
+    # follow then prove scene 4's model is the catalogue again.
+    $notReady = $S['IDS_S5_NOT_READY'].Substring(0, $S['IDS_S5_NOT_READY'].IndexOf('%s')).Trim()
+    foreach ($round in 1, 2) {
+        Write-Host "`n-- Back, Configure/Install, Back, Download/Update ($round) --"
+        Press-WizardButton -Sheet $h -Button $PSBTN_BACK
+        $p3 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S3_PATH
+        Invoke-Button -Dialog $p3 -CtrlId $IDC_S3_CONFIGURE -Post
+        $refusal = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h" -TimeoutMs 4000
+        Assert-That "Configure/Install with nothing downloaded is refused ($round)" ($null -ne $refusal)
+        if ($refusal) {
+            $said = (Get-ControlInventory -Dialog $refusal.Handle |
+                Where-Object { $_.Class -eq 'Static' } | ForEach-Object { $_.Text }) -join ' '
+            Assert-That "the refusal says there is nothing here to choose from ($round)" `
+            ($said.Contains($notReady)) "warning said [$said]"
+            foreach ($caption in 'IDS_S5_LANGUAGE', 'IDS_S5_VOICE', 'IDS_S5_STYLE') {
+                $named = $S[$caption].TrimEnd(':')
+                Assert-That "and names '$named' ($round)" ($said.Contains($named)) "warning said [$said]"
+            }
+            Dismiss-Modal -Modal $refusal.Handle
+        }
+        $p3 = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S3_PATH -TimeoutMs 3000
+        Assert-That "the wizard stays on scene 3 ($round)" ($p3 -ne [IntPtr]::Zero)
+        if ($p3 -eq [IntPtr]::Zero) { throw 'Configure/Install left scene 3 with nothing downloaded' }
+
+        Invoke-Button -Dialog $p3 -CtrlId $IDC_S3_DOWNLOAD
+        $page = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE
+        $deadline = (Get-Date).AddSeconds(20)
+        do {
+            Start-Sleep -Milliseconds 300
+            $status = Get-CtrlText $page $IDC_S4_STATUS
+        } while ($status -cne $S['IDS_S4_READY'] -and (Get-Date) -lt $deadline)
+        $rows = Get-TreeRowCount -Dialog $page -CtrlId $IDC_S4_TREE
+        Assert-That "scene 4 shows the whole catalogue again ($round)" ($rows -eq $EXPECTED_ROWS) `
+            "control holds $rows rows, expected $EXPECTED_ROWS"
+    }
 
     # Only the choice categories schemas/rbr.toml marks select = "one" are demanded.
     Write-Host "`n-- download gate --"
@@ -895,6 +937,115 @@ try {
         Assert-That 'before anything in the folder changed' ((Get-Content -Raw $ledgerPath) -eq $ledgerBefore)
     } finally {
         $fakeGames | ForEach-Object { if (-not $_.HasExited) { $_.Kill(); $_.WaitForExit(5000) | Out-Null } }
+    }
+
+    # ---------------------------------------------------------------
+    # Eighth pass — a category with nothing to pick from after 4b
+    # ---------------------------------------------------------------
+    # Every co-driver download fails for good, so scene 5 would ask for a
+    # voice with none to offer. The transfer goes back to scene 4 instead,
+    # with the voices unticked there too, and a new selection fetches again.
+    Write-Host "`n-- eighth pass: no voice arrives --"
+    $gameFolder8 = Join-Path $work 'game8'
+    [void](New-Item -ItemType Directory -Force -Path $gameFolder8)
+    [void](New-Item -ItemType File -Path (Join-Path $gameFolder8 'RichardBurnsRally_SSE.exe'))
+
+    $front8 = Get-FreePort
+    $standIn8 = [System.Net.HttpListener]::new()
+    $standIn8.Prefixes.Add("http://127.0.0.1:$front8/")
+    $standIn8.Start()
+    $seen8 = [hashtable]::Synchronized(@{ Voices = 0 })
+    $relay8 = [powershell]::Create()
+    [void]$relay8.AddScript({
+            param($listener, $behind, $seen)
+            $client = [System.Net.Http.HttpClient]::new()
+            while ($listener.IsListening) {
+                try { $ctx = $listener.GetContext() } catch { break }
+                try {
+                    if ($ctx.Request.Url.AbsolutePath.StartsWith('/download/rbr/public/codriver/')) {
+                        $seen.Voices++
+                        $ctx.Response.StatusCode = 404
+                    } else {
+                        $ask = [System.Net.Http.HttpRequestMessage]::new(
+                            [System.Net.Http.HttpMethod]::Get, "$behind$($ctx.Request.Url.PathAndQuery)")
+                        $answer = $client.SendAsync($ask).Result
+                        $body = $answer.Content.ReadAsByteArrayAsync().Result
+                        $ctx.Response.StatusCode = [int]$answer.StatusCode
+                        $ctx.Response.ContentLength64 = $body.Length
+                        $ctx.Response.OutputStream.Write($body, 0, $body.Length)
+                    }
+                    $ctx.Response.Close()
+                } catch {
+                    $ctx.Response.Abort()
+                }
+            }
+        }).AddArgument($standIn8).AddArgument("http://127.0.0.1:$port").AddArgument($seen8)
+    $relay8Run = $relay8.BeginInvoke()
+    try {
+        $launch8 = Start-Installer -ExePath $ExePath -ExtraArgs @('--server', "http://127.0.0.1:$front8")
+        $proc = $launch8.Process
+        $sheet8 = Wait-ForDialog -OwnerPid $proc.Id
+        if (-not $sheet8) { throw 'no wizard on the eighth pass' }
+        $h8 = $sheet8.Handle
+
+        $p = Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S1_COMBO
+        [void][NativeUi]::SendMessageW([NativeUi]::GetDlgItem($p, $IDC_S1_COMBO), 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
+        Press-WizardButton -Sheet $h8 -Button $PSBTN_NEXT
+        [void](Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S2_MOTD)
+        Press-WizardButton -Sheet $h8 -Button $PSBTN_NEXT
+        $p = Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S3_PATH
+        Set-CtrlText -Dialog $p -CtrlId $IDC_S3_PATH -Value $gameFolder8
+        Invoke-EditChanged -Dialog $p -CtrlId $IDC_S3_PATH
+        Start-Sleep -Milliseconds 900
+        Invoke-Button -Dialog $p -CtrlId $IDC_S3_DOWNLOAD
+
+        $p4 = Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S4_TREE
+        $deadline = (Get-Date).AddSeconds(20)
+        do {
+            Start-Sleep -Milliseconds 300
+        } while ((Get-TreeRowCount -Dialog $p4 -CtrlId $IDC_S4_TREE) -eq 0 -and (Get-Date) -lt $deadline)
+
+        [void](Invoke-TreeCheckRoots -Dialog $p4 -CtrlId $IDC_S4_TREE)
+        Press-WizardButton -Sheet $h8 -Button $PSBTN_NEXT
+        $warn8 = Wait-ForDialog -OwnerPid $proc.Id -NotHandle "$h8" -TimeoutMs 40000
+        Assert-That 'no voice arriving is named rather than asked about' ($null -ne $warn8)
+        if (-not $warn8) { throw 'no warning after the voices failed' }
+        $said = (Get-ControlInventory -Dialog $warn8.Handle |
+            Where-Object { $_.Class -eq 'Static' } | ForEach-Object { $_.Text }) -join ' '
+        $voice = $S['IDS_S5_VOICE'].TrimEnd(':')
+        Assert-That "the warning names '$voice' alone" `
+        ($said.Contains($notReady) -and $said.Contains($voice) -and
+            -not $said.Contains($S['IDS_S5_LANGUAGE'].TrimEnd(':'))) "warning said [$said]"
+        Dismiss-Modal -Modal $warn8.Handle
+
+        $p4 = Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S4_TREE -TimeoutMs 5000
+        Assert-That 'it is back to scene 4, not on to the questions' ($p4 -ne [IntPtr]::Zero)
+        if ($p4 -eq [IntPtr]::Zero) { throw 'scene 4 did not come back' }
+        $tv8 = [NativeUi]::GetDlgItem($p4, $IDC_S4_TREE)
+        $root = [NativeUi]::SendMessageW($tv8, $TVM_GETNEXTITEM, [IntPtr]$TVGN_ROOT, [IntPtr]::Zero)
+        $images = @()
+        while ($root -ne [IntPtr]::Zero) {
+            $images += Get-TreeStateImage -Tree $tv8 -Item $root
+            $root = [NativeUi]::SendMessageW($tv8, $TVM_GETNEXTITEM, [IntPtr]$TVGN_NEXT, $root)
+        }
+        Assert-That 'the voices are unticked there, the rest stay ticked' `
+        ((@($images | Where-Object { $_ -eq 1 }).Count -eq 1) -and (@($images | Where-Object { $_ -eq 2 }).Count -eq 3)) `
+            "root state images: $($images -join ', ')"
+
+        # Only the voices are missing now, so this transfer brings nothing at
+        # all, and that still ends at the summary: a server that delivers
+        # nothing is what the run log is there to explain.
+        $before = $seen8.Voices
+        [void](Invoke-TreeCheckRoots -Dialog $p4 -CtrlId $IDC_S4_TREE)
+        Press-WizardButton -Sheet $h8 -Button $PSBTN_NEXT
+        $p7 = Wait-ForPageControl -Sheet $h8 -CtrlId $IDC_S7_RESULT -TimeoutMs 40000
+        Assert-That 'a new selection runs a transfer of its own' `
+        ($seen8.Voices -gt $before) "voices asked for: $before before, $($seen8.Voices) after"
+        $result8 = if ($p7 -ne [IntPtr]::Zero) { Get-CtrlText $p7 $IDC_S7_RESULT } else { '' }        Assert-That 'and when it brings nothing, the run ends at the summary' `
+        ($result8.Contains($S['IDS_S7_NONE_DOWNLOADED'])) "result was [$result8]"
+    } finally {
+        $standIn8.Close()
+        $relay8.Stop(); $relay8.Dispose()
     }
 } finally {
     if ($proc -and -not $proc.HasExited) { $proc.Kill(); $proc.WaitForExit(2000) | Out-Null }

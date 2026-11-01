@@ -331,6 +331,14 @@ after the second folder is deleted.
     of ours, and acting on it aborted the Configure route. So the two are
     sized together, the refresh is driven off the handle table, and a
     notification is validated by its `hItem`.
+  - INVARIANT: whatever replaces `tree` with anything but scene 4's own
+    catalogue clears `catalogue_loaded`, so scene 4's next visit fetches
+    and rebuilds the model and the control together. The Configure route
+    once left them disagreeing: Download then passed its gate with nothing
+    ticked, and the next visit ignored every tick.
+  - Scene 5 is entered only through `configuration::has_something_to_pick`
+    (on scene 3 for Configure, after 4b for Download): every choice
+    category needs a checked package the cache HOLDS (`Cache::holds`).
 - `ui/` — the small Win32 vocabulary the pages are written in: control
   text, combo boxes, list boxes, the three modal shapes, the folder picker.
 - `choices.rs` — scene 5's model: the three single-select lists and the

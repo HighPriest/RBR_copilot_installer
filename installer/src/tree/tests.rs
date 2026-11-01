@@ -412,3 +412,38 @@ fn a_package_that_never_arrived_is_unticked_alone() {
         ]
     );
 }
+
+/// Scene 5 asks for one pick per category, so each needs something on this
+/// computer to pick from: ticked is not enough, and absent is not exempt.
+#[test]
+fn a_category_is_ready_only_with_a_checked_package_in_the_cache() {
+    let choices = crate::schema::choice_categories(RBR);
+    let in_cache = [
+        "rbr/public/language/english",
+        "rbr/public/style/Descriptive",
+    ];
+    let is_cached = |key: &str| in_cache.contains(&key);
+    let mut tree = super::Tree::build(RBR, &catalogue(), &[], &[]);
+    tree.set_checked(find(&tree, &["language", "english"]), true);
+    tree.set_checked(find(&tree, &["codriver", "polish", "male", "Kamil"]), true);
+    tree.set_checked(find(&tree, &["style", "Numeric Standard"]), true);
+
+    // Kamil and Numeric Standard are ticked but were never downloaded.
+    assert_eq!(
+        tree.categories_not_ready(&choices, &is_cached),
+        vec!["codriver", "style"]
+    );
+
+    tree.set_checked(find(&tree, &["style", "Descriptive"]), true);
+    assert_eq!(
+        tree.categories_not_ready(&choices, &is_cached),
+        vec!["codriver"]
+    );
+
+    // Nothing to configure at all: an empty tree is not vacuously ready.
+    let empty = super::Tree::build(RBR, &[], &[], &[]);
+    assert_eq!(
+        empty.categories_not_ready(&choices, &is_cached),
+        vec!["language", "codriver", "style"]
+    );
+}
