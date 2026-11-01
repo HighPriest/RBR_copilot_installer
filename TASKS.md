@@ -96,7 +96,7 @@ See root `CLAUDE.md`, "Install model".
 - [x] Build the restore scene: go back to any earlier state, or remove
       everything, after seeing exactly what that would do
 - [ ] Work through `installer/TASKS.md` I9 (polish) and I10 (release gate)
-- [ ] Audit the final size against the 620 kB gate
+- [ ] Audit the final size against the 700 kB gate
   - [x] Save a `cargo bloat` report to `docs/bloat.txt`
 
 ## M7 — Ship

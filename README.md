@@ -130,7 +130,7 @@ pwsh -File tests\Run-AllTests.ps1   # lint, tests, size gate, GUI suite
 | Path | What it is |
 |---|---|
 | `shared/` | Protocol types shared by both sides. serde only — no I/O, no HTTP. |
-| `installer/` | The Windows GUI. Win32 + WinHTTP, no GUI framework, hard 620 kB gate. |
+| `installer/` | The Windows GUI. Win32 + WinHTTP, no GUI framework, hard 700 kB gate. |
 | `installer/src/` | `wizard/` (the wizard pages and its two routes), `tree/` / `choices/` (their models), `http/` (WinHTTP), `api/`, `cache/`, `sha256.rs`, `runlog/`. |
 | `installer/tests/` | Every installer check: Rust tests, the size gate, and the PowerShell suite that drives the real UI. |
 | `installer/res/installer.rc` | Dialog templates, all user-visible strings per language, icon, version info. |

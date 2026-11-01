@@ -11,9 +11,10 @@ logic modules on any host.
 
 ## The size budget
 
-**620 kB.** It was 500 kB until the install engine landed and 600 kB until
-the installer stopped needing the Visual C++ redistributable; each move was
-argued for (installer/CLAUDE.md, "The size budget"). The rules it produced did not move: no tokio, no
+**700 kB.** It was 500 kB until the install engine landed, 600 kB until
+the installer stopped needing the Visual C++ redistributable, and 620 kB
+until the build reached exactly that and the maintainer raised it
+(installer/CLAUDE.md, "The size budget"). The rules it produced did not move: no tokio, no
 reqwest, no rustls, no GUI framework, and `std` over a dependency.
 
 Measured on the release build for `x86_64-pc-windows-msvc`:
@@ -32,6 +33,7 @@ Measured on the release build for `x86_64-pc-windows-msvc`:
 | I7f — the engine wired in (gate raised to 600 kB) | 553,984 | 541 kB |
 | restore scene + the recut icon | 590,336 | 576.5 kB |
 | the hybrid CRT, no VC++ redistributable (gate raised to 620 kB) | 632,320 | 617.5 kB |
+| scene 5's readiness check (gate raised to 700 kB) | 634,880 | 620 kB |
 
 Two levers are held in reserve, in this order:
 

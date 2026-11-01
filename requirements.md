@@ -49,7 +49,7 @@ warning as a failure here too.
 pwsh -File installer/tests/Run-AllTests.ps1
 ```
 
-Which is: fmt, clippy, the cargo test binaries, the release version, the 620 kB
+Which is: fmt, clippy, the cargo test binaries, the release version, the 700 kB
 size gate, the WinHTTP client against a live server, the crash report, the
 UI layout in both languages, and the wizard flow end to end. It needs an
 interactive desktop for the last three.
@@ -60,7 +60,7 @@ is a finding to report, not an invitation to start changing things.
 
 ### Always
 
-- The installer binary stays under **620 kB**, and imports nothing Windows
+- The installer binary stays under **700 kB**, and imports nothing Windows
   does not ship. `Test-BinarySize.ps1` is
   part of the full suite; run it by hand after anything that adds code or
   resources.

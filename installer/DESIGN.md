@@ -578,7 +578,7 @@ with the correct `file0=packages\FilipekMod_<style>.ini` per style.
 
 comctl32 **PropertySheet in wizard mode** (`PSH_WIZARD`): Back/Next/Cancel,
 page switching and keyboard handling come from the OS at ~0 bytes of ours,
-which matters against the 620 kB gate. One dialog template per scene in
+which matters against the 700 kB gate. One dialog template per scene in
 `res/installer.rc`; button enablement via `PSM_SETWIZBUTTONS`.
 
 Three things the OS does NOT give, each worked around in `wizard.rs` with the

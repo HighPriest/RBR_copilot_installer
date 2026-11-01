@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026/11/01 — installer: the size gate moves to 700 kB
+
+The scene 5 readiness check landed the release build on exactly 620 kB
+(634,880 bytes), with nothing left for the next change. The maintainer
+raised the gate to 700 kB. Unlike the two raises before it, this one was
+not measured against the levers in `installer/CLAUDE.md`: the icon and
+serde_json are still unspent, and the forbidden crates stay forbidden.
+
 ## 2026/11/01 — installer: scene 5 opens only with something to pick (I9)
 
 Download/Update → Back → Configure/Install → Back → Download/Update, on a

@@ -352,7 +352,7 @@ Ordered security first, then what support needs, then what a user hits.
 ## I10 — Release gate
 
 - [x] Save a `cargo bloat` report to `docs/bloat.txt`
-- [ ] Pass the 620 kB gate on the release build, and record the final size
+- [ ] Pass the 700 kB gate on the release build, and record the final size
 - [x] Version every build from its release tag, `v/X.Y.Z`, so no version
       is ever typed by hand
   - [x] `build.rs` reads the tag, refuses any other shape, and falls back

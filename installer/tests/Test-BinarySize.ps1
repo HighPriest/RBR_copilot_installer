@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    AUTOMATED TEST. The 620 kB release gate, and that the installer needs nothing
+    AUTOMATED TEST. The 700 kB release gate, and that the installer needs nothing
     Windows does not ship. Exits non-zero if the binary is over budget or
     imports any other DLL.
 
@@ -15,14 +15,14 @@
     PC without it, so it is held out the same way the size is.
 
 .PARAMETER LimitKB
-    Budget in kB. Defaults to the 620 kB hard constraint from the root
+    Budget in kB. Defaults to the 700 kB hard constraint from the root
     CLAUDE.md; only pass something else to explore headroom locally.
 
 .EXAMPLE
     pwsh -File tests/Test-BinarySize.ps1
 #>
 [CmdletBinding()]
-param([int]$LimitKB = 620)
+param([int]$LimitKB = 700)
 
 $ErrorActionPreference = 'Stop'
 

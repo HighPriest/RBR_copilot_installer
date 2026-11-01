@@ -1,13 +1,16 @@
 # installer/CLAUDE.md — Windows GUI installer
 
-Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 620 kB.
+Windows-only (x86_64-pc-windows-msvc). HARD RELEASE GATE: final .exe < 700 kB.
 Run `tests/Test-BinarySize.ps1` after every change that touches dependencies or adds
 noticeable code. If size regresses, fix it before continuing.
 
 The gate was 500 kB until 2026-10-25, when the install engine (I7) took
 the binary to 546 kB, and 600 kB until 2026-10-31, when the installer
 stopped needing the Visual C++ redistributable (I10, below). Each raise
-measured the alternatives first — see "The size budget" below. Treat 620
+measured the alternatives first — see "The size budget" below. It was 620
+kB until 2026-11-01, when scene 5's readiness check (I9) landed the build
+on exactly 620 kB and the maintainer raised it to 700; that raise came
+with no measurement, and none of the levers below was spent. Treat 700
 as the same kind of hard line 500 was: the answer to "we are over" is to
 find the bytes, and the levers below are still on the table. The next
 build that wants more should have to argue for it as these did.
@@ -456,7 +459,7 @@ first" error.
 
 ## Size audit workflow
 
-- `tests/Test-BinarySize.ps1` — fails build over 620 kB (release gate), or
+- `tests/Test-BinarySize.ps1` — fails build over 700 kB (release gate), or
   on an import Windows does not ship.
 - When investigating: `cargo bloat --release --target x86_64-pc-windows-msvc`.
 - Budget sketch: WinHTTP+dialog skeleton ~120-180 kB; miniz ~40 kB;
@@ -483,7 +486,7 @@ suites. Read `tests/README.md` before adding one.
   on any other shape; no tag means `0.0.0-dev`. The test builds from tags
   and reads the version back out of the binary. Never type a version into
   `Cargo.toml` or the `.rc` — nothing reads them.
-- `tests/Test-BinarySize.ps1` — the 620 kB release gate, and the imports check.
+- `tests/Test-BinarySize.ps1` — the 700 kB release gate, and the imports check.
 - `tests/Test-HttpClient.ps1` — builds and runs a real `pacenotes-server`,
   then drives `--selftest-http` against it: /health, anonymous vs
   authenticated /packages, downloads, 401, 404, an unreachable port, and

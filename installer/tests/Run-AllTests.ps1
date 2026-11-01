@@ -11,7 +11,7 @@
       2. cargo clippy        — ditto, under -D warnings as CI uses
       3. cargo test          — pure logic, cross-platform, no desktop needed
       4. Test-ReleaseVersion — a build carries its release tag's version
-      5. Test-BinarySize.ps1 — the 620 kB release gate (builds the release exe
+      5. Test-BinarySize.ps1 — the 700 kB release gate (builds the release exe
                                the next two steps run)
       6. Test-HttpClient.ps1 — the WinHTTP client against a live
                                pacenotes-server, including the auth matrix
