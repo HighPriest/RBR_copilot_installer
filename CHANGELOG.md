@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026/11/01 — installer: a partly ticked category shows a partial box (I9)
+
+On scene 4, a category with only some of its items ticked showed a blank
+space where its checkbox belonged. The model and the control both knew the
+state (image 3), but the control builds its checkbox images when
+`TVS_CHECKBOXES` arrives, and from the template that was before the partial
+style was asked for: there was no third image to draw. The template no
+longer sets `TVS_CHECKBOXES`; the page adds it after the partial style.
+
+With a real partial image the control cycles unchecked → checked →
+partial, so a click on a partly ticked category now ticks all of it,
+rather than clearing it as the cycle's next step would.
+
+`Test-WizardDownload.ps1` ticks one voice and measures the category's
+checkbox as drawn: the old build drew 1 dark pixel there against 59 for an
+empty box. The tree helpers now find a row by walking the visible rows, so
+they work on an expanded tree too.
+
 ## 2026/11/01 — installer: installs four to fifteen times faster (I9)
 
 Measured on a voice-pack-shaped package, 3 000 files and 114 MB, on one

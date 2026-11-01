@@ -71,6 +71,14 @@ public static class NativeKeys {
     var info = new GUITHREADINFO(); info.cbSize = Marshal.SizeOf(info);
     return GetGUIThreadInfo(tid, ref info) ? info.hwndFocus : IntPtr.Zero; }
 }
+
+public static class NativeGeometry {
+  [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
+  [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr h, ref POINT p);
+  // Where a window's client area starts on screen, past any border.
+  public static POINT ClientOrigin(IntPtr window) {
+    var p = new POINT(); ClientToScreen(window, ref p); return p; }
+}
 "@
 
 $script:WM_SETTEXT = 0x000C
@@ -97,8 +105,13 @@ $script:TVM_GETITEMHEIGHT = 0x111C
 $script:TVM_GETINDENT = 0x1106
 $script:TVM_GETITEMSTATE = 0x1127
 $script:TVIS_STATEIMAGEMASK = 0xF000
+$script:TVM_ENSUREVISIBLE = 0x1114
 $script:TVGN_ROOT = 0
 $script:TVGN_NEXT = 1
+$script:TVGN_PARENT = 3
+$script:TVGN_CHILD = 4
+$script:TVGN_FIRSTVISIBLE = 5
+$script:TVGN_NEXTVISIBLE = 6
 $script:TVGN_CARET = 9
 $script:WM_LBUTTONDOWN = 0x0201
 $script:WM_LBUTTONUP = 0x0202
@@ -372,37 +385,104 @@ function Invoke-TreeCheckRoots {
         target's address space, and it would skip the notification that is the
         whole point.
 
-        The geometry is only valid for TOP-LEVEL rows with every row
-        collapsed, which is how this tree opens: row i then sits at
-        y = i * itemheight, and a root's state icon sits just past the
-        expand button, i.e. one indent in. Both measurements come from the
-        control (TVM_GETITEMHEIGHT, TVM_GETINDENT) rather than being assumed.
+        Where each row is comes from Get-TreeCheckbox, so expanded rows
+        in between do not throw the clicks off.
 
         Returns the number of roots that ended up ticked. #>
     param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
     $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
-    $height = [int][NativeUi]::SendMessageW($h, $script:TVM_GETITEMHEIGHT, [IntPtr]::Zero, [IntPtr]::Zero)
-    $indent = [int][NativeUi]::SendMessageW($h, $script:TVM_GETINDENT, [IntPtr]::Zero, [IntPtr]::Zero)
-
-    $roots = @()
-    $item = [NativeUi]::SendMessageW($h, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_ROOT, [IntPtr]::Zero)
-    while ($item -ne [IntPtr]::Zero -and $roots.Count -lt 64) {
-        $roots += $item
-        $item = [NativeUi]::SendMessageW($h, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_NEXT, $item)
-    }
-
-    for ($row = 0; $row -lt $roots.Count; $row++) {
+    $roots = @(Get-TreeRoots -Tree $h)
+    foreach ($root in $roots) {
         # A click toggles and cached rows start ticked, so only unticked rows are clicked.
-        if ((Get-TreeStateImage -Tree $h -Item $roots[$row]) -eq 2) { continue }
-        $x = $indent + [int]($height / 2)
-        $y = $row * $height + [int]($height / 2)
-        $point = [IntPtr](($y -shl 16) -bor $x)
-        [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONDOWN, [IntPtr]$script:MK_LBUTTON, $point)
-        [void][NativeUi]::SendMessageW($h, $script:WM_LBUTTONUP, [IntPtr]0, $point)
-        Start-Sleep -Milliseconds 150
+        if ((Get-TreeStateImage -Tree $h -Item $root) -eq 2) { continue }
+        Invoke-TreeCheckbox -Tree $h -Item $root
     }
     Start-Sleep -Milliseconds 250
     return ($roots | Where-Object { (Get-TreeStateImage -Tree $h -Item $_) -eq 2 }).Count
+}
+
+function Get-TreeRoots {
+    param([Parameter(Mandatory)][IntPtr]$Tree)
+    $roots = @()
+    $item = [NativeUi]::SendMessageW($Tree, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_ROOT, [IntPtr]::Zero)
+    while ($item -ne [IntPtr]::Zero -and $roots.Count -lt 64) {
+        $roots += $item
+        $item = [NativeUi]::SendMessageW($Tree, $script:TVM_GETNEXTITEM, [IntPtr]$script:TVGN_NEXT, $item)
+    }
+    return $roots
+}
+
+function Get-TreeCheckbox {
+    <#  Where an item's checkbox is drawn, in the tree's client coordinates:
+        the square at X, Y of side Size.
+
+        The item is scrolled into view first (which also expands its
+        parents). Its row is then its place among the visible rows counted
+        from the first one shown, and its checkbox sits one indent in past
+        its depth's indentation, since TVS_LINESATROOT gives even a root an
+        expand-button column. Row height and indent come from the control
+        (TVM_GETITEMHEIGHT, TVM_GETINDENT) rather than being assumed. #>
+    param([Parameter(Mandatory)][IntPtr]$Tree, [Parameter(Mandatory)][IntPtr]$Item)
+    $next = { param($code, $from) [NativeUi]::SendMessageW($Tree, $script:TVM_GETNEXTITEM, [IntPtr]$code, $from) }
+    [void][NativeUi]::SendMessageW($Tree, $script:TVM_ENSUREVISIBLE, [IntPtr]::Zero, $Item)
+    $row = 0
+    $at = & $next $script:TVGN_FIRSTVISIBLE ([IntPtr]::Zero)
+    while ($at -ne $Item -and $at -ne [IntPtr]::Zero) {
+        $row++
+        $at = & $next $script:TVGN_NEXTVISIBLE $at
+    }
+    $depth = 0
+    $up = & $next $script:TVGN_PARENT $Item
+    while ($up -ne [IntPtr]::Zero) {
+        $depth++
+        $up = & $next $script:TVGN_PARENT $up
+    }
+    $height = [int][NativeUi]::SendMessageW($Tree, $script:TVM_GETITEMHEIGHT, [IntPtr]::Zero, [IntPtr]::Zero)
+    $indent = [int][NativeUi]::SendMessageW($Tree, $script:TVM_GETINDENT, [IntPtr]::Zero, [IntPtr]::Zero)
+    return [pscustomobject]@{ X = $indent * ($depth + 1); Y = $row * $height; Size = $height }
+}
+
+function Invoke-TreeCheckbox {
+    <#  One click on an item's checkbox, as a user makes it. #>
+    param([Parameter(Mandatory)][IntPtr]$Tree, [Parameter(Mandatory)][IntPtr]$Item)
+    $box = Get-TreeCheckbox -Tree $Tree -Item $Item
+    $x = $box.X + [int]($box.Size / 2)
+    $y = $box.Y + [int]($box.Size / 2)
+    $point = [IntPtr](($y -shl 16) -bor $x)
+    [void][NativeUi]::SendMessageW($Tree, $script:WM_LBUTTONDOWN, [IntPtr]$script:MK_LBUTTON, $point)
+    [void][NativeUi]::SendMessageW($Tree, $script:WM_LBUTTONUP, [IntPtr]0, $point)
+    Start-Sleep -Milliseconds 150
+}
+
+function Get-TreeCheckboxInk {
+    <#  How many dark pixels an item's checkbox is drawn with, as a person
+        sees it: an empty box is its border alone, a partial one adds the
+        mark inside, and a state with no image draws nothing at all. The
+        tree's window is rendered with PrintWindow, as Get-ControlFill
+        does, so the wizard need not be in front. #>
+    param([Parameter(Mandatory)][IntPtr]$Tree, [Parameter(Mandatory)][IntPtr]$Item)
+    Add-Type -AssemblyName System.Drawing
+    $box = Get-TreeCheckbox -Tree $Tree -Item $Item
+    Start-Sleep -Milliseconds 200
+    $outer = New-Object RECT
+    [void][NativeUi]::GetWindowRect($Tree, [ref]$outer)
+    $client = [NativeGeometry]::ClientOrigin($Tree)
+    $bitmap = New-Object System.Drawing.Bitmap ($outer.R - $outer.L), ($outer.B - $outer.T)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $hdc = $graphics.GetHdc()
+    [void][NativeUi]::PrintWindow($Tree, $hdc, 2)
+    $graphics.ReleaseHdc($hdc); $graphics.Dispose()
+    $left = $client.X - $outer.L + $box.X
+    $top = $client.Y - $outer.T + $box.Y
+    $ink = 0
+    for ($y = $top; $y -lt $top + $box.Size; $y++) {
+        for ($x = $left; $x -lt $left + $box.Size; $x++) {
+            $pixel = $bitmap.GetPixel($x, $y)
+            if ([Math]::Max($pixel.R, [Math]::Max($pixel.G, $pixel.B)) -lt 160) { $ink++ }
+        }
+    }
+    $bitmap.Dispose()
+    return $ink
 }
 
 function Close-Dialog {
@@ -582,7 +662,8 @@ function Get-ResourceStrings {
         .rc instead makes the assertion "the control shows what the resource
         defines for this language", which is the property worth holding.
 
-        Returns a hashtable of IDS_NAME -> text, with \n and \r\n unescaped.
+        Returns a hashtable of IDS_NAME -> text, with \n, \r\n and the
+        doubled quote "" unescaped, as the resource compiler does.
     #>
     param(
         [Parameter(Mandatory)][ValidateSet('en', 'pl')][string]$Language,
@@ -601,7 +682,7 @@ function Get-ResourceStrings {
     foreach ($line in $m.Groups['body'].Value -split "`r?`n") {
         $entry = [regex]::Match($line, '^\s*(?<id>IDS_[A-Z0-9_]+)\s+"(?<val>.*)"\s*$')
         if (-not $entry.Success) { continue }
-        $value = $entry.Groups['val'].Value -replace '\\r\\n', "`r`n" -replace '\\n', "`n"
+        $value = $entry.Groups['val'].Value -replace '\\r\\n', "`r`n" -replace '\\n', "`n" -replace '""', '"'
         $table[$entry.Groups['id'].Value] = $value
     }
     if ($table.Count -eq 0) { throw "STRINGTABLE for $langToken parsed as empty" }

@@ -33,14 +33,20 @@ struct NmTvItemChange {
     lparam: LPARAM,
 }
 
-/// Partial checkboxes are an extended style, which a template cannot request.
+/// Partial checkboxes are an extended style, which a template cannot request,
+/// and the checkbox images are built when `TVS_CHECKBOXES` arrives: given in
+/// the template, it came first, there was no partial image, and a category
+/// with only some items ticked drew no box at all.
 pub unsafe fn enable_partial_checkboxes(dialog: HWND) {
+    let control = tree_control(dialog);
     wm::SendMessageW(
-        tree_control(dialog),
+        control,
         TVM_SETEXTENDEDSTYLE,
         ctl::TVS_EX_PARTIALCHECKBOXES as WPARAM,
         ctl::TVS_EX_PARTIALCHECKBOXES as LPARAM,
     );
+    let style = wm::GetWindowLongPtrW(control, wm::GWL_STYLE);
+    wm::SetWindowLongPtrW(control, wm::GWL_STYLE, style | ctl::TVS_CHECKBOXES as isize);
 }
 
 /// Replaces the control's items with the model's.
@@ -149,8 +155,12 @@ pub unsafe fn on_item_changed(dialog: HWND, lparam: LPARAM) -> isize {
     if state.tree_items.get(node).copied() != Some(change.item as isize) {
         return 0;
     }
-    let image = (change.state_new & ctl::TVIS_STATEIMAGEMASK) >> STATE_IMAGE_SHIFT;
-    state.tree.set_checked(node, image == STATE_IMAGE_CHECKED);
+    let image = |state: u32| (state & ctl::TVIS_STATEIMAGEMASK) >> STATE_IMAGE_SHIFT;
+    // The control cycles unchecked, checked, partial; a click on a partly
+    // ticked category means "all of it", as tri-state boxes do elsewhere.
+    let checked = image(change.state_new) == STATE_IMAGE_CHECKED
+        || image(change.state_old) == STATE_IMAGE_PARTIAL;
+    state.tree.set_checked(node, checked);
     // Posted: written from inside the click, the clicked row would be redrawn with its old state.
     wm::PostMessageW(dialog, WM_SYNC_CHECKS, 0, 0);
     0

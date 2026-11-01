@@ -304,7 +304,8 @@ the one an automatic policy would have deleted.
   reached; when only the catalogue did, that the list could not be read. A
   catalogue that answers after `/health` did not is noted in the run log.
 - Checking a parent checks all its descendants; mixed descendants show the
-  parent as partially checked.
+  parent as partially checked, with the partial box (a filled square), and
+  a click on a partial box ticks all of it, as tri-state boxes do elsewhere.
 - Unchecking a downloaded leaf only excludes it from this run; it is not
   removed from the cache.
 - **Download**: requires at least one checked leaf in every **choice**

@@ -277,6 +277,8 @@ BEGIN
     PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 14, 154, 120, 18
 END
 
+// No TVS_CHECKBOXES here: the code adds it after the partial style, or the
+// checkbox images are built without a partial one and that state draws blank.
 IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
@@ -284,7 +286,7 @@ BEGIN
     LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
     CONTROL         "", IDC_S4_TREE, "SysTreeView32",
                     TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
-                    | TVS_CHECKBOXES | TVS_SHOWSELALWAYS | TVS_DISABLEDRAGDROP
+                    | TVS_SHOWSELALWAYS | TVS_DISABLEDRAGDROP
                     | WS_BORDER | WS_TABSTOP,
                     14, 24, 302, 158
     LTEXT           "", IDC_S4_STATUS, 14, 188, 302, 18

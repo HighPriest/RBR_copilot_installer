@@ -47,7 +47,7 @@ $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
 $PSBTN_NEXT = 1; $PSBTN_FINISH = 2
-$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1; $EM_GETLINECOUNT = 0x00BA
+$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1; $TVGN_CHILD = 4; $EM_GETLINECOUNT = 0x00BA
 
 $crateRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $repoRoot = Split-Path -Parent $crateRoot
@@ -255,6 +255,35 @@ try {
     }
     $still = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S4_TREE -TimeoutMs 3000
     Assert-That 'and the wizard stays on scene 4' ($still -ne [IntPtr]::Zero)
+
+    # A category with only some of its items ticked must say so. Its box once
+    # drew blank, since the checkbox images were built before the partial one
+    # was asked for. Measured as ink, because a blank box and a partial one
+    # hold the same state image index.
+    Write-Host "`n-- partial selection --"
+    $tvP = [NativeUi]::GetDlgItem($page, $IDC_S4_TREE)
+    $childOf = { param($item) [NativeUi]::SendMessageW($tvP, $TVM_GETNEXTITEM, [IntPtr]$TVGN_CHILD, $item) }
+    $roots = @(Get-TreeRoots -Tree $tvP)
+    # The co-driver category, the one nested two levels deep, found by shape since its text is out of reach.
+    $voices = $roots | Where-Object {
+        $first = & $childOf $_
+        $first -ne [IntPtr]::Zero -and (& $childOf $first) -ne [IntPtr]::Zero
+    } | Select-Object -First 1
+    $voice = $voices
+    while (($below = & $childOf $voice) -ne [IntPtr]::Zero) { $voice = $below }
+    $other = $roots | Where-Object { $_ -ne $voices } | Select-Object -First 1
+    Invoke-TreeCheckbox -Tree $tvP -Item $voice
+    Assert-That 'ticking one voice leaves its category partly ticked' `
+    ((Get-TreeStateImage -Tree $tvP -Item $voices) -eq 3)
+    $partialInk = Get-TreeCheckboxInk -Tree $tvP -Item $voices
+    $emptyInk = Get-TreeCheckboxInk -Tree $tvP -Item $other
+    Assert-That 'and the category shows a partial box, not a blank space' `
+    ($emptyInk -gt 0 -and $partialInk -gt $emptyInk + 20) "ink: partial $partialInk, an empty box $emptyInk"
+    Invoke-TreeCheckbox -Tree $tvP -Item $voices
+    Assert-That 'a click on the partial box ticks the whole category' `
+    ((Get-TreeStateImage -Tree $tvP -Item $voices) -eq 2)
+    Invoke-TreeCheckbox -Tree $tvP -Item $voices
+    Assert-That 'and another click clears it again' ((Get-TreeStateImage -Tree $tvP -Item $voices) -eq 1)
 
     # Ticking every category is what the gate asked for.
     $ticked = Invoke-TreeCheckRoots -Dialog $page -CtrlId $IDC_S4_TREE
