@@ -56,18 +56,35 @@ work is verified is in the root `requirements.md`.
 
 ## Deploy
 
-- The Quadlet follows the host's existing pattern: every start clones the
-  branch, builds the image and deletes the checkout, so
-  `systemctl --user restart pacenotes` IS the deployment. Two deliberate
-  departures from it:
-  - `podman image prune -f` **without** `--external`. The `--external`
-    form also deletes buildah's intermediate containers, which kills any
-    concurrent podman build on the host.
-  - `StartLimitIntervalSec=1h` with `StartLimitBurst=3`, because a restart
-    loop re-runs a Rust release build each time.
-- `CARGO_BUILD_JOBS=1` in the Containerfile: the host has 3 GB of RAM, and
-  an OOM during the build presents as a vanishing-layer error rather than
-  an honest message.
+- Images are built in CI, never on the host. A `v/X.Y.Z` tag runs
+  `.github/workflows/cd-release-on-tag.yml`, which pushes
+  `ghcr.io/<owner>/pacenotes-server:X.Y.Z` (and `:sha-<12>`) as a PRIVATE
+  package — never a release asset or workflow artifact, because the
+  repository is public and so are its artifacts — then SSHes to the host
+  to run `deploy/pacenotes-update X.Y.Z`.
+- The Quadlet runs the LOCAL tag `localhost/pacenotes-server:current` with
+  `Pull=never`; only `pacenotes-update` moves that tag. A restart therefore
+  never builds, never pulls and never changes the version, and works with
+  the registry down.
+- `pacenotes-update` is the deploy key's forced `command=`. It takes ONLY an
+  `X.Y.Z` version from `SSH_ORIGINAL_COMMAND`, pulls that exact image with
+  the host's own `read:packages` token, keeps the running image as
+  `:previous`, restarts, and waits for the healthcheck; an unhealthy
+  container is rolled back to `:previous` and the script exits 1, failing
+  the CI job.
+- Not `podman auto-update` and no `AutoUpdate=`: it cannot be scoped to one
+  unit, and other containers on the host carry `AutoUpdate`, so every
+  release would have updated them too.
+- `podman untag` needs the image AND the name: given a name alone it strips
+  every name the image has, `:current` included, and the prune that follows
+  deletes the running image. Found by the script's test, 2026-11-01.
+- `podman image prune -f` **without** `--external`: the `--external` form
+  deletes buildah's intermediate containers, killing any concurrent build.
+- `StartLimitIntervalSec=1h` with `StartLimitBurst=3`: a crash loop stops
+  instead of restarting forever.
+- `CARGO_BUILD_JOBS=1` is the Containerfile's DEFAULT, for a build on the
+  3 GB host, where an OOM presents as a vanishing-layer error rather than an
+  honest message. CI passes `CARGO_BUILD_JOBS=4`.
 - `libsql` is built without its `replication` feature. Embedded replicas
   are not something this server creates, and `core` + `remote` + `tls`
   still satisfy "moving auth to Turso is a `--db-url` change".

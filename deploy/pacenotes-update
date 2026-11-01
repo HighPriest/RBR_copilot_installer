@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Rolls the pacenotes container onto one released server image.
+#
+# Installed on the host as ~/.local/bin/pacenotes-update and run by the release
+# workflow's `deploy` job over SSH, through a key that authorized_keys locks
+# to this script (deploy/README.md, "Deploying from GitHub"):
+#
+#   command="/home/user/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… deploy
+#
+# The ONLY thing taken from the caller is the version — from
+# SSH_ORIGINAL_COMMAND, or the first argument when run by hand — and it must
+# be X.Y.Z. A leaked key can therefore do no more than redeploy a version
+# already published to the registry.
+#
+#   ~/.local/bin/pacenotes-update 2.1.0
+#
+# What it does:
+#   1. pull <PACENOTES_IMAGE>:<version> with the host's own read-only token;
+#   2. if that is already what runs, stop — redeploying is a no-op;
+#   3. keep the running image as localhost/pacenotes-server:previous, tag the
+#      new one :current (the tag the Quadlet runs), restart the unit;
+#   4. wait for the container's healthcheck; if it never passes, put
+#      :previous back as :current, restart, and exit 1 so the CI job fails.
+#
+# Not `podman auto-update`: it cannot be limited to one unit, and other
+# containers on the host carry AutoUpdate, so every release would have
+# updated them too.
+#
+# Overrides, for testing against isolated storage only:
+#   PACENOTES_PODMAN   podman command, e.g. "podman --root X --runroot Y"
+#   PACENOTES_UNIT     systemd user unit to restart (default: pacenotes)
+#   PACENOTES_CONTAINER container whose healthcheck is waited on (pacenotes)
+#   PACENOTES_NO_PULL  1 = the image is already present locally; do not pull
+#   PACENOTES_HEALTH_TIMEOUT seconds to wait for health (default 90)
+
+set -euo pipefail
+
+config="${PACENOTES_CONFIG:-$HOME/.config/containers/systemd/pacenotes.config.env}"
+unit="${PACENOTES_UNIT:-pacenotes}"
+container="${PACENOTES_CONTAINER:-pacenotes}"
+local_image="${PACENOTES_LOCAL_IMAGE:-localhost/pacenotes-server}"
+health_timeout="${PACENOTES_HEALTH_TIMEOUT:-90}"
+read -r -a podman <<< "${PACENOTES_PODMAN:-podman}"
+
+# An SSH session that is not a login may not carry these; systemctl --user and
+# rootless podman both need them.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
+
+fail() {
+    echo "pacenotes-update: $*" >&2
+    exit 1
+}
+
+# Reads KEY=value from the env file without executing it.
+config_value() {
+    local key="$1" line value
+    line="$(grep -E "^[[:space:]]*${key}=" "$config" | tail -n 1 || true)"
+    value="${line#*=}"
+    value="${value%\"}"
+    value="${value#\"}"
+    printf '%s' "$value"
+}
+
+version="${SSH_ORIGINAL_COMMAND:-${1:-}}"
+if [[ ! "$version" =~ ^[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}$ ]]; then
+    fail "expected a version X.Y.Z, got '${version}'"
+fi
+
+[[ -r "$config" ]] || fail "cannot read $config"
+registry_image="$(config_value PACENOTES_IMAGE)"
+authfile="$(config_value PACENOTES_REGISTRY_AUTHFILE)"
+authfile="${authfile/#\~/$HOME}"
+[[ -n "$registry_image" ]] || fail "PACENOTES_IMAGE is not set in $config"
+
+# One deploy at a time: two tags pushed close together must not interleave.
+exec 9> "$XDG_RUNTIME_DIR/pacenotes-update.lock"
+flock -w 600 9 || fail "another deploy is still running"
+
+wanted="$registry_image:$version"
+if [[ "${PACENOTES_NO_PULL:-0}" != 1 ]]; then
+    pull_args=(pull --quiet)
+    [[ -n "$authfile" ]] && pull_args+=(--authfile "$authfile")
+    echo "pacenotes-update: pulling $wanted"
+    "${podman[@]}" "${pull_args[@]}" "$wanted" > /dev/null
+fi
+new_id="$("${podman[@]}" image inspect --format '{{.Id}}' "$wanted")" \
+    || fail "$wanted is not available"
+current_id="$("${podman[@]}" image inspect --format '{{.Id}}' "$local_image:current" 2> /dev/null || true)"
+
+if [[ "$new_id" == "$current_id" ]]; then
+    echo "pacenotes-update: $version is already running; nothing to do"
+    exit 0
+fi
+
+wait_healthy() {
+    local deadline=$((SECONDS + health_timeout))
+    while ((SECONDS < deadline)); do
+        if "${podman[@]}" healthcheck run "$container" > /dev/null 2>&1; then
+            return 0
+        fi
+        sleep 3
+    done
+    return 1
+}
+
+restart() {
+    systemctl --user restart "$unit"
+}
+
+if [[ -n "$current_id" ]]; then
+    "${podman[@]}" tag "$current_id" "$local_image:previous"
+fi
+"${podman[@]}" tag "$new_id" "$local_image:current"
+echo "pacenotes-update: restarting $unit on $version"
+restart
+
+if wait_healthy; then
+    # The registry name is not needed once :current holds the image; dropping
+    # it lets the prune below reclaim versions older than :previous. Image AND
+    # name, both: `podman untag <image>` alone strips EVERY name, :current
+    # included, and the prune would then delete the running image.
+    "${podman[@]}" untag "$new_id" "$wanted" > /dev/null 2>&1 || true
+    "${podman[@]}" image prune -f > /dev/null 2>&1 || true
+    echo "pacenotes-update: $version is running and healthy"
+    exit 0
+fi
+
+echo "pacenotes-update: $version did not become healthy within ${health_timeout}s" >&2
+"${podman[@]}" logs --tail 30 "$container" >&2 2> /dev/null || true
+if [[ -z "$current_id" ]]; then
+    fail "no previous image to roll back to; the unit is left as it is"
+fi
+echo "pacenotes-update: rolling back to the previous image" >&2
+"${podman[@]}" tag "$current_id" "$local_image:current"
+# The failed image stays in the registry for debugging; locally it would
+# only accumulate, since nothing else names it.
+"${podman[@]}" untag "$new_id" "$wanted" > /dev/null 2>&1 || true
+restart
+if wait_healthy; then
+    fail "rolled back; the previous image is running again"
+fi
+fail "rolled back, but the previous image is not healthy either — check '$unit' by hand"

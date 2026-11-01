@@ -103,13 +103,20 @@ See root `CLAUDE.md`, "Install model".
 
 - [x] Write the deploy set: Containerfile, Podman Quadlet, Caddy site
       block and `deploy/README.md`
-- [ ] Build and push the image from CI, tagged with the git sha, so the
+- [x] Build and push the image from CI, tagged with the git sha, so the
       Quadlet pins a tag and a restart never rebuilds
-  - [ ] Build both the server and the installer in CI
-  - [ ] Store the build artifacts
-  - [ ] Source the executable from CI when the Quadlet deploys
-  - [ ] Make publishing content mean running `manifest gen` alone, and say
+  - [x] Build both the server and the installer in CI
+  - [x] Store the build artifacts
+    - [x] Installer: GitHub Release asset
+    - [x] Server: private GHCR image only, no workflow artifact
+  - [x] Source the executable from CI when the Quadlet deploys
+    - [x] `deploy/pacenotes-update`, the deploy key's forced command
+    - [x] Roll back to `:previous` when the new container is unhealthy
+    - [x] Fix `podman untag` stripping `:current` (found by the test)
+  - [x] Make publishing content mean running `manifest gen` alone, and say
         so in `deploy/README.md`
+  - [ ] First tagged release through the whole pipeline: secrets set, GHCR
+        package private, deploy job green
 - [ ] Author the sidecar `.toml` files for the real packages: display
       names, `exclusive_group` on the config variants, `requires` on the
       voice packs
@@ -124,7 +131,7 @@ From the design review's period 2. The findings themselves stay in
 
 - [ ] Sign the `.exe` with Authenticode in CD and publish its SHA-256 (O2)
 - [ ] Pin the toolchain and the base images by digest (O2)
-- [ ] Publish a versioned server artifact rather than a branch tip (O2)
+- [x] Publish a versioned server artifact rather than a branch tip (O2)
 - [ ] Bind Caddy's plain-HTTP block to loopback, or remove it (O2)
 - [ ] Make the `EnvironmentFile` path agree with `deploy/README.md` (O2)
 - [ ] Confirm the default hostname stays under the project's control, and

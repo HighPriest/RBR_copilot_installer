@@ -1,9 +1,11 @@
 # Pacenotes package/auth server.
 #
+# Built in CI by .github/workflows/cd-release-on-tag.yml on every `v/X.Y.Z`
+# tag and pushed to GHCR; the host only pulls it (deploy/pacenotes-update).
 # Build context is the REPOSITORY ROOT (the server depends on ../shared by
-# path), so build it as:
+# path), so a local test build is:
 #
-#   podman build -f deploy/Containerfile -t localhost/pacenotes-server:latest .
+#   podman build -f deploy/Containerfile -t localhost/pacenotes-server:test .
 #
 # The installer is not built here: it is Windows-only and excluded from the
 # workspace on purpose (root CLAUDE.md).
@@ -25,7 +27,8 @@ COPY server ./server
 # The server embeds these with include_bytes! to flag a data root's differing copy.
 COPY schemas ./schemas
 
-# A parallel release build OOM-kills rustc on a 3 GB host, which podman reports as a vanishing layer.
+# A parallel release build OOM-kills rustc on a 3 GB host, which podman reports
+# as a vanishing layer; CI passes CARGO_BUILD_JOBS=4.
 ARG CARGO_BUILD_JOBS=1
 ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 

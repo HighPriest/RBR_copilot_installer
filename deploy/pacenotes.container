@@ -1,24 +1,32 @@
 # Pacenotes package/auth server — Podman Quadlet.
 #
-# Every start clones the configured branch, builds the image and discards the
-# checkout, so `systemctl --user restart pacenotes` is the deployment.
+# Runs the image tagged localhost/pacenotes-server:current. Nothing here
+# builds or pulls: the release workflow builds the image in CI and pushes it
+# to GHCR, and deploy/pacenotes-update pulls one exact version, moves
+# `:current` onto it (keeping the old one as `:previous`) and restarts this
+# unit — rolling back by itself if the new container never turns healthy.
+# A restart is therefore just a restart, and works with the registry down.
 #
 # Install (see deploy/README.md for the full walkthrough):
 #   cp deploy/pacenotes.container deploy/pacenotes.config.env \
 #      ~/.config/containers/systemd/
-#   systemctl --user daemon-reload && systemctl --user start pacenotes
+#   install -m 755 deploy/pacenotes-update ~/bin/
+#   ~/.local/bin/pacenotes-update X.Y.Z        # the first time, by hand
 
 [Unit]
 Description=Pacenotes package + auth server - Quadlet
 # Caddy fronts it, but it does not have to be up for this to serve.
 After=network-online.target
-# Every start is a release build, so a restart loop must not run forever.
 StartLimitIntervalSec=1h
 StartLimitBurst=3
 
 [Container]
 ContainerName=pacenotes
-Image=localhost/pacenotes-server:latest
+# A LOCAL tag only pacenotes-update moves. Never a registry reference: a
+# restart must not change what runs, and no AutoUpdate=, because
+# `podman auto-update` updates every container on the host that has it.
+Image=localhost/pacenotes-server:current
+Pull=never
 
 EnvironmentFile=pacenotes.config.env
 
@@ -28,6 +36,7 @@ Volume=%h/pacenotes/data:/data:Z
 Network=internal.network
 
 # No PublishPort: only Caddy, which terminates TLS, reaches `pacenotes:8080`.
+# pacenotes-update waits on this healthcheck before it calls a deploy good.
 HealthCmd=curl --fail --silent http://localhost:8080/health
 HealthInterval=1m
 HealthTimeout=10s
@@ -36,21 +45,9 @@ HealthRetries=3
 # Longer than the server's 20 s drain, which podman's default 10 s would cut short.
 StopTimeout=30
 
-# Point EnvironmentFile at this system's copy.
 [Service]
-EnvironmentFile=/home/user/.config/containers/systemd/pacenotes.config.env
-ExecStartPre=git clone -b ${BRANCH_TO_BUILD} ${GIT_REPO_URL} ${APP_SOURCE_DIR} --depth 1
-ExecStartPre=rm -r -f ${APP_SOURCE_DIR}/.git
-ExecStartPre=podman build --network host --layers -f ${APP_SOURCE_DIR}/deploy/Containerfile -t ${IMAGE_NAME} ${APP_SOURCE_DIR}
-ExecStartPre=rm -r -f ${APP_SOURCE_DIR}
-# Not `--external`, which deletes the intermediate containers of any other build running on the host.
-ExecStartPre=podman image prune -f
-ExecStopPost=rm -r -f ${APP_SOURCE_DIR}
-# A failed build stops the unit outright, since it runs in ExecStartPre.
 Restart=on-failure
 RestartSec=30
-# A cold Rust release build of the workspace takes minutes on a small VPS.
-TimeoutStartSec=1800
 
 [Install]
 WantedBy=default.target network-online.target

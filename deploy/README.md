@@ -2,17 +2,30 @@
 
 Written for: whoever administers the box that hosts the package server.
 
-One Podman Quadlet builds the server straight from git, one Caddy site block
-puts it on HTTPS, and one directory holds everything mutable. There is no
-database to provision and no upload API: **publishing a package is copying a
-zip into place.**
+GitHub Actions builds the server image when a release is tagged, one Podman
+Quadlet runs it, one Caddy site block puts it on HTTPS, and one directory
+holds everything mutable. There is no database to provision and no upload
+API: **publishing a package is copying a zip into place.**
 
 - `Containerfile` — multi-stage build of `pacenotes-server` (build context is
-  the repository root).
+  the repository root). CI builds it; the host no longer does.
 - `entrypoint.sh` — regenerates `manifest.json`, then serves.
-- `pacenotes.container` — the Quadlet unit. Builds from git on every start.
+- `pacenotes.container` — the Quadlet unit. Runs the local image
+  `localhost/pacenotes-server:current`; never builds, never pulls.
+- `pacenotes-update` — the only thing that changes which image runs: pulls a
+  released version, moves `:current` onto it, restarts, rolls back if the
+  new container is unhealthy. CI runs it over SSH.
 - `pacenotes.config.env` — all configuration. Copy and edit this.
 - `Caddyfile.snippet` — the reverse-proxy site block.
+
+How a release reaches this host:
+
+```
+git tag v/2.1.0 && git push github v/2.1.0
+  └─ .github/workflows/cd-release-on-tag.yml
+       release  installer .exe  -> GitHub Releases (public)
+       server   server image    -> ghcr.io/<owner>/pacenotes-server:2.1.0 (private)
+       deploy   ssh host "2.1.0" -> ~/.local/bin/pacenotes-update 2.1.0
 
 ---
 
@@ -98,30 +111,50 @@ uninstalling keep working). So:
   file onto the server. In the other order every installer in the wild
   stops downloading for that game until its users update.
 
-### 1.2 Install the unit
+### 1.2 Install the unit and the update script
 
 ```sh
 cp deploy/pacenotes.container   ~/.config/containers/systemd/
 cp deploy/pacenotes.config.env  ~/.config/containers/systemd/
+install -D -m 755 deploy/pacenotes-update ~/.local/.local/bin/pacenotes-update
+systemctl --user daemon-reload
 ```
 
-Edit `~/.config/containers/systemd/pacenotes.config.env`. At minimum check
-`GIT_REPO_URL` and `BRANCH_TO_BUILD`; leave `PACENOTES_LISTEN=0.0.0.0:8080`
-alone (on `127.0.0.1` the container would be unreachable from Caddy).
+Edit `~/.config/containers/systemd/pacenotes.config.env`. Set
+`PACENOTES_IMAGE` to `ghcr.io/<github owner in lower case>/pacenotes-server`;
+leave `PACENOTES_LISTEN=0.0.0.0:8080` alone (on `127.0.0.1` the container
+would be unreachable from Caddy).
 
-Pulling over SSH means the host needs a key the git remote accepts — Test it before starting the unit:
+The image is a **private** GHCR package, so the host needs its own
+credentials — a GitHub token (classic, scope `read:packages` and nothing
+else) used only for this:
 
 ```sh
-git ls-remote "$(. ~/.config/containers/systemd/pacenotes.config.env; echo $GIT_REPO_URL)" >/dev/null && echo "git access OK"
+podman login ghcr.io --username <github user> \
+    --authfile ~/.config/containers/ghcr-auth.json      # paste the token
 ```
+
+That path is `PACENOTES_REGISTRY_AUTHFILE` in the env file.
 
 ### 1.3 Start it
 
+The first deployment is by hand, with a version that CI has already
+published (see §1.5):
+
 ```sh
-systemctl --user daemon-reload
-systemctl --user start pacenotes
-journalctl --user -u pacenotes -f        # first build takes a few minutes
+~/.local/bin/pacenotes-update 2.1.0
+journalctl --user -u pacenotes -f
 ```
+
+It pulls the image, tags it `localhost/pacenotes-server:current`, starts the
+unit and waits for the healthcheck. From then on CI does this on every
+release, and `systemctl --user restart pacenotes` only ever restarts the same
+image — a restart never builds, never pulls, and works with GitHub down.
+
+**Moving from the old build-on-start unit:** the previous Quadlet built
+`localhost/pacenotes-server:latest` from git at every start. Copy the new
+unit, `daemon-reload`, then run `pacenotes-update` once as above; the old
+`:latest` image can be removed with `podman rmi` once the new one is healthy.
 
 Check it from the host, without going through Caddy:
 
@@ -151,6 +184,66 @@ curl -s https://pacenotes.example.com/health
 DNS must already point at this host, as for every other `*.example.com` site.
 Caddy fetches the certificate itself.
 
+### 1.5 Deploying from GitHub
+
+The release workflow (`.github/workflows/cd-release-on-tag.yml`) runs on a
+pushed `v/X.Y.Z` tag. Its `deploy` job logs into this host with a key that
+can do exactly one thing: run `pacenotes-update` with a version.
+
+1. **A deploy key, for nothing else.** On any machine:
+
+   ```sh
+   ssh-keygen -t ed25519 -N '' -C pacenotes-deploy -f pacenotes-deploy
+   ```
+
+2. **Lock it to the script.** Append the PUBLIC key to the server user's
+   `~/.ssh/authorized_keys` on this host, prefixed like this (one line):
+
+   ```
+   command="/home/<user>/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… pacenotes-deploy
+   ```
+
+   `command=` replaces whatever the client asks to run with the script, and
+   hands the client's text over only as `SSH_ORIGINAL_COMMAND`, which the
+   script accepts solely as an `X.Y.Z` version. `restrict` turns off port
+   forwarding, agent forwarding and the terminal. A stolen copy of this key
+   can redeploy a version already in the registry, and nothing more.
+
+3. **GitHub, in the repository's Settings → Environments → `production`**
+   (create it; this is also where a required reviewer can be added to hold
+   every deploy for approval):
+
+   | Secret | Value |
+   |---|---|
+   | `DEPLOY_SSH_KEY` | the PRIVATE key file's contents |
+   | `DEPLOY_KNOWN_HOSTS` | output of `ssh-keyscan -p <port> <host>` — checked strictly |
+   | `DEPLOY_HOST` | the host's public name or address |
+   | `DEPLOY_PORT` | `<port>` (this host's sshd) |
+   | `DEPLOY_USER` | the user whose Quadlet runs `pacenotes` |
+
+4. **Set the installer's default server** as a repository VARIABLE (not a
+   secret) `PACENOTES_DEFAULT_SERVER` — the release job refuses to build
+   without it.
+
+5. **After the first release**, open the package under the GitHub profile's
+   Packages tab and confirm it says *Private*. GHCR makes a new package
+   private, and nothing in the workflow changes that; the installer `.exe`
+   is the only public artifact.
+
+Releasing is then:
+
+```sh
+git tag v/2.1.0
+git push <github remote> v/2.1.0
+```
+
+The three jobs run in parallel except `deploy`, which waits for the image.
+A red `deploy` job means one of: the host was unreachable or its key did not
+match `DEPLOY_KNOWN_HOSTS`; the pull was refused (the host's GHCR token); or
+the new container never became healthy — in which case the script has
+ALREADY put the previous image back, and the job log ends with the
+container's last lines.
+
 ---
 
 ## 2. Publishing packages
@@ -160,19 +253,13 @@ Caddy fetches the certificate itself.
 cp KamilFilipek.zip ~/pacenotes/data/rbr/packages/public/codriver/polish/male/
 
 # 2. publish
-systemctl --user restart pacenotes
-```
-
-The restart regenerates `manifest.json` (that is what `entrypoint.sh` does),
-so there is no separate publish step to forget. It also rebuilds the image
-from git, which takes minutes; to publish without a rebuild:
-
-```sh
 podman exec pacenotes pacenotes-server manifest gen --data /data
 ```
 
-The server picks the new manifest up on the next request — no restart needed
-after that command.
+That is the whole of publishing: no restart, no release, no rebuild. The
+server picks the new manifest up on its next request. (A restart would also
+regenerate it — `entrypoint.sh` runs `manifest gen` on every start — but it
+is not needed, and publishing content never deploys code.)
 
 **Read the warnings.** `manifest gen` prints one line per package and then
 its complaints: mis-filed levels, a sidecar with no zip, a dependency that
@@ -348,14 +435,16 @@ percent-encoded (`style/Numeric%20Standard`).
 
 | Task | Command |
 |---|---|
-| Deploy the latest commit | `systemctl --user restart pacenotes` |
+| Deploy a release | push a `v/X.Y.Z` tag (§1.5), or by hand `~/.local/bin/pacenotes-update X.Y.Z` |
+| Roll back by hand | `podman tag localhost/pacenotes-server:previous localhost/pacenotes-server:current && systemctl --user restart pacenotes` |
+| What is running | `podman image inspect localhost/pacenotes-server:current --format '{{index .Labels "org.opencontainers.image.version"}}'` |
 | Logs | `journalctl --user -u pacenotes -f` |
 | Health | `podman healthcheck run pacenotes` |
-| Publish without rebuilding | `podman exec pacenotes pacenotes-server manifest gen --data /data` |
+| Publish content | `podman exec pacenotes pacenotes-server manifest gen --data /data` |
 | Back up | `~/pacenotes/data` — `auth.db` above all, and the packages + sidecars (your content; nothing else has a copy). `manifest.json` is regenerated from them |
 
-`Restart=on-failure` brings a crashed server back, but a failed *build* stops
-the unit rather than looping: the build runs in `ExecStartPre`.
+`Restart=on-failure` brings a crashed server back onto the same image; a
+restart never changes the version.
 
 ### Troubleshooting
 
@@ -369,33 +458,34 @@ and `{name}` are manifest lookup keys, never paths, so anything not listed —
 including every traversal attempt — is a 404 by design.
 
 **A download 401s with a key that should work.** `token list` shows whether
-it is revoked or expired, and which directories it was granted. A key with no
-grant for that directory gets 403, not 401 — 401 means the key itself was
-rejected.
+it is revoked or expired, and which directories it was granted. 401 means the
+key itself was rejected; a live key with no grant for that directory gets 404,
+exactly like a package that does not exist (there is no 403).
 
-**The build fails with layers "vanishing"**
-(`identifier is not a container`, `layer not known`, or rustc reporting
-`No such file or directory` under `target/`). Another podman build on this
-host ran `podman image prune -f --external`, which deletes *concurrent*
-builds' intermediate containers. The quadlets here (including
-`pacenotes.container`) do exactly that in `ExecStartPre`, so do not build two of
-them at once — and if one of those units is stuck in a restart loop, fix that
-first. To build regardless, use a separate storage root:
+**The `deploy` job fails with "Host key verification failed".**
+`DEPLOY_KNOWN_HOSTS` does not hold this host's current key — refresh it with
+`ssh-keyscan -p <port> <host>`. Never switch strict checking off to get past it.
+
+**`pacenotes-update` cannot pull.** The token in
+`PACENOTES_REGISTRY_AUTHFILE` expired or lacks `read:packages`; log in again
+(§1.2). `podman pull --authfile … <image>:<version>` reproduces it by hand.
+
+**A deploy rolled back.** The new image did not pass its healthcheck within
+90 s. `:current` already points at the previous image again; the job log ends
+with the failed container's last log lines. Build and test the fix, then tag
+a new release.
+
+**Building the image on this host** (only for testing; releases are built in
+CI). This host has 3 GB, so the Containerfile defaults to
+`CARGO_BUILD_JOBS=1` — a parallel build OOM-kills rustc, which podman reports
+as layers "vanishing" (`identifier is not a container`, `layer not known`).
+The same symptom appears when another unit runs `podman image prune -f
+--external` during the build, since that deletes concurrent builds'
+intermediate containers. Build in a separate storage root:
 
 ```sh
 podman --root ~/.cache/pacenotes-build/storage \
        --runroot ~/.cache/pacenotes-build/run \
        build --network host -f deploy/Containerfile -t localhost/pacenotes-server:test .
+podman unshare rm -rf ~/.cache/pacenotes-build     # plain rm cannot: subuid-owned
 ```
-
-Clean that scratch storage up with `podman unshare`, not plain `rm` — the
-layers are owned by subuids, so `rm -rf` fails with "Permission denied":
-
-```sh
-podman unshare rm -rf ~/.cache/pacenotes-build
-```
-
-**The build runs out of memory.** This host has 3 GB. The Containerfile
-pins `CARGO_BUILD_JOBS=1` for that reason; OOM shows up as the same
-"vanishing layer" symptom rather than an honest error. On a bigger builder:
-`--build-arg CARGO_BUILD_JOBS=4`.

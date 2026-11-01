@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026/11/01 — release: the server image is built in CI and deployed on a tag (M7)
+
+Pushing a `v/X.Y.Z` tag now runs three jobs in `cd-release-on-tag.yml`: the
+installer to GitHub Releases as before, the server image to
+`ghcr.io/<owner>/pacenotes-server:X.Y.Z` (and `:sha-<12>`), and, once the
+image exists, a deploy to the VPS. The repository is public, so its workflow
+artifacts are too; the server therefore ships ONLY as a GHCR package, which
+is private, and never as a release asset or artifact.
+
+The host stops building. The Quadlet runs the local tag
+`localhost/pacenotes-server:current` with `Pull=never`, so a restart is just
+a restart. The new `deploy/pacenotes-update` is the only thing that moves
+that tag: CI SSHes in with a key that `authorized_keys` locks to the script,
+which takes nothing from the caller but an `X.Y.Z` version, pulls that image
+with the host's own read-only token, keeps the running one as `:previous`,
+restarts and waits for the healthcheck — and puts `:previous` back and fails
+the job if the new container never turns healthy. `podman auto-update` was
+not used: it cannot be scoped to one unit, and nine other containers on the
+host carry `AutoUpdate`, so every release would have updated them too.
+
+Tested against isolated storage with stand-in images and a throwaway unit:
+a healthy update, a redeploy of the same version (a no-op), and an update
+whose healthcheck fails (rolled back, exit 1). The first run found a real
+bug: `podman untag <name>` with one argument strips EVERY name from the
+image, so a successful deploy dropped `:current` and the following prune
+could delete the running image; it now names the image and the tag.
+
+Publishing content is now `manifest gen` alone; it never deploys code.
+`deploy/README.md` covers the GHCR token, the deploy key, the `production`
+environment's five secrets and the move from the build-on-start unit. The
+GitHub run, the GHCR package's visibility and the SSH hop cannot be tested
+from here: the first real tag is the end-to-end test.
+
 ## 2026/11/01 — installer: a larger window, and the Download tree opens expanded (I9)
 
 The window was 615x512 px, sized for an 800x600 screen. Every page is now

@@ -1,15 +1,26 @@
-# Releases the installer when a `v/X.Y.Z` tag is pushed.
+# Releases everything when a `v/X.Y.Z` tag is pushed:
 #
-# The tag is the only place a version is written. It reaches the build as
-# PACENOTES_RELEASE_TAG, and build.rs turns it into the user agent, the
-# conflict report's version and the VERSIONINFO, refusing any other shape
-# (installer/requirements.md, "I10 — the version comes from the tag").
-# Replaces the release on merge to master and the manual release, which read
-# the version from installer/Cargo.toml and created the tag from it.
+#   release  (windows) the installer, as a GitHub Release asset
+#   server   (ubuntu)  the server image, pushed to GHCR — a PRIVATE package,
+#                      never a release asset or workflow artifact (the
+#                      repository is public, and so are its artifacts)
+#   deploy   (ubuntu)  after `server`: asks the VPS to roll the container
+#                      onto that exact image (deploy/pacenotes-update)
+#
+# The tag is the only place a version is written. It reaches the installer
+# build as PACENOTES_RELEASE_TAG, and build.rs turns it into the user agent,
+# the conflict report's version and the VERSIONINFO, refusing any other shape
+# (installer/requirements.md, "I10 — the version comes from the tag"). The
+# server image is tagged with the same X.Y.Z.
 #
 #   git tag v/1.2.3 && git push origin v/1.2.3
+#
+# `deploy` needs the `production` environment's secrets (deploy/README.md,
+# "Deploying from GitHub"): DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, DEPLOY_HOST,
+# DEPLOY_PORT, DEPLOY_USER. The key is locked on the host to running
+# pacenotes-update and nothing else.
 
-name: Pacenotes Installer Release
+name: Pacenotes Release
 
 on:
   push:
@@ -95,3 +106,102 @@ jobs:
         draft: false
         prerelease: false
         files: installer/target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe
+
+  server:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # The installer's build.rs is what refuses a malformed tag on that side;
+    # the server image gets the same X.Y.Z rule here, before anything builds.
+    - name: Version and image name from the tag
+      id: version
+      shell: bash
+      run: |
+        tag="$PACENOTES_RELEASE_TAG"
+        version="${tag#v/}"
+        if [[ "$tag" != v/* || ! "$version" =~ ^[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}$ ]]; then
+          echo "::error::A release tag is v/X.Y.Z; got '$tag'."
+          exit 1
+        fi
+        # GHCR refuses upper case, and the owner is not all lower case.
+        owner="${GITHUB_REPOSITORY_OWNER,,}"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "image=ghcr.io/$owner/pacenotes-server" >> "$GITHUB_OUTPUT"
+        echo "short_sha=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+        echo "Server version: $version"
+
+    - uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # The same Containerfile the host used to build from source. A runner has
+    # 4 cores and 16 GB, so it may compile in parallel; the Containerfile's
+    # default of 1 job is for the 3 GB host and stays.
+    - name: Build and push the server image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: deploy/Containerfile
+        build-args: CARGO_BUILD_JOBS=4
+        push: true
+        tags: |
+          ${{ steps.version.outputs.image }}:${{ steps.version.outputs.version }}
+          ${{ steps.version.outputs.image }}:sha-${{ steps.version.outputs.short_sha }}
+        labels: |
+          org.opencontainers.image.title=pacenotes-server
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.version=${{ steps.version.outputs.version }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: server
+    runs-on: ubuntu-latest
+    # Holds the secrets, and is where a required reviewer can be added to
+    # hold deploys for approval without touching this file.
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+    # The host's authorized_keys pins this key to deploy/pacenotes-update,
+    # which reads ONLY the version from what we send. Host-key checking stays
+    # strict: a deploy that cannot prove it reached the right machine stops.
+    - name: Roll the server onto the new image
+      shell: bash
+      env:
+        VERSION: ${{ needs.server.outputs.version }}
+        DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      run: |
+        for name in DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS DEPLOY_HOST DEPLOY_PORT DEPLOY_USER; do
+          if [[ -z "${!name}" ]]; then
+            echo "::error::Secret $name is not set in the production environment (deploy/README.md)."
+            exit 1
+          fi
+        done
+        install -d -m 700 ~/.ssh
+        printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+          -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o BatchMode=yes \
+          -o ConnectTimeout=20 \
+          "$DEPLOY_USER@$DEPLOY_HOST" "$VERSION"

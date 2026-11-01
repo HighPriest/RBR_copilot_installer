@@ -60,6 +60,8 @@ protocol in the root `CLAUDE.md`.
       traversal
 - [x] Write the deploy set: Containerfile, entrypoint, Podman Quadlet,
       Caddy site block and `deploy/README.md`
+- [x] Deploy from CI: image built on a `v/*` tag and pushed to private GHCR,
+      `deploy/pacenotes-update` rolls the Quadlet onto it
 - [ ] Author the sidecar `.toml` files for the real packages
   - [ ] Share `exclusive_group = "pacenote-config"` across the config
         variants, and make each voice pack require its language pack
