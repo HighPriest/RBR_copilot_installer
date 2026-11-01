@@ -343,7 +343,12 @@ after the second folder is deleted.
     (on scene 3 for Configure, after 4b for Download): every choice
     category needs a checked package the cache HOLDS (`Cache::holds`).
 - `ui/` — the small Win32 vocabulary the pages are written in: control
-  text, combo boxes, list boxes, the three modal shapes, the folder picker.
+  text, combo boxes, list boxes, the three modal shapes, the folder picker,
+  and `paint_forward_button`, the light green of the way forward. A themed
+  push button ignores the colours its parent offers, so it is drawn whole
+  from `NM_CUSTOMDRAW`: Next and Finish through a subclass of the sheet
+  (`wizard/sheet.rs`, hooked at `PSCB_INITIALIZED`), since they are the
+  sheet's controls, and Download/Update from scene 3's own page.
 - `choices.rs` — scene 5's model: the three single-select lists and the
   no-choice extras, derived from what scene 4 committed. Pure.
 - `tree/` — scene 4's model: manifest + cache → rows, states, checks. Pure.

@@ -161,6 +161,12 @@ try {
     Assert-That 'Back is unavailable on the first scene' `
     (-not (Test-WizardButtonEnabled -Sheet $sheetH -ButtonId $ID_WIZBACK))
 
+    # The way forward is painted light green so the eye finds it; nothing else is.
+    $forward = Get-ControlFill -Window $sheetH -Control ([NativeUi]::GetDlgItem($sheetH, $ID_WIZNEXT))
+    Assert-That 'the primary button is light green' (Test-IsGreen $forward) "painted $forward"
+    $cancel = Get-ControlFill -Window $sheetH -Control ([NativeUi]::GetDlgItem($sheetH, 2))
+    Assert-That 'Cancel keeps the theme''s look' (-not (Test-IsGreen $cancel)) "painted $cancel"
+
     # Choose the language under test, then continue.
     [void][NativeUi]::SendMessageW($combo, 0x014E, [IntPtr]$Language, [IntPtr]::Zero)
     Press-WizardButton -Sheet $sheetH -Button $PSBTN_NEXT
@@ -284,6 +290,15 @@ try {
     Assert-That "every route unlocks once a game is detected" `
     ([NativeUi]::IsWindowEnabled($routeDown) -and [NativeUi]::IsWindowEnabled($routeConf) -and
         [NativeUi]::IsWindowEnabled($routeRest))
+
+    # The main route is this scene's way forward, so it is the green one; the
+    # sheet's Next, disabled here, stays the theme's grey.
+    $main = Get-ControlFill -Window $sheetH -Control $routeDown
+    Assert-That 'Download/Update is light green' (Test-IsGreen $main) "painted $main"
+    $side = Get-ControlFill -Window $sheetH -Control $routeConf
+    Assert-That 'Configure/Install keeps the theme''s look' (-not (Test-IsGreen $side)) "painted $side"
+    $idle = Get-ControlFill -Window $sheetH -Control ([NativeUi]::GetDlgItem($sheetH, $ID_WIZNEXT))
+    Assert-That 'a disabled Next is not painted as the way forward' (-not (Test-IsGreen $idle)) "painted $idle"
 
     # Two markers: the dropdown becomes a real choice listing only the matches.
     Set-FolderAndSettle -Page $page -Path $twoGames

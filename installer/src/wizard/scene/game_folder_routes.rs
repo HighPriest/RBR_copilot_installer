@@ -16,6 +16,16 @@ pub unsafe fn show_route_buttons(dialog: HWND) {
     crate::ui::enable(dialog, crate::wizard::control_ids::IDC_S3_RESTORE, ready);
 }
 
+/// The main route is this scene's way forward, so it is painted like Next;
+/// the other two keep the theme's look.
+pub unsafe fn paint_main_route(dialog: HWND, lparam: LPARAM) -> isize {
+    let draw = &*(lparam as *const ctl::NMCUSTOMDRAW);
+    if draw.hdr.idFrom != usize::from(crate::wizard::control_ids::IDC_S3_DOWNLOAD) {
+        return 0;
+    }
+    crate::wizard::page::reply(dialog, crate::ui::paint_forward_button(draw))
+}
+
 /// Starts the log and opens the cache in the game folder, then jumps to the
 /// route's first page by page id, since at most one of them is the next page.
 pub unsafe fn take_route(dialog: HWND, route: crate::wizard::state::Route) {

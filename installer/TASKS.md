@@ -349,7 +349,7 @@ Ordered security first, then what support needs, then what a user hits.
   - [x] Scene 4b fetched again what an earlier transfer had cached, once a
         selection could come back to it
 - [x] Show the message of the day with the line breaks of its `.txt`
-- [ ] Give the buttons that carry the normal flow forward a light green
+- [x] Give the buttons that carry the normal flow forward a light green
       background: Next, its relabelled forms, Finish, and Download/Update
 - [ ] The installation process is quite slow. Check for possible optimisations, like copying, moving, writing files in bulk.
 

@@ -80,6 +80,7 @@ pub unsafe extern "system" fn game_folder_page(
                 crate::wizard::page::reply(dialog, 0)
             }
             Some(ctl::PSN_QUERYCANCEL) => crate::wizard::page::query_cancel(dialog),
+            Some(ctl::NM_CUSTOMDRAW) => super::game_folder_routes::paint_main_route(dialog, lparam),
             _ => 0,
         },
         _ => 0,

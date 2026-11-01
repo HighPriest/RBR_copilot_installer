@@ -5,8 +5,8 @@ use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 /// The wizard buttons' ids from prsht.h; `PSM_SETNEXTTEXT` is ignored by this
 /// sheet, but setting the controls' text directly works.
 const ID_WIZBACK: u16 = 0x3023;
-const ID_WIZNEXT: u16 = 0x3024;
-const ID_WIZFINISH: u16 = 0x3025;
+pub const ID_WIZNEXT: u16 = 0x3024;
+pub const ID_WIZFINISH: u16 = 0x3025;
 
 /// The sheet owning a page, which handles the `PSM_*` messages.
 pub unsafe fn sheet(dialog: HWND) -> HWND {

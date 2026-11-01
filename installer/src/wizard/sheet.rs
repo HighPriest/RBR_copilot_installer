@@ -4,6 +4,8 @@ use windows_sys::Win32::UI::WindowsAndMessaging as wm;
 /// Scene 3's index in `pages`.
 const GAME_FOLDER_PAGE: u32 = 2;
 
+const SHEET_SUBCLASS: usize = 1;
+
 /// Runs the wizard until the user finishes or cancels; a restart as
 /// administrator opens on scene 3, where it was asked for.
 pub fn run(
@@ -75,7 +77,9 @@ pub fn run(
     unsafe {
         let mut header: ctl::PROPSHEETHEADERW_V2 = core::mem::zeroed();
         header.dwSize = core::mem::size_of::<ctl::PROPSHEETHEADERW_V2>() as u32;
-        header.dwFlags = ctl::PSH_WIZARD | ctl::PSH_PROPSHEETPAGE | ctl::PSH_USEHICON;
+        header.dwFlags =
+            ctl::PSH_WIZARD | ctl::PSH_PROPSHEETPAGE | ctl::PSH_USEHICON | ctl::PSH_USECALLBACK;
+        header.pfnCallback = Some(on_sheet_event);
         header.hInstance = crate::i18n::instance();
         header.pszCaption = caption.as_ptr();
         header.nPages = pages.len() as u32;
@@ -84,6 +88,47 @@ pub fn run(
         header.Anonymous3.ppsp = pages.as_ptr() as *mut ctl::PROPSHEETPAGEW;
         ctl::PropertySheetW(&mut header);
     }
+}
+
+/// Next and Finish belong to the sheet, which exists from here on, so this is
+/// where their painting is hooked in.
+unsafe extern "system" fn on_sheet_event(
+    sheet: windows_sys::Win32::Foundation::HWND,
+    message: u32,
+    _lparam: windows_sys::Win32::Foundation::LPARAM,
+) -> i32 {
+    if message == ctl::PSCB_INITIALIZED {
+        windows_sys::Win32::UI::Shell::SetWindowSubclass(
+            sheet,
+            Some(paint_forward_buttons),
+            SHEET_SUBCLASS,
+            0,
+        );
+    }
+    0
+}
+
+/// Paints Next and Finish green; the sheet's own procedure does everything else.
+unsafe extern "system" fn paint_forward_buttons(
+    sheet: windows_sys::Win32::Foundation::HWND,
+    message: u32,
+    wparam: windows_sys::Win32::Foundation::WPARAM,
+    lparam: windows_sys::Win32::Foundation::LPARAM,
+    _subclass: usize,
+    _reference: usize,
+) -> windows_sys::Win32::Foundation::LRESULT {
+    if message == wm::WM_NOTIFY {
+        let forward = [
+            crate::wizard::page::ID_WIZNEXT,
+            crate::wizard::page::ID_WIZFINISH,
+        ];
+        // Every notification starts with the header; only a custom-draw one is an NMCUSTOMDRAW.
+        let header = &*(lparam as *const ctl::NMHDR);
+        if header.code == ctl::NM_CUSTOMDRAW && forward.contains(&(header.idFrom as u16)) {
+            return crate::ui::paint_forward_button(&*(lparam as *const ctl::NMCUSTOMDRAW));
+        }
+    }
+    windows_sys::Win32::UI::Shell::DefSubclassProc(sheet, message, wparam, lparam)
 }
 
 /// A page from a dialog template in this executable, carrying the shared state as its `lParam`.

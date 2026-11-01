@@ -5,6 +5,8 @@ mod chrome;
 mod notification;
 mod state_access;
 
-pub use chrome::{set_buttons, set_header, set_next_text, set_sheet_caption, sheet};
+pub use chrome::{
+    set_buttons, set_header, set_next_text, set_sheet_caption, sheet, ID_WIZFINISH, ID_WIZNEXT,
+};
 pub use notification::{notify_code, query_cancel, reply, stay};
 pub use state_access::{adopt_state, state};

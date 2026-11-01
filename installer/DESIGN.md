@@ -45,6 +45,13 @@ Common chrome on every page: a title, the content area, and a footer with
 per page) and **Cancel** (asks for confirmation; disabled on scene 6, where
 every phase writes to the game folder). No going back once scene 4b starts.
 
+The button that carries the normal flow forward is **light green**: the
+primary button in each of its labels (Continue, ACCEPT, Download, Install,
+Restore, Finish) and scene 3's Download/Update. Nothing else is, so the eye
+finds the way on without reading. A disabled one keeps the theme's grey,
+since green there would point at a way that is not open. Back, Cancel and
+the two secondary routes keep the theme's look.
+
 The window is ONE size for every scene — a property sheet sizes itself to its
 largest page — so a scene with little content, such as scene 1, simply has
 space around it. That size is 330x215 DLU, set by scene 5: three lists have

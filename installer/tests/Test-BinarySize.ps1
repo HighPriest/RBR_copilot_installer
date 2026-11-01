@@ -88,12 +88,13 @@ try {
 
     # Windows' own DLLs, and the Universal CRT that ships with Windows 10 and later.
     $foreign = @(Get-ImportedDll $exe | Where-Object {
-            $_ -notmatch '^(kernel32|user32|shell32|comctl32|ntdll|ole32|advapi32|winhttp)\.dll$' -and
+            $_ -notmatch '^(kernel32|user32|gdi32|shell32|comctl32|ntdll|ole32|advapi32|winhttp)\.dll$' -and
             $_ -notmatch '^api-ms-win-'
         })
     if ($foreign.Count -gt 0) {
-        Write-Error ("IMPORT GATE FAILED: the installer needs {0}, which Windows does not ship. " +
-            "See installer/build/runtime_link.rs." -f ($foreign -join ', '))
+        # Parenthesised, or -f formats only the second string and the names never appear.
+        Write-Error (('IMPORT GATE FAILED: the installer needs {0}, which Windows does not ship. ' +
+                'See installer/build/runtime_link.rs.') -f ($foreign -join ', '))
         exit 1
     }
     Write-Host 'Imports only what Windows ships.' -ForegroundColor Green

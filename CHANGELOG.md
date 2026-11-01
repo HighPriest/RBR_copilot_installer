@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026/11/01 — installer: the way forward is light green (I9)
+
+The button that carries the normal flow forward now has a light green
+background: Next in each of its labels, Finish, and scene 3's
+Download/Update. A disabled one stays the theme's grey, and Back, Cancel and
+the secondary routes keep their look.
+
+No library changes. A themed push button ignores the colours its parent
+offers, so these are painted whole from the button's custom-draw
+notification: fill, border, label in the button's own font, and the hot,
+pressed and focused states. Next and Finish belong to the property sheet,
+so the sheet is subclassed once it exists; Download/Update is painted by
+scene 3's page.
+
+`Test-UiLayout.ps1` samples the rendered colour of the primary button,
+Cancel, both kinds of route button and the disabled Next (70/70); on the
+previous build both "light green" checks fail on the theme's grey. The
+drawing pulls in `gdi32.dll`, which Windows ships, so `Test-BinarySize.ps1`
+allows it — and its import-gate message, whose `-f` formatted only half
+the string, now names the DLL it complains about.
+
+Size: 622.5 kB, +1.5 kB.
+
 ## 2026/11/01 — server: no colour codes in a log that is not a terminal (S12)
 
 The server coloured its log whether or not anyone could see the colour, so

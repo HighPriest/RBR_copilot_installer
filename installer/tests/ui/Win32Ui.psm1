@@ -314,6 +314,35 @@ function Select-ListItem {
     return (Get-ListSelection -Dialog $Dialog -CtrlId $CtrlId)
 }
 
+function Get-ControlFill {
+    <#  The colour a control is painted in, as a person sees it.
+
+        The whole top-level window renders itself through PrintWindow with
+        PW_RENDERFULLCONTENT, as Get-UiScreenshot.ps1 does, so the wizard
+        need not be in front. The sample sits 6 px in from the control's left
+        edge and halfway down: past a two-pixel focus border, and clear of a
+        centred label. #>
+    param([Parameter(Mandatory)][IntPtr]$Window, [Parameter(Mandatory)][IntPtr]$Control)
+    Add-Type -AssemblyName System.Drawing
+    $outer = New-Object RECT; $inner = New-Object RECT
+    [void][NativeUi]::GetWindowRect($Window, [ref]$outer)
+    [void][NativeUi]::GetWindowRect($Control, [ref]$inner)
+    $bitmap = New-Object System.Drawing.Bitmap ($outer.R - $outer.L), ($outer.B - $outer.T)
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    $hdc = $graphics.GetHdc()
+    [void][NativeUi]::PrintWindow($Window, $hdc, 2)
+    $graphics.ReleaseHdc($hdc); $graphics.Dispose()
+    $color = $bitmap.GetPixel($inner.L - $outer.L + 6, [int](($inner.T + $inner.B) / 2) - $outer.T)
+    $bitmap.Dispose()
+    return $color
+}
+
+function Test-IsGreen {
+    <#  Green, not just light: the theme's buttons are grey, R = G = B. #>
+    param([Parameter(Mandatory)]$Color)
+    return ($Color.G - [Math]::Max($Color.R, $Color.B)) -ge 20
+}
+
 function Get-TreeRowCount {
     param([Parameter(Mandatory)][IntPtr]$Dialog, [Parameter(Mandatory)][int]$CtrlId)
     $h = [NativeUi]::GetDlgItem($Dialog, $CtrlId)
