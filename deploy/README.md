@@ -116,7 +116,7 @@ uninstalling keep working). So:
 ```sh
 cp deploy/pacenotes.container   ~/.config/containers/systemd/
 cp deploy/pacenotes.config.env  ~/.config/containers/systemd/
-install -D -m 755 deploy/pacenotes-update ~/.local/.local/bin/pacenotes-update
+install -D -m 755 deploy/pacenotes-update ~/.local/bin/pacenotes-update
 systemctl --user daemon-reload
 ```
 
@@ -197,11 +197,25 @@ can do exactly one thing: run `pacenotes-update` with a version.
    ```
 
 2. **Lock it to the script.** Append the PUBLIC key to the server user's
-   `~/.ssh/authorized_keys` on this host, prefixed like this (one line):
+   `~/.ssh/authorized_keys` on this host, prefixed with the script's
+   ABSOLUTE path — generate the line rather than typing the path, since a
+   home directory is not always under `/home` (on this host it is `/srv`).
+   As the server user, from the directory holding `pacenotes-deploy.pub`:
 
+   ```sh
+   bash -c 'printf "command=\"%s/.local/bin/pacenotes-update\",restrict %s\n" \
+       "$HOME" "$(cat pacenotes-deploy.pub)" >> ~/.ssh/authorized_keys'
    ```
-   command="/home/<user>/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… pacenotes-deploy
-   ```
+
+   which appends a line like
+   `command="/srv/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… pacenotes-deploy`.
+   (`bash -c` because the login shell may be fish, whose syntax differs.)
+
+   sshd runs `command=` through the user's LOGIN shell, so whatever is there
+   must be a path that exists exactly as written: a wrong one fails the
+   deploy job at once with exit code 127 and "Unknown command" (fish) or
+   "No such file or directory" (bash). The script's own `#!/usr/bin/env
+   bash` makes the login shell irrelevant after that.
 
    `command=` replaces whatever the client asks to run with the script, and
    hands the client's text over only as `SSH_ORIGINAL_COMMAND`, which the
@@ -221,9 +235,19 @@ can do exactly one thing: run `pacenotes-update` with a version.
    | `DEPLOY_PORT` | `<port>` (this host's sshd) |
    | `DEPLOY_USER` | the user whose Quadlet runs `pacenotes` |
 
-4. **Set the installer's default server** as a repository VARIABLE (not a
-   secret) `PACENOTES_DEFAULT_SERVER` — the release job refuses to build
-   without it.
+4. **Set the installer's default server** as a REPOSITORY variable (not a
+   secret, and NOT in the `production` environment) `PACENOTES_DEFAULT_SERVER`:
+   Settings → Secrets and variables → Actions → Variables → *Repository
+   variables*. The release job refuses to build without it.
+
+   An environment's variables reach only jobs that name that environment,
+   and the installer job deliberately does not name `production` — doing so
+   would expose the deploy key to a job that runs third-party actions and
+   every crate's build script, and put installer releases behind any
+   approval rule meant for server deploys. The value is compiled into a
+   public `.exe` anyway, so nothing about it needs protecting. The manual
+   debug build reads the same repository variable, and without it silently
+   falls back to `.env.example`'s local address.
 
 5. **After the first release**, open the package under the GitHub profile's
    Packages tab and confirm it says *Private*. GHCR makes a new package

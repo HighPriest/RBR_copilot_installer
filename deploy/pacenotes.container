@@ -10,7 +10,7 @@
 # Install (see deploy/README.md for the full walkthrough):
 #   cp deploy/pacenotes.container deploy/pacenotes.config.env \
 #      ~/.config/containers/systemd/
-#   install -m 755 deploy/pacenotes-update ~/bin/
+#   install -D -m 755 deploy/pacenotes-update ~/.local/bin/pacenotes-update
 #   ~/.local/bin/pacenotes-update X.Y.Z        # the first time, by hand
 
 [Unit]

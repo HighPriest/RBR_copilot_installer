@@ -39,7 +39,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Setup Rust (MSVC target)
       uses: dtolnay/rust-toolchain@stable
@@ -50,6 +50,11 @@ jobs:
       with:
         workspaces: installer
 
+    # A REPOSITORY variable on purpose. An environment's variables reach only
+    # jobs that name the environment, and this job must not name `production`:
+    # that would hand the deploy key to a job that runs crates' build scripts
+    # and third-party actions, and put installer releases behind any reviewer
+    # rule meant for server deploys.
     - name: Default server (the public address, from the repository variable)
       working-directory: installer
       shell: pwsh
@@ -57,7 +62,10 @@ jobs:
         PACENOTES_DEFAULT_SERVER: ${{ vars.PACENOTES_DEFAULT_SERVER }}
       run: |
         if (-not $env:PACENOTES_DEFAULT_SERVER) {
-          Write-Error "Set the repository variable PACENOTES_DEFAULT_SERVER to the public server URL."
+          Write-Error ("PACENOTES_DEFAULT_SERVER is empty. Set it as a REPOSITORY variable " +
+            "(Settings > Secrets and variables > Actions > Variables > Repository variables). " +
+            "A variable in the production environment is invisible to this job, which " +
+            "deliberately does not use that environment (deploy/README.md 1.5).")
           exit 1
         }
         "PACENOTES_DEFAULT_SERVER=$env:PACENOTES_DEFAULT_SERVER" | Set-Content .env
@@ -91,13 +99,13 @@ jobs:
         echo "VERSION=$actual" >> $env:GITHUB_ENV
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: pacenotes-installer-${{ env.VERSION }}
         path: installer/target/x86_64-pc-windows-msvc/release/pacenotes-installer.exe
 
     - name: Create release and upload installer
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -117,7 +125,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # The installer's build.rs is what refuses a malformed tag on that side;
     # the server image gets the same X.Y.Z rule here, before anything builds.
@@ -140,10 +148,10 @@ jobs:
         } >> "$GITHUB_OUTPUT"
         echo "Server version: $version"
 
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
 
     - name: Log in to GHCR
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -153,7 +161,7 @@ jobs:
     # 4 cores and 16 GB, so it may compile in parallel; the Containerfile's
     # default of 1 job is for the 3 GB host and stays.
     - name: Build and push the server image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: deploy/Containerfile

@@ -5,7 +5,10 @@
 # workflow's `deploy` job over SSH, through a key that authorized_keys locks
 # to this script (deploy/README.md, "Deploying from GitHub"):
 #
-#   command="/home/user/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… deploy
+#   command="<absolute home>/.local/bin/pacenotes-update",restrict ssh-ed25519 AAAA… deploy
+#
+# The path must exist exactly as written — sshd runs it through the user's
+# login shell, and a home is not always under /home (deploy/README.md 1.5).
 #
 # The ONLY thing taken from the caller is the version — from
 # SSH_ORIGINAL_COMMAND, or the first argument when run by hand — and it must

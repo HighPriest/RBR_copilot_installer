@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026/11/02 — deploy: the forced command's path is generated, not typed
+
+The first real deploy failed with exit code 127, `fish: Unknown command:
+/home/<user>/.local/bin/pacenotes-update`. Not fish and not a hang: sshd runs
+an `authorized_keys` `command=` through the user's login shell, and that path
+did not exist — the server user's home is `/srv`, and the README's template
+said `/home/<user>`. The README now generates the line from `$HOME` (under
+`bash -c`, since the login shell may be fish) and says what a wrong path
+looks like. Also fixed: a doubled `~/.local/.local/bin` in the install step
+and a stale `~/bin` in the Quadlet's header.
+
+## 2026/11/01 — ci: actions on Node 24, and where the default server lives
+
+GitHub now forces Node-20 actions onto Node 24 with a deprecation warning.
+The runtime is chosen by each action's own `runs.using`, not by the runner
+image, so the fix is newer action versions, checked one by one against
+their `action.yml`: checkout v5, upload-artifact v6, setup-buildx v4,
+login v4, build-push v7 and action-gh-release v3 all declare `node24`, and
+every input these workflows pass still exists. rust-cache v2 already runs
+on Node 24; rust-toolchain is a composite action with no Node at all.
+
+The release job failed with `PACENOTES_DEFAULT_SERVER` unset although it
+was set — in the `production` environment, whose variables only reach jobs
+that name it. The installer job deliberately does not: naming it would
+expose the deploy key to a job running third-party actions and crates'
+build scripts, and put installer releases behind any reviewer rule meant
+for deploys. The variable belongs at repository level; the error message
+and `deploy/README.md` now say so, and why.
+
 ## 2026/11/01 — ci: the workflow runs again, and checks itself
 
 `ci.yml` had been invalid since `3f516e0`: the installer job's name,
