@@ -14,10 +14,43 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# CI only reads the repository. Declared, so the token is not whatever the
+# repository's default happens to be — a compromised action or dependency
+# running in a job gets read access and nothing more.
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request makes the older run
+# pointless; cancel it rather than queue a second full Windows build.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # GitHub refuses to run a workflow file it cannot parse, silently from the
+  # point of view of a push: ci.yml went unrun for weeks over one unquoted
+  # colon in a job name. actionlint catches that, bad `${{ }}` expressions,
+  # unknown `needs:` targets, and (with the runner's shellcheck) the shell
+  # inside `run:` blocks. Pinned to a release tag, script and binary both.
+  workflows:
+    name: workflow files (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: actionlint
+        shell: bash
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7
+          ./actionlint -color
+
   server:
     name: shared + server (linux)
     runs-on: ubuntu-latest
+    # A cold build and the test suite take a few minutes; anything near this
+    # is a hang, not a slow day.
+    timeout-minutes: 20
     env:
       RUSTFLAGS: -D warnings
     steps:
@@ -43,8 +76,12 @@ jobs:
         run: cargo test --workspace --locked
 
   installer:
-    name: installer (windows: lint, test, version, size gate)
+    name: "installer (windows: lint, test, version, size gate)"
     runs-on: windows-latest
+    # Two release builds, the tests and a debug server build. Without a limit
+    # a test that waits on a server that never answers holds a runner for
+    # GitHub's default of 6 hours.
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: installer
@@ -57,9 +94,14 @@ jobs:
           targets: x86_64-pc-windows-msvc
           components: rustfmt, clippy
 
+      # Both workspaces: Test-HttpClient.ps1 builds `pacenotes-server` into the
+      # repository root's target/, and without it every run rebuilt libsql and
+      # the rest of the server from scratch on the slowest runner.
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: installer
+          workspaces: |
+            installer
+            .
 
       - name: Default server (the local address from .env.example)
         run: Copy-Item .env.example .env

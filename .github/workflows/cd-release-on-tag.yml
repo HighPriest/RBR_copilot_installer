@@ -133,9 +133,11 @@ jobs:
         fi
         # GHCR refuses upper case, and the owner is not all lower case.
         owner="${GITHUB_REPOSITORY_OWNER,,}"
-        echo "version=$version" >> "$GITHUB_OUTPUT"
-        echo "image=ghcr.io/$owner/pacenotes-server" >> "$GITHUB_OUTPUT"
-        echo "short_sha=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+        {
+          echo "version=$version"
+          echo "image=ghcr.io/$owner/pacenotes-server"
+          echo "short_sha=${GITHUB_SHA::12}"
+        } >> "$GITHUB_OUTPUT"
         echo "Server version: $version"
 
     - uses: docker/setup-buildx-action@v3

@@ -135,7 +135,8 @@ Push-Location $repoRoot
 $savedRustflags = $env:RUSTFLAGS
 $env:RUSTFLAGS = $null
 try {
-    cargo build -p pacenotes-server 2>&1 | Out-Null
+    # --locked: the versions in Cargo.lock, the ones the server job tested.
+    cargo build --locked -p pacenotes-server 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Error 'server build failed; run `cargo build -p pacenotes-server` to see why'
         exit 1

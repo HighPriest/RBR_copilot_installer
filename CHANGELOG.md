@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026/11/01 — ci: the workflow runs again, and checks itself
+
+`ci.yml` had been invalid since `3f516e0`: the installer job's name,
+`installer (windows: lint, …)`, held a colon followed by a space, which YAML
+reads as a nested key, so GitHub refused the whole file and none of CI ran.
+The name is quoted now.
+
+Also:
+
+- A `workflows` job runs actionlint (pinned to v1.7.7, with the runner's
+  ShellCheck) over every workflow file, so a file GitHub cannot parse — or
+  a broken expression, `needs:` target or shell line — fails a run instead
+  of silently never starting one.
+- `timeout-minutes` on every job (5 / 20 / 45) instead of GitHub's 6 hours,
+  which a hung `Test-HttpClient.ps1` could otherwise hold a runner for.
+- The Windows job caches the repository root's `target/` as well as the
+  installer's: `Test-HttpClient.ps1` builds `pacenotes-server` there, and it
+  was rebuilt from scratch every run. That build is now `--locked`, like the
+  server job's.
+- `permissions: contents: read` for the workflow's token, and a
+  `concurrency` group that cancels a branch's or pull request's older run
+  when a newer push arrives.
+- `cd-release-on-tag.yml`: the server job's outputs are written in one
+  grouped redirect (ShellCheck SC2129, which the new lint would flag).
+
+None of this could be run here: actionlint is fetched from GitHub at run
+time, and downloading it locally was not permitted. The next push is the
+test.
+
 ## 2026/11/01 — release: the server image is built in CI and deployed on a tag (M7)
 
 Pushing a `v/X.Y.Z` tag now runs three jobs in `cd-release-on-tag.yml`: the
