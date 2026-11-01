@@ -5,6 +5,7 @@
 //! Paths are `/`-separated on every host, because they are also the ledger's keys.
 //! An archive and each entry are held in memory whole; real packages stay under 50 MB.
 
+mod archive;
 mod central_directory;
 mod crc32;
 mod entry_data;
@@ -12,6 +13,7 @@ mod entry_name;
 mod extraction;
 mod zip_error;
 
+pub use archive::Archive;
 pub use entry_name::safe_relative;
 pub use extraction::{entries, entry_paths, extract, read_entry, FileEntry};
 pub use zip_error::ZipError;

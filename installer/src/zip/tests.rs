@@ -358,3 +358,22 @@ fn duplicate_entry(zip: &[u8], name: &str, as_name: &str) -> Vec<u8> {
     doubled[end_record + 12..end_record + 16].copy_from_slice(&size.to_le_bytes());
     doubled
 }
+
+/// Opened once, an archive reads every file it lists, by any spelling of its
+/// path, as `read_entry` would.
+#[test]
+fn an_archive_reads_each_file_as_read_entry_does() {
+    let archive = super::Archive::open(DEFLATED).expect("open the fixture");
+    for path in super::entry_paths(DEFLATED).expect("list") {
+        assert_eq!(
+            archive.read(&path).expect("read through the archive"),
+            super::read_entry(DEFLATED, &path).expect("read on its own"),
+            "{path}"
+        );
+    }
+    assert_eq!(
+        archive.read(&RBR_INI.to_uppercase()).expect("folded"),
+        b"[PACENOTE]\r\nname=Kamil\r\n"
+    );
+    assert!(archive.read("Plugins/missing.ini").is_err());
+}

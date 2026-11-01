@@ -1,5 +1,44 @@
 # Changelog
 
+## 2026/11/01 — installer: installs four to fifteen times faster (I9)
+
+Measured on a voice-pack-shaped package, 3 000 files and 114 MB, on one
+machine:
+
+| | before | after |
+|---|---|---|
+| fresh install | 11.8 s | 3.0 s |
+| install over a manual install of the same files | 20.3 s | 1.35 s |
+| uninstalling that again | 3.1 s or worse | 0.63 s |
+
+- **The zip's directory is read once per package**, not once per file
+  (`zip::Archive`). Finding each file by walking the whole directory made
+  an install of n files n² entry parses: 8.5 s of the 11.8.
+- **A file that already holds the incoming bytes is not written again**,
+  nor decompressed a second time: its hash is taken during the comparison
+  that found it identical. On a first run over a manual install that is
+  every file.
+- **Uninstalling no longer re-reads the payload for every file.** An
+  identical original of an installed entry needs nothing at all — the file
+  was just hashed against what was written, which is the original — and a
+  write-ahead entry reads the payload once.
+- **The CRC check uses a full byte table** (1 KiB) instead of a nibble
+  table: 0.42 s → 0.24 s.
+- **The log pane appends a line** instead of setting its whole text again
+  for each one. On the control itself, 1 500 lines took 19.8 s that way
+  and 3.5 s appended. It mattered most where there are many lines — a first
+  run backing up the files of a manual install — and it ran on the UI
+  thread, so the finished run waited behind it.
+
+What remains, and why it stays: writing through a temp file and a rename
+(1.8 s against 1.1 s for plain writes) keeps a half-written file from ever
+existing under the real name, and the SHA-256 of each file (0.43 s) is what
+the ledger records. New tests: an identical file keeps its modification
+time, its original survives an emptied cache, `Archive` reads what
+`read_entry` does, and scene 6's pane holds the run log in order.
+
+Size: 627.5 kB, +5 kB.
+
 ## 2026/11/01 — installer: the way forward is light green (I9)
 
 The button that carries the normal flow forward now has a light green

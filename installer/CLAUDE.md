@@ -181,11 +181,14 @@ after the second folder is deleted.
     byte-identical skip quietly turns files the user already had into files
     the installer owns and later deletes.
 
-    An `identical` original is only recoverable while that payload is in
-    the cache, and nothing can guarantee it: a user can empty the cache by
-    hand, and the orphan sweep does not read the ledger. Pinning is best
-    effort. The rule that holds regardless: **if the original cannot be put back, the file is left
-    alone and logged — never deleted.**
+    An `identical` file is not written at all, and its hash is taken when
+    it is compared. Uninstalling an `installed` entry needs nothing from the
+    cache for it either: the file has just been hashed against what was
+    written, which IS the original. Only a write-ahead (`installing`) entry,
+    whose files were never hashed, recovers an identical original from the
+    payload, and that only while the payload is cached — a user can empty
+    the cache by hand. The rule that holds regardless: **if the original
+    cannot be put back, the file is left alone and logged — never deleted.**
   - **`state: "installing"`**, written BEFORE extracting. A run that dies
     mid-extract leaves half-written files that are in no ledger entry — so
     the next run would treat them as the user's own and back them up as the
@@ -420,7 +423,10 @@ after the second folder is deleted.
 - `sha256.rs` — small std-only sha256 (~100 lines). (No `sha2` crate.)
 - `zip.rs` — zip reader (central directory + miniz_oxide inflate). The
   legacy zip WRITER for backups is no longer needed (backups are plain
-  file copies) — do not write one.
+  file copies) — do not write one. Reading several files from one package
+  goes through `zip::Archive`, which reads the central directory ONCE:
+  looking each file up by walking it again made an install of n files cost
+  n² entry parses, 8.5 s of a 12 s install at 3 000 files.
 - `install.rs` — dispatch to the chosen game's own configuration step, plus
   one module per game that has one (`install/rbr.rs`). There is NO shared
   abstraction over these on purpose: the games share no file layout, some

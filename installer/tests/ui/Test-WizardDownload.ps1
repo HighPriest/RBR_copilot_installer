@@ -41,7 +41,7 @@ $IDC_S3_PATH = 322
 $IDC_S3_DOWNLOAD = 326; $IDC_S3_CONFIGURE = 327; $IDC_S3_RESTORE = 329
 $IDC_RESTORE_POINTS = 372; $IDC_RESTORE_PREVIEW = 373
 $IDC_S4_TREE = 331; $IDC_S4_STATUS = 332
-$IDC_S6_PHASE = 351
+$IDC_S6_PHASE = 351; $IDC_S6_LOG = 354
 $IDC_S5_LANG_LABEL = 341; $IDC_S5_LANG = 342
 $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
@@ -367,6 +367,21 @@ try {
     ($logText.Contains('installed rbr/public/')) "log said [$logText]"
     Assert-That 'the log names the restore point' `
     ($logText.Contains('restore point')) "log said [$logText]"
+
+    # Scene 6's pane is filled once as it appears and appended to after, so
+    # it must read as the start of the same log: every earlier line, in order.
+    $collect = [NativeUi+EnumProc] {
+        param($child, $unused)
+        $text = Get-CtrlText $child $IDC_S6_LOG
+        if ($text -and $text.Contains('installed rbr/public/')) { $script:panes += $text }
+        return $true
+    }
+    $script:panes = @()
+    [void][NativeUi]::EnumChildWindows($h, $collect, [IntPtr]::Zero)
+    $panes = $script:panes
+    Assert-That 'the installation pane shows the run log as it grew' `
+    ($panes.Count -eq 1 -and $logText.StartsWith($panes[0]) -and $panes[0].Contains('game: ')) `
+        "found $($panes.Count) pane(s); first [$(if ($panes.Count) { $panes[0] })]"
 
     # The files are in the game folder, and the ledger records them.
     Write-Host "`n-- the game folder --"

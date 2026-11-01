@@ -51,6 +51,9 @@ pub unsafe extern "system" fn installation_page(
                     crate::ui::IDCANCEL,
                     false,
                 );
+                if let Some(state) = crate::wizard::page::state(dialog) {
+                    super::progress_page::show_log(dialog, state);
+                }
                 start(dialog);
                 crate::wizard::page::reply(dialog, 0)
             }

@@ -47,6 +47,9 @@ pub unsafe extern "system" fn fetching_page(
                 crate::wizard::page::set_sheet_caption(dialog);
                 crate::wizard::page::set_header(dialog, crate::i18n::IDS_S4B_TITLE);
                 crate::wizard::page::set_buttons(dialog, 0);
+                if let Some(state) = crate::wizard::page::state(dialog) {
+                    super::progress_page::show_log(dialog, state);
+                }
                 start(dialog);
                 crate::wizard::page::reply(dialog, 0)
             }

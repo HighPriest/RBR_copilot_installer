@@ -108,6 +108,44 @@ fn a_file_that_already_matched_is_not_copied_but_is_still_put_back() {
     );
 }
 
+/// Rewriting a file with the bytes it already holds costs a write per file and
+/// changes nothing, and on a first run over a manual install that is every file.
+#[test]
+fn a_file_that_already_matched_is_not_written_again() {
+    let world = common::World::new("identical-untouched");
+    world.write_game_file(INI, b"exactly what the package ships");
+    let long_ago =
+        std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_000_000_000);
+    std::fs::File::options()
+        .write(true)
+        .open(world.path(INI))
+        .and_then(|file| file.set_modified(long_ago))
+        .expect("backdate the file");
+    world.publish(common::KAMIL, &[(INI, b"exactly what the package ships")]);
+
+    world.apply(&[common::KAMIL]);
+    let modified = std::fs::metadata(world.path(INI)).and_then(|meta| meta.modified());
+    assert_eq!(modified.expect("read the time"), long_ago);
+}
+
+/// After an install, an identical file still holding what was written is the
+/// original, so emptying the cache costs it nothing.
+#[test]
+fn an_identical_original_survives_an_emptied_cache() {
+    let world = common::World::new("identical-no-cache");
+    world.write_game_file(INI, b"exactly what the package ships");
+    let sha = world.publish(common::KAMIL, &[(INI, b"exactly what the package ships")]);
+    world.apply(&[common::KAMIL]);
+
+    std::fs::remove_file(world.payload(&sha)).expect("empty the cache");
+    let outcome = world.apply(&[]);
+    assert_eq!(
+        world.read_game_file(INI).as_deref(),
+        Some(&b"exactly what the package ships"[..])
+    );
+    assert!(outcome.left_alone.is_empty(), "{:?}", outcome.left_alone);
+}
+
 #[test]
 fn a_file_changed_since_we_installed_it_is_left_alone() {
     let world = common::World::new("changed");

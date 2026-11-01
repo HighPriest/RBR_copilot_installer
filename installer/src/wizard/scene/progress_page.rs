@@ -110,9 +110,16 @@ pub unsafe fn finish_page(dialog: HWND, phase: u16, next: Option<u16>) {
     };
 }
 
-/// Appends to the run log and shows its newest line in the pane, where the page has one.
+/// Appends to the run log and adds the line to the pane, where the page has
+/// one; `show_log` has brought the pane up to date when the page appeared.
 pub unsafe fn log_line(dialog: HWND, state: &mut crate::wizard::state::WizardState, text: &str) {
     state.log.line(text);
+    crate::ui::append_line(dialog, crate::wizard::control_ids::IDC_S6_LOG, text);
+}
+
+/// The whole log so far, for a page coming into view: lines are logged from
+/// pages that have no pane, so this page has not seen them.
+pub unsafe fn show_log(dialog: HWND, state: &crate::wizard::state::WizardState) {
     crate::ui::set_text_raw(
         dialog,
         crate::wizard::control_ids::IDC_S6_LOG,

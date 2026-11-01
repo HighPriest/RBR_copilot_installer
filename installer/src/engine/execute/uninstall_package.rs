@@ -7,8 +7,21 @@ pub fn uninstall_package(
     let Some(entry) = run.ledger.get(key).cloned() else {
         return Ok(());
     };
+    // Only a write-ahead entry takes identical originals from the payload (see
+    // `put_back`), and it reads the payload once, not once for each of them.
+    let identical =
+        |file: &crate::ledger::LedgerFile| file.prior == crate::ledger::Prior::Identical;
+    let installed = entry.state == crate::ledger::EntryState::Installed;
+    let payload = if !installed && entry.files.values().any(identical) {
+        std::fs::read(run.cache.payload_path(&entry.sha256)).ok()
+    } else {
+        None
+    };
+    let archive = payload
+        .as_deref()
+        .and_then(|payload| crate::zip::Archive::open(payload).ok());
     for file in entry.files.values() {
-        if let Some(reason) = put_back(run, key, &entry, file)? {
+        if let Some(reason) = put_back(run, key, &entry, file, archive.as_ref())? {
             run.watcher
                 .log(&format!("{} {reason}; left alone", file.path));
             outcome.left_alone.push(file.path.clone());
@@ -30,6 +43,7 @@ fn put_back(
     key: &str,
     entry: &crate::ledger::LedgerEntry,
     file: &crate::ledger::LedgerFile,
+    payload: Option<&crate::zip::Archive>,
 ) -> Result<Option<String>, super::ExecuteError> {
     let target = crate::relative_path::join(run.game_dir, &file.path);
     if !target.exists() {
@@ -71,8 +85,12 @@ fn put_back(
             }
             super::game_files::copy_file(&copy, &target)?;
         }
+        // The hash above proved the file holds what was written, which for an
+        // identical one is what was here before: it is the original already.
+        crate::ledger::Prior::Identical if entry.state == crate::ledger::EntryState::Installed => {}
         crate::ledger::Prior::Identical => {
-            let Some(bytes) = original_from_payload(run.cache, &entry.sha256, &file.path) else {
+            let original = payload.and_then(|archive| archive.read(&file.path).ok());
+            let Some(bytes) = original else {
                 return Ok(Some(
                     "was already on this computer before it was installed, and the package \
                      it came from is no longer cached"
@@ -83,15 +101,6 @@ fn put_back(
         }
     }
     Ok(None)
-}
-
-fn original_from_payload(
-    cache: &crate::cache::Cache,
-    package_sha: &str,
-    path: &str,
-) -> Option<Vec<u8>> {
-    let bytes = std::fs::read(cache.payload_path(package_sha)).ok()?;
-    crate::zip::read_entry(&bytes, path).ok()
 }
 
 /// Removes the directories the uninstall emptied, deepest first, up to but not

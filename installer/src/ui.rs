@@ -12,7 +12,7 @@ mod resource;
 
 pub use combo_box::{combo_add, combo_reset, combo_select, combo_selection};
 pub use control_layout::{scroll_to_end, show, stretch_to_bottom_of};
-pub use control_text::{enable, get_text, set_text, set_text_raw, set_window_text};
+pub use control_text::{append_line, enable, get_text, set_text, set_text_raw, set_window_text};
 pub use explorer::reveal_in_explorer;
 pub use folder_picker::browse_for_folder;
 pub use forward_button::paint_forward_button;
