@@ -230,139 +230,140 @@ END
 #define IDS_S7_RESTORED       162
 
 // Wizard pages. Each caption here is an English fallback that the wizard replaces from the string table.
-// A PropertySheet takes its largest page's size, so every page shares one: 330x215 DLU, for scene 5's three lists.
+// A PropertySheet takes its largest page's size, so every page shares one: 470x300 DLU, about
+// 860x680 px at 100%: the most that fits a 1024x768 screen above its taskbar.
 // The lists are full width because a third of it clips the part of a co-driver's path that tells two voices apart.
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
-IDD_S1_LANGUAGE DIALOGEX 0, 0, 330, 215
+IDD_S1_LANGUAGE DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "Select language:", IDC_S1_PROMPT, 14, 30, 302, 10
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "Select language:", IDC_S1_PROMPT, 14, 30, 442, 10
     COMBOBOX        IDC_S1_COMBO, 14, 44, 180, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     LTEXT           "Restart the application to change language later.",
-                    IDC_S1_NOTE, 14, 66, 302, 20
+                    IDC_S1_NOTE, 14, 66, 442, 20
 END
 
-IDD_S2_MOTD DIALOGEX 0, 0, 330, 215
+IDD_S2_MOTD DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    EDITTEXT        IDC_S2_MOTD, 14, 24, 302, 132,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    EDITTEXT        IDC_S2_MOTD, 14, 24, 442, 214,
                     ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
-    LTEXT           "Secret:", IDC_S2_SECRET_LABEL, 14, 166, 60, 9
-    EDITTEXT        IDC_S2_SECRET, 78, 164, 238, 13, ES_AUTOHSCROLL | ES_PASSWORD
-    LTEXT           "", IDC_S2_STATUS, 14, 188, 302, 10
+    LTEXT           "Secret:", IDC_S2_SECRET_LABEL, 14, 252, 60, 9
+    EDITTEXT        IDC_S2_SECRET, 78, 250, 378, 13, ES_AUTOHSCROLL | ES_PASSWORD
+    LTEXT           "", IDC_S2_STATUS, 14, 272, 442, 10
 END
 
-IDD_S3_FOLDER DIALOGEX 0, 0, 330, 215
+IDD_S3_FOLDER DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "Game folder:", IDC_S3_PATH_LABEL, 14, 28, 302, 9
-    EDITTEXT        IDC_S3_PATH, 14, 40, 244, 13, ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...", IDC_S3_BROWSE, 264, 39, 52, 15
-    LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 302, 9
-    COMBOBOX        IDC_S3_GAME, 14, 78, 244, 90,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "Game folder:", IDC_S3_PATH_LABEL, 14, 28, 442, 9
+    EDITTEXT        IDC_S3_PATH, 14, 40, 384, 13, ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...", IDC_S3_BROWSE, 404, 39, 52, 15
+    LTEXT           "Game:", IDC_S3_GAME_LABEL, 14, 66, 442, 9
+    COMBOBOX        IDC_S3_GAME, 14, 78, 384, 90,
                     CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
     // Two columns: the tall main flow on the right, the secondary pair stacked to match it.
-    LTEXT           "", IDC_S3_ROUTES, 14, 98, 302, 30
+    LTEXT           "", IDC_S3_ROUTES, 14, 98, 442, 30
     // Listed first though drawn on the right: template order is Tab order, and the main route comes first.
-    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 176, 132, 140, 40
-    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 132, 120, 18
-    PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 14, 154, 120, 18
+    DEFPUSHBUTTON   "Download/Update", IDC_S3_DOWNLOAD, 276, 132, 180, 40
+    PUSHBUTTON      "Configure/Install", IDC_S3_CONFIGURE, 14, 132, 160, 18
+    PUSHBUTTON      "Restore/Uninstall", IDC_S3_RESTORE, 14, 154, 160, 18
 END
 
 // No TVS_CHECKBOXES here: the code adds it after the partial style, or the
 // checkbox images are built without a partial one and that state draws blank.
-IDD_S4_DOWNLOAD DIALOGEX 0, 0, 330, 215
+IDD_S4_DOWNLOAD DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
     CONTROL         "", IDC_S4_TREE, "SysTreeView32",
                     TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT
                     | TVS_SHOWSELALWAYS | TVS_DISABLEDRAGDROP
                     | WS_BORDER | WS_TABSTOP,
-                    14, 24, 302, 158
-    LTEXT           "", IDC_S4_STATUS, 14, 188, 302, 18
+                    14, 24, 442, 248
+    LTEXT           "", IDC_S4_STATUS, 14, 278, 442, 18
 END
 
 // Half preview, since restoring is the one thing here that can remove a user's files.
-IDD_RESTORE DIALOGEX 0, 0, 330, 215
+IDD_RESTORE DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "", IDC_RESTORE_PROMPT, 14, 26, 302, 18
-    LISTBOX         IDC_RESTORE_POINTS, 14, 48, 302, 70,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "", IDC_RESTORE_PROMPT, 14, 26, 442, 18
+    LISTBOX         IDC_RESTORE_POINTS, 14, 48, 442, 110,
                     LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_RESTORE_PREVIEW, 14, 126, 302, 80,
+    EDITTEXT        IDC_RESTORE_PREVIEW, 14, 166, 442, 128,
                     ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
                     | WS_VSCROLL | NOT WS_TABSTOP
 END
 
-IDD_S5_CONFIG DIALOGEX 0, 0, 330, 215
+IDD_S5_CONFIG DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "", IDC_S5_LANG_LABEL, 14, 26, 302, 9
-    LISTBOX         IDC_S5_LANG, 14, 37, 302, 46,
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "", IDC_S5_LANG_LABEL, 14, 26, 442, 9
+    LISTBOX         IDC_S5_LANG, 14, 37, 442, 76,
                     LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "", IDC_S5_VOICE_LABEL, 14, 90, 302, 9
-    LISTBOX         IDC_S5_VOICE, 14, 101, 302, 46,
+    LTEXT           "", IDC_S5_VOICE_LABEL, 14, 120, 442, 9
+    LISTBOX         IDC_S5_VOICE, 14, 131, 442, 76,
                     LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "", IDC_S5_STYLE_LABEL, 14, 154, 302, 9
-    LISTBOX         IDC_S5_STYLE, 14, 165, 302, 46,
+    LTEXT           "", IDC_S5_STYLE_LABEL, 14, 214, 442, 9
+    LISTBOX         IDC_S5_STYLE, 14, 225, 442, 71,
                     LBS_NOTIFY | WS_BORDER | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_S6_INSTALL DIALOGEX 0, 0, 330, 215
+IDD_S6_INSTALL DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "", IDC_S6_PHASE, 14, 28, 302, 10
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "", IDC_S6_PHASE, 14, 28, 442, 10
     CONTROL         "", IDC_S6_PROGRESS, "msctls_progress32",
-                    WS_BORDER, 14, 42, 302, 12
-    LTEXT           "", IDC_S6_ITEM, 14, 60, 302, 10
-    EDITTEXT        IDC_S6_LOG, 14, 76, 302, 130,
+                    WS_BORDER, 14, 42, 442, 12
+    LTEXT           "", IDC_S6_ITEM, 14, 60, 442, 10
+    EDITTEXT        IDC_S6_LOG, 14, 76, 442, 218,
                     ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
                     | WS_VSCROLL | NOT WS_TABSTOP
 END
 
 // Scene 4b, the same screen as scene 6 at an earlier moment, as its own template
 // so each page has its own controls and an id for PSM_SETCURSELID.
-IDD_S4B_FETCH DIALOGEX 0, 0, 330, 215
+IDD_S4B_FETCH DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
-    LTEXT           "", IDC_S6_PHASE, 14, 28, 302, 10
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
+    LTEXT           "", IDC_S6_PHASE, 14, 28, 442, 10
     CONTROL         "", IDC_S6_PROGRESS, "msctls_progress32",
-                    WS_BORDER, 14, 42, 302, 12
-    LTEXT           "", IDC_S6_ITEM, 14, 60, 302, 10
-    EDITTEXT        IDC_S6_LOG, 14, 76, 302, 130,
+                    WS_BORDER, 14, 42, 442, 12
+    LTEXT           "", IDC_S6_ITEM, 14, 60, 442, 10
+    EDITTEXT        IDC_S6_LOG, 14, 76, 442, 218,
                     ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
                     | WS_VSCROLL | NOT WS_TABSTOP
 END
 
 // The log is hidden on success, and the detail block then stretches over it.
-IDD_S7_SUMMARY DIALOGEX 0, 0, 330, 215
+IDD_S7_SUMMARY DIALOGEX 0, 0, 470, 300
 STYLE DS_SHELLFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_DISABLED
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 302, 12
+    LTEXT           "", IDC_SCENE_TITLE, 14, 8, 442, 12
     // Three lines, because the Polish result sentence wraps to three.
-    LTEXT           "", IDC_S7_RESULT, 14, 28, 302, 30
-    EDITTEXT        IDC_S7_DETAIL, 14, 62, 302, 56,
+    LTEXT           "", IDC_S7_RESULT, 14, 28, 442, 30
+    EDITTEXT        IDC_S7_DETAIL, 14, 62, 442, 100,
                     ES_MULTILINE | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
-    EDITTEXT        IDC_S7_LOG, 14, 124, 302, 82,
+    EDITTEXT        IDC_S7_LOG, 14, 168, 442, 128,
                     ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL
                     | WS_VSCROLL | NOT WS_TABSTOP
 END
@@ -493,16 +494,16 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 STRINGTABLE
 BEGIN
     IDS_CONNECTING      "Łączenie..."
-    IDS_DOWNLOADING     "Aktualnie pobieram: %s"
+    IDS_DOWNLOADING     "Pobieram: %s"
     IDS_VERIFYING       "Weryfikacja..."
     IDS_BACKUP          "Zapisywanie kopii zapasowej"
-    IDS_INSTALLING      "Aktualnie instaluję: %s"
+    IDS_INSTALLING      "Instaluję: %s"
     IDS_DONE            "Gotowe"
     IDS_READY           "Gotowy."
-    IDS_ALREADY_RUNNING "Instalator Pacenotes jest już uruchomiony.\n\nZamknij drugie okno i spróbuj ponownie. Dwie kopie nadpisywałyby sobie nawzajem pobrane pliki i zapis instalacji."
-    IDS_CRASH           "Coś poszło nie tak i instalator musi się zamknąć.\r\n\r\nSzczegóły zapisano w pliku:\r\n%s\r\n\r\nFolder gry nie został w połowie zainstalowany: to, co już zapisano, też jest tam odnotowane.\r\n\r\nPokazać ten plik?"
-    IDS_CRASH_NOFILE    "Coś poszło nie tak i instalator musi się zamknąć. Nie udało się zapisać dziennika, więc to jedyna kopia informacji o błędzie:"
-    IDS_APP_TITLE       "Instalator Pacenotes"
+    IDS_ALREADY_RUNNING "Instalator Pilotów jest już uruchomiony.\n\nZamknij drugie okno i spróbuj ponownie. Dwie kopie nadpisywałyby sobie nawzajem pobrane pliki i zapis instalacji."
+    IDS_CRASH           "Coś poszło nie tak i instalator musi zostać zamknięty.\r\n\r\nSzczegóły zapisano w pliku dziennika:\r\n%s\r\n\r\nFolder gry jest w stanie połowicznej instalacji: to, co już zapisano, też jest odnotowane w pliku dziennika.\r\n\r\nPokazać ten plik?"
+    IDS_CRASH_NOFILE    "Coś poszło nie tak i instalator musi zostać zamknięty Nie udało się zapisać dziennika, więc to jedyna kopia informacji o błędzie:"
+    IDS_APP_TITLE       "Instalator Pilotów: FilipekMod"
 
     IDS_BTN_CONTINUE    "Kontynuuj"
     IDS_BTN_ACCEPT      "AKCEPTUJ"
@@ -516,29 +517,29 @@ BEGIN
     IDS_CANCEL_CONFIRM  "Zatrzymać instalator i zamknąć to okno?"
 
     IDS_S1_TITLE        "Język"
-    IDS_S1_PROMPT       "Wybierz język tej instalacji:"
-    IDS_S1_RESTART      "Wybór obowiązuje przez cały przebieg. Aby go zmienić, uruchom instalator ponownie."
+    IDS_S1_PROMPT       "Wybierz język instalacji:"
+    IDS_S1_RESTART      "Wybór obowiązuje w całej aplikacji. Aby zmienić język, uruchom instalator ponownie."
 
-    IDS_S2_TITLE        "Wiadomość dnia"
+    IDS_S2_TITLE        "Ważne informacje"
     IDS_S2_SECRET       "Klucz dostępu:"
     IDS_S2_CHECKING     "Stan serwera: Sprawdzanie..."
     IDS_S2_ONLINE       "Stan serwera: Online"
     IDS_S2_OFFLINE      "Stan serwera: Offline"
-    IDS_S2_OFFLINE_MOTD "Nie udało się połączyć z serwerem.\r\n\r\nMożesz kontynuować: dostępna będzie wyłącznie zawartość wcześniej pobrana na ten komputer."
-    IDS_S2_BADSECRET    "Serwer nie zaakceptował tego klucza.\n\nWyczyść pole, aby kontynuować bez zawartości prywatnej, albo popraw klucz i spróbuj ponownie."
-    IDS_S2_EXPIRING     "Ten klucz traci ważność %s.\r\n\r\nMożesz kontynuować. Po tej dacie dostępna będzie wyłącznie zawartość publiczna, więc poproś o nowy klucz przed jej upływem."
+    IDS_S2_OFFLINE_MOTD "Nie udało się połączyć z serwerem.\r\n\r\nMożesz kontynuować tylko do konfiguracji zawartości wcześniej pobranej na komputer."
+    IDS_S2_BADSECRET    "Serwer nie rozpoznał tego klucza.\n\nWyczyść pole, aby kontynuować bez zawartości prywatnej, albo popraw klucz i spróbuj ponownie."
+    IDS_S2_EXPIRING     "Ten klucz traci ważność %s.\r\n\r\nPo tej dacie dostępna będzie wyłącznie zawartość publiczna, więc poproś o nowy klucz przed jej upływem.\r\n\r\nMożesz kontynuować."
 
     IDS_S3_TITLE        "Folder gry"
     IDS_S3_PATH         "Folder, w którym zainstalowana jest gra:"
     IDS_S3_GAME         "Wykryta gra:"
     IDS_S3_DETECTING    "(Wykrywanie)"
-    IDS_S3_NOGAME       "W tym folderze nie znaleziono obsługiwanej gry.\n\nWskaż folder zawierający plik wykonywalny gry."
+    IDS_S3_NOGAME       "W tym folderze nie znaleziono kompatybilnej gry.\n\nWskaż folder zawierający plik wykonywalny gry (.exe)."
     IDS_S3_DOWNLOAD     "Pobierz/Aktualizuj"
     IDS_S3_CONFIGURE    "Konfiguruj/Instaluj"
     IDS_S3_RESTORE      "Przywróć/Odinstaluj"
-    IDS_S3_NOT_WRITABLE "Twoje konto Windows nie może zapisywać w tym folderze:\r\n%s\r\n\r\nTak zwykle jest, gdy gra jest zainstalowana w Program Files. Uruchomić instalator ponownie jako administrator? Dotychczasowe wybory zostaną zachowane."
+    IDS_S3_NOT_WRITABLE "Twoje konto Windows nie może zapisywać w tym folderze:\r\n%s\r\n\r\nTak zwykle jest, gdy gra jest zainstalowana w folderze ""Program Files"". Jeżeli jesteś pewny poprawności ścieżki, uruchomić program jako Administrator?"
     IDS_S3_NOT_WRITABLE_ADMIN "Nie można zapisywać w tym folderze, nawet jako administrator:\r\n%s\r\n\r\nWybierz inny folder."
-    IDS_S3_ROUTES       "Pobierz/Aktualizuj — pobierz nową zawartość, a potem skonfiguruj ją i zainstaluj.\r\nKonfiguruj/Instaluj — zmień aktywne ustawienia, używając tego, co już jest na tym komputerze.\r\nPrzywróć/Odinstaluj — przywróć folder gry do wcześniejszego stanu."
+    IDS_S3_ROUTES       "Pobierz/Aktualizuj — pobierz nową zawartość, a potem skonfiguruj ją i zainstaluj.\r\nKonfiguruj/Instaluj — zmień aktywne ustawienia, używając tego, co już jest pobrane na tym komputerze.\r\nPrzywróć/Odinstaluj — przywróć folder gry do wcześniejszego stanu."
 
     IDS_S4_TITLE        "Pobieranie"
     IDS_S4_LOADING      "Wczytywanie listy dostępnej zawartości..."
@@ -547,9 +548,9 @@ BEGIN
     IDS_S4_READY        "Zaznacz, czego potrzebujesz. Pozycje już obecne na tym komputerze są zaznaczone."
     IDS_S4_MISSING      "Wybierz co najmniej jedną pozycję w każdej z kategorii: %s"
     IDS_S4_FETCH_FAILED "Nie udało się odczytać listy dostępnej zawartości. Pokazana jest tylko zawartość z tego komputera."
-    IDS_S4_NEEDS_NEWER  "Serwer udostępnia zawartość, której ta wersja instalatora nie rozumie, więc nie można pobrać niczego nowego.\n\nPobierz najnowszy instalator. Wszystko, co już zainstalowano, działa dalej: bez aktualizacji możesz zmienić wybór lub usunąć pakiety."
+    IDS_S4_NEEDS_NEWER  "Serwer udostępnia zawartość, której ta wersja instalatora nie rozumie!\n\nPobierz najnowszy instalator. Wszystko, co już zainstalowano lub pobrano, działa dalej: bez aktualizacji możesz zmienić konfigurację lub usunąć pakiety."
     IDS_S4B_TITLE       "Pobieranie"
-    IDS_S4B_DONE        "Wszystko, co wybrano, jest na tym komputerze. Nic nie zostało jeszcze zainstalowane."
+    IDS_S4B_DONE        "Wszystko, co wybrano, jest już pobrane na komputerze. Nic nie zostało jeszcze zainstalowane."
     IDS_STATE_DOWNLOADED "(pobrane)"
     IDS_STATE_UPDATE    "(aktualizacja)"
     IDS_STATE_LOCAL     "(tylko lokalnie)"
@@ -557,10 +558,10 @@ BEGIN
     IDS_STATE_UNAVAILABLE "(zainstalowane, już niedostępne)"
 
     IDS_S5_TITLE        "Konfiguracja"
-    IDS_S5_LANGUAGE     "Język pacenotes:"
+    IDS_S5_LANGUAGE     "Język tekstu notatek:"
     IDS_S5_VOICE        "Głos pilota:"
-    IDS_S5_STYLE        "Styl pacenotes:"
-    IDS_S5_MISSING      "Wybierz jedną pozycję w: %s"
+    IDS_S5_STYLE        "Styl pilota/notatek:"
+    IDS_S5_MISSING      "Wybierz conajmniej jedną pozycję w: %s"
     IDS_S5_NONE         "(na poprzednim ekranie nie wybrano nic)"
     IDS_S5_NOT_READY    "Na tym komputerze nie ma nic do wyboru w kategoriach: %s\r\n\r\nNajpierw pobierz co najmniej jedną pozycję w każdej z nich."
 
@@ -569,13 +570,13 @@ BEGIN
     IDS_S6_BACKUP       "Tworzenie kopii zapasowej zastępowanych plików"
     IDS_S6_INSTALLING   "Instalowanie"
     IDS_S6_FINISHED     "Zakończono"
-    IDS_S6_NOTHING      "Wszystko, co wybrano, jest już na tym komputerze."
+    IDS_S6_NOTHING      "Wszystko, co wybrano, jest już zainstalowane na tym komputerze."
     IDS_S6_CANCELLING   "Zatrzymywanie..."
     IDS_S6_STARTED      "Rozpoczynam."
     IDS_S6_CHECKING     "Sprawdzanie pakietów i folderu gry"
     IDS_S6_UNINSTALLING "Usuwanie tego, co jest zastępowane"
     IDS_S6_CONFIGURING  "Zapisywanie konfiguracji gry"
-    IDS_S6_CONFIRM_REMOVE "Te pozycje są zainstalowane i nie są już zaznaczone, więc zostaną usunięte z folderu gry:\n\n%s\n\nKontynuować?"
+    IDS_S6_CONFIRM_REMOVE "Te pozycje były zainstalowane i zostaną usunięte z folderu gry:\n\n%s\n\nKontynuować?"
 
     IDS_S7_TITLE        "Podsumowanie"
     IDS_S7_OK           "Instalacja zakończona."
@@ -583,26 +584,26 @@ BEGIN
     IDS_S7_CANCELLED    "Anulowano. Nic nie zostało zainstalowane, a nieukończone pobieranie odrzucono."
     IDS_S7_PENDING_ENGINE "Wszystko, co wybrano, zostało pobrane i zweryfikowane. Instalowanie w folderze gry nie jest jeszcze zaimplementowane, więc folder gry pozostał nietknięty."
     IDS_S7_GAME         "Gra: %s"
-    IDS_S7_DOWNLOADS    "Pobrano w tym przebiegu: %s"
-    IDS_S7_EXTRAS       "Pakiety pacenotes: %s"
+    IDS_S7_DOWNLOADS    "Pobrano w tym procesie: %s"
+    IDS_S7_EXTRAS       "Pakiety notatek: %s"
     IDS_S7_LOGFILE      "Plik dziennika: %s"
     IDS_S7_NOTHING_TODO "Nie trzeba było nic pobierać."
     IDS_S7_CHANGED      "Pakiety zainstalowane / usunięte: %s"
-    IDS_S7_LEFT_ALONE   "Pozostawione bez zmian, bo zmienił je ktoś inny: %s"
-    IDS_S7_RESTORE_POINT "Ten przebieg można cofnąć z punktu przywracania %s"
-    IDS_S7_NOT_DOWNLOADED "Nie udało się pobrać: %s. Reszta nie została wstrzymana, a przyczynę podaje dziennik."
+    IDS_S7_LEFT_ALONE   "Pozostawione bez zmian, bo zmienił je ktoś inny (ręcznie): %s"
+    IDS_S7_RESTORE_POINT "Ten proces można cofnąć z punktu przywracania %s"
+    IDS_S7_NOT_DOWNLOADED "Nie udało się pobrać: %s. Reszta instalacji nie została wstrzymana. Przyczynę błędu znajdziesz w dzienniku."
     IDS_S7_NONE_DOWNLOADED "nie udało się niczego pobrać"
 
     IDS_RESTORE_TITLE   "Przywracanie"
-    IDS_RESTORE_PROMPT  "Wybierz stan, do którego chcesz wrócić. Znaki mówią, co zrobił przebieg po tym punkcie: + dodano, - usunięto, ~ zmieniono wersję."
+    IDS_RESTORE_PROMPT  "Wybierz stan, do którego chcesz wrócić. Symbole wskazują, co stało się podczas instalacji: + dodano, - usunięto, ~ zmieniono wersję."
     IDS_RESTORE_ALL     "Usuń wszystko, co dodał ten instalator"
     IDS_RESTORE_EMPTY   "Nie ma do czego wracać: ten instalator jeszcze niczego nie zmienił w tym folderze."
-    IDS_RESTORE_PICK    "Najpierw wybierz stan z listy."
+    IDS_RESTORE_PICK    "Najpierw wybierz punkt z listy."
     IDS_RESTORE_PUT_BACK "Zostanie przywrócone:\r\n%s"
     IDS_RESTORE_REMOVE  "Zostanie usunięte:\r\n%s"
     IDS_RESTORE_KEEP    "Pozostanie bez zmian:\r\n%s"
     IDS_RESTORE_MISSING "NIE MOŻNA przywrócić, bo pobranego pliku już nie ma na tym komputerze. To, co jest zainstalowane teraz, zostanie nietknięte:\r\n%s"
-    IDS_RESTORE_NOTHING "Ten folder już odpowiada temu stanowi. Nic się nie zmieni."
+    IDS_RESTORE_NOTHING "Ten folder jest już w docelowym stanie. Nic się nie zmieni."
     IDS_BTN_RESTORE     "Przywróć"
     IDS_RESTORE_RUNNING "Przywracanie..."
     IDS_S7_RESTORED     "Przywrócono do stanu %s."

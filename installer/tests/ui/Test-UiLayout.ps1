@@ -148,6 +148,19 @@ try {
     Start-Sleep -Milliseconds 300
     Assert-Equal 'the keyboard starts on the language list' (Get-FocusedControlId $sheetH) $IDC_S1_COMBO
 
+    # Larger than an 800x600 screen, to show more of a catalogue, yet within a
+    # 1024x768 one above a 40 px taskbar. Measured at 100%: the installer is
+    # per-monitor DPI aware, so its rectangle is real pixels at its own DPI.
+    $frame = New-Object RECT
+    [void][NativeUi]::GetWindowRect($sheetH, [ref]$frame)
+    $scale = [NativeGeometry]::GetDpiForWindow($sheetH) / 96
+    $width = [int](($frame.R - $frame.L) / $scale)
+    $height = [int](($frame.B - $frame.T) / $scale)
+    Assert-That 'the window is larger than an 800x600 screen' ($width -gt 800 -or $height -gt 600) `
+        "${width}x$height at 100%"
+    Assert-That 'and fits a 1024x768 screen above its taskbar' ($width -le 1024 -and $height -le 728) `
+        "${width}x$height at 100%"
+
     Assert-AnyShipped 'window caption is a shipped string' $sheet.Title 'IDS_APP_TITLE'
     Assert-AnyShipped 'scene 1 prompt' (Get-CtrlText $page $IDC_S1_PROMPT) 'IDS_S1_PROMPT'
     Assert-AnyShipped 'scene 1 restart note' (Get-CtrlText $page $IDC_S1_NOTE) 'IDS_S1_RESTART'

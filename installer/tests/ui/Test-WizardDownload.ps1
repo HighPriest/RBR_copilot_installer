@@ -47,7 +47,7 @@ $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
 $PSBTN_NEXT = 1; $PSBTN_FINISH = 2
-$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1; $TVGN_CHILD = 4; $EM_GETLINECOUNT = 0x00BA
+$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1; $TVGN_CHILD = 4; $TVGN_NEXTVISIBLE = 6; $EM_GETLINECOUNT = 0x00BA
 
 $crateRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $repoRoot = Split-Path -Parent $crateRoot
@@ -193,6 +193,15 @@ try {
     # Every grouping row the operator's folders imply, plus every package.
     Assert-That 'the whole catalogue reached the tree control' ($rows -eq $EXPECTED_ROWS) `
         "control holds $rows rows, expected $EXPECTED_ROWS"
+    # Every row opens expanded: walking the visible rows reaches all of them.
+    $shown = 0
+    $at = [NativeUi]::SendMessageW($tv, $TVM_GETNEXTITEM, [IntPtr]$TVGN_ROOT, [IntPtr]::Zero)
+    while ($at -ne [IntPtr]::Zero) {
+        $shown++
+        $at = [NativeUi]::SendMessageW($tv, $TVM_GETNEXTITEM, [IntPtr]$TVGN_NEXTVISIBLE, $at)
+    }
+    Assert-That 'and every row of it opens expanded' ($shown -eq $EXPECTED_ROWS) `
+        "$shown of $EXPECTED_ROWS rows are shown without a click"
 
     # REGRESSION (2026-11-01): Back, Configure/Install, Back, Download/Update,
     # on a folder with nothing downloaded yet. The Configure route replaced

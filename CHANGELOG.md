@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026/11/01 — installer: a larger window, and the Download tree opens expanded (I9)
+
+The window was 615x512 px, sized for an 800x600 screen. Every page is now
+470x300 DLU instead of 330x215 — about 860x680 px at 100%, the most that
+fits a 1024x768 screen above its taskbar. Each page keeps its arrangement;
+the extra width widens every control, and the extra height goes to what
+holds lists: the Download tree, the logs, the message of the day, the
+configuration lists and the restore list and preview.
+
+The Download tree opens with every row expanded, so each package is in
+view without a click. It had opened collapsed so every category needing a
+pick stayed on screen; a long co-driver list now pushes the categories
+below it a scroll away, which the larger window offsets.
+
+`Test-UiLayout.ps1` checks the window is larger than 800x600 yet fits
+1024x768 above a taskbar, measured at 100% from the window's own DPI;
+`Test-WizardDownload.ps1` checks every row is shown without a click.
+
 ## 2026/11/01 — installer: a partly ticked category shows a partial box (I9)
 
 On scene 4, a category with only some of its items ticked showed a blank

@@ -353,7 +353,7 @@ Ordered security first, then what support needs, then what a user hits.
       background: Next, its relabelled forms, Finish, and Download/Update
 - [x] The installation process is quite slow. Check for possible optimisations, like copying, moving, writing files in bulk.
 - [x] Show a category with only some items ticked as partially selected, not blank
-- [ ] Open the Download tree with every row expanded, and enlarge the window
+- [x] Open the Download tree with every row expanded, and enlarge the window
       beyond 800x600 to show more of it
 
 ## I10 — Release gate

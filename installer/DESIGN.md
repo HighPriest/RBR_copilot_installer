@@ -54,10 +54,14 @@ the two secondary routes keep the theme's look.
 
 The window is ONE size for every scene — a property sheet sizes itself to its
 largest page — so a scene with little content, such as scene 1, simply has
-space around it. That size is 330x215 DLU, set by scene 5: three lists have
-to be visible at once, and each at full width, because a co-driver is
-identified by its whole path and a narrower column clips exactly the part
-that tells two voices apart.
+space around it. That size is 470x300 DLU, about 860x680 px at 100%: the
+most that fits a 1024x768 screen above its taskbar, so the Download tree and
+the logs show as much as they can. It was 330x215 (615x512 px, an 800x600
+screen) until 2026-11-01. Scene 5 sets the shape: three lists have to be
+visible at once, and each at full width, because a co-driver is identified
+by its whole path and a narrower column clips exactly the part that tells
+two voices apart. Every page keeps its arrangement; the extra height goes
+to the parts that hold lists.
 
 ## Scene 1 — Language
 
@@ -288,6 +292,11 @@ the one an automatic policy would have deleted.
   `PackageInfo.name` is its path under the access directory, so
   `codriver/polish/male/Kamil` gives level 1 = `category` (`codriver`),
   middle levels (`polish`, `male`) and the leaf (`Kamil`).
+- The tree opens with every row expanded, so each package is in view
+  without a click. It opened collapsed until 2026-11-01, to keep every
+  category that needs a pick on screen; with a long co-driver list the
+  categories below it are now a scroll away, which the larger window
+  offsets.
 - Only packages for the detected game are shown; the manifest is fetched with
   `?game=<id>` so the server filters rather than the client.
 - Loading order:

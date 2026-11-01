@@ -78,6 +78,8 @@ public static class NativeGeometry {
   // Where a window's client area starts on screen, past any border.
   public static POINT ClientOrigin(IntPtr window) {
     var p = new POINT(); ClientToScreen(window, ref p); return p; }
+  // The DPI a per-monitor-aware window lays itself out at; 96 is 100%.
+  [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
 }
 "@
 

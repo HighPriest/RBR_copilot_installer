@@ -76,9 +76,10 @@ unsafe fn insert_node(
     item.Anonymous.itemex.mask = ctl::TVIF_TEXT | ctl::TVIF_PARAM | ctl::TVIF_STATE;
     item.Anonymous.itemex.pszText = text.as_ptr() as *mut u16;
     item.Anonymous.itemex.lParam = node as LPARAM;
-    // Collapsed, so the opening view shows every category that needs a pick.
+    // Expanded, so every package is in view without a click; a category
+    // below a long one is a scroll away, which the larger window offsets.
     item.Anonymous.itemex.stateMask = ctl::TVIS_EXPANDED;
-    item.Anonymous.itemex.state = 0;
+    item.Anonymous.itemex.state = ctl::TVIS_EXPANDED;
 
     let handle = wm::SendMessageW(control, TVM_INSERTITEMW, 0, &item as *const _ as LPARAM);
     state.tree_items[node] = handle;
