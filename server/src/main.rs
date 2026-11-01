@@ -108,6 +108,9 @@ const EXIT_PUBLISHED_WITH_ERRORS: u8 = 2;
 #[tokio::main]
 async fn main() -> anyhow::Result<std::process::ExitCode> {
     tracing_subscriber::fmt()
+        // A log file or the journal would otherwise keep the escape codes, and a
+        // grep for `agent=` would miss every line.
+        .with_ansi(std::io::IsTerminal::is_terminal(&std::io::stdout()))
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )

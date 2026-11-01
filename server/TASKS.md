@@ -150,3 +150,4 @@ IDs point into `DESIGN-REVIEW.md`.
   - [x] Derive a missing version as `sha-<8 hex>`
   - [x] Refuse to drop metadata unless told to, and add
         `manifest migrate-to-sidecars`
+- [x] Write the log without colour codes when stdout is not a terminal

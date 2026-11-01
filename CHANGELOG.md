@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026/11/01 — server: no colour codes in a log that is not a terminal (S12)
+
+The server coloured its log whether or not anyone could see the colour, so
+a log written to a file or the journal kept the ANSI escape codes, and a
+search for `agent=` missed every access line: the field name and its `=`
+sat on either side of an escape. `Test-HttpClient.ps1` failed that way
+when run from a terminal that set `TERM`. Colour is now on only when
+stdout is a terminal.
+
 ## 2026/11/01 — installer: the message of the day keeps its line breaks (I9)
 
 Scene 2 showed the message of the day as one run-on line. A Win32 edit
