@@ -47,7 +47,7 @@ $IDC_S5_VOICE_LABEL = 343; $IDC_S5_VOICE = 344
 $IDC_S5_STYLE_LABEL = 345; $IDC_S5_STYLE = 346
 $IDC_S7_RESULT = 361; $IDC_S7_DETAIL = 362; $IDC_S7_LOG = 363
 $PSBTN_NEXT = 1; $PSBTN_FINISH = 2
-$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1
+$TVM_GETCOUNT = 0x1105; $TVM_GETNEXTITEM = 0x110A; $TVGN_ROOT = 0; $TVGN_NEXT = 1; $EM_GETLINECOUNT = 0x00BA
 
 $crateRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $repoRoot = Split-Path -Parent $crateRoot
@@ -115,6 +115,10 @@ try {
     # A game without a schema publishes nothing, and this catalogue uses exactly RBR's.
     Copy-Item -LiteralPath (Join-Path $repoRoot 'schemas\rbr.toml') `
         -Destination (Join-Path $data 'rbr\schema.toml')
+    # Written on Linux or in any editor set to LF, a message of the day ends its lines in LF only.
+    [void](New-Item -ItemType Directory -Force -Path (Join-Path $data 'motd'))
+    $MOTD_LINES = @('Rally season opens on Friday.', 'New voices this week:', 'Kamil and Ewa.')
+    [System.IO.File]::WriteAllText((Join-Path $data 'motd\en.txt'), ($MOTD_LINES -join "`n") + "`n")
     & $server manifest gen --data $data 2>&1 | Out-Null
 
     $port = Get-FreePort
@@ -149,6 +153,15 @@ try {
         $status = Get-CtrlText $page $IDC_S2_STATUS
     } while ($status -cne $S['IDS_S2_ONLINE'] -and (Get-Date) -lt $deadline)
     Assert-Equal 'server is seen as online' $status $S['IDS_S2_ONLINE']
+    # Polish falls back to the English file, so both languages see it.
+    $deadline = (Get-Date).AddSeconds(10)
+    while (-not (Get-CtrlText $page $IDC_S2_MOTD) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 200 }
+    $motd = [NativeUi]::GetDlgItem($page, $IDC_S2_MOTD)
+    $motdLines = [int][NativeUi]::SendMessageW($motd, $EM_GETLINECOUNT, [IntPtr]::Zero, [IntPtr]::Zero)
+    Assert-That 'the message of the day keeps the line breaks of its file' `
+    ($motdLines -eq $MOTD_LINES.Count) "the pane shows $motdLines line(s), the file has $($MOTD_LINES.Count)"
+    Assert-That 'and every line of it' ((Get-CtrlText $page $IDC_S2_MOTD) -ceq ($MOTD_LINES -join "`r`n")) `
+        "the pane says [$(Get-CtrlText $page $IDC_S2_MOTD)]"
     Press-WizardButton -Sheet $h -Button $PSBTN_NEXT
 
     $page = Wait-ForPageControl -Sheet $h -CtrlId $IDC_S3_PATH

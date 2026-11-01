@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026/11/01 — installer: the message of the day keeps its line breaks (I9)
+
+Scene 2 showed the message of the day as one run-on line. A Win32 edit
+control breaks lines only at CRLF, and a `.txt` written on the server, or
+in any editor set to LF, ends its lines in LF alone. The text is now
+re-joined with CRLF before it is shown, whichever endings the file used.
+
+`Test-WizardDownload.ps1` serves a three-line, LF-only message and reads
+back the line count the control itself reports (140/140 in both
+languages; the unfixed build showed 2 lines, the one long line wrapped).
+
 ## 2026/11/01 — installer: the size gate moves to 700 kB
 
 The scene 5 readiness check landed the release build on exactly 620 kB

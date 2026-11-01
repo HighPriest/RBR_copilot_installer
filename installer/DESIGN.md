@@ -67,6 +67,8 @@ that tells two voices apart.
   English fallback). Offline → built-in localized text saying the server is
   unreachable and only cached content is available. A 404 from the server
   (no MOTD published) is treated exactly like being offline.
+- The file's own line breaks are kept, LF or CRLF: an edit control breaks
+  lines only at CRLF, so the text is re-joined with CRLF before it is shown.
 - **Secret** field (password style). The secret unlocks extra (private)
   content: it is the bearer access key for every later server request.
   It is typed each run and **never remembered**: storing it would mean the

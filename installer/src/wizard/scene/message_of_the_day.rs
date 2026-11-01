@@ -72,6 +72,8 @@ unsafe fn on_worker_done(dialog: HWND, wparam: WPARAM, lparam: LPARAM) {
             crate::ui::set_text(dialog, crate::wizard::control_ids::IDC_S2_STATUS, status);
         }
         crate::worker::Message::Motd(Some(text)) => {
+            // An edit control breaks lines only at CRLF, and the server's .txt may end them in LF.
+            let text = text.lines().collect::<Vec<_>>().join("\r\n");
             crate::ui::set_text_raw(dialog, crate::wizard::control_ids::IDC_S2_MOTD, &text);
         }
         crate::worker::Message::SecretChecked(outcome) => on_secret_checked(dialog, outcome),
