@@ -60,7 +60,10 @@ diagrams="$docs/src/architecture/diagrams"
 mkdir -p "$diagrams"
 for source in "$docs"/diagrams/*.d2; do
     name="$(basename "$source" .d2)"
-    d2 --layout=elk --theme=0 --dark-theme=200 --pad=24 "$source" "$diagrams/$name.svg"
+    # Each source names its layout engine, theme and padding in its own
+    # d2-config vars. Light only: an <img> follows the system's colour scheme,
+    # not the book's theme, and a dark variant broke the coloured boxes.
+    d2 "$source" "$diagrams/$name.svg"
 done
 
 echo "== book"

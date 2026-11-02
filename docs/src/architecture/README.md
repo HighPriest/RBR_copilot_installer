@@ -24,8 +24,11 @@ a diagram that quietly disagrees with the rules is worse than no diagram.
 ## How they are made
 
 Each diagram is a [D2](https://d2lang.com) source in `docs/diagrams/`,
-rendered to SVG with the ELK layout by `docs/build.sh` every time the site is
-built, locally and in CI. The SVGs are never committed: what is published is
+rendered to SVG by `docs/build.sh` every time the site is built, locally and
+in CI. Each source names its own layout engine in its `d2-config` vars:
+dagre for the activity flows, ELK where tables and containers need it. They
+render light only, because an image in a page follows the system's colour
+scheme rather than the book's theme. The SVGs are never committed: what is published is
 always drawn from the sources in the same commit. A source that does not
 parse fails the build rather than publishing a stale picture.
 

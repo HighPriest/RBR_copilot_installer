@@ -1,11 +1,19 @@
 # A1 — the installer: one run, from launch to the summary.
 # Sources: installer/src/wizard/ (scene/*.rs), installer/src/worker/.
 
+vars: {
+  d2-config: {
+    layout-engine: dagre
+    theme-id: 0
+    pad: 24
+  }
+}
+
 direction: down
 
 title: |md
   # A1 — Installer: one run, three routes
-  Colour names who acts: the wizard on the UI thread, the one worker thread, the disk. Scene 3's route is the only branch that skips pages.
+  Colour names who acts: the wizard (UI thread), the worker thread, the disk.
 | {near: top-center}
 
 classes: {
@@ -18,29 +26,29 @@ classes: {
 }
 
 start: "" {class: dot}
-launch: "Launch: one instance per user, common controls, the Windows UI language" {class: ui}
-language: "Scene 1 — the UI language (default: Windows')" {class: ui}
-motd: "Scene 2 — message of the day, with its own line breaks; optional access key" {class: ui}
-key: "key typed?" {class: decision}
-whoami: "GET /whoami on the worker: 200 live, 401 wrong, expired or revoked" {class: worker}
-folder: "Scene 3 — the folder; the game is detected from its marker .exe. Not writable: offer to restart as administrator" {class: ui}
+launch: "Launch: one instance per user,\nthe Windows UI language" {class: ui}
+language: "Scene 1 — the UI language" {class: ui}
+motd: "Scene 2 — message of the day,\noptional access key" {class: ui}
+key: "key\ntyped?" {class: decision}
+whoami: "GET /whoami on the worker:\n200 live · 401 wrong, expired, revoked" {class: worker}
+folder: "Scene 3 — the game folder; the game\nis detected from its marker .exe.\nNot writable: offer to restart as admin" {class: ui}
 route: "route?" {class: decision}
 
 start -> launch -> language -> motd -> key
 key -> whoami: "yes"
 whoami -> motd: "401: stay"
-whoami -> folder: "live, or the server cannot be asked"
-key -> folder: "no (anonymous)"
+whoami -> folder: "live, or cannot ask"
+key -> folder: "no"
 folder -> route
 
 # Download / Update
-tree: "Scene 4 — tick what to HAVE: catalogue + cache + ledger, every row expanded" {class: ui}
-ticked: "a tick in every choice category shown?" {class: decision}
-schema: "schema hash known to this build?" {class: decision}
-blocked: "Download blocked — for THIS game only" {class: stop}
-fetch: "Scene 4b — fetch what is not cached yet: sha256 verified as it streams, retried when a retry could help" {class: worker}
-cached: "Cache gains <sha256>.zip + cache.json; the game folder is untouched" {class: disk}
-arrived: "anything arrived?" {class: decision}
+tree: "Scene 4 — tick what to HAVE:\ncatalogue + cache + ledger,\nevery row expanded" {class: ui}
+ticked: "a tick in every\nchoice category?" {class: decision}
+schema: "schema hash\nknown?" {class: decision}
+blocked: "Download blocked,\nfor THIS game only" {class: stop}
+fetch: "Scene 4b — fetch what is not cached:\nsha256 verified as it streams,\nretried when a retry could help" {class: worker}
+cached: "The cache gains <sha256>.zip;\nthe game folder is untouched" {class: disk}
+arrived: "anything\narrived?" {class: decision}
 
 route -> tree: "Download / Update"
 tree -> ticked
@@ -51,20 +59,20 @@ schema -> fetch: "yes"
 fetch -> cached -> arrived
 
 # Configure / Install
-local: "Build the tree from cache + ledger: no server, no transfers" {class: ui}
+local: "Tree from cache + ledger:\nno server, no transfers" {class: ui}
 route -> local: "Configure / Install"
 
 # Both meet at the gate in front of scene 5.
-ready: "every choice category has a ticked package in the cache?" {class: decision}
+ready: "every choice category\nhas a ticked package\nin the cache?" {class: decision}
 arrived -> ready: "yes"
 local -> ready
-ready -> folder: "no (Configure): download first"
-ready -> tree: "no (Download): back, failures unticked"
+ready -> folder: "no (Configure):\ndownload first"
+ready -> tree: "no (Download):\nfailures unticked"
 
-configure: "Scene 5 — one pick per choice category, plus the optional extras" {class: ui}
-answered: "every list answered?" {class: decision}
-install: "Scene 6 — install on the worker (A2)" {class: worker}
-summary: "Scene 7 — what changed, and where the log is" {class: ui}
+configure: "Scene 5 — one pick per choice\ncategory, plus optional extras" {class: ui}
+answered: "every list\nanswered?" {class: decision}
+install: "Scene 6 — install\non the worker (A2)" {class: worker}
+summary: "Scene 7 — what changed,\nand where the log is" {class: ui}
 end: "" {class: dot}
 
 ready -> configure: "yes"
@@ -72,19 +80,13 @@ configure -> answered
 answered -> configure: "no: name the lists"
 answered -> install: "yes"
 install -> summary -> end
-arrived -> summary: "nothing: the reason is in the log"
+arrived -> summary: "nothing: the reason\nis in the log"
 
 # Restore / Uninstall
-points: "Restore scene — points newest first, plus 'remove everything'" {class: ui}
-preview: "Preview one: remove, put back, keep, unavailable" {class: ui}
-empty: "plan empty?" {class: decision}
+points: "Restore scene — points newest\nfirst, plus 'remove everything'" {class: ui}
+preview: "Preview one: remove,\nput back, keep, unavailable" {class: ui}
+empty: "plan\nempty?" {class: decision}
 route -> points: "Restore / Uninstall"
 points -> preview -> empty
 empty -> points: "yes: nothing to do"
 empty -> install: "no"
-
-notes: |md
-  - **Scene 4's ticks are what to HAVE; scene 5's picks are what to USE.** Downloading comes first, so the install page needs no network except to report a conflict.
-  - **An unknown schema hash blocks downloading for that game only.** Reconfiguring, uninstalling and restoring keep working.
-  - **Cancel** is the sheet's button, honoured before scene 6 and disabled there: from scene 6 on, every phase writes to the game folder.
-| {shape: page; near: bottom-center}

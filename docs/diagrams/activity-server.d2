@@ -1,11 +1,20 @@
 # S1 — the server: how one download request is answered.
 # Sources: server/src/routes.rs, server/src/auth/, server/src/store/.
 
+vars: {
+  d2-config: {
+    layout-engine: dagre
+    theme-id: 0
+    pad: 24
+  }
+}
+
 direction: down
 
 title: |md
   # S1 — Server: how one download request is answered
-  GET /download/{game}/{directory}/{*name}. Colour names who decides: the handler, the access decision, the store. Every pill is a final answer.
+  `GET /download/{game}/{directory}/{*name}` — colour names who decides:
+  the handler, the access decision, the store. Every oval is a final answer.
 | {near: top-center}
 
 classes: {
@@ -19,21 +28,21 @@ classes: {
 }
 
 start: "" {class: dot}
-ids: "game and directory valid ids, name a valid name?" {class: decision}
-public: "the public directory?" {class: decision}
-header: "Bearer header well formed? Garbage costs no query" {class: auth}
-load: "load_token(): tokens LEFT JOIN grants, decoded fail-closed" {class: auth}
-decide: "decide(): allow, unauthorized or hidden" {class: decision}
-lookup: "Manifest lookup — only a hit yields a path on disk" {class: store}
-hit: "in the manifest?" {class: decision}
-size: "stat the file: size equals the manifest's?" {class: store}
-fresh: "If-None-Match equals the sha256?" {class: decision}
-stream: "Stream it: ETag, Content-Length, Content-Disposition naming the leaf" {class: handler}
+ids: "valid game,\ndirectory\nand name?" {class: decision}
+public: "the public\ndirectory?" {class: decision}
+header: "Bearer header well formed?\nGarbage costs no query" {class: auth}
+load: "load_token(): tokens LEFT JOIN\ngrants, decoded fail-closed" {class: auth}
+decide: "decide()" {class: decision}
+lookup: "Manifest lookup: only a hit\nyields a path on disk" {class: store}
+hit: "in the\nmanifest?" {class: decision}
+size: "Stat the file: size\nequals the manifest's?" {class: store}
+fresh: "If-None-Match\nequals the\nsha256?" {class: decision}
+stream: "Stream it: ETag, Content-Length,\nContent-Disposition naming the leaf" {class: handler}
 
-r404a: "404 — nothing could exist" {class: answer}
-r401: "401 — no live key, whether or not the package exists" {class: answer}
-r404b: "404 — no grant, or no such package: the same answer" {class: answer}
-r503: "503 — being copied, or a stale manifest" {class: answer}
+r404a: "404 — nothing\ncould exist" {class: answer}
+r401: "401 — no live key, whether\nor not the package exists" {class: answer}
+r404b: "404 — no grant, or no such\npackage: the same answer" {class: answer}
+r503: "503 — being copied,\nor a stale manifest" {class: answer}
 r304: "304 — not modified" {class: answer}
 r200: "200 — the zip streams" {class: ok}
 
@@ -54,9 +63,3 @@ size -> fresh: "yes"
 fresh -> r304: "yes"
 fresh -> stream: "no"
 stream -> r200
-
-notes: |md
-  - **There is no 403.** "Exists, but not for you" is the enumeration signal the statuses avoid.
-  - **The URL parts are lookup keys, never path fragments**, which is what makes the `{*name}` wildcard safe.
-  - **/packages never answers 4xx:** a bad, expired or revoked key, or a database outage, gets the public listing.
-| {shape: page; near: bottom-center}

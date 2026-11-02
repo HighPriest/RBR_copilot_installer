@@ -1,74 +1,87 @@
 # SY-1 — SysML block definition diagram: the system and its blocks.
+# The responsibilities and constraints in full are in docs/src/architecture/system.md.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+    pad: 24
+  }
+}
 
 direction: down
 
 title: |md
-  # SY-1 — SysML block definition: the system and its blocks
-  A filled diamond is composition: the whole owns the part. A dashed arrow is a compile-time dependency.
+  # SY-1 — SysML block definition
+  A filled diamond is composition: the whole owns the part.
+  A dashed arrow is a compile-time dependency.
 | {near: top-center}
 
 classes: {
-  block: {style: {fill: "#FFFFFF"; stroke: "#3F6FB5"}}
-  external: {style: {fill: "#F2F4F7"; stroke: "#77808D"}}
-  owns: {source-arrowhead: {shape: diamond; style.filled: true}; target-arrowhead: {shape: arrow}}
+  block: {shape: rectangle; style: {fill: "#FFFFFF"; stroke: "#3F6FB5"}}
+  external: {shape: rectangle; style: {fill: "#F2F4F7"; stroke: "#77808D"}}
   uses: {style: {stroke-dash: 4; stroke: "#3F6FB5"}}
 }
 
-system: |md
-  «block» **Pacenotes System**
-
-  pacenote packages for rally games, from one server to many game folders
-| {class: block}
+system: "«block»\nPacenotes System" {class: block}
 
 installer: |md
-  «block» **Installer** — Windows GUI
+  «block» **Installer**
 
-  *parts:* wizard (nine pages, three routes), worker thread, WinHTTP client, cache, ledger, engine, restore, run log
-
-  *constraints:* .exe under 700 kB; no tokio, reqwest, rustls, hyper or GUI crate; imports only DLLs Windows ships
+  - Windows GUI: nine pages,
+    three routes, one worker
+  - .exe under 700 kB
+  - no tokio, reqwest, rustls,
+    hyper or GUI crate
 | {class: block}
 
 protocol: |md
-  «block» **Shared Protocol** — the shared/ crate
+  «block» **Shared Protocol**
 
-  *values:* Manifest, PackageInfo, GameSchema, KeyStatus, ConflictReport, ApiError
-
-  *constraint:* serde only; no I/O, no async, no HTTP
+  - the wire types
+  - serde only: no I/O,
+    no async, no HTTP
 | {class: block}
 
 server: |md
-  «block» **Package Server** — one static binary
+  «block» **Package Server**
 
-  *parts:* routes, auth (decide), store (manifest gen), reports (validate, rate limit), admin CLI
-
-  *constraint:* TLS is the reverse proxy's job, not its own
+  - routes, auth, store,
+    reports, admin CLI
+  - one static binary;
+    TLS is the proxy's job
 | {class: block}
 
-game: |md
-  «block» **Game Installation** — external
-
-  the game folder a run targets; `.pacenotes/` holds every trace of the installer
-| {class: external}
-
 catalogue: |md
-  «block» **Package Catalogue** — the data root
+  «block» **Package Catalogue**
 
-  zips, sidecars, schemas, the generated `manifest.json`, `motd/<lang>.txt`, `reports/*.jsonl`
+  - zips, sidecars, schemas
+  - manifest.json, MOTD,
+    conflict reports
 | {class: block}
 
 authdb: |md
-  «block» **Auth Database** — libSQL
+  «block» **Auth Database**
 
-  tokens and grants; raw keys are never stored
+  - libSQL: keys and grants
+  - raw keys never stored
 | {class: block}
 
-system -> installer: "" {class: owns}
-system -> protocol: "" {class: owns}
-system -> server: "" {class: owns}
-system -> catalogue: "" {class: owns}
-system -> authdb: "" {class: owns}
+game: |md
+  «block» **Game Installation**
+
+  - external: the folder a run
+    targets; .pacenotes holds
+    every trace of the installer
+| {class: external}
+
+system <-> installer: {source-arrowhead: {shape: diamond; style.filled: true}}
+system <-> protocol: {source-arrowhead: {shape: diamond; style.filled: true}}
+system <-> server: {source-arrowhead: {shape: diamond; style.filled: true}}
+system <-> catalogue: {source-arrowhead: {shape: diamond; style.filled: true}}
+system <-> authdb: {source-arrowhead: {shape: diamond; style.filled: true}}
 installer -> protocol: "«use»" {class: uses}
 server -> protocol: "«use»" {class: uses}
 installer -> game: "writes only here"
-server -> catalogue: "reads; manifest gen writes manifest.json"
+server -> catalogue: "reads; publishes\nmanifest.json"
 server -> authdb: "SQL"

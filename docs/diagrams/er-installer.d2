@@ -1,11 +1,21 @@
 # ER-2 — the installer: what a run leaves inside <game folder>\.pacenotes.
 # Sources: installer/src/cache/, installer/src/ledger/, installer/src/restore/, installer/src/runlog/.
+# The meaning of each column is in docs/src/architecture/data-model.md.
 
-direction: right
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 0
+    pad: 24
+  }
+}
+
+direction: down
 
 title: |md
-  # ER-2 — Installer: what a run leaves in the game folder (.pacenotes)
-  The same package identity (game/directory/name) and the same sha256 travel from ER-1 into the cache, and from the cache into the ledger.
+  # ER-2 — Installer: the game folder's .pacenotes
+  The package identity (game/directory/name) and its sha256 travel from
+  ER-1 into the cache, and from the cache into the ledger.
 | {near: top-center}
 
 classes: {
@@ -14,117 +24,105 @@ classes: {
   logical: {style: {stroke-dash: 4}}
 }
 
-cache: "Download cache — .pacenotes/cache/" {
+cache: "Download cache (cache/)" {
   class: local
 
-  index: "CACHE_INDEX — cache.json" {
+  index: "CACHE_INDEX (cache.json)" {
     shape: sql_table
     version: INTEGER {constraint: primary_key}
-    packages: "key → CacheEntry"
-    state: "Missing, Unreadable or Loaded"
+    packages: "key → entry"
   }
 
-  entry: "CACHE_ENTRY — a snapshot of PackageInfo" {
+  entry: CACHE_ENTRY {
     shape: sql_table
-    key: "game/directory/name" {constraint: primary_key}
-    sha256: "TEXT → the payload" {constraint: foreign_key}
+    key: "game/dir/name" {constraint: primary_key}
+    sha256: TEXT {constraint: foreign_key}
     version: TEXT
     size: INTEGER
     updated_at: INTEGER
     display_name: TEXT NULL
     exclusive_group: TEXT NULL
-    requires: "[directory/name]"
+    requires: "[dir/name]"
   }
 
-  payload: "CACHE_PAYLOAD — <sha256>.zip" {
+  payload: "CACHE_PAYLOAD (<sha256>.zip)" {
     shape: sql_table
-    sha256: "TEXT — dedupe, integrity, rollback" {constraint: primary_key}
+    sha256: TEXT {constraint: primary_key}
   }
 
-  index -> entry: "packages{} 1 : 0..*"
-  entry -> payload: "sha256 0..* : 1"
+  index -> entry: "1 : 0..*"
+  entry -> payload: "0..* : 1"
 }
 
-ledger: "Install ledger — .pacenotes/installed.json, written atomically" {
+ledger: "Install ledger (installed.json)" {
   class: local
 
   document: LEDGER {
     shape: sql_table
     version: INTEGER {constraint: primary_key}
-    packages: "key → LedgerEntry"
-    state: "an unreadable ledger is never overwritten"
+    packages: "key → entry"
   }
 
   entry: LEDGER_ENTRY {
     shape: sql_table
-    key: "game/directory/name" {constraint: primary_key}
-    sha256: "what was installed"
+    key: "game/dir/name" {constraint: primary_key}
+    sha256: TEXT
     version: TEXT
     exclusive_group: TEXT NULL
-    state: "installing (write-ahead) or installed"
+    state: "installing / installed"
   }
 
   file: LEDGER_FILE {
     shape: sql_table
-    entry: "ledger key" {constraint: [primary_key; foreign_key]}
-    path_folded: "case-folded" {constraint: primary_key}
-    path: "as written, /-separated"
+    entry: key {constraint: [primary_key; foreign_key]}
+    path_folded: TEXT {constraint: primary_key}
+    path: "as written"
     sha256: "what WE wrote"
-    prior: "absent, identical or backup"
+    prior: "absent / identical / backup"
   }
 
-  document -> entry: "packages{} 1 : 0..*"
-  entry -> file: "files{} 1 : 1..*"
+  document -> entry: "1 : 0..*"
+  entry -> file: "1 : 1..*"
 }
 
-restore: "Restore points — .pacenotes/restore/<UTC stamp>/" {
+restore: "Restore points (restore/<stamp>/)" {
   class: disk
 
   point: RESTORE_POINT {
     shape: sql_table
     name: "UTC stamp" {constraint: primary_key}
-    ledger_json: "the ledger BEFORE the run"
-    files: "the originals it replaced"
+    ledger_json: "ledger before the run"
+    files: "originals replaced"
   }
 
   saved: SAVED_FILE {
     shape: sql_table
     point: TEXT {constraint: [primary_key; foreign_key]}
-    path: "relative, /-separated" {constraint: primary_key}
-    bytes: "copied only when they differ"
+    path: TEXT {constraint: primary_key}
+    bytes: original
   }
 
   snapshot: LEDGER_SNAPSHOT {
     shape: sql_table
     class: logical
     point: TEXT {constraint: [primary_key; foreign_key]}
-    packages: "the frozen LedgerEntry map"
+    packages: "frozen entries"
   }
 
-  point -> saved: "files/ 1 : 0..*"
+  point -> saved: "1 : 0..*"
   point -> snapshot: "ledger.json" {class: logical}
 }
 
-logs: "Run logs — .pacenotes/logs/" {
+logs: "Run logs (logs/)" {
   class: disk
 
   log: RUN_LOG {
     shape: sql_table
-    stamp: "install-<stamp>.log, newest five kept" {constraint: primary_key}
-    header: "build, start, server, Windows build"
-    lines: "every line timed in UTC"
+    stamp: "install-<stamp>.log" {constraint: primary_key}
+    header: "build, start, server, Windows"
+    lines: "timed in UTC"
   }
 }
 
-cache.entry -> ledger.entry: "installed as: same key, same sha256" {class: logical}
-ledger.file -> restore.point: "prior = backup names a point" {class: logical}
-
-prior: |md
-  **`prior` is what makes uninstall safe**
-
-  - `backup` — the original is under that point's `files/` and is copied back.
-  - `identical` — the bytes already matched: nothing was copied and nothing was written. An installed entry's file still holding what was written *is* the original.
-  - `absent` — there was no file, so uninstall deletes it.
-
-  If an original cannot be put back, the file is left alone and logged — never deleted.
-| {shape: page; near: bottom-center}
+cache.entry -> ledger.entry: "installed as" {class: logical}
+ledger.file -> restore.point: "prior = backup" {class: logical}

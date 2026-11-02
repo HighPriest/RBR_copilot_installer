@@ -54,10 +54,22 @@ and the docs build always points it at `.env.example`.
 unused `authors` key left `[workspace.package]`, where Cargo warned about it
 on every build.
 
-Not checked here: this machine has no network, so D2 itself never ran; the
-sources were written to its documented syntax and CI renders them, failing
-the build on any error. The rest of the site was built here end to end with
-a stand-in for `d2`.
+Pinned to the latest releases, D2 v0.9.0 (now at `d2lang/d2`) and mdBook
+v0.5.4. Rendered with D2 and inspected, the first drafts needed work:
+
+- **Light only.** With a dark variant, a system in dark mode switched the
+  text to light colours while the boxes kept their light fills, unreadable.
+  An image in a page follows the system's scheme, not the book's theme.
+- **Each source names its own layout** in its `d2-config` vars: dagre for
+  the activity flows, which ELK tangled into back-edges; ELK for the tables
+  and containers. `build.sh` passes no flags.
+- **Width.** D2 does not wrap labels, so long sentences made the ER diagrams
+  5 900 px wide. Labels are broken by hand, column types are short (the
+  chapter's tables explain them), and containers stack; nothing is wider
+  than 2 300 px now, most under 1 600.
+- **SY-3** is a grid, one row per requirement — test case, requirement,
+  block — so no line crosses another, and SY-1's composition edges carry
+  their diamonds.
 
 ## 2026/11/02 — deploy: the forced command's path is generated, not typed
 
