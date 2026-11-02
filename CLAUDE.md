@@ -182,9 +182,27 @@ Any protocol change = change `shared/` first, then both sides in the same PR.
 new install model supersedes (backup/FilipekMod/unpacked staging dirs,
 oldest-zip restore). `installer/CLAUDE.md` says which is which.
 
+## Documentation
+
+- `docs/` is an mdBook that CI publishes to GitHub Pages
+  (`.github/workflows/docs.yml`); `docs/build.sh` builds the same site
+  locally. See `DEVELOPMENT.md` §3.1.
+- A document lives where it belongs in the repository. Its book chapter is
+  one `include` line at the same relative path under `docs/src/`, so links
+  between documents work in both places; add that line and a
+  `docs/src/SUMMARY.md` entry for a new document. Links to source files are
+  pointed at GitHub by `tools/mdbook-repo-links`.
+- Diagrams are D2 sources in `docs/diagrams/`, rendered to SVG at build
+  time; the SVGs are never committed.
+- The API reference is rustdoc with private items. The installer's is
+  built with `PACENOTES_ENV_FILE=.env.example`: rustdoc prints the default
+  server, and a published page must never carry a real deployment's address.
+- **No Python anywhere in the project**, documentation tooling included.
+
 ## Workspace layout / build
 
-- Root `cargo build` builds `shared` + `server` (Linux OK, used in CI).
+- Root `cargo build` builds `shared`, `server` and `tools/mdbook-repo-links`
+  (Linux OK, used in CI).
 - `installer/` builds only on Windows MSVC target and is excluded from the
   workspace default members on purpose. Do not "fix" that.
 - Check binary size after every installer change:

@@ -1,0 +1,10 @@
+[package]
+name = "mdbook-repo-links"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "mdBook preprocessor: links to repository files the book does not hold point at GitHub"
+
+[dependencies]
+serde_json = { workspace = true }

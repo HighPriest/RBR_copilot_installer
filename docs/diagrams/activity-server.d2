@@ -1,0 +1,62 @@
+# S1 — the server: how one download request is answered.
+# Sources: server/src/routes.rs, server/src/auth/, server/src/store/.
+
+direction: down
+
+title: |md
+  # S1 — Server: how one download request is answered
+  GET /download/{game}/{directory}/{*name}. Colour names who decides: the handler, the access decision, the store. Every pill is a final answer.
+| {near: top-center}
+
+classes: {
+  handler: {style: {fill: "#EEF7F2"; stroke: "#3D8A6A"}}
+  auth: {style: {fill: "#F6F0FB"; stroke: "#8E5BB5"}}
+  store: {style: {fill: "#EEF3FB"; stroke: "#3F6FB5"}}
+  decision: {shape: diamond; style: {fill: "#FFF8E5"; stroke: "#C9A33B"}}
+  answer: {shape: oval; style: {fill: "#FFFFFF"; stroke: "#555555"}}
+  ok: {shape: oval; style: {fill: "#E9F7EE"; stroke: "#2E8B57"}}
+  dot: {shape: circle; width: 24; height: 24; style: {fill: "#333333"; stroke: "#333333"}}
+}
+
+start: "" {class: dot}
+ids: "game and directory valid ids, name a valid name?" {class: decision}
+public: "the public directory?" {class: decision}
+header: "Bearer header well formed? Garbage costs no query" {class: auth}
+load: "load_token(): tokens LEFT JOIN grants, decoded fail-closed" {class: auth}
+decide: "decide(): allow, unauthorized or hidden" {class: decision}
+lookup: "Manifest lookup — only a hit yields a path on disk" {class: store}
+hit: "in the manifest?" {class: decision}
+size: "stat the file: size equals the manifest's?" {class: store}
+fresh: "If-None-Match equals the sha256?" {class: decision}
+stream: "Stream it: ETag, Content-Length, Content-Disposition naming the leaf" {class: handler}
+
+r404a: "404 — nothing could exist" {class: answer}
+r401: "401 — no live key, whether or not the package exists" {class: answer}
+r404b: "404 — no grant, or no such package: the same answer" {class: answer}
+r503: "503 — being copied, or a stale manifest" {class: answer}
+r304: "304 — not modified" {class: answer}
+r200: "200 — the zip streams" {class: ok}
+
+start -> ids
+ids -> r404a: "no"
+ids -> public: "yes"
+public -> lookup: "yes: no key needed"
+public -> header: "no"
+header -> load -> decide
+decide -> r401: "unauthorized"
+decide -> r404b: "hidden"
+decide -> lookup: "allow"
+lookup -> hit
+hit -> r404b: "no"
+hit -> size: "yes"
+size -> r503: "no"
+size -> fresh: "yes"
+fresh -> r304: "yes"
+fresh -> stream: "no"
+stream -> r200
+
+notes: |md
+  - **There is no 403.** "Exists, but not for you" is the enumeration signal the statuses avoid.
+  - **The URL parts are lookup keys, never path fragments**, which is what makes the `{*name}` wildcard safe.
+  - **/packages never answers 4xx:** a bad, expired or revoked key, or a database outage, gets the public listing.
+| {shape: page; near: bottom-center}

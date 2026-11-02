@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["shared", "server"]
+members = ["shared", "server", "tools/mdbook-repo-links"]
 exclude = ["installer"]
 # NOTE: `installer` is intentionally NOT a default workspace member.
 # It only builds on Windows (x86_64-pc-windows-msvc) and must be built with
@@ -12,7 +12,6 @@ exclude = ["installer"]
 [workspace.package]
 edition = "2021"
 license = "MIT"
-authors = ["Pacenotes"]
 
 [workspace.dependencies]
 serde = { version = "=1.0.229", features = ["std", "derive"] }

@@ -11,6 +11,7 @@ the rules a change has to respect see the `CLAUDE.md` files.
 | `shared/` | any OS | Protocol types only (serde). No I/O. |
 | `server/` | any OS (deployed on Linux) | axum + tokio + libSQL. Normal async stack. |
 | `installer/` | **Windows, MSVC target only** | Win32 GUI + WinHTTP, under a hard 700 kB gate. |
+| `tools/mdbook-repo-links/` | any OS | The documentation book's preprocessor (§3.1). |
 
 `installer/` is **deliberately excluded** from the Cargo workspace, so a
 plain `cargo build` at the root builds `shared` + `server` and nothing else.
@@ -86,6 +87,48 @@ cargo build --target x86_64-pc-windows-msvc            # debug
 and then fails if the `.exe` is over 700 kB or imports a DLL Windows does not ship. **Check the size after every
 installer change** — the budget is the reason the installer has no HTTP
 crate, no TLS crate and no GUI framework.
+
+### 3.1 The documentation site
+
+`docs/` is an mdBook that CI publishes to GitHub Pages
+(`.github/workflows/docs.yml`): every Markdown document in the repository,
+the architecture diagrams, and the rustdoc API reference. Build the whole
+site locally with
+
+```sh
+docs/build.sh          # Git Bash on Windows, or any shell elsewhere
+```
+
+and open `docs/book/index.html`. It needs, besides cargo:
+
+- **[D2](https://d2lang.com)** — one self-contained binary from its
+  releases page. It renders `docs/diagrams/*.d2` to SVG. The SVGs are build
+  output and never committed.
+- **[mdBook](https://github.com/rust-lang/mdBook)** — one binary from its
+  releases page, or `cargo install mdbook`.
+
+CI pins both versions in `docs.yml`; use the same ones.
+
+How the book is put together, so a change lands in the right place:
+
+- **A document lives where it always did.** Most chapters under `docs/src/`
+  are a single line using mdBook's `include` directive on the original, at
+  the same relative path (`docs/src/installer/DESIGN.md` includes
+  `installer/DESIGN.md`), so the links between documents work in the book
+  as they do on GitHub. A new document gets such a chapter and an entry in
+  `docs/src/SUMMARY.md`.
+- **Links to source files** cannot be book pages; `tools/mdbook-repo-links`
+  points each one at the file on GitHub when the book is built.
+- **The architecture chapters** live in `docs/src/architecture/`, and their
+  diagrams in `docs/diagrams/`. Change a diagram when the structure it shows
+  changes.
+- **The API reference** is rustdoc with private items. The installer's half
+  builds only on Windows; elsewhere `docs/build.sh` leaves it out unless
+  `INSTALLER_API` names a directory holding it. Its default server address
+  is always `.env.example`'s: the script sets `PACENOTES_ENV_FILE`, because
+  rustdoc prints the address and a published page must never carry a real
+  deployment's.
+- There is no Python anywhere in this project, the documentation included.
 
 ## 4. Testing
 

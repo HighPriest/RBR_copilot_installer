@@ -442,7 +442,7 @@ Useful checks from a workstation:
 
 ```sh
 curl -s https://pacenotes.example.com/health
-curl -s https://pacenotes.example.com/packages?game=rbr | python3 -m json.tool | head
+curl -s https://pacenotes.example.com/packages?game=rbr | head -c 600; echo
 curl -s "https://pacenotes.example.com/motd?lang=en"
 curl -sI https://pacenotes.example.com/download/rbr/public/language/polish
 curl -sI -H "Authorization: Bearer pcn_…" \

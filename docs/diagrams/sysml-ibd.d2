@@ -1,0 +1,48 @@
+# SY-2 — SysML internal block diagram: deployment and interfaces.
+# Sources: deploy/ (Containerfile, Quadlet, Caddy block), installer/src/http/, server/src/routes.rs.
+
+direction: right
+
+title: |md
+  # SY-2 — SysML internal block: deployment and interfaces
+  The parts as they are wired, and what each connection carries.
+| {near: top-center}
+
+classes: {
+  part: {style: {fill: "#FFFFFF"; stroke: "#3F6FB5"}}
+  store: {shape: cylinder; style: {fill: "#F2F4F7"; stroke: "#77808D"}}
+  actor: {shape: person; style: {fill: "#FBF0E4"; stroke: "#C08A55"}}
+}
+
+player: "Player\n«actor»" {class: actor}
+operator: "Operator\n«actor»" {class: actor}
+
+pc: "Player's Windows PC" {
+  installer: |md
+    «part» **Installer** : Pacenotes System
+
+    Windows .exe, WinHTTP over Schannel
+  | {class: part}
+  game: "Game Installation\n«part» file system" {class: store}
+  installer -> game: "extract the overlay; write the cache, ledger, restore points, logs under .pacenotes/"
+}
+
+host: "Server host" {
+  caddy: "Caddy\n«part» reverse proxy, TLS ends here" {class: part}
+  server: |md
+    «part» **Server** : Package Server
+
+    a Podman container; provides /health /whoami /packages /download /motd /report/conflict
+  | {class: part}
+  catalogue: "Package Catalogue\n«part» ./data" {class: store}
+  authdb: "Auth DB\n«part» libSQL" {class: store}
+
+  caddy -> server: "plain HTTP :8080"
+  server -> catalogue: "manifest.json, zip streams"
+  server -> authdb: "SELECT … FROM tokens LEFT JOIN grants"
+}
+
+player -> pc.installer: "choices"
+pc.installer -> host.caddy: "HTTPS: GET /packages, /download, /motd, /whoami; POST /report/conflict"
+operator -> host.catalogue: "copy a zip + sidecar; manifest gen"
+operator -> host.authdb: "token mint, grant, revoke"

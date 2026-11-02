@@ -1,0 +1,117 @@
+# The documentation site: the mdBook in docs/, the D2 diagrams rendered to
+# SVG, and the rustdoc API reference, published to GitHub Pages from master.
+# Pull requests build it too, so a diagram that does not parse or a broken
+# doc comment fails before it merges. The build itself is docs/build.sh, the
+# same script a developer runs; see DEVELOPMENT.md §3.1.
+#
+# Pages must be set to deploy from "GitHub Actions" in the repository's
+# settings, once.
+
+name: Docs
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Pinned: a new D2 or mdBook release changes the site only when this does.
+  D2_VERSION: v0.6.9
+  MDBOOK_VERSION: v0.5.4
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The installer builds only for the MSVC target, so its API reference is
+  # made on Windows and handed to the site job.
+  installer-api:
+    name: installer API reference (windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: installer
+
+      # build.sh reads .env.example through PACENOTES_ENV_FILE, so no .env is
+      # needed, and no deployment's address can reach a published page.
+      - name: rustdoc
+        shell: bash
+        run: docs/build.sh installer-api "$RUNNER_TEMP/installer-api"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: installer-api
+          path: ${{ runner.temp }}/installer-api
+          retention-days: 1
+
+  site:
+    name: book, diagrams, API reference
+    needs: installer-api
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install D2 and mdBook
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL "https://github.com/terrastruct/d2/releases/download/${D2_VERSION}/d2-${D2_VERSION}-linux-amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP"
+          cp "$RUNNER_TEMP/d2-${D2_VERSION}/bin/d2" "$RUNNER_TEMP/bin/"
+          curl -fsSL "https://github.com/rust-lang/mdBook/releases/download/${MDBOOK_VERSION}/mdbook-${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: installer-api
+          path: ${{ runner.temp }}/installer-api
+
+      - name: Build the site
+        shell: bash
+        env:
+          INSTALLER_API: ${{ runner.temp }}/installer-api
+          REQUIRE_INSTALLER_API: "1"
+        run: docs/build.sh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/book
+
+  deploy:
+    name: publish to GitHub Pages
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

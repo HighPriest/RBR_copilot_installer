@@ -1,0 +1,36 @@
+# The project's documentation as one mdBook. Build it with docs/build.sh,
+# which also renders the D2 diagrams and the rustdoc API reference; CI
+# publishes the result to GitHub Pages (.github/workflows/docs.yml).
+#
+# Most chapters under src/ are a single {{#include}} of a document that lives
+# elsewhere in the repository, at the same relative path, so every document
+# keeps one source and its relative links keep working in the book.
+
+[book]
+title = "RBR Copilot Installer"
+authors = ["HighPriest"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+# Not the default set: its `index` step renames every README chapter to
+# index.html, and then each link to a README.md is dead. Only the include
+# step is wanted; the first chapter still becomes the site's index.html.
+use-default-preprocessors = false
+
+[preprocessor.links]
+
+# Links to repository files that are not chapters (source, scripts, the
+# licence) point at GitHub instead of dying in the book. Runs after the
+# include step, so it sees the included text.
+[preprocessor.repo-links]
+command = "cargo run --quiet --locked --manifest-path ../Cargo.toml -p mdbook-repo-links --"
+after = ["links"]
+repository = "https://github.com/HighPriest/RBR_copilot_installer"
+branch = "master"
+
+[output.html]
+git-repository-url = "https://github.com/HighPriest/RBR_copilot_installer"
+site-url = "/RBR_copilot_installer/"

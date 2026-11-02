@@ -1,0 +1,70 @@
+# A2 — the installer: what scene 6 does inside the install engine.
+# Sources: installer/src/engine/ (plan, preflight, execute), installer/src/install/.
+
+direction: down
+
+title: |md
+  # A2 — Installer: the install engine (scene 6)
+  Colour names who acts: the worker calls, the engine decides, the ledger records ownership, the game folder changes. Nothing reaches the network but the optional conflict report.
+| {near: top-center}
+
+classes: {
+  worker: {style: {fill: "#F1EAF9"; stroke: "#9A7FC0"}}
+  engine: {style: {fill: "#FDF2E7"; stroke: "#C99A5B"}}
+  ledger: {style: {fill: "#F3EEF9"; stroke: "#7D62A8"}}
+  folder: {style: {fill: "#EEF1F5"; stroke: "#8A97A8"}}
+  decision: {shape: diamond; style: {fill: "#FFF8E5"; stroke: "#C9A33B"}}
+  stop: {shape: oval; style: {fill: "#FFFFFF"; stroke: "#555555"}}
+  dot: {shape: circle; width: 24; height: 24; style: {fill: "#333333"; stroke: "#333333"}}
+  each: {style: {fill: "#FFFFFF"; stroke: "#B5BFCC"; stroke-dash: 4}}
+}
+
+start: "" {class: dot}
+open: "Open the ledger and the cache; build the map of what is available" {class: worker}
+plan: "plan(): uninstall what was dropped, superseded by a pick or a group, half-written, or changed; install the rest. requires is checked against the selection" {class: engine}
+preflight: "Pre-flight, while nothing has moved: payload sha256, write probe, free space, the game not running from this folder, every file list" {class: engine}
+pass: "plan and pre-flight pass?" {class: decision}
+refused: "Refused before anything moved: scene 7 says why" {class: stop}
+overlaps: "overlaps(): files two selected packages both write" {class: engine}
+point: "Open a restore point: <stamp>/ holding the ledger as it is now" {class: ledger}
+
+start -> open -> plan -> preflight -> pass
+pass -> refused: "no"
+pass -> overlaps: "yes"
+overlaps -> point
+
+remove: "for each package to remove — always first" {
+  class: each
+  owner: "Per file: another owner? still the bytes we wrote? prior says delete, copy back, or keep" {class: ledger}
+  effect: "Deleted, the original copied back, or left alone and logged" {class: folder}
+  forget: "The entry leaves the ledger; emptied folders are pruned" {class: ledger}
+  owner -> effect -> forget
+}
+
+add: "for each package to install — its zip directory read once" {
+  class: each
+  prior: "Classify each file's prior: backup (copied to the point), identical (hashed, not rewritten), absent" {class: engine}
+  ahead: "put(state = installing): the write-ahead entry" {class: ledger}
+  extract: "Extract: a temp file renamed into place, one file at a time" {class: folder}
+  done: "put(state = installed) with each file's sha256" {class: ledger}
+  prior -> ahead -> extract -> done
+}
+
+step: "the game's own step, once" {
+  class: each
+  edit: "RBR: set language and sounds in PaceNote.ini, nothing else" {class: engine}
+  adopt: "record_configured(): adopt the edits, or the next uninstall reads them as someone else's" {class: ledger}
+  edit -> adopt
+}
+
+report: "POST /report/conflict with the overlaps; a failure is only a log line" {class: worker}
+end: "" {class: dot}
+
+point -> remove.owner
+remove.forget -> add.prior
+add.done -> step.edit
+step.adopt -> report -> end
+
+facts: |md
+  The engine is pure `std` and runs off Windows in tests: free space and "is the game running" are measured on the UI thread and passed in as `HostFacts`.
+| {shape: page; near: bottom-center}

@@ -1,0 +1,74 @@
+# SY-1 — SysML block definition diagram: the system and its blocks.
+
+direction: down
+
+title: |md
+  # SY-1 — SysML block definition: the system and its blocks
+  A filled diamond is composition: the whole owns the part. A dashed arrow is a compile-time dependency.
+| {near: top-center}
+
+classes: {
+  block: {style: {fill: "#FFFFFF"; stroke: "#3F6FB5"}}
+  external: {style: {fill: "#F2F4F7"; stroke: "#77808D"}}
+  owns: {source-arrowhead: {shape: diamond; style.filled: true}; target-arrowhead: {shape: arrow}}
+  uses: {style: {stroke-dash: 4; stroke: "#3F6FB5"}}
+}
+
+system: |md
+  «block» **Pacenotes System**
+
+  pacenote packages for rally games, from one server to many game folders
+| {class: block}
+
+installer: |md
+  «block» **Installer** — Windows GUI
+
+  *parts:* wizard (nine pages, three routes), worker thread, WinHTTP client, cache, ledger, engine, restore, run log
+
+  *constraints:* .exe under 700 kB; no tokio, reqwest, rustls, hyper or GUI crate; imports only DLLs Windows ships
+| {class: block}
+
+protocol: |md
+  «block» **Shared Protocol** — the shared/ crate
+
+  *values:* Manifest, PackageInfo, GameSchema, KeyStatus, ConflictReport, ApiError
+
+  *constraint:* serde only; no I/O, no async, no HTTP
+| {class: block}
+
+server: |md
+  «block» **Package Server** — one static binary
+
+  *parts:* routes, auth (decide), store (manifest gen), reports (validate, rate limit), admin CLI
+
+  *constraint:* TLS is the reverse proxy's job, not its own
+| {class: block}
+
+game: |md
+  «block» **Game Installation** — external
+
+  the game folder a run targets; `.pacenotes/` holds every trace of the installer
+| {class: external}
+
+catalogue: |md
+  «block» **Package Catalogue** — the data root
+
+  zips, sidecars, schemas, the generated `manifest.json`, `motd/<lang>.txt`, `reports/*.jsonl`
+| {class: block}
+
+authdb: |md
+  «block» **Auth Database** — libSQL
+
+  tokens and grants; raw keys are never stored
+| {class: block}
+
+system -> installer: "" {class: owns}
+system -> protocol: "" {class: owns}
+system -> server: "" {class: owns}
+system -> catalogue: "" {class: owns}
+system -> authdb: "" {class: owns}
+installer -> protocol: "«use»" {class: uses}
+server -> protocol: "«use»" {class: uses}
+installer -> game: "writes only here"
+server -> catalogue: "reads; manifest gen writes manifest.json"
+server -> authdb: "SQL"

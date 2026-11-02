@@ -1,0 +1,59 @@
+# S2 — the server: publishing with `manifest gen`.
+# Sources: server/src/store/ (generation, sidecars, schemas), server/src/reports/.
+
+direction: down
+
+title: |md
+  # S2 — Server: publishing (manifest gen)
+  Publishing is copying a zip into place and running one command, which is strict on purpose. A refusal writes nothing.
+| {near: top-center}
+
+classes: {
+  cli: {style: {fill: "#EEF7F2"; stroke: "#3D8A6A"}}
+  report: {style: {fill: "#FDF2E7"; stroke: "#C99A5B"}}
+  decision: {shape: diamond; style: {fill: "#FFF8E5"; stroke: "#C9A33B"}}
+  skip: {shape: oval; style: {fill: "#FFFFFF"; stroke: "#8A97A8"}}
+  refuse: {shape: oval; style: {fill: "#FDECEC"; stroke: "#C0392B"}}
+  dot: {shape: circle; width: 24; height: 24; style: {fill: "#333333"; stroke: "#333333"}}
+}
+
+start: "" {class: dot}
+run: "pacenotes-server manifest gen --data ./data" {class: cli}
+load: "Load the current manifest.json (only the two guards read it), then walk <data>/" {class: cli}
+folder: "a reserved name, a stray file, or no packages/?" {class: decision}
+schema: "schema.toml present and parses?" {class: decision}
+hash: "Hash the schema's raw bytes; one this build does not bundle is a warning about a pending rollout" {class: cli}
+category: "each package's category declared?" {class: decision}
+sidecar: "Read <name>.toml (an unknown key withholds that package), then sha256, size and mtime" {class: cli}
+requires: "Validate requires: the target exists in the same game; public never needs protected content" {class: cli}
+conflicts: "Summarise 30 days of conflict reports into per-pair warnings" {class: report}
+vanish: "would a live game vanish?" {class: decision}
+lost: "would metadata be lost?" {class: decision}
+write: "Write manifest.json atomically: a temp file in the data dir, then rename" {class: cli}
+end: "Print every published package; exit 0, or 2 when something was withheld" {class: cli}
+done: "" {class: dot}
+
+skip_folder: "skip, with a warning" {class: skip}
+nothing: "error: this game publishes nothing" {class: refuse}
+skip_package: "skip the package, with a warning" {class: skip}
+refuse_vanish: "refuse: exit 1 — unless --accept-unpublish" {class: refuse}
+refuse_lost: "refuse: exit 1 — unless --accept-metadata-loss" {class: refuse}
+
+start -> run -> load -> folder
+folder -> skip_folder: "yes"
+folder -> schema: "no"
+schema -> nothing: "no"
+schema -> hash: "yes"
+hash -> category
+category -> skip_package: "no"
+category -> sidecar: "yes"
+sidecar -> requires -> conflicts -> vanish
+vanish -> refuse_vanish: "yes"
+vanish -> lost: "no"
+lost -> refuse_lost: "yes"
+lost -> write: "no"
+write -> end -> done
+
+notes: |md
+  The manifest is a **pure function** of zips, sidecars and schemas: nothing is inherited from the previous one, so deleting a sidecar key removes it at the next publish. The two guards exist because that same purity lets an accidental upgrade empty a live catalogue.
+| {shape: page; near: bottom-center}

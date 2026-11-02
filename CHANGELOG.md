@@ -1,5 +1,47 @@
 # Changelog
 
+## 2026/11/02 — docs: one mdBook on GitHub Pages, with rustdoc and D2 diagrams (M7)
+
+The documentation was a dozen Markdown files spread over the repository,
+plus nine architecture diagrams drawn as PNGs by Python and Pillow from
+explicit coordinates. It is now one site, built by `docs/build.sh` and
+published to GitHub Pages by `.github/workflows/docs.yml` from `master`:
+
+- **Every document**, included rather than copied: each chapter under
+  `docs/src/` is one include line at the same relative path as the
+  original, so a document keeps one source and its links work in the book
+  as on GitHub. mdBook's default `index` step is off, because it renames
+  README chapters and kills every link to them.
+- **The diagrams**, redrawn in D2 and rendered to SVG at build time: the two
+  ER models, four activity diagrams, and the SysML block, deployment and
+  requirement diagrams, corrected to the application as it is (the 700 kB
+  gate, the scene 5 readiness check, identical files no longer rewritten,
+  the running-game check, redirects). The SVGs are never committed. The
+  Python generator and its PNGs are gone; there is no Python left in the
+  project.
+- **The API reference**, rustdoc with private items for the shared crate,
+  the server, and the installer's library and Windows application. The
+  installer's two halves share a crate name, so each gets its own run; it
+  builds only on Windows, so CI makes it in a Windows job and hands it over.
+- **`tools/mdbook-repo-links`**, a small Rust preprocessor in the workspace:
+  a link to a repository file that is not a chapter (source, scripts, the
+  licence) points at the file on GitHub instead of dying in the book.
+
+One thing had to change in the installer for this: rustdoc prints the
+default server address `build.rs` reads from `installer/.env`, so a docs
+build on a machine with a real `.env` would have published that address.
+`build.rs` now reads the file `PACENOTES_ENV_FILE` names when it is set,
+and the docs build always points it at `.env.example`.
+
+`deploy/README.md` no longer pipes through `python3 -m json.tool`, and the
+unused `authors` key left `[workspace.package]`, where Cargo warned about it
+on every build.
+
+Not checked here: this machine has no network, so D2 itself never ran; the
+sources were written to its documented syntax and CI renders them, failing
+the build on any error. The rest of the site was built here end to end with
+a stand-in for `d2`.
+
 ## 2026/11/02 — deploy: the forced command's path is generated, not typed
 
 The first real deploy failed with exit code 127, `fish: Unknown command:

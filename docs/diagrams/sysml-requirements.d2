@@ -1,0 +1,85 @@
+# SY-3 — SysML requirement diagram: each requirement, the block that
+# satisfies it, and the test that verifies it.
+
+direction: right
+
+title: |md
+  # SY-3 — SysML requirements: what the system must do, and what proves it
+  «satisfy» points from the block to the requirement; «verify» from the test case to the requirement.
+| {near: top-center}
+
+classes: {
+  req: {style: {fill: "#FFFDF5"; stroke: "#C9A33B"}}
+  block: {style: {fill: "#FFFFFF"; stroke: "#3F6FB5"}}
+  test: {shape: page; style: {fill: "#EEF7F2"; stroke: "#3D8A6A"}}
+  satisfy: {style: {stroke: "#3F6FB5"}}
+  verify: {style: {stroke: "#3D8A6A"; stroke-dash: 4}}
+}
+
+blocks: "«block»s" {
+  installer: "Installer" {class: block}
+  engine: "Installer / engine" {class: block}
+  local: "Installer / cache + ledger" {class: block}
+  schema: "Installer / schema" {class: block}
+  http: "Installer / http" {class: block}
+  auth: "Server / auth" {class: block}
+  routes: "Server / routes" {class: block}
+  store: "Server / store" {class: block}
+  reports: "Server / reports" {class: block}
+}
+
+requirements: "«requirement»s" {
+  size: "R-SIZE\nthe .exe stays under 700 kB and imports only DLLs Windows ships" {class: req}
+  tls: "R-TLS\nHTTPS through WinHTTP and Schannel; no TLS, async or GUI crate" {class: req}
+  redirect: "R-REDIRECT\nredirects are followed by the installer; the key never leaves its origin" {class: req}
+  overlay: "R-OVERLAY\na package is a game-root overlay; its content is never interpreted" {class: req}
+  folder: "R-LOCAL\nnothing is written outside the game folder" {class: req}
+  offline: "R-OFFLINE\ninstall and restore work from the cache" {class: req}
+  hash: "R-SCHEMA\nan unknown schema hash blocks downloading for that game only" {class: req}
+  bearer: "R-AUTH\nbearer keys stored as sha256, grants per directory, no tiers" {class: req}
+  enum: "R-ENUM\nstatuses never enumerate; there is no 403" {class: req}
+  path: "R-PATH\nURL parts are lookup keys, never paths" {class: req}
+  pure: "R-PURE\nthe manifest is a pure function of zips, sidecars and schemas" {class: req}
+  report: "R-REPORT\nreports are unauthenticated, capped, validated and rate limited" {class: req}
+}
+
+tests: "«test case»s" {
+  binary_size: "installer/tests/Test-BinarySize.ps1" {class: test}
+  public_endpoint: "installer/tests/Test-PublicEndpoint.ps1" {class: test}
+  redirects: "installer/tests/Test-Redirects.ps1" {class: test}
+  applying: "installer/tests/applying_a_selection.rs" {class: test}
+  local_units: "installer/src/cache/tests.rs, installer/src/ledger/tests.rs" {class: test}
+  restoring: "installer/tests/restoring_a_game_folder.rs" {class: test}
+  schema_units: "installer/src/schema/tests.rs" {class: test}
+  decide: "server/src/auth/access_decision.rs (decide table)" {class: test}
+  matrix: "server/tests/access_matrix.rs" {class: test}
+  download: "server/tests/package_download.rs" {class: test}
+  publishing: "server/tests/publishing.rs" {class: test}
+  conflicts: "server/tests/conflict_reports.rs" {class: test}
+}
+
+blocks.installer -> requirements.size: "«satisfy»" {class: satisfy}
+blocks.http -> requirements.tls: "«satisfy»" {class: satisfy}
+blocks.http -> requirements.redirect: "«satisfy»" {class: satisfy}
+blocks.engine -> requirements.overlay: "«satisfy»" {class: satisfy}
+blocks.local -> requirements.folder: "«satisfy»" {class: satisfy}
+blocks.engine -> requirements.offline: "«satisfy»" {class: satisfy}
+blocks.schema -> requirements.hash: "«satisfy»" {class: satisfy}
+blocks.auth -> requirements.bearer: "«satisfy»" {class: satisfy}
+blocks.routes -> requirements.enum: "«satisfy»" {class: satisfy}
+blocks.store -> requirements.path: "«satisfy»" {class: satisfy}
+blocks.store -> requirements.pure: "«satisfy»" {class: satisfy}
+blocks.reports -> requirements.report: "«satisfy»" {class: satisfy}
+
+tests.binary_size -> requirements.size: "«verify»" {class: verify}
+tests.public_endpoint -> requirements.tls: "«verify»" {class: verify}
+tests.redirects -> requirements.redirect: "«verify»" {class: verify}
+tests.applying -> requirements.overlay: "«verify»" {class: verify}
+tests.local_units -> requirements.folder: "«verify»" {class: verify}
+tests.restoring -> requirements.offline: "«verify»" {class: verify}
+tests.schema_units -> requirements.hash: "«verify»" {class: verify}
+tests.decide -> requirements.bearer: "«verify»" {class: verify}
+tests.matrix -> requirements.enum: "«verify»" {class: verify}
+tests.download -> requirements.path: "«verify»" {class: verify}
+tests.publishing -> requirements.pure: "«verify»" {class: verify}
+tests.conflicts -> requirements.report: "«verify»" {class: verify}

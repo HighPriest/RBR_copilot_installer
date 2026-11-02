@@ -1,2 +1,6 @@
 # Schemas are compared by the SHA-256 of their raw bytes, which a line-ending conversion would change.
 schemas/*.toml -text
+
+# Run by bash, which reads a carriage return as part of the command; a Windows
+# checkout (the docs job builds the installer API there) must keep LF.
+*.sh text eol=lf

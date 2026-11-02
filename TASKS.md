@@ -123,6 +123,10 @@ See root `CLAUDE.md`, "Install model".
 - [ ] Write reproducible release-build instructions for both binaries
 - [ ] Smoke-test on a fresh Windows VM: download, install a subset, switch
       a config variant, uninstall, restore
+- [ ] Rewrite `README.md` to match the application as it is
+- [x] Publish every document in the repository as one mdBook on GitHub
+      Pages from CI, with the rustdoc API reference and the architecture
+      diagrams redrawn in D2 and rendered to SVG; no Python anywhere
 
 ### Supply chain and operations
 

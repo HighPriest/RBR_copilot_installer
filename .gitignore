@@ -14,5 +14,3 @@ Cargo.lock.bak
 legacy
 /installer/.env
 
-# Python bytecode from docs/architecture/src (the diagram generator).
-__pycache__/
