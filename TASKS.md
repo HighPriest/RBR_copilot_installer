@@ -127,6 +127,9 @@ See root `CLAUDE.md`, "Install model".
 - [x] Publish every document in the repository as one mdBook on GitHub
       Pages from CI, with the rustdoc API reference and the architecture
       diagrams redrawn in D2 and rendered to SVG; no Python anywhere
+  - [x] Copy `tools/` into the server image build: the new workspace member
+        broke it at v/2.0.1, and CI now loads the workspace from what the
+        Containerfile copies
 
 ### Supply chain and operations
 

@@ -75,6 +75,20 @@ jobs:
       - name: Test
         run: cargo test --workspace --locked
 
+      # The server image is built only when a release is tagged, from just
+      # what deploy/Containerfile copies. v/2.0.1 failed there, after every
+      # check here had passed, because a new workspace member was not copied
+      # and cargo reads every member's manifest. This loads the workspace
+      # from exactly the copied paths, so the next one fails here instead.
+      - name: The workspace loads from what the Containerfile copies
+        shell: bash
+        run: |
+          context="$RUNNER_TEMP/container-context"
+          mkdir -p "$context"
+          awk '/^COPY / && $2 !~ /^--/ { for (i = 2; i < NF; i++) print $i }' deploy/Containerfile \
+            | while read -r path; do cp -r --parents "$path" "$context/"; done
+          cd "$context" && cargo metadata --locked --format-version 1 > /dev/null
+
   installer:
     name: "installer (windows: lint, test, version, size gate)"
     runs-on: windows-latest

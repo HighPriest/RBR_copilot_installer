@@ -203,6 +203,10 @@ oldest-zip restore). `installer/CLAUDE.md` says which is which.
 
 - Root `cargo build` builds `shared`, `server` and `tools/mdbook-repo-links`
   (Linux OK, used in CI).
+- A new workspace member must also be `COPY`'d in `deploy/Containerfile`:
+  cargo reads every member's manifest even to build only the server. CI
+  loads the workspace from exactly what that file copies; a release found
+  the gap first, at v/2.0.1.
 - `installer/` builds only on Windows MSVC target and is excluded from the
   workspace default members on purpose. Do not "fix" that.
 - Check binary size after every installer change:

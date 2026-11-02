@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026/11/02 — deploy: the server image builds again (M7)
+
+The v/2.0.1 release failed in "Build and push the server image": `cargo
+build -p pacenotes-server` exited 101 inside the container. The docs commit
+had added `tools/mdbook-repo-links` to the Cargo workspace, and
+`deploy/Containerfile` copies only the paths it names into the build. Cargo
+reads every workspace member's manifest before building any one package,
+so the missing `tools/` stopped it, though the server does not use it.
+
+The Containerfile now copies `tools/`. Reproduced first, by loading the
+workspace from exactly the paths the old Containerfile copied (the same
+"failed to load manifest for workspace member" error), then a release build
+of the server from the new file set.
+
+Nothing before a release built from just those paths, so every CI check had
+passed. The server job now does: it copies what the Containerfile's `COPY`
+lines name into an empty directory and loads the workspace there, which
+fails on the v/2.0.1 Containerfile and passes on this one. The root
+`CLAUDE.md` says a new workspace member needs its `COPY` line.
+
 ## 2026/11/02 — README: matches the application as it is (M7)
 
 The README had drifted from the code. It said downloads went to a per-user

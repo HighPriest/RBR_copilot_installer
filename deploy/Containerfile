@@ -24,6 +24,9 @@ WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY shared ./shared
 COPY server ./server
+# Never built here, but a workspace member: cargo reads every member's
+# manifest before building any one package, and fails without it.
+COPY tools ./tools
 # The server embeds these with include_bytes! to flag a data root's differing copy.
 COPY schemas ./schemas
 
