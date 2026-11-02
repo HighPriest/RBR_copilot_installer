@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026/11/02 — README: matches the application as it is (M7)
+
+The README had drifted from the code. It said downloads went to a per-user
+cache (they live in the game folder, as its own later section said), that
+scene 3 offered two buttons (there are three: Restore/Uninstall was
+missing), described `wizard/` as having two routes and the wizard as seven
+scenes, listed `legacy/` as part of the repository (it is git-ignored, and
+not one file of it is tracked), and pointed at the Python-drawn
+architecture README. It also opened with an unclosed HTML paragraph, which
+mdBook warned about.
+
+Rewritten against the code: the three routes and what gates them, the
+download page's expanded tree and partial boxes, retries and what happens
+when a category or the whole transfer comes back empty, the restart as
+administrator, the refusal while the game runs, restore points, and the
+documentation site. The layout table names what is really there.
+
 ## 2026/11/02 — docs: one mdBook on GitHub Pages, with rustdoc and D2 diagrams (M7)
 
 The documentation was a dozen Markdown files spread over the repository,
